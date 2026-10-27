@@ -1,15 +1,24 @@
 /**
  * Planejamento de Conteúdo — ponte entre a planilha e o site.
  *
- * Guarda os dados em duas abas desta planilha:
- *   MARCAS  — uma linha por marca (produtos, fases, observações)
- *   PAUTAS  — uma linha por post (mesmas colunas da aba DETALHAMENTO)
+ * Guarda os dados em abas desta planilha:
+ *   MARCAS    — uma linha por marca (produtos, fases, perfil, arquivos)
+ *   PAUTAS    — uma linha por post (mesmas colunas da aba DETALHAMENTO + fluxo de aprovação)
+ *   USUARIOS  — equipe com login, papel e marcas liberadas (aba oculta)
+ *
+ * Papéis:
+ *   admin     — vê e faz tudo, cadastra a equipe e as marcas
+ *   social    — vê e alimenta só as marcas liberadas para ele
+ *   aprovador — vê as marcas liberadas, valida ideias e aprova conteúdos
  *
  * Passo a passo no arquivo LEIAME.md.
  */
 
 const ABA_PAUTAS = 'PAUTAS';
 const ABA_MARCAS = 'MARCAS';
+const ABA_USUARIOS = 'USUARIOS';
+const PASTA_ARQUIVOS = 'Planejamento de Conteúdo - Arquivos';
+const DIAS_DE_SESSAO = 30;
 
 const CAMPOS_PAUTA = [
   ['id', 'ID'], ['marcaId', 'Marca ID'], ['marca', 'Marca'], ['status', 'Status'],
@@ -17,13 +26,36 @@ const CAMPOS_PAUTA = [
   ['formato', 'Formato'], ['produto', 'Produto'], ['pauta', 'Pauta / ângulo'],
   ['objetivo', 'Objetivo (jornada de compra)'], ['cta', 'CTA / destino'], ['rede', 'Rede'],
   ['gravacao', 'Gravação'], ['observacao', 'Observação'], ['inspiracao', 'Inspiração'],
-  ['legenda', 'Legenda'], ['criativo', 'Criativo'], ['criado', 'Criado em'], ['atualizado', 'Atualizado em']
+  ['legenda', 'Legenda'], ['criativo', 'Criativo'], ['criado', 'Criado em'], ['atualizado', 'Atualizado em'],
+  ['motivo', 'Motivo da reprovação'], ['historico', 'Histórico']
 ];
 const CAMPOS_MARCA = [
   ['id', 'ID'], ['nome', 'Nome'], ['produtos', 'Produtos'], ['fases', 'Fases'],
   ['observacoes', 'Observações'], ['criado', 'Criado em'],
   ['perfil', 'Perfil (sobre, público, observações)'], ['arquivos', 'Arquivos']
 ];
+const CAMPOS_USUARIO = [
+  ['id', 'ID'], ['nome', 'Nome'], ['login', 'Login (e-mail)'], ['papel', 'Papel'],
+  ['marcas', 'Marcas liberadas (IDs)'], ['ativo', 'Ativo'], ['hash', 'Senha (protegida)'],
+  ['sal', 'Sal'], ['criado', 'Criado em']
+];
+const PAPEIS = ['admin', 'social', 'aprovador'];
+
+const STATUS = ['Ideia', 'Em validação', 'Ideia reprovada', 'Em produção', 'Em aprovação', 'Ajustes solicitados', 'Aprovado', 'Agendado', 'Postado'];
+const STATUS_ANTIGOS = { 'Validado': 'Em produção', 'Produzido': 'Em aprovação' };
+
+// quem: 'editar' = admin ou social da marca; 'aprovar' = admin ou aprovador da marca
+const ACOES = {
+  enviarValidacao: { de: ['Ideia', 'Ideia reprovada'], para: 'Em validação', quem: 'editar', texto: 'Enviou a ideia para validação' },
+  validar: { de: ['Em validação'], para: 'Em produção', quem: 'aprovar', texto: 'Validou a ideia' },
+  reprovarIdeia: { de: ['Em validação'], para: 'Ideia reprovada', quem: 'aprovar', motivo: true, texto: 'Reprovou a ideia' },
+  enviarAprovacao: { de: ['Em produção', 'Ajustes solicitados'], para: 'Em aprovação', quem: 'editar', texto: 'Enviou o conteúdo para aprovação' },
+  aprovar: { de: ['Em aprovação'], para: 'Aprovado', quem: 'aprovar', texto: 'Aprovou o conteúdo' },
+  pedirAjustes: { de: ['Em aprovação'], para: 'Ajustes solicitados', quem: 'aprovar', motivo: true, texto: 'Pediu ajustes no conteúdo' },
+  agendar: { de: ['Aprovado'], para: 'Agendado', quem: 'editar', texto: 'Marcou como agendado' },
+  postar: { de: ['Aprovado', 'Agendado'], para: 'Postado', quem: 'editar', texto: 'Marcou como postado' }
+};
+
 const DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 const FASES_PADRAO = [
   { nome: 'Lançamento', cor: '#A9A9A4' },
@@ -32,53 +64,108 @@ const FASES_PADRAO = [
   { nome: 'Semana da promoção', cor: '#6B6B70' },
   { nome: 'Última chamada', cor: '#3F3F43' }
 ];
-const ACOES_DE_ESCRITA = ['salvarPauta', 'excluirPauta', 'status', 'salvarMarca', 'excluirMarca', 'enviarArquivo'];
-const PASTA_ARQUIVOS = 'Planejamento de Conteúdo - Arquivos';
 
 /* ---------- Entrada do site ---------- */
 
 function doGet() {
-  return json_(listar_());
+  return json_({ ok: true, mensagem: 'A ligação com a planilha está funcionando. Use o site para entrar.' });
 }
 
 function doPost(e) {
   let req;
   try { req = JSON.parse(e.postData.contents); } catch (err) { return json_({ ok: false, error: 'Pedido inválido.' }); }
-
-  if (ACOES_DE_ESCRITA.indexOf(req.action) >= 0) {
-    const senha = PropertiesService.getScriptProperties().getProperty('SENHA');
-    if (senha && req.senha !== senha) return json_({ ok: false, code: 'senha', error: 'Senha incorreta.' });
-  }
-
-  // envio de arquivo vai para o Drive, fora da trava da planilha
-  if (req.action === 'enviarArquivo') {
-    try { return json_(Object.assign({ ok: true }, enviarArquivo_(req))); }
-    catch (err) { return json_({ ok: false, error: String(err.message || err) }); }
-  }
-
-  const lock = LockService.getScriptLock();
-  lock.waitLock(20000);
   try {
-    switch (req.action) {
-      case 'listar': return json_(listar_());
-      case 'salvarPauta': return json_({ ok: true, id: salvarPauta_(req.pauta || {}) });
-      case 'excluirPauta': excluirLinha_(ABA_PAUTAS, CAMPOS_PAUTA, req.id); return json_({ ok: true });
-      case 'status': mudarStatus_(req.id, req.status); return json_({ ok: true });
-      case 'salvarMarca': return json_({ ok: true, id: salvarMarca_(req.marca || {}) });
-      case 'excluirMarca': excluirMarca_(req.id); return json_({ ok: true });
-      default: return json_({ ok: false, error: 'Ação desconhecida: ' + req.action });
+    if (req.action === 'login') return json_(login_(req.login, req.senha));
+    const eu = usuarioDoToken_(req.token);
+    if (!eu) return json_({ ok: false, code: 'sessao', error: 'Sua sessão expirou. Entre de novo.' });
+
+    // envio de arquivo vai para o Drive, fora da trava da planilha
+    if (req.action === 'enviarArquivo') return json_(Object.assign({ ok: true }, enviarArquivo_(eu, req)));
+
+    const lock = LockService.getScriptLock();
+    lock.waitLock(20000);
+    try {
+      switch (req.action) {
+        case 'listar': return json_(listar_(eu));
+        case 'salvarPauta': return json_({ ok: true, id: salvarPauta_(eu, req.pauta || {}) });
+        case 'excluirPauta': excluirPauta_(eu, req.id); return json_({ ok: true });
+        case 'acao': acaoPauta_(eu, req.id, req.acao, req.motivo, req.status); return json_({ ok: true });
+        case 'salvarMarca': return json_({ ok: true, id: salvarMarca_(eu, req.marca || {}) });
+        case 'excluirMarca': soAdmin_(eu); excluirMarca_(req.id); return json_({ ok: true });
+        case 'salvarUsuario': soAdmin_(eu); return json_({ ok: true, id: salvarUsuario_(eu, req.usuario || {}) });
+        case 'trocarSenha': trocarSenha_(eu, req.atual, req.nova); return json_({ ok: true });
+        case 'sair': PropertiesService.getScriptProperties().deleteProperty('tok_' + req.token); return json_({ ok: true });
+        default: return json_({ ok: false, error: 'Ação desconhecida: ' + req.action });
+      }
+    } finally {
+      lock.releaseLock();
     }
   } catch (err) {
-    return json_({ ok: false, error: String(err.message || err) });
-  } finally {
-    lock.releaseLock();
+    return json_({ ok: false, code: err.code || 'server', error: String(err.message || err) });
   }
+}
+
+/* ---------- Login e permissões ---------- */
+
+function login_(login, senha) {
+  const u = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(x => x.login === normLogin_(login))[0];
+  if (!u || u.ativo !== 'sim' || u.hash !== hash_(senha, u.sal)) {
+    Utilities.sleep(800);
+    throw erro_('login', 'Login ou senha incorretos.');
+  }
+  const props = PropertiesService.getScriptProperties();
+  const agora = Date.now();
+  // limpa sessões vencidas
+  const todas = props.getProperties();
+  Object.keys(todas).forEach(k => {
+    if (k.indexOf('tok_') === 0) {
+      try { if (JSON.parse(todas[k]).exp < agora) props.deleteProperty(k); } catch (e) { props.deleteProperty(k); }
+    }
+  });
+  const token = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
+  props.setProperty('tok_' + token, JSON.stringify({ uid: u.id, exp: agora + DIAS_DE_SESSAO * 864e5 }));
+  return { ok: true, token: token };
+}
+
+function usuarioDoToken_(token) {
+  if (!token) return null;
+  const raw = PropertiesService.getScriptProperties().getProperty('tok_' + token);
+  if (!raw) return null;
+  let s;
+  try { s = JSON.parse(raw); } catch (e) { return null; }
+  if (s.exp < Date.now()) return null;
+  const u = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(x => x.id === s.uid)[0];
+  if (!u || u.ativo !== 'sim') return null;
+  return publicoUsuario_(u);
+}
+
+function publicoUsuario_(u) {
+  return {
+    id: u.id, nome: u.nome, login: u.login, papel: u.papel, ativo: u.ativo === 'sim',
+    marcas: String(u.marcas || '').split(',').map(s => s.trim()).filter(String)
+  };
+}
+
+function acesso_(eu, marcaId) {
+  return eu.papel === 'admin' || eu.marcas.indexOf('*') >= 0 || eu.marcas.indexOf(marcaId) >= 0;
+}
+function podeEditar_(eu, marcaId) {
+  return eu.papel === 'admin' || (eu.papel === 'social' && acesso_(eu, marcaId));
+}
+function podeAprovar_(eu, marcaId) {
+  return eu.papel === 'admin' || (eu.papel === 'aprovador' && acesso_(eu, marcaId));
+}
+function soAdmin_(eu) {
+  if (eu.papel !== 'admin') throw erro_('permissao', 'Só o administrador pode fazer isso.');
+}
+function erro_(code, msg) {
+  const e = new Error(msg); e.code = code; return e;
 }
 
 /* ---------- Leitura ---------- */
 
-function listar_() {
-  const marcas = ler_(ABA_MARCAS, CAMPOS_MARCA).map(m => ({
+function listar_(eu) {
+  const marcas = ler_(ABA_MARCAS, CAMPOS_MARCA).filter(m => acesso_(eu, m.id)).map(m => ({
     id: m.id,
     nome: m.nome,
     produtos: String(m.produtos || '').split('\n').map(s => s.trim()).filter(String),
@@ -88,15 +175,21 @@ function listar_() {
     perfil: parseJSON_(m.perfil, {}),
     arquivos: parseJSON_(m.arquivos, [])
   }));
-  const pautas = ler_(ABA_PAUTAS, CAMPOS_PAUTA).map(p => {
-    p.data = paraISO_(p.data);
-    p.criado = Number(p.criado) || 0;
-    p.atualizado = Number(p.atualizado) || 0;
-    delete p.dia;
-    delete p.marca;
-    return p;
-  });
-  return { ok: true, marcas: marcas, pautas: pautas };
+  const pautas = ler_(ABA_PAUTAS, CAMPOS_PAUTA).filter(p => acesso_(eu, p.marcaId)).map(pautaParaSite_);
+  const r = { ok: true, eu: eu, marcas: marcas, pautas: pautas };
+  if (eu.papel === 'admin') r.usuarios = ler_(ABA_USUARIOS, CAMPOS_USUARIO).map(publicoUsuario_);
+  return r;
+}
+
+function pautaParaSite_(p) {
+  p.data = paraISO_(p.data);
+  p.criado = Number(p.criado) || 0;
+  p.atualizado = Number(p.atualizado) || 0;
+  p.status = normStatus_(p.status);
+  p.historico = parseJSON_(p.historico, []);
+  delete p.dia;
+  delete p.marca;
+  return p;
 }
 
 function ler_(nome, campos) {
@@ -116,31 +209,87 @@ function ler_(nome, campos) {
     });
 }
 
-/* ---------- Escrita ---------- */
+function pautaPorId_(id) {
+  const p = ler_(ABA_PAUTAS, CAMPOS_PAUTA).filter(x => x.id === String(id))[0];
+  return p ? pautaParaSite_(p) : null;
+}
 
-function salvarPauta_(p) {
-  const id = p.id || Utilities.getUuid().slice(0, 13);
-  const marca = ler_(ABA_MARCAS, CAMPOS_MARCA).filter(m => m.id === p.marcaId)[0];
+/* ---------- Pautas ---------- */
+
+function salvarPauta_(eu, p) {
+  const atual = p.id ? pautaPorId_(p.id) : null;
+  if (p.id && !atual) throw erro_('server', 'Pauta não encontrada. Atualize a página.');
+  const marcaId = atual ? atual.marcaId : p.marcaId;
+  if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Você não pode editar pautas desta marca.');
+  const id = atual ? atual.id : Utilities.getUuid().slice(0, 13);
+  const historico = atual ? atual.historico : [{ em: Date.now(), por: eu.nome, acao: 'Criou a pauta' }];
   const linha = Object.assign({}, p, {
     id: id,
-    marca: marca ? marca.nome : '',
+    marcaId: marcaId,
+    marca: nomeDaMarca_(marcaId),
+    status: atual ? atual.status : 'Ideia',
+    motivo: atual ? atual.motivo : '',
+    historico: JSON.stringify(historico),
     data: paraBR_(p.data),
     dia: diaDaSemana_(p.data),
+    criado: atual ? atual.criado : Date.now(),
     atualizado: Date.now()
   });
   gravar_(ABA_PAUTAS, CAMPOS_PAUTA, linha);
   return id;
 }
 
-function mudarStatus_(id, status) {
-  const aba = aba_(ABA_PAUTAS, CAMPOS_PAUTA);
-  const r = linhaDoId_(aba, id);
-  if (!r) throw new Error('Pauta não encontrada. Atualize a página.');
-  aba.getRange(r, colunaDe_(CAMPOS_PAUTA, 'status')).setValue(status);
-  aba.getRange(r, colunaDe_(CAMPOS_PAUTA, 'atualizado')).setValue(Date.now());
+function excluirPauta_(eu, id) {
+  const atual = pautaPorId_(id);
+  if (!atual) return;
+  if (!podeEditar_(eu, atual.marcaId)) throw erro_('permissao', 'Você não pode excluir pautas desta marca.');
+  excluirLinha_(ABA_PAUTAS, CAMPOS_PAUTA, id);
 }
 
-function salvarMarca_(m) {
+function acaoPauta_(eu, id, acao, motivo, status) {
+  const p = pautaPorId_(id);
+  if (!p) throw erro_('server', 'Pauta não encontrada. Atualize a página.');
+  motivo = String(motivo || '').trim();
+  let para, texto;
+  if (acao === 'definir') {
+    soAdmin_(eu);
+    if (STATUS.indexOf(status) < 0) throw erro_('server', 'Status inválido.');
+    para = status; texto = 'Mudou o status para ' + status;
+  } else {
+    const a = ACOES[acao];
+    if (!a) throw erro_('server', 'Ação desconhecida.');
+    const pode = a.quem === 'aprovar' ? podeAprovar_(eu, p.marcaId) : podeEditar_(eu, p.marcaId);
+    if (!pode) throw erro_('permissao', a.quem === 'aprovar' ? 'Só o aprovador ou o administrador pode fazer isso.' : 'Você não pode alterar pautas desta marca.');
+    if (a.de.indexOf(p.status) < 0) throw erro_('server', 'Esta pauta está em "' + p.status + '" e não pode passar por esta etapa. Atualize a página.');
+    if (a.motivo && !motivo) throw erro_('server', 'Escreva o motivo.');
+    para = a.para; texto = a.texto;
+  }
+  const historico = p.historico.concat([{ em: Date.now(), por: eu.nome, acao: texto, de: p.status, para: para, motivo: motivo }]);
+  const aba = aba_(ABA_PAUTAS, CAMPOS_PAUTA);
+  const r = linhaDoId_(aba, id);
+  const set = (k, v) => aba.getRange(r, colunaDe_(CAMPOS_PAUTA, k)).setValue(v);
+  set('status', para);
+  set('motivo', (para === 'Ideia reprovada' || para === 'Ajustes solicitados') ? motivo : '');
+  set('historico', JSON.stringify(historico));
+  set('atualizado', String(Date.now()));
+}
+
+function normStatus_(s) {
+  s = String(s || '').trim();
+  if (STATUS_ANTIGOS[s]) return STATUS_ANTIGOS[s];
+  return STATUS.indexOf(s) >= 0 ? s : 'Ideia';
+}
+
+/* ---------- Marcas ---------- */
+
+function nomeDaMarca_(id) {
+  const m = ler_(ABA_MARCAS, CAMPOS_MARCA).filter(x => x.id === id)[0];
+  return m ? m.nome : '';
+}
+
+function salvarMarca_(eu, m) {
+  if (!m.id) soAdmin_(eu);
+  else if (!podeEditar_(eu, m.id)) throw erro_('permissao', 'Você não pode editar esta marca.');
   const id = m.id || Utilities.getUuid().slice(0, 13);
   gravar_(ABA_MARCAS, CAMPOS_MARCA, {
     id: id,
@@ -158,26 +307,9 @@ function salvarMarca_(m) {
   if (n > 0) {
     const ids = aba.getRange(2, colunaDe_(CAMPOS_PAUTA, 'marcaId'), n, 1).getValues();
     const col = aba.getRange(2, colunaDe_(CAMPOS_PAUTA, 'marca'), n, 1);
-    const nomes = col.getValues().map((v, i) => [ids[i][0] === id ? (m.nome || 'Sem nome') : v[0]]);
-    col.setValues(nomes);
+    col.setValues(col.getValues().map((v, i) => [ids[i][0] === id ? (m.nome || 'Sem nome') : v[0]]));
   }
   return id;
-}
-
-function enviarArquivo_(req) {
-  if (!req.base64) throw new Error('Arquivo vazio.');
-  const marca = ler_(ABA_MARCAS, CAMPOS_MARCA).filter(m => m.id === req.marcaId)[0];
-  const raiz = pasta_(DriveApp.getRootFolder(), PASTA_ARQUIVOS);
-  const pasta = pasta_(raiz, marca ? marca.nome : 'Sem marca');
-  const blob = Utilities.newBlob(Utilities.base64Decode(req.base64), req.mime || 'application/octet-stream', req.nome || 'arquivo');
-  const arquivo = pasta.createFile(blob);
-  try { arquivo.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) { /* domínio pode bloquear link público */ }
-  return { url: arquivo.getUrl(), driveId: arquivo.getId() };
-}
-
-function pasta_(mae, nome) {
-  const it = mae.getFoldersByName(nome);
-  return it.hasNext() ? it.next() : mae.createFolder(nome);
 }
 
 function excluirMarca_(id) {
@@ -189,6 +321,69 @@ function excluirMarca_(id) {
   }
   excluirLinha_(ABA_MARCAS, CAMPOS_MARCA, id);
 }
+
+function enviarArquivo_(eu, req) {
+  if (!podeEditar_(eu, req.marcaId)) throw erro_('permissao', 'Você não pode enviar arquivos para esta marca.');
+  if (!req.base64) throw new Error('Arquivo vazio.');
+  const raiz = pasta_(DriveApp.getRootFolder(), PASTA_ARQUIVOS);
+  const pasta = pasta_(raiz, nomeDaMarca_(req.marcaId) || 'Sem marca');
+  const blob = Utilities.newBlob(Utilities.base64Decode(req.base64), req.mime || 'application/octet-stream', req.nome || 'arquivo');
+  const arquivo = pasta.createFile(blob);
+  try { arquivo.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) { /* domínio pode bloquear link público */ }
+  return { url: arquivo.getUrl(), driveId: arquivo.getId() };
+}
+
+function pasta_(mae, nome) {
+  const it = mae.getFoldersByName(nome);
+  return it.hasNext() ? it.next() : mae.createFolder(nome);
+}
+
+/* ---------- Equipe ---------- */
+
+function salvarUsuario_(eu, u) {
+  const todos = ler_(ABA_USUARIOS, CAMPOS_USUARIO);
+  const atual = u.id ? todos.filter(x => x.id === u.id)[0] : null;
+  if (u.id && !atual) throw erro_('server', 'Pessoa não encontrada.');
+  const login = normLogin_(u.login);
+  if (!login) throw erro_('server', 'Preencha o login.');
+  if (todos.some(x => x.login === login && x.id !== u.id)) throw erro_('server', 'Já existe alguém com este login.');
+  if (PAPEIS.indexOf(u.papel) < 0) throw erro_('server', 'Papel inválido.');
+  if (atual && atual.id === eu.id && (u.papel !== 'admin' || u.ativo === false)) throw erro_('server', 'Você não pode tirar o seu próprio acesso de administrador.');
+  if (!atual && !u.senha) throw erro_('server', 'Defina uma senha provisória.');
+  if (u.senha && String(u.senha).length < 6) throw erro_('server', 'A senha precisa ter pelo menos 6 caracteres.');
+  const sal = u.senha ? Utilities.getUuid() : atual.sal;
+  gravar_(ABA_USUARIOS, CAMPOS_USUARIO, {
+    id: atual ? atual.id : Utilities.getUuid().slice(0, 13),
+    nome: String(u.nome || '').trim() || login,
+    login: login,
+    papel: u.papel,
+    marcas: (u.marcas || []).join(','),
+    ativo: u.ativo === false ? 'não' : 'sim',
+    hash: u.senha ? hash_(u.senha, sal) : atual.hash,
+    sal: sal,
+    criado: atual ? atual.criado : String(Date.now())
+  });
+}
+
+function trocarSenha_(eu, atual, nova) {
+  const u = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(x => x.id === eu.id)[0];
+  if (!u || u.hash !== hash_(atual, u.sal)) throw erro_('server', 'A senha atual está incorreta.');
+  if (!nova || String(nova).length < 6) throw erro_('server', 'A nova senha precisa ter pelo menos 6 caracteres.');
+  const sal = Utilities.getUuid();
+  u.sal = sal; u.hash = hash_(nova, sal);
+  gravar_(ABA_USUARIOS, CAMPOS_USUARIO, u);
+}
+
+function hash_(senha, sal) {
+  const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(sal) + '|' + String(senha), Utilities.Charset.UTF_8);
+  return Utilities.base64Encode(bytes);
+}
+
+function normLogin_(s) {
+  return String(s || '').trim().toLowerCase();
+}
+
+/* ---------- Escrita genérica ---------- */
 
 function gravar_(nome, campos, obj) {
   const aba = aba_(nome, campos);
@@ -214,14 +409,15 @@ function aba_(nome, campos) {
     aba.getRange(1, 1, 1, campos.length).setValues([campos.map(c => c[1])]).setFontWeight('bold');
     aba.getRange(1, 1, aba.getMaxRows(), campos.length).setNumberFormat('@');
     aba.setFrozenRows(1);
+    if (nome === ABA_USUARIOS) aba.hideSheet();
   }
   // abas criadas por versões anteriores ganham as colunas novas
   if (aba.getMaxColumns() < campos.length) aba.insertColumnsAfter(aba.getMaxColumns(), campos.length - aba.getMaxColumns());
   const cab = aba.getRange(1, 1, 1, campos.length).getValues()[0];
   cab.forEach((h, i) => {
     if (h === '') {
-      aba.getRange(1, i + 1).setValue(campos[i][1]).setFontWeight('bold');
       aba.getRange(1, i + 1, aba.getMaxRows(), 1).setNumberFormat('@');
+      aba.getRange(1, i + 1).setValue(campos[i][1]).setFontWeight('bold');
     }
   });
   return aba;
@@ -246,8 +442,8 @@ function parseJSON_(txt, padrao) {
 }
 
 function parseFases_(txt) {
-  try { const f = JSON.parse(txt); if (Array.isArray(f) && f.length) return f; } catch (e) {}
-  return FASES_PADRAO;
+  const f = parseJSON_(txt, null);
+  return Array.isArray(f) && f.length ? f : FASES_PADRAO;
 }
 
 // "01/11/2026" -> "2026-11-01"
@@ -272,21 +468,45 @@ function json_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
 
-/* ---------- Rodar uma vez: cria as abas e importa o que já existe ---------- */
+/* ---------- Rodar uma vez: cria as abas, o primeiro administrador e importa o que já existe ---------- */
 
 /**
- * Cria as abas MARCAS e PAUTAS e, se PAUTAS estiver vazia, importa as linhas
- * de todas as abas cujo nome começa com "DETALHAMENTO" (ex.: "DETALHAMENTO MARCA 1").
- * As observações vêm da aba com o nome da marca (ex.: "MARCA 1"), das linhas
- * que começam com "•" abaixo de "Observações".
+ * 1. Cria as abas MARCAS, PAUTAS e USUARIOS (oculta).
+ * 2. Se ainda não há ninguém cadastrado, cria você como administrador e mostra
+ *    o login e uma senha provisória no "Registro de execução" (embaixo do editor).
+ * 3. Se PAUTAS estiver vazia, importa as linhas das abas que começam com "DETALHAMENTO".
+ * 4. Atualiza status antigos (Validado → Em produção, Produzido → Em aprovação).
  */
 function configurar() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   aba_(ABA_MARCAS, CAMPOS_MARCA);
   const pautas = aba_(ABA_PAUTAS, CAMPOS_PAUTA);
-  if (pautas.getLastRow() > 1) { Logger.log('A aba PAUTAS já tem dados. Nada foi importado.'); return; }
+  aba_(ABA_USUARIOS, CAMPOS_USUARIO);
 
+  if (!ler_(ABA_USUARIOS, CAMPOS_USUARIO).length) {
+    const login = normLogin_(Session.getEffectiveUser().getEmail()) || 'admin';
+    const senha = Utilities.getUuid().slice(0, 8);
+    const sal = Utilities.getUuid();
+    gravar_(ABA_USUARIOS, CAMPOS_USUARIO, {
+      id: Utilities.getUuid().slice(0, 13), nome: 'Administrador', login: login, papel: 'admin',
+      marcas: '*', ativo: 'sim', hash: hash_(senha, sal), sal: sal, criado: String(Date.now())
+    });
+    Logger.log('Administrador criado. Login: ' + login + '  |  Senha provisória: ' + senha + '  (troque em "Minha conta" depois de entrar)');
+  }
+
+  if (pautas.getLastRow() > 1) {
+    const n = pautas.getLastRow() - 1;
+    const col = pautas.getRange(2, colunaDe_(CAMPOS_PAUTA, 'status'), n, 1);
+    col.setValues(col.getValues().map(v => [normStatus_(v[0])]));
+    Logger.log('A aba PAUTAS já tem dados: nada foi importado, só os status foram atualizados.');
+    return;
+  }
+  importarDetalhamento_(ss);
+}
+
+function importarDetalhamento_(ss) {
   const tz = Session.getScriptTimeZone();
+  const sistema = { id: '', nome: 'Importação', papel: 'admin', marcas: ['*'] };
   const marcas = {};
   let total = 0;
   ss.getSheets().filter(a => /^DETALHAMENTO/i.test(a.getName())).forEach(aba => {
@@ -305,28 +525,37 @@ function configurar() {
       const postagem = String(pega('postagem')).trim();
       if (!postagem) return;
       const nomeMarca = String(pega('marca')).trim() || aba.getName().replace(/^DETALHAMENTO\s*/i, '') || 'Marca';
-      if (!marcas[nomeMarca]) marcas[nomeMarca] = { nome: nomeMarca, produtos: [], ordem: Object.keys(marcas).length };
+      if (!marcas[nomeMarca]) marcas[nomeMarca] = { produtos: [], pautas: [], ordem: Object.keys(marcas).length };
       const m = marcas[nomeMarca];
       const produto = String(pega('produto')).trim();
       if (produto && m.produtos.indexOf(produto) < 0) m.produtos.push(produto);
       let data = pega('data');
       data = data instanceof Date ? Utilities.formatDate(data, tz, 'yyyy-MM-dd') : paraISO_(String(data).trim());
       const criativo = String(pega('criativo')).trim();
-      (m.pautas = m.pautas || []).push({
-        status: String(pega('status')).trim() || 'Ideia', data: data, postagem: postagem,
+      m.pautas.push({
+        status: normStatus_(pega('status')), data: data, postagem: postagem,
         fase: String(pega('fase')).trim(), formato: String(pega('formato')).trim(), produto: produto,
         pauta: String(pega('pauta')), objetivo: String(pega('objetivo')), cta: String(pega('cta')),
         rede: String(pega('rede')), gravacao: String(pega('gravacao')), observacao: String(pega('observacao')),
         inspiracao: String(pega('inspiracao')), legenda: String(pega('legenda')),
-        criativo: /^https?:\/\//.test(criativo) ? criativo : '', criado: i + 1
+        criativo: /^https?:\/\//.test(criativo) ? criativo : ''
       });
     });
   });
 
   Object.keys(marcas).forEach(nome => {
     const m = marcas[nome];
-    const id = salvarMarca_({ nome: nome, produtos: m.produtos, fases: FASES_PADRAO, observacoes: observacoesDe_(ss, nome), criado: m.ordem + 1 });
-    (m.pautas || []).forEach(p => { p.marcaId = id; salvarPauta_(p); total++; });
+    const id = salvarMarca_(sistema, { nome: nome, produtos: m.produtos, fases: FASES_PADRAO, observacoes: observacoesDe_(ss, nome), criado: m.ordem + 1 });
+    m.pautas.forEach(p => {
+      p.marcaId = id;
+      const status = p.status;
+      const pid = salvarPauta_(sistema, p);
+      if (status !== 'Ideia') {
+        const aba = aba_(ABA_PAUTAS, CAMPOS_PAUTA);
+        aba.getRange(linhaDoId_(aba, pid), colunaDe_(CAMPOS_PAUTA, 'status')).setValue(status);
+      }
+      total++;
+    });
   });
   Logger.log('Importadas ' + Object.keys(marcas).length + ' marca(s) e ' + total + ' pauta(s).');
 }
