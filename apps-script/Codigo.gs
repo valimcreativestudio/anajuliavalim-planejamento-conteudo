@@ -17,6 +17,9 @@
  * Passo a passo no arquivo LEIAME.md.
  */
 
+// muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
+const VERSAO = '2026-10-27.7';
+
 const ABA_PAUTAS = 'POSTAGENS';
 const ABA_MARCAS = 'MARCAS';
 const ABA_USUARIOS = 'USUARIOS';
@@ -76,7 +79,7 @@ const FASES_PADRAO = [
 /* ---------- Entrada do site ---------- */
 
 function doGet() {
-  return json_({ ok: true, mensagem: 'A ligação com a planilha está funcionando. Use o site para entrar.' });
+  return json_({ ok: true, versao: VERSAO, mensagem: 'A ligação com a planilha está funcionando. Use o site para entrar.' });
 }
 
 function doPost(e) {
@@ -190,7 +193,7 @@ function listar_(eu) {
   }));
   const pautas = ler_(ABA_PAUTAS, CAMPOS_PAUTA).filter(p => acesso_(eu, p.marcaId)).map(pautaParaSite_);
   registrarAcesso_(eu);
-  const r = { ok: true, eu: eu, marcas: marcas, pautas: pautas };
+  const r = { ok: true, versao: VERSAO, eu: eu, marcas: marcas, pautas: pautas };
   if (VEEM_TODAS.indexOf(eu.papel) >= 0) r.usuarios = ler_(ABA_USUARIOS, CAMPOS_USUARIO).map(publicoUsuario_);
   return r;
 }
