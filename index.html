@@ -319,6 +319,57 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 .passos li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; }
 .passos li::before { counter-increment: passo; content: counter(passo); width: 26px; height: 26px; border-radius: 99px; background: var(--surface-2); display: grid; place-items: center; font-weight: 700; font-size: 12px; }
 .passos .acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+/* Relatório (dashboard do mês): uma folha clara de propósito, igual na tela, no PDF e na imagem */
+.rel { --r-bg: #FFFFFF; --r-ink: #1D1D1F; --r-muted: #6B6B70; --r-line: #E4E4E0; --r-soft: #F2F2EF; --r-bar: #3E5C76; --r-bar2: #C9D3DD; --r-bad: #B3362F;
+  background: var(--r-bg); color: var(--r-ink); border-radius: 16px; padding: 28px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; border: 1px solid var(--line); color-scheme: light; }
+.rel h3 { margin: 0 0 12px; font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--r-muted); font-weight: 600; }
+.rel-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 8px 20px; border-bottom: 1px solid var(--r-line); padding-bottom: 16px; }
+.rel-head h2 { font-family: var(--f-display); font-weight: 400; font-size: clamp(28px, 4vw, 40px); line-height: 1; margin: 4px 0 0; color: var(--r-ink); }
+.rel-head .eb { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--r-muted); font-weight: 600; }
+.rel-head .gen { font-size: 12px; color: var(--r-muted); text-align: right; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.kpis > * { min-width: 0; }
+.kpi { background: var(--r-soft); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.kpi .k { font-size: 12px; color: var(--r-muted); font-weight: 600; }
+.kpi .n { font-family: var(--f-display); font-size: 44px; line-height: 1; font-variant-numeric: tabular-nums; }
+.kpi .n small { font-family: var(--f-body); font-size: 15px; color: var(--r-muted); margin-left: 4px; }
+.kpi .d { font-size: 12.5px; color: var(--r-muted); }
+.meter { height: 6px; border-radius: 99px; background: var(--r-bar2); overflow: hidden; margin-top: 4px; }
+.meter i { display: block; height: 100%; background: var(--r-bar); border-radius: 99px; }
+.rel-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 28px; }
+.rel-grid .full { grid-column: 1 / -1; }
+.rel-grid > section { min-width: 0; }
+@media (max-width: 720px) { .rel { padding: 18px; } .rel-grid { grid-template-columns: minmax(0, 1fr); } .rbar { grid-template-columns: minmax(0, 7em) 1fr 4.6em; } }
+.rbars { display: grid; gap: 7px; }
+.rbar { display: grid; grid-template-columns: minmax(0, 10em) 1fr 5em; gap: 10px; align-items: center; font-size: 13px; }
+.rbar .lb { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rbar .tr { height: 12px; display: flex; gap: 2px; }
+.rbar .fl { height: 100%; background: var(--r-bar); border-radius: 0 4px 4px 0; min-width: 2px; }
+.rbar .v { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+.rbar .v small { color: var(--r-muted); font-weight: 400; }
+.wk { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 10px; align-items: end; height: 170px; padding-top: 18px; border-bottom: 1px solid var(--r-line); }
+.wk .c { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; gap: 0; position: relative; }
+.wk .c .val { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; margin-bottom: 4px; }
+.wk .c .s { width: min(46px, 70%); }
+.wk .c .s.a { background: var(--r-bar2); border-radius: 4px 4px 0 0; }
+.wk .c .s.b { background: var(--r-bar); margin-top: 2px; }
+.wk-lb { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 10px; font-size: 11.5px; color: var(--r-muted); text-align: center; margin-top: 6px; }
+.lgd { display: flex; gap: 14px; font-size: 12px; color: var(--r-muted); margin-bottom: 4px; }
+.lgd i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.rtab { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 0; }
+.rtab th, .rtab td { padding: 7px 8px; border-bottom: 1px solid var(--r-line); text-align: left; background: transparent; color: var(--r-ink); position: static; }
+.rtab th { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--r-muted); font-weight: 600; }
+.rtab td.n, .rtab th.n { text-align: right; font-variant-numeric: tabular-nums; }
+.rtab tbody tr { cursor: default; }
+.rtab tbody tr:hover td { background: transparent; }
+.mot { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; font-size: 13px; }
+.mot li { border-left: 3px solid var(--r-bad); padding: 2px 0 2px 10px; }
+.mot li span { color: var(--r-muted); }
+.rel .vazio { color: var(--r-muted); font-size: 13px; margin: 0; }
+.dl-bar { display: flex; flex-wrap: wrap; gap: 8px; }
+.escopo { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.escopo button { border: 0; background: var(--surface); padding: 7px 12px; font-size: 13px; }
+.escopo button[aria-pressed="true"] { background: var(--primary); color: var(--primary-ink); }
 .empty { border: 1px dashed var(--line); border-radius: 14px; padding: 36px 20px; text-align: center; color: var(--muted); display: grid; gap: 12px; justify-items: center; }
 .empty strong { font-family: var(--f-display); font-weight: 400; font-size: 26px; color: var(--ink); }
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 999px; font-weight: 500; z-index: 50; box-shadow: var(--shadow); }
@@ -670,30 +721,184 @@ function vGrade() {
     <p class="grade-note">Do post mais recente (canto superior esquerdo) ao mais antigo. A arte aparece quando o Criativo é um link de arquivo do Drive compartilhado como "Qualquer pessoa com o link"; sem imagem, aparece o nome do post na cor da fase.</p>`;
 }
 
-function bars(map, colorFn) {
-  const entries = Object.entries(map).sort((a, b) => b[1] - a[1]);
-  const max = Math.max(1, ...entries.map(e => e[1]));
-  if (!entries.length) return `<p class="muted">Sem dados.</p>`;
-  return `<div class="bars">${entries.map(([k, v]) => `<div class="bar" style="--c:${colorFn ? colorFn(k) : "var(--caramelo)"}">
-    <span class="lb" title="${esc(k)}">${esc(k)}</span><span class="tr"><span class="fl" style="display:block;width:${(v / max * 100).toFixed(1)}%"></span></span><span class="v">${v}</span></div>`).join("")}</div>`;
+/* ---------- Resumo do mês: dashboard para apresentar ---------- */
+function dadosResumo() {
+  const todas = S.resumoTodas && S.marcas.length > 1;
+  const ps = S.posts.filter(p => (todas || p.marcaId === S.marcaId) && (p.data || "").startsWith(S.month))
+    .sort((a, b) => (a.data || "").localeCompare(b.data || ""));
+  return { todas, ps, titulo: todas ? "Todas as marcas" : (marca() || {}).nome || "" };
+}
+function rbars(map, total, naOrdem) {
+  const ent = naOrdem ? Object.entries(map) : Object.entries(map).sort((a, b) => b[1] - a[1]);
+  if (!ent.length) return `<p class="vazio">Sem dados neste mês.</p>`;
+  const max = Math.max(1, ...ent.map(e => e[1]));
+  return `<div class="rbars">${ent.map(([k, v]) => `<div class="rbar" title="${esc(k)}: ${v} (${Math.round(v / total * 100)}%)">
+    <span class="lb">${esc(k)}</span><span class="tr"><span class="fl" style="width:${(v / max * 100).toFixed(1)}%"></span></span><span class="v">${v} <small>${Math.round(v / total * 100)}%</small></span></div>`).join("")}</div>`;
+}
+const ETAPAS_REL = [["Ideia", ["Ideia", "Ideia reprovada"]], ["Em validação", ["Em validação"]], ["Em produção", ["Em produção", "Ajustes solicitados"]], ["Em aprovação", ["Em aprovação"]], ["Aprovado", ["Aprovado"]], ["Agendado", ["Agendado"]], ["Postado", ["Postado"]]];
+function calcResumo(ps) {
+  const n = ps.length, conta = f => ps.filter(f).length;
+  const postadas = conta(p => p.status === "Postado");
+  const prontas = conta(p => ["Aprovado", "Agendado", "Postado"].includes(p.status));
+  // aprovado de primeira: chegou a Aprovado sem nenhum "Pediu ajustes" no histórico
+  const aprovadas = ps.filter(p => (p.historico || []).some(h => (h.acao || "").startsWith("Aprovou")));
+  const deprimeira = aprovadas.filter(p => !(p.historico || []).some(h => (h.acao || "").startsWith("Pediu ajustes"))).length;
+  const ideiasVal = ps.filter(p => (p.historico || []).some(h => (h.acao || "").startsWith("Validou")));
+  const ideiasDePrimeira = ideiasVal.filter(p => !(p.historico || []).some(h => (h.acao || "").startsWith("Reprovou"))).length;
+  const tempos = aprovadas.map(p => {
+    const c = (p.historico || []).find(h => (h.acao || "").startsWith("Criou"));
+    const a = (p.historico || []).find(h => (h.acao || "").startsWith("Aprovou"));
+    return c && a ? (a.em - c.em) / 864e5 : null;
+  }).filter(x => x != null && x >= 0);
+  const devol = [];
+  ps.forEach(p => (p.historico || []).forEach(h => { if (h.motivo) devol.push({ ...h, post: p }); }));
+  devol.sort((a, b) => b.em - a.em);
+  const etapas = {}; ETAPAS_REL.forEach(([t, sts]) => etapas[t] = conta(p => sts.includes(p.status)));
+  const by = key => ps.reduce((o, p) => { const k = p[key] || "Não definido"; o[k] = (o[k] || 0) + 1; return o; }, {});
+  const tipos = ps.filter(p => p.agTipo).reduce((o, p) => (o[p.agTipo] = (o[p.agTipo] || 0) + 1, o), {});
+  // semanas do mês (domingo a sábado)
+  const first = parse(S.month + "-01"), semanas = [];
+  for (let d = new Date(first); d.getMonth() === first.getMonth(); d.setDate(d.getDate() + 1)) {
+    const w = Math.floor((d.getDate() + first.getDay() - 1) / 7);
+    semanas[w] = semanas[w] || { ini: d.getDate(), fim: d.getDate(), plan: 0, post: 0 };
+    semanas[w].fim = d.getDate();
+  }
+  ps.forEach(p => { const d = parse(p.data); const w = Math.floor((d.getDate() + first.getDay() - 1) / 7); if (semanas[w]) { semanas[w].plan++; if (p.status === "Postado") semanas[w].post++; } });
+  // equipe: ações registradas nas postagens do mês
+  const pessoas = {};
+  ps.forEach(p => (p.historico || []).forEach(h => {
+    if (!h.por || h.por === "Importação") return;
+    const o = pessoas[h.por] = pessoas[h.por] || { criou: 0, enviou: 0, aprovou: 0, devolveu: 0 };
+    const a = h.acao || "";
+    if (a.startsWith("Criou")) o.criou++;
+    else if (a.startsWith("Enviou")) o.enviou++;
+    else if (a.startsWith("Validou") || a.startsWith("Aprovou")) o.aprovou++;
+    else if (a.startsWith("Reprovou") || a.startsWith("Pediu")) o.devolveu++;
+  }));
+  const marcas = {};
+  ps.forEach(p => { const o = marcas[p.marcaId] = marcas[p.marcaId] || { plan: 0, post: 0, prontas: 0, devol: 0 }; o.plan++; if (p.status === "Postado") o.post++; if (["Aprovado", "Agendado", "Postado"].includes(p.status)) o.prontas++; o.devol += (p.historico || []).filter(h => h.motivo).length; });
+  return { n, postadas, prontas, aprovadas: aprovadas.length, deprimeira, ideiasVal: ideiasVal.length, ideiasDePrimeira, tempoMedio: tempos.length ? tempos.reduce((a, b) => a + b, 0) / tempos.length : null, devol, etapas, by, tipos, semanas: semanas.filter(Boolean), pessoas, marcas };
+}
+const pctTxt = (a, b) => b ? Math.round(a / b * 100) + "%" : "—";
+function relatorioHtml() {
+  const { todas, ps, titulo } = dadosResumo(), r = calcResumo(ps), n = r.n;
+  const hoje = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  const maxW = Math.max(1, ...r.semanas.map(w => w.plan));
+  const kpi = (k, num, d, meter) => `<div class="kpi"><span class="k">${k}</span><span class="n">${num}</span>${meter != null ? `<div class="meter"><i style="width:${meter}%"></i></div>` : ""}<span class="d">${d}</span></div>`;
+  const pessoas = Object.entries(r.pessoas).sort((a, b) => (b[1].criou + b[1].enviou + b[1].aprovou) - (a[1].criou + a[1].enviou + a[1].aprovou));
+  return `<div class="rel" id="relatorio">
+    <div class="rel-head"><div><div class="eb">Relatório de conteúdo · ${esc(titulo)}</div><h2>${esc(monthLabel(S.month))}</h2></div>
+      <div class="gen">Gerado em ${esc(hoje)}<br>por ${esc(S.eu?.nome || "")}</div></div>
+    ${n ? `<div class="kpis">
+      ${kpi("Postagens planejadas", n, `${r.prontas} aprovadas ou adiante`)}
+      ${kpi("Postadas", `${r.postadas}<small>de ${n}</small>`, `${pctTxt(r.postadas, n)} do planejado`, Math.round(r.postadas / n * 100))}
+      ${kpi("Aprovadas de primeira", r.aprovadas ? pctTxt(r.deprimeira, r.aprovadas) : "—", r.aprovadas ? `${r.deprimeira} de ${r.aprovadas} conteúdos sem pedido de ajuste` : "Nenhum conteúdo aprovado ainda", r.aprovadas ? Math.round(r.deprimeira / r.aprovadas * 100) : null)}
+      ${kpi("Ideias validadas de primeira", r.ideiasVal ? pctTxt(r.ideiasDePrimeira, r.ideiasVal) : "—", r.ideiasVal ? `${r.ideiasDePrimeira} de ${r.ideiasVal} ideias sem reprovação` : "Nenhuma ideia validada ainda", r.ideiasVal ? Math.round(r.ideiasDePrimeira / r.ideiasVal * 100) : null)}
+      ${kpi("Tempo até aprovar", r.tempoMedio != null ? `${r.tempoMedio < 1 ? "<1" : Math.round(r.tempoMedio)}<small>${r.tempoMedio < 1.5 ? "dia" : "dias"}</small>` : "—", "Média da criação da postagem até a aprovação do conteúdo")}
+    </div>
+    <div class="rel-grid">
+      <section><h3>Andamento das postagens</h3>${rbars(Object.fromEntries(Object.entries(r.etapas).filter(e => e[1])), n, true)}</section>
+      <section><h3>Postagens por semana</h3>
+        <div class="lgd"><span><i style="background:var(--r-bar)"></i>Postadas</span><span><i style="background:var(--r-bar2)"></i>Ainda não postadas</span></div>
+        <div class="wk">${r.semanas.map(w => `<div class="c" title="${w.ini} a ${w.fim}: ${w.plan} planejadas, ${w.post} postadas">
+          <span class="val">${w.plan || ""}</span>
+          ${w.plan - w.post ? `<span class="s a" style="height:${((w.plan - w.post) / maxW * 120).toFixed(0)}px"></span>` : ""}
+          ${w.post ? `<span class="s b" style="height:${(w.post / maxW * 120).toFixed(0)}px${w.plan - w.post ? "" : ";border-radius:4px 4px 0 0"}"></span>` : ""}</div>`).join("")}</div>
+        <div class="wk-lb">${r.semanas.map(w => `<span>${w.ini}–${w.fim}</span>`).join("")}</div></section>
+      <section><h3>Por formato</h3>${rbars(r.by("formato"), n)}</section>
+      <section><h3>${Object.keys(r.tipos).length ? "Agendadas como" : "Por rede"}</h3>${Object.keys(r.tipos).length ? rbars(r.tipos, Object.values(r.tipos).reduce((a, b) => a + b, 0)) : rbars(r.by("rede"), n)}</section>
+      <section><h3>Por produto</h3>${rbars(r.by("produto"), n)}</section>
+      <section><h3>Por objetivo</h3>${rbars(r.by("objetivo"), n)}</section>
+      ${todas ? `<section class="full"><h3>Por marca</h3><div style="overflow-x:auto"><table class="rtab"><thead><tr><th>Marca</th><th class="n">Planejadas</th><th class="n">Aprovadas ou adiante</th><th class="n">Postadas</th><th class="n">% postado</th><th class="n">Devoluções</th></tr></thead><tbody>
+        ${Object.entries(r.marcas).sort((a, b) => b[1].plan - a[1].plan).map(([id, o]) => `<tr><td>${esc(nomeMarca(id))}</td><td class="n">${o.plan}</td><td class="n">${o.prontas}</td><td class="n">${o.post}</td><td class="n">${pctTxt(o.post, o.plan)}</td><td class="n">${o.devol}</td></tr>`).join("")}</tbody></table></div></section>` : ""}
+      <section${todas ? "" : ' class="full"'}><h3>Equipe no mês</h3>${pessoas.length ? `<div style="overflow-x:auto"><table class="rtab"><thead><tr><th>Pessoa</th><th class="n">Criou</th><th class="n">Enviou para validação/aprovação</th><th class="n">Validou / aprovou</th><th class="n">Devolveu</th></tr></thead><tbody>
+        ${pessoas.map(([nome, o]) => `<tr><td>${esc(nome)}</td><td class="n">${o.criou}</td><td class="n">${o.enviou}</td><td class="n">${o.aprovou}</td><td class="n">${o.devolveu}</td></tr>`).join("")}</tbody></table></div>` : `<p class="vazio">Nenhuma ação registrada nas postagens deste mês.</p>`}</section>
+      <section class="full"><h3>Devoluções e motivos (${r.devol.length})</h3>${r.devol.length ? `<ul class="mot">${r.devol.slice(0, 8).map(h => `<li>${esc(h.motivo)} <span>· ${esc(nm(h.post))}${todas ? " · " + esc(nomeMarca(h.post.marcaId)) : ""} · ${esc((h.acao || "").startsWith("Reprovou") ? "ideia" : "conteúdo")} · ${esc(h.por)}</span></li>`).join("")}</ul>${r.devol.length > 8 ? `<p class="vazio" style="margin-top:6px">e mais ${r.devol.length - 8}.</p>` : ""}` : `<p class="vazio">Nenhuma ideia reprovada nem ajuste pedido neste mês.</p>`}</section>
+    </div>` : `<p class="vazio">Nenhuma postagem planejada em ${esc(monthLabel(S.month))}.</p>`}
+  </div>`;
 }
 function vResumo() {
-  const m = marca(), ps = postsMes();
-  const count = key => ps.reduce((o, p) => { const k = p[key] || "—"; o[k] = (o[k] || 0) + 1; return o; }, {});
-  const st = {}; STATUS.forEach(s => { const n = ps.filter(p => (p.status || "Ideia") === s).length; if (n) st[s] = n; });
-  const postado = ps.filter(p => p.status === "Postado").length;
-  return head(m.nome, "Resumo do mês", monthNav()) +
-    `<div class="sum-grid">
-      <div class="panel"><h2>Total</h2><div class="big">${ps.length}</div><p class="muted" style="margin:8px 0 0">${ps.length === 1 ? "publicação planejada" : "publicações planejadas"} · ${postado} já ${postado === 1 ? "postada" : "postadas"}</p></div>
-      <div class="panel"><h2>Por produto</h2>${bars(count("produto"))}</div>
-      <div class="panel"><h2>Por formato</h2>${bars(count("formato"), () => "var(--vinho)")}</div>
-      <div class="panel"><h2>Por status</h2>${bars(st, stColor)}</div>
-      <div class="panel"><h2>Por fase</h2>${bars(count("fase"), k => esc(faseCor(m, k)))}</div>
-      <div class="panel"><h2>Por objetivo</h2>${bars(count("objetivo"), () => "var(--verde)")}</div>
-      <div class="panel" style="grid-column:1/-1"><h2>Observações da marca</h2>${m.observacoes ? `<p class="obs">${esc(m.observacoes)}</p>` : `<p class="muted">Nenhuma observação. Adicione na aba Marca.</p>`}</div>
-    </div>`;
+  const m = marca(), varias = S.marcas.length > 1;
+  const escopo = varias ? `<div class="escopo" role="group" aria-label="Escopo"><button type="button" aria-pressed="${!S.resumoTodas}" onclick="S.resumoTodas=false;render()">${esc(m.nome)}</button><button type="button" aria-pressed="${!!S.resumoTodas}" onclick="S.resumoTodas=true;render()">Todas as marcas</button></div>` : "";
+  return head(S.resumoTodas && varias ? "Todas as marcas" : m.nome, "Resumo do mês", escopo + monthNav()) +
+    `<div class="dl-bar" style="margin:-4px 0 14px">
+      <button class="btn primary" type="button" id="dlPdf" onclick="baixarRelatorio('pdf')">Baixar PDF</button>
+      <button class="btn" type="button" id="dlPng" onclick="baixarRelatorio('png')">Baixar imagem</button>
+      <button class="btn" type="button" onclick="baixarCsv()">Baixar planilha (CSV)</button>
+    </div>` + relatorioHtml() +
+    (!S.resumoTodas && m.observacoes ? `<div class="panel" style="margin-top:16px"><h2>Observações da marca</h2><p class="obs">${esc(m.observacoes)}</p></div>` : "");
 }
 
+/* downloads: as bibliotecas só carregam quando alguém clica */
+const LIBS = {
+  html2canvas: "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
+  jspdf: "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+};
+function carregarLib(url) {
+  return new Promise((ok, erro) => {
+    if (document.querySelector(`script[src="${url}"]`)) return ok();
+    const sc = document.createElement("script"); sc.src = url; sc.onload = ok; sc.onerror = erro; document.head.appendChild(sc);
+  });
+}
+function nomeArquivo(ext) {
+  const { titulo } = dadosResumo();
+  const slug = t => t.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w]+/g, "-").replace(/^-|-$/g, "").toLowerCase();
+  return `relatorio-${slug(titulo)}-${S.month}.${ext}`;
+}
+function baixarBlob(blob, nome) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = nome;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+async function capturarRelatorio() {
+  await carregarLib(LIBS.html2canvas);
+  // copia a folha numa largura fixa fora da tela, para o arquivo sair igual no celular e no computador
+  const box = document.createElement("div");
+  box.style.cssText = "position:fixed;left:-10000px;top:0;width:1120px;";
+  box.innerHTML = relatorioHtml();
+  document.body.appendChild(box);
+  try {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    return await html2canvas(box.firstElementChild, { scale: 2, backgroundColor: "#FFFFFF", logging: false });
+  } finally { box.remove(); }
+}
+async function baixarRelatorio(tipo) {
+  const btn = $(tipo === "pdf" ? "#dlPdf" : "#dlPng"), txt = btn.textContent;
+  btn.disabled = true; btn.textContent = "Gerando…";
+  try {
+    const canvas = await capturarRelatorio();
+    if (tipo === "png") {
+      await new Promise(ok => canvas.toBlob(b => { baixarBlob(b, nomeArquivo("png")); ok(); }, "image/png"));
+    } else {
+      await carregarLib(LIBS.jspdf);
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+      const W = 297, H = 210, mg = 8, larg = W - mg * 2;
+      const pxPorMm = canvas.width / larg, altPag = Math.floor((H - mg * 2) * pxPorMm);
+      // divide em páginas A4 deitadas quando o relatório é mais alto que uma folha
+      for (let y = 0, pg = 0; y < canvas.height; y += altPag, pg++) {
+        const h = Math.min(altPag, canvas.height - y);
+        const parte = document.createElement("canvas"); parte.width = canvas.width; parte.height = h;
+        parte.getContext("2d").drawImage(canvas, 0, y, canvas.width, h, 0, 0, canvas.width, h);
+        if (pg) pdf.addPage();
+        pdf.addImage(parte.toDataURL("image/jpeg", 0.92), "JPEG", mg, mg, larg, h / pxPorMm);
+      }
+      pdf.save(nomeArquivo("pdf"));
+    }
+    toast("Arquivo baixado");
+  } catch (e) {
+    toast("Não consegui gerar o arquivo. Confira a internet e tente de novo.");
+  } finally { btn.disabled = false; btn.textContent = txt; }
+}
+function baixarCsv() {
+  const { ps, todas } = dadosResumo();
+  const cols = [["Marca", p => nomeMarca(p.marcaId)], ["Data", p => brFull(p.data)], ["Dia", p => wd(p.data)], ["Status", p => p.status], ["Título", p => p.postagem], ["Nome", p => p.pauta], ["Formato", p => p.formato], ["Produto", p => p.produto], ["Fase", p => p.fase], ["Objetivo", p => p.objetivo], ["Rede", p => p.rede], ["Agendado como", p => p.agTipo], ["Agendado para", p => p.agData ? brFull(p.agData) + " " + (p.agHora || "") : ""], ["Link do post", p => p.postLink], ["Devoluções", p => (p.historico || []).filter(h => h.motivo).length], ["Último motivo", p => p.motivo]];
+  const cel = v => { const t = String(v ?? ""); return /[";\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
+  const linhas = [cols.map(c => c[0]).join(";")].concat(ps.map(p => cols.map(c => cel(c[1](p))).join(";")));
+  baixarBlob(new Blob(["﻿" + linhas.join("\r\n")], { type: "text/csv;charset=utf-8" }), nomeArquivo("csv"));
+  toast(todas ? "Planilha de todas as marcas baixada" : "Planilha baixada");
+}
 
 /* ---------- Área da marca ---------- */
 const SECOES = {

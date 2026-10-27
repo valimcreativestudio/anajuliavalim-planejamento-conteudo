@@ -53,6 +53,10 @@ Entre no site como administrador e abra a aba **Equipe** → **+ Pessoa**:
 Não há limite de pessoas nem de marcas por pessoa. Para tirar o acesso de alguém, desmarque **Acesso ativo**.
 Ao salvar uma pessoa com senha (use **Gerar senha**), aparece a mensagem de boas-vindas pronta, adaptada ao papel dela, com as marcas, o login, a senha provisória e o link do site, e o botão **Enviar pelo WhatsApp** (preencha o WhatsApp da pessoa com DDD). Ela troca a senha e o nome em **Minha conta**.
 
+## Resumo do mês (dashboard)
+
+A aba **Resumo do mês** mostra o relatório pronto para apresentar: postagens planejadas e postadas, % aprovado de primeira, ideias validadas de primeira, tempo médio até aprovar, andamento, postagens por semana, formatos, tipos de agendamento, produtos, objetivos, desempenho por marca e por pessoa e os motivos das devoluções. Dá para ver uma marca ou **todas as marcas** e baixar em **PDF** (A4 deitado), **imagem (PNG)** ou **planilha (CSV)**.
+
 ## Atividade da equipe
 
 Em **Equipe → Atividade** (o administrador, o diretor e o gestor veem): último acesso de cada pessoa, quantas postagens criou, editou e enviou, quantas validou/aprovou ou devolveu, pendências e a lista das últimas ações. Quem fica 3 dias sem sinal aparece em vermelho.
