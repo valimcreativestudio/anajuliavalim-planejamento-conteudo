@@ -505,8 +505,8 @@ function render() {
 function avisoVersao() {
   if (!S.versao || S.versao === VERSAO_SCRIPT || !podeGerir()) return "";
   return `<div class="motivo" style="margin-bottom:16px"><b>O script da planilha está desatualizado</b>
-    A planilha está rodando a versão <b>${esc(S.versao)}</b> e o site espera a <b>${VERSAO_SCRIPT}</b>. Algumas funções (como Diretor, Gestor e agendamento) não vão salvar até atualizar.
-    No Apps Script: cole o Codigo.gs do GitHub, salve e vá em <b>Implantar → Gerenciar implantações → ✏️ → Versão: Nova versão → Implantar</b>.</div>`;
+    A planilha está rodando a versão <strong>${esc(S.versao)}</strong> e o site espera a <strong>${VERSAO_SCRIPT}</strong>. Algumas funções (como Diretor, Gestor e agendamento) não vão salvar até atualizar.
+    No Apps Script: cole o Codigo.gs do GitHub, salve e vá em <strong>Implantar → Gerenciar implantações → ✏️ → Versão: Nova versão → Implantar</strong>.</div>`;
 }
 function monthNav() {
   return `<div class="month-nav">
