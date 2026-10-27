@@ -94,6 +94,7 @@ function doPost(e) {
         case 'excluirMarca': soAdmin_(eu); excluirMarca_(req.id); return json_({ ok: true });
         case 'salvarUsuario': soAdmin_(eu); return json_({ ok: true, id: salvarUsuario_(eu, req.usuario || {}) });
         case 'trocarSenha': trocarSenha_(eu, req.atual, req.nova); return json_({ ok: true });
+        case 'meuNome': salvarMeuNome_(eu, req.nome); return json_({ ok: true });
         case 'sair': PropertiesService.getScriptProperties().deleteProperty('tok_' + req.token); return json_({ ok: true });
         default: return json_({ ok: false, error: 'Ação desconhecida: ' + req.action });
       }
@@ -363,6 +364,14 @@ function salvarUsuario_(eu, u) {
     sal: sal,
     criado: atual ? atual.criado : String(Date.now())
   });
+}
+
+function salvarMeuNome_(eu, nome) {
+  nome = String(nome || '').trim().slice(0, 60);
+  if (!nome) throw erro_('server', 'Escreva o seu nome.');
+  const u = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(x => x.id === eu.id)[0];
+  u.nome = nome;
+  gravar_(ABA_USUARIOS, CAMPOS_USUARIO, u);
 }
 
 function trocarSenha_(eu, atual, nova) {

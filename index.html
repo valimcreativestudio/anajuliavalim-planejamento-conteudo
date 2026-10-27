@@ -258,7 +258,9 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100dvh - 2
 .upl { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; align-items: end; }
 /* Login, equipe e aprovações */
 .me { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-.me .who { opacity: .85; white-space: nowrap; }
+.me .who { white-space: nowrap; font-size: 15px; }
+.me .who b { font-weight: 600; }
+.me .papel { opacity: .7; font-size: 12px; white-space: nowrap; }
 .me a { color: var(--vinho-ink); }
 nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 6px; border-radius: 99px; background: var(--danger); color: #fff; font-size: 11px; font-weight: 700; }
 .login { max-width: 380px; margin: 8vh auto 0; display: grid; gap: 14px; }
@@ -438,7 +440,7 @@ function render() {
   $("#novaMarca").hidden = !ehAdmin();
   $("#tabEquipe").hidden = !ehAdmin();
   $("#me").hidden = !S.eu;
-  if (S.eu) $("#me").innerHTML = `<span class="who">${esc(S.eu.nome)} · ${esc(PAPEIS[S.eu.papel] || "")}</span><a href="#conta">Minha conta</a><button class="ghost-light" type="button" onclick="sair()">Sair</button>`;
+  if (S.eu) $("#me").innerHTML = `<span class="who">Olá, <b>${esc(S.eu.nome)}</b></span><span class="papel">${esc(PAPEIS[S.eu.papel] || "")}</span><a href="#conta">Minha conta</a><button class="ghost-light" type="button" onclick="sair()">Sair</button>`;
   const pend = pendencias().length, bd = $("#apvBadge");
   bd.hidden = !pend; bd.textContent = pend;
   if (!API) {
@@ -1207,13 +1209,25 @@ async function sair() {
   location.hash = "#calendario"; render();
 }
 function vConta() {
-  return head(PAPEIS[S.eu.papel] || "", "Minha conta") + `<form class="panel" style="max-width:460px;display:grid;gap:12px" onsubmit="event.preventDefault();trocarSenha()">
-    <div><b>${esc(S.eu.nome)}</b><div class="muted">${esc(S.eu.login)}</div></div>
+  return head(PAPEIS[S.eu.papel] || "", "Minha conta") + `<form class="panel" style="max-width:460px;display:grid;gap:12px;margin-bottom:16px" onsubmit="event.preventDefault();salvarMeuNome()">
+    <h2>Seu nome</h2>
+    <label class="field"><span>Como você quer ser chamado(a)</span><input id="cNome" required maxlength="60" value="${esc(S.eu.nome)}" autocomplete="name"></label>
+    <span class="muted" style="font-size:13px">Aparece no "Olá" lá em cima e no histórico das postagens. Seu login continua <b>${esc(S.eu.login)}</b>.</span>
+    <button class="btn primary" type="submit" style="justify-self:start">Salvar nome</button>
+  </form>
+  <form class="panel" style="max-width:460px;display:grid;gap:12px" onsubmit="event.preventDefault();trocarSenha()">
+    <h2>Trocar senha</h2>
     <label class="field"><span>Senha atual</span><input id="cAtual" type="password" autocomplete="current-password" required></label>
     <label class="field"><span>Nova senha (mínimo 6 caracteres)</span><input id="cNova" type="password" autocomplete="new-password" minlength="6" required></label>
     <label class="field"><span>Repita a nova senha</span><input id="cNova2" type="password" autocomplete="new-password" minlength="6" required></label>
     <button class="btn primary" type="submit" style="justify-self:start">Trocar senha</button>
   </form>`;
+}
+async function salvarMeuNome() {
+  const nome = $("#cNome").value.trim();
+  if (!nome) return toast("Escreva o seu nome.");
+  try { await api("meuNome", { nome }); S.dirty = false; await carregar(); toast(`Pronto, ${nome}!`); }
+  catch (e) { writeFail(e); }
 }
 async function trocarSenha() {
   if ($("#cNova").value !== $("#cNova2").value) return toast("As duas senhas novas não são iguais.");
