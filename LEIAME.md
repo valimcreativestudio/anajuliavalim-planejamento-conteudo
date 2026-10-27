@@ -49,7 +49,7 @@ Entre no site como administrador e abra a aba **Equipe** → **+ Pessoa**:
 | **Aprovador** | As marcas marcadas para ele (ou "Todas") | Valida ideias e aprova conteúdos, sempre escrevendo o motivo quando não aprova |
 
 Não há limite de pessoas nem de marcas por pessoa. Para tirar o acesso de alguém, desmarque **Acesso ativo**.
-Mande para cada pessoa o endereço do site, o login e a senha provisória; ela troca a senha em **Minha conta**.
+Ao salvar uma pessoa com senha (use **Gerar senha**), aparece a mensagem de boas-vindas pronta, com as marcas, o login, a senha provisória e o link do site, e o botão **Enviar pelo WhatsApp** (preencha o WhatsApp da pessoa com DDD). Ela troca a senha e o nome em **Minha conta**.
 
 ## Fluxo de aprovação (2 etapas)
 

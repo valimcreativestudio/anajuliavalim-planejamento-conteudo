@@ -278,7 +278,7 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 .fluxo .steps span { padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); }
 .fluxo .steps span.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 .fluxo .steps span.done { color: var(--ink); }
-.btn.ok { background: var(--st-postado); border-color: var(--st-postado); color: #fff; }
+.btn.ok { background: var(--st-postado); border-color: var(--st-postado); color: var(--primary-ink); font-weight: 600; }
 .hist { font-size: 12.5px; color: var(--muted); display: grid; gap: 4px; margin: 6px 0 0; padding-left: 16px; }
 .hist b { color: var(--ink); font-weight: 600; }
 .apv-sec h2 { font-family: var(--f-display); font-weight: 400; font-size: 26px; margin: 26px 0 12px; display: flex; align-items: center; gap: 10px; }
@@ -1299,14 +1299,15 @@ function vEquipe() {
   const u = S.uEdit;
   const marcasTxt = x => x.papel === "admin" || x.marcas.includes("*") ? "Todas" : x.marcas.map(nomeMarca).filter(Boolean).join(", ") || "—";
   const linhas = S.usuarios.slice().sort((a, b) => a.nome.localeCompare(b.nome)).map(x => `<tr onclick="S.uEdit=S.usuarios.find(y=>y.id==='${esc(x.id)}');render()">
-    <td><b>${esc(x.nome)}</b><div class="muted">${esc(x.login)}</div></td><td>${esc(PAPEIS[x.papel] || x.papel)}</td><td>${esc(marcasTxt(x))}</td><td>${x.ativo ? "Ativo" : `<span class="muted">Desativado</span>`}</td></tr>`).join("");
+    <td><b>${esc(x.nome)}</b><div class="muted">${esc(x.login)}${x.whatsapp ? " · " + esc(fmtTel(x.whatsapp)) : ""}</div></td><td>${esc(PAPEIS[x.papel] || x.papel)}</td><td>${esc(marcasTxt(x))}</td><td>${x.ativo ? "Ativo" : `<span class="muted">Desativado</span>`}</td></tr>`).join("");
   const form = u ? `<form class="panel" style="display:grid;gap:12px;margin-top:16px" onsubmit="event.preventDefault();salvarUsuario()">
       <h2>${u.id ? "Editar " + esc(u.nome) : "Nova pessoa"}</h2>
       <div class="pf-grid">
         <label class="field"><span>Nome</span><input id="uNome" required value="${esc(u.nome || "")}"></label>
         <label class="field"><span>Login (e-mail)</span><input id="uLogin" required value="${esc(u.login || "")}" autocomplete="off"></label>
+        <label class="field"><span>WhatsApp (com DDD)</span><input id="uTel" type="tel" inputmode="tel" placeholder="(11) 98765-4321" value="${esc(u.whatsapp ? fmtTel(u.whatsapp) : "")}"></label>
         <label class="field"><span>Papel</span><select id="uPapel" onchange="lerFormU();render()">${Object.entries(PAPEIS).map(([k, l]) => `<option value="${k}"${u.papel === k ? " selected" : ""}>${l}</option>`).join("")}</select></label>
-        <label class="field"><span>${u.id ? "Nova senha (deixe em branco para manter)" : "Senha provisória"}</span><input id="uSenha" type="text" autocomplete="off" ${u.id ? "" : "required"} minlength="6"></label>
+        <label class="field"><span>${u.id ? "Nova senha (deixe em branco para manter)" : "Senha provisória"}</span><span class="prod-pick"><input id="uSenha" type="text" autocomplete="off" ${u.id ? "" : "required"} minlength="6" value="${esc(u.senhaTemp || "")}" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px"><button class="btn sm" type="button" onclick="$('#uSenha').value=gerarSenha();S.dirty=true">Gerar senha</button></span></label>
         ${u.papel === "admin" ? `<div class="field full"><span>Marcas</span><span class="muted">O administrador vê todas as marcas.</span></div>`
           : `<div class="field full"><span>Marcas que ${u.papel === "aprovador" ? "aprova" : "alimenta"}</span><div class="chk-list" id="uMarcas">
             <label><input type="checkbox" value="*"${(u.marcas || []).includes("*") ? " checked" : ""}> <b>Todas as marcas</b></label>
@@ -1317,16 +1318,61 @@ function vEquipe() {
     </form>` : "";
   return head("Administração", "Equipe", `<button class="btn primary" type="button" onclick="S.uEdit={papel:'social',marcas:[],ativo:true};render()">+ Pessoa</button>`) +
     `<p class="sec-intro"><b>Social media</b> vê e alimenta só as marcas liberadas para ele e envia ideias e conteúdos para aprovação. <b>Aprovador</b> valida ideias e aprova conteúdos das marcas liberadas. <b>Administrador</b> vê e faz tudo. Não há limite de pessoas nem de marcas por pessoa.</p>
+    ${boasVindasHtml()}
     <div class="table-wrap"><table style="min-width:620px"><thead><tr><th>Pessoa</th><th>Papel</th><th>Marcas</th><th>Acesso</th></tr></thead><tbody>${linhas}</tbody></table></div>` + form;
 }
 function lerFormU() {
-  Object.assign(S.uEdit, { nome: $("#uNome").value, login: $("#uLogin").value, papel: $("#uPapel").value, ativo: $("#uAtivo").checked, marcas: lerMarcasU() });
+  Object.assign(S.uEdit, { nome: $("#uNome").value, login: $("#uLogin").value, whatsapp: soDigitos($("#uTel").value), senhaTemp: $("#uSenha").value, papel: $("#uPapel").value, ativo: $("#uAtivo").checked, marcas: lerMarcasU() });
 }
 function lerMarcasU() { return [...document.querySelectorAll("#uMarcas input:checked")].map(i => i.value); }
 async function salvarUsuario() {
-  const u = { id: S.uEdit.id || "", nome: $("#uNome").value.trim(), login: $("#uLogin").value.trim(), papel: $("#uPapel").value, senha: $("#uSenha").value, ativo: $("#uAtivo").checked, marcas: $("#uPapel").value === "admin" ? ["*"] : lerMarcasU() };
-  try { await api("salvarUsuario", { usuario: u }); S.uEdit = null; S.dirty = false; await carregar(); toast(u.senha && !u.id ? "Pessoa cadastrada. Envie o login e a senha provisória para ela." : "Salvo"); }
-  catch (e) { writeFail(e); }
+  const u = { id: S.uEdit.id || "", nome: $("#uNome").value.trim(), login: $("#uLogin").value.trim(), whatsapp: soDigitos($("#uTel").value), papel: $("#uPapel").value, senha: $("#uSenha").value.trim(), ativo: $("#uAtivo").checked, marcas: $("#uPapel").value === "admin" ? ["*"] : lerMarcasU() };
+  try {
+    await api("salvarUsuario", { usuario: u });
+    S.uEdit = null; S.dirty = false;
+    // com senha nova, prepara a mensagem de boas-vindas para o WhatsApp
+    S.boasVindas = u.senha ? { nome: u.nome, tel: u.whatsapp, msg: msgBoasVindas(u), novo: !u.id } : null;
+    await carregar(); render(); toast(u.id ? "Salvo" : "Pessoa cadastrada");
+    window.scrollTo(0, 0);
+  } catch (e) { writeFail(e); }
+}
+const soDigitos = t => String(t || "").replace(/\D/g, "");
+function telWa(t) { const d = soDigitos(t); return d.length === 10 || d.length === 11 ? "55" + d : d; }
+function fmtTel(t) {
+  const d = soDigitos(t).replace(/^55(?=\d{10,11}$)/, "");
+  return d.length === 11 ? `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}` : d.length === 10 ? `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}` : t;
+}
+function gerarSenha() {
+  const c = "abcdefghjkmnpqrstuvwxyz23456789";
+  const a = new Uint32Array(8); crypto.getRandomValues(a);
+  return [...a].map(n => c[n % c.length]).join("");
+}
+function listaMarcas(u) {
+  if (u.papel === "admin" || (u.marcas || []).includes("*")) return "todas as marcas da agência";
+  const n = (u.marcas || []).map(nomeMarca).filter(Boolean);
+  if (!n.length) return "as marcas que vamos liberar para você em breve";
+  return (n.length === 1 ? "pela marca " : "pelas marcas ") + (n.length === 1 ? n[0] : n.slice(0, -1).join(", ") + " e " + n[n.length - 1]);
+}
+function msgBoasVindas(u) {
+  const site = location.origin + location.pathname;
+  const marcas = listaMarcas(u);
+  const resp = marcas.startsWith("pela") ? `Você está responsável ${marcas}.` : `Você está responsável por ${marcas}.`;
+  return `Olá, ${u.nome}! Seja bem-vindo(a) à nossa equipe. ${resp}\n\nSeu e-mail para acesso é ${u.login} e sua senha provisória é ${u.senha}.\n\nLembrando que você pode alterar essa senha em "Minha conta" para maior segurança.\n\nAcesse o sistema: ${site}`;
+}
+function boasVindasHtml() {
+  const b = S.boasVindas;
+  if (!b) return "";
+  const link = b.tel ? `https://wa.me/${telWa(b.tel)}?text=${encodeURIComponent(b.msg)}` : "";
+  return `<div class="panel" style="display:grid;gap:10px;margin-bottom:16px;border-color:var(--st-postado)">
+    <h2>${b.novo ? "Envie o acesso para " : "Envie a nova senha para "}${esc(b.nome)}</h2>
+    <label class="field"><span>Mensagem (dá para editar antes de enviar)</span><textarea id="bvMsg" rows="7" oninput="S.boasVindas.msg=this.value;const a=$('#bvWa');if(a)a.href='https://wa.me/${esc(telWa(b.tel))}?text='+encodeURIComponent(this.value)">${esc(b.msg)}</textarea></label>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+      ${link ? `<a class="btn ok" id="bvWa" href="${esc(link)}" target="_blank" rel="noopener">Enviar pelo WhatsApp</a>` : `<span class="muted">Cadastre o WhatsApp da pessoa para enviar direto. Por enquanto, copie a mensagem.</span>`}
+      <button class="btn" type="button" onclick="copiarTexto($('#bvMsg').value,'Mensagem copiada')">Copiar mensagem</button>
+      <button class="btn" type="button" onclick="S.boasVindas=null;render()">Fechar</button>
+    </div>
+    <span class="muted" style="font-size:12.5px">A senha aparece só agora. Depois de fechar, para mandar de novo, gere uma nova senha na edição da pessoa.</span>
+  </div>`;
 }
 async function excluirPost() {
   try { await api("excluirPauta", { id: EDIT.id }); $("#dlg").close(); await carregar(); toast("Postagem excluída"); } catch (e) { writeFail(e); }
@@ -1383,7 +1429,7 @@ async function carregar() {
     if (e.code === "sessao") return writeFail(e);
     if (!S.loadedP) S.failed = true; else toast("Sem conexão com a planilha agora.");
   }
-  if (!$("#dlg").open && !S.dirty && !S.rej && !S.uEdit) render();
+  if (!$("#dlg").open && !S.dirty && !S.rej && !S.uEdit && !S.boasVindas) render();
 }
 setInterval(() => { if (API && S.token && document.visibilityState === "visible" && !$("#dlg").open) carregar(); }, 30000);
 carregar();

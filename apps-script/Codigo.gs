@@ -37,7 +37,7 @@ const CAMPOS_MARCA = [
 const CAMPOS_USUARIO = [
   ['id', 'ID'], ['nome', 'Nome'], ['login', 'Login (e-mail)'], ['papel', 'Papel'],
   ['marcas', 'Marcas liberadas (IDs)'], ['ativo', 'Ativo'], ['hash', 'Senha (protegida)'],
-  ['sal', 'Sal'], ['criado', 'Criado em']
+  ['sal', 'Sal'], ['criado', 'Criado em'], ['whatsapp', 'WhatsApp']
 ];
 const PAPEIS = ['admin', 'social', 'aprovador'];
 
@@ -142,7 +142,7 @@ function usuarioDoToken_(token) {
 
 function publicoUsuario_(u) {
   return {
-    id: u.id, nome: u.nome, login: u.login, papel: u.papel, ativo: u.ativo === 'sim',
+    id: u.id, nome: u.nome, login: u.login, papel: u.papel, ativo: u.ativo === 'sim', whatsapp: u.whatsapp || '',
     marcas: String(u.marcas || '').split(',').map(s => s.trim()).filter(String)
   };
 }
@@ -362,7 +362,8 @@ function salvarUsuario_(eu, u) {
     ativo: u.ativo === false ? 'não' : 'sim',
     hash: u.senha ? hash_(u.senha, sal) : atual.hash,
     sal: sal,
-    criado: atual ? atual.criado : String(Date.now())
+    criado: atual ? atual.criado : String(Date.now()),
+    whatsapp: String(u.whatsapp || '').replace(/\D/g, '')
   });
 }
 
