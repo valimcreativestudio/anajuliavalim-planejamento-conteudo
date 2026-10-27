@@ -495,10 +495,6 @@ function head(eyebrow, title, extra = "") {
 }
 const addBtn = (date = "") => S.canWrite ? `<button class="btn primary" type="button" onclick="openEditor(null,'${date}')">+ Nova postagem</button>` : "";
 
-function legendaFases() {
-  const m = marca();
-  return `<div class="fases"><b style="color:var(--ink);font-weight:600">Fases do mês</b>${fasesDe(m).map(f => `<span><i style="background:${esc(f.cor)}"></i>${esc(f.nome)}</span>`).join("")}</div>`;
-}
 
 function vCal() {
   const m = marca();
@@ -523,9 +519,9 @@ function vCal() {
     </div>`;
   }
   const n = postsMes().length;
-  return head(m.nome, "Calendário", monthNav() + addBtn()) + legendaFases() +
+  return head(m.nome, "Calendário", monthNav() + addBtn()) +
     `<div class="cal">${cells}</div>
-    <p class="muted" style="margin-top:12px">${n} ${n === 1 ? "publicação" : "publicações"} em ${esc(monthLabel(S.month))}. A cor de cada post indica a fase; a bolinha, o status. Clique num post para abrir o detalhamento.</p>`;
+    <p class="muted" style="margin-top:12px">${n} ${n === 1 ? "publicação" : "publicações"} em ${esc(monthLabel(S.month))}. A bolinha indica o status. Clique num post para abrir o detalhamento.</p>`;
 }
 
 function filtered() {
