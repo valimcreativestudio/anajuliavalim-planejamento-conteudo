@@ -1,9 +1,9 @@
 # Planejamento de Conteúdo
 
-Sistema de planejamento de Instagram por marca: calendário, pautas, fluxo de produção, grade do feed e resumo do mês.
+Sistema de planejamento de Instagram por marca: calendário, postagens, fluxo de produção, grade do feed e resumo do mês.
 
 - O **site** fica no GitHub Pages (arquivos `index.html` e `config.js`).
-- Os **dados** ficam na sua planilha do Google, nas abas `MARCAS` e `PAUTAS`.
+- Os **dados** ficam na sua planilha do Google, nas abas `MARCAS` e `POSTAGENS`.
 - Cada pessoa entra com o próprio login e senha. O administrador cadastra a equipe e escolhe as marcas de cada um.
 
 ---
@@ -15,7 +15,7 @@ Sistema de planejamento de Instagram por marca: calendário, pautas, fluxo de pr
 3. Apague o que estiver no editor e cole todo o conteúdo do arquivo `apps-script/Codigo.gs`. Clique em **Salvar** (ícone de disquete).
 4. No topo do editor, escolha a função **configurar** e clique em **Executar**.
    - Na primeira vez, o Google pede autorização: **Revisar permissões → escolha sua conta → Avançado → Acessar (não seguro) → Permitir**. Isso aparece porque o script é seu e não passou por verificação do Google.
-   - A função cria as abas que faltarem (`MARCAS`, `PAUTAS` e `USUARIOS`, que fica oculta), importa o que estiver nas abas `DETALHAMENTO` se `PAUTAS` estiver vazia e atualiza os status antigos.
+   - A função cria as abas que faltarem (`MARCAS`, `POSTAGENS` e `USUARIOS`, que fica oculta), importa o que estiver nas abas `DETALHAMENTO` se `POSTAGENS` estiver vazia e atualiza os status antigos.
    - Ela também cria **você como administrador**. Abra o **Registro de execução** (aparece embaixo do editor) e anote o login e a **senha provisória**. Depois de entrar no site, troque a senha em **Minha conta**.
 5. Clique em **Implantar → Nova implantação**.
    - Em "Selecione o tipo", clique na engrenagem e escolha **App da Web**.
@@ -45,7 +45,7 @@ Entre no site como administrador e abra a aba **Equipe** → **+ Pessoa**:
 | Papel | O que vê | O que faz |
 |---|---|---|
 | **Administrador** | Todas as marcas | Tudo: cadastra pessoas e marcas, aprova, muda qualquer status |
-| **Social media** | Só as marcas marcadas para ele | Cria e edita pautas, preenche a marca, envia para validação e aprovação, marca como agendado/postado |
+| **Social media** | Só as marcas marcadas para ele | Cria e edita postagens, preenche a marca, envia para validação e aprovação, marca como agendado/postado |
 | **Aprovador** | As marcas marcadas para ele (ou "Todas") | Valida ideias e aprova conteúdos, sempre escrevendo o motivo quando não aprova |
 
 Não há limite de pessoas nem de marcas por pessoa. Para tirar o acesso de alguém, desmarque **Acesso ativo**.
@@ -53,13 +53,13 @@ Mande para cada pessoa o endereço do site, o login e a senha provisória; ela t
 
 ## Fluxo de aprovação (2 etapas)
 
-1. **Ideia** → a social media cria a pauta e clica em **Enviar ideia para validação**.
+1. **Ideia** → a social media cria a postagem e clica em **Enviar ideia para validação**.
 2. **Em validação** → o aprovador **valida** ou **reprova** (com o motivo). Reprovada, ela volta para a social media com o motivo à mostra.
 3. **Em produção** → a social media monta o conteúdo (legenda, criativo) e clica em **Enviar conteúdo para aprovação**.
 4. **Em aprovação** → o aprovador **aprova** ou clica em **Não aprovar** e escreve o que precisa mudar.
 5. **Aprovado** → pode agendar. Depois: **Agendado** → **Postado**.
 
-A aba **Aprovações** reúne o que está esperando cada pessoa (com um número vermelho de pendências). Cada pauta guarda o histórico de quem fez o quê e quando, com os motivos.
+A aba **Aprovações** reúne o que está esperando cada pessoa (com um número vermelho de pendências). Cada postagem guarda o histórico de quem fez o quê e quando, com os motivos.
 
 ## Área da marca
 
@@ -78,8 +78,8 @@ Tudo fica na aba `MARCAS` da planilha (colunas Perfil e Arquivos).
 
 ## Dicas
 
-- **Imagens na grade:** cole no campo Criativo o link de um arquivo do Google Drive compartilhado como "Qualquer pessoa com o link". A prévia aparece na pauta e na grade.
-- **Atualização:** o site busca novidades da planilha a cada 30 segundos. Se duas pessoas editarem a mesma pauta ao mesmo tempo, vale a última que salvou.
-- **Editar direto na planilha:** pode, nas abas `MARCAS` e `PAUTAS`. Não mude a coluna `ID` nem a ordem das colunas. A data fica no formato `dd/mm/aaaa`.
+- **Imagens na grade:** cole no campo Criativo o link de um arquivo do Google Drive compartilhado como "Qualquer pessoa com o link". A prévia aparece na postagem e na grade.
+- **Atualização:** o site busca novidades da planilha a cada 30 segundos. Se duas pessoas editarem a mesma postagem ao mesmo tempo, vale a última que salvou.
+- **Editar direto na planilha:** pode, nas abas `MARCAS` e `POSTAGENS`. Não mude a coluna `ID` nem a ordem das colunas. A data fica no formato `dd/mm/aaaa`.
 - **Segurança:** as permissões são conferidas no script da planilha, não só no site. As senhas ficam protegidas (embaralhadas) na aba oculta `USUARIOS`. Cada login vale por 30 dias.
 - **Mudou o `Codigo.gs`?** Depois de colar a versão nova, vá em **Implantar → Gerenciar implantações → editar (lápis) → Versão: Nova versão → Implantar**. O URL continua o mesmo.

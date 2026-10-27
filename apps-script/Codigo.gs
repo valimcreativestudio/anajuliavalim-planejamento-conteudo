@@ -3,7 +3,7 @@
  *
  * Guarda os dados em abas desta planilha:
  *   MARCAS    — uma linha por marca (produtos, fases, perfil, arquivos)
- *   PAUTAS    — uma linha por post (mesmas colunas da aba DETALHAMENTO + fluxo de aprovação)
+ *   POSTAGENS — uma linha por post (mesmas colunas da aba DETALHAMENTO + fluxo de aprovação)
  *   USUARIOS  — equipe com login, papel e marcas liberadas (aba oculta)
  *
  * Papéis:
@@ -14,7 +14,7 @@
  * Passo a passo no arquivo LEIAME.md.
  */
 
-const ABA_PAUTAS = 'PAUTAS';
+const ABA_PAUTAS = 'POSTAGENS';
 const ABA_MARCAS = 'MARCAS';
 const ABA_USUARIOS = 'USUARIOS';
 const PASTA_ARQUIVOS = 'Planejamento de Conteúdo - Arquivos';
@@ -23,7 +23,7 @@ const DIAS_DE_SESSAO = 30;
 const CAMPOS_PAUTA = [
   ['id', 'ID'], ['marcaId', 'Marca ID'], ['marca', 'Marca'], ['status', 'Status'],
   ['data', 'Data'], ['dia', 'Dia'], ['postagem', 'Postagem'], ['fase', 'Fase'],
-  ['formato', 'Formato'], ['produto', 'Produto'], ['pauta', 'Pauta / ângulo'],
+  ['formato', 'Formato'], ['produto', 'Produto'], ['pauta', 'Ângulo da postagem'],
   ['objetivo', 'Objetivo (jornada de compra)'], ['cta', 'CTA / destino'], ['rede', 'Rede'],
   ['gravacao', 'Gravação'], ['observacao', 'Observação'], ['inspiracao', 'Inspiração'],
   ['legenda', 'Legenda'], ['criativo', 'Criativo'], ['criado', 'Criado em'], ['atualizado', 'Atualizado em'],
@@ -218,11 +218,11 @@ function pautaPorId_(id) {
 
 function salvarPauta_(eu, p) {
   const atual = p.id ? pautaPorId_(p.id) : null;
-  if (p.id && !atual) throw erro_('server', 'Pauta não encontrada. Atualize a página.');
+  if (p.id && !atual) throw erro_('server', 'Postagem não encontrada. Atualize a página.');
   const marcaId = atual ? atual.marcaId : p.marcaId;
-  if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Você não pode editar pautas desta marca.');
+  if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Você não pode editar postagens desta marca.');
   const id = atual ? atual.id : Utilities.getUuid().slice(0, 13);
-  const historico = atual ? atual.historico : [{ em: Date.now(), por: eu.nome, acao: 'Criou a pauta' }];
+  const historico = atual ? atual.historico : [{ em: Date.now(), por: eu.nome, acao: 'Criou a postagem' }];
   const linha = Object.assign({}, p, {
     id: id,
     marcaId: marcaId,
@@ -242,13 +242,13 @@ function salvarPauta_(eu, p) {
 function excluirPauta_(eu, id) {
   const atual = pautaPorId_(id);
   if (!atual) return;
-  if (!podeEditar_(eu, atual.marcaId)) throw erro_('permissao', 'Você não pode excluir pautas desta marca.');
+  if (!podeEditar_(eu, atual.marcaId)) throw erro_('permissao', 'Você não pode excluir postagens desta marca.');
   excluirLinha_(ABA_PAUTAS, CAMPOS_PAUTA, id);
 }
 
 function acaoPauta_(eu, id, acao, motivo, status) {
   const p = pautaPorId_(id);
-  if (!p) throw erro_('server', 'Pauta não encontrada. Atualize a página.');
+  if (!p) throw erro_('server', 'Postagem não encontrada. Atualize a página.');
   motivo = String(motivo || '').trim();
   let para, texto;
   if (acao === 'definir') {
@@ -259,8 +259,8 @@ function acaoPauta_(eu, id, acao, motivo, status) {
     const a = ACOES[acao];
     if (!a) throw erro_('server', 'Ação desconhecida.');
     const pode = a.quem === 'aprovar' ? podeAprovar_(eu, p.marcaId) : podeEditar_(eu, p.marcaId);
-    if (!pode) throw erro_('permissao', a.quem === 'aprovar' ? 'Só o aprovador ou o administrador pode fazer isso.' : 'Você não pode alterar pautas desta marca.');
-    if (a.de.indexOf(p.status) < 0) throw erro_('server', 'Esta pauta está em "' + p.status + '" e não pode passar por esta etapa. Atualize a página.');
+    if (!pode) throw erro_('permissao', a.quem === 'aprovar' ? 'Só o aprovador ou o administrador pode fazer isso.' : 'Você não pode alterar postagens desta marca.');
+    if (a.de.indexOf(p.status) < 0) throw erro_('server', 'Esta postagem está em "' + p.status + '" e não pode passar por esta etapa. Atualize a página.');
     if (a.motivo && !motivo) throw erro_('server', 'Escreva o motivo.');
     para = a.para; texto = a.texto;
   }
@@ -301,7 +301,7 @@ function salvarMarca_(eu, m) {
     perfil: JSON.stringify(m.perfil || {}),
     arquivos: JSON.stringify(m.arquivos || [])
   });
-  // mantém o nome da marca em dia na aba PAUTAS
+  // mantém o nome da marca em dia na aba POSTAGENS
   const aba = aba_(ABA_PAUTAS, CAMPOS_PAUTA);
   const n = aba.getLastRow() - 1;
   if (n > 0) {
@@ -471,10 +471,10 @@ function json_(obj) {
 /* ---------- Rodar uma vez: cria as abas, o primeiro administrador e importa o que já existe ---------- */
 
 /**
- * 1. Cria as abas MARCAS, PAUTAS e USUARIOS (oculta).
+ * 1. Cria as abas MARCAS, POSTAGENS e USUARIOS (oculta).
  * 2. Se ainda não há ninguém cadastrado, cria você como administrador e mostra
  *    o login e uma senha provisória no "Registro de execução" (embaixo do editor).
- * 3. Se PAUTAS estiver vazia, importa as linhas das abas que começam com "DETALHAMENTO".
+ * 3. Se POSTAGENS estiver vazia, importa as linhas das abas que começam com "DETALHAMENTO".
  * 4. Atualiza status antigos (Validado → Em produção, Produzido → Em aprovação).
  */
 function configurar() {
@@ -498,7 +498,7 @@ function configurar() {
     const n = pautas.getLastRow() - 1;
     const col = pautas.getRange(2, colunaDe_(CAMPOS_PAUTA, 'status'), n, 1);
     col.setValues(col.getValues().map(v => [normStatus_(v[0])]));
-    Logger.log('A aba PAUTAS já tem dados: nada foi importado, só os status foram atualizados.');
+    Logger.log('A aba POSTAGENS já tem dados: nada foi importado, só os status foram atualizados.');
     return;
   }
   importarDetalhamento_(ss);
@@ -557,7 +557,7 @@ function importarDetalhamento_(ss) {
       total++;
     });
   });
-  Logger.log('Importadas ' + Object.keys(marcas).length + ' marca(s) e ' + total + ' pauta(s).');
+  Logger.log('Importadas ' + Object.keys(marcas).length + ' marca(s) e ' + total + ' postagem(ns).');
 }
 
 function observacoesDe_(ss, nomeMarca) {

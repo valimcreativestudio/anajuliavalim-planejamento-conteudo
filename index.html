@@ -312,7 +312,7 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
     <div class="me" id="me" hidden></div>
     <nav class="tabs" id="tabs">
       <a href="#calendario">Calendário</a>
-      <a href="#pautas">Pautas</a>
+      <a href="#pautas">Postagens</a>
       <a href="#fluxo">Fluxo de produção</a>
       <a href="#grade">Grade do Insta</a>
       <a href="#resumo">Resumo do mês</a>
@@ -323,7 +323,7 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
   </div>
 </header>
 <main class="wrap" id="app">
-  <div class="empty"><strong>Carregando o planejamento…</strong><span>As marcas e pautas aparecem aqui assim que a planilha responder.</span></div>
+  <div class="empty"><strong>Carregando o planejamento…</strong><span>As marcas e postagens aparecem aqui assim que a planilha responder.</span></div>
 </main>
 
 <dialog id="dlg"><form id="dlgForm" method="dialog"></form></dialog>
@@ -479,7 +479,7 @@ function monthNav() {
 function head(eyebrow, title, extra = "") {
   return `<div class="view-head"><h1><small>${esc(eyebrow)}</small>${title}</h1><div class="tools">${extra}</div></div>`;
 }
-const addBtn = (date = "") => S.canWrite ? `<button class="btn primary" type="button" onclick="openEditor(null,'${date}')">+ Nova pauta</button>` : "";
+const addBtn = (date = "") => S.canWrite ? `<button class="btn primary" type="button" onclick="openEditor(null,'${date}')">+ Nova postagem</button>` : "";
 
 function legendaFases() {
   const m = marca();
@@ -502,7 +502,7 @@ function vCal() {
     ps.sort((a, b) => FORMATOS.indexOf(a.formato) - FORMATOS.indexOf(b.formato));
     cells += `<div class="day${out ? " out" : ""}${ps.length ? " has" : ""}${k === today ? " today" : ""}">
       <div class="dhead"><span class="dnum"><b>${d.getDate()}</b><span class="wd">${WD[d.getDay()]}</span></span>
-      ${S.canWrite ? `<button class="add-day" type="button" aria-label="Nova pauta em ${br(k)}" onclick="openEditor(null,'${k}')">+</button>` : ""}</div>
+      ${S.canWrite ? `<button class="add-day" type="button" aria-label="Nova postagem em ${br(k)}" onclick="openEditor(null,'${k}')">+</button>` : ""}</div>
       ${ps.map(p => `<button class="chip" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="openEditor('${esc(p.id)}')">
         <span class="meta"><span class="fmt">${FMT_ICON[p.formato] || ""} ${esc(p.formato || "")}</span><span class="dot" style="background:${stColor(p.status)}" title="${esc(p.status)}"></span>${REPROVADOS.includes(p.status) ? `<span class="flag">${p.status === "Ideia reprovada" ? "Reprovada" : "Ajustes"}</span>` : ""}</span>
         <span class="t"><b>${esc(p.produto || "")}${p.produto ? ":" : ""}</b> ${esc(p.postagem || "sem título")}</span></button>`).join("")}
@@ -542,17 +542,17 @@ function vPautas() {
     <td>${esc(p.rede)}</td>
     <td onclick="event.stopPropagation()">${/^https?:\/\//.test(p.criativo || "") ? `<a class="lnk" href="${esc(p.criativo)}" target="_blank" rel="noopener">Abrir</a>` : `<span class="muted">—</span>`}</td>
   </tr>`).join("");
-  return head(m.nome, "Pautas do mês", monthNav() + `<button class="btn" type="button" onclick="copiarTabela()">Copiar para planilha</button>` + addBtn()) +
+  return head(m.nome, "Postagens do mês", monthNav() + `<button class="btn" type="button" onclick="copiarTabela()">Copiar para planilha</button>` + addBtn()) +
     `<div class="filters">
-      <input id="fq" type="search" placeholder="Buscar em título, pauta, legenda…" value="${esc(S.f.q)}" oninput="clearTimeout(window._fq);window._fq=setTimeout(()=>setF('q',this.value),250)">
+      <input id="fq" type="search" placeholder="Buscar em título, ângulo, legenda…" value="${esc(S.f.q)}" oninput="clearTimeout(window._fq);window._fq=setTimeout(()=>setF('q',this.value),250)">
       <select id="fst" aria-label="Status" onchange="setF('status',this.value)">${opt(STATUS, S.f.status, "Todos os status")}</select>
       <select id="ffm" aria-label="Formato" onchange="setF('formato',this.value)">${opt(FORMATOS, S.f.formato, "Todos os formatos")}</select>
       <select id="fpr" aria-label="Produto" onchange="setF('produto',this.value)">${opt(produtosDe(m), S.f.produto, "Todos os produtos")}</select>
     </div>` +
     (ps.length ? `<div class="table-wrap"><table>
-      <thead><tr><th>Status</th><th>Data</th><th>Fase</th><th>Formato</th><th>Produto</th><th>Postagem / pauta</th><th>Objetivo</th><th>CTA / destino</th><th>Rede</th><th>Criativo</th></tr></thead>
+      <thead><tr><th>Status</th><th>Data</th><th>Fase</th><th>Formato</th><th>Produto</th><th>Postagem / ângulo</th><th>Objetivo</th><th>CTA / destino</th><th>Rede</th><th>Criativo</th></tr></thead>
       <tbody>${rows}</tbody></table></div>`
-      : `<div class="empty"><strong>Nenhuma pauta aqui</strong><span>${postsMes().length ? "Nenhuma pauta bate com os filtros." : "Este mês ainda está vazio. Adicione a primeira pauta."}</span>${addBtn()}</div>`);
+      : `<div class="empty"><strong>Nenhuma postagem aqui</strong><span>${postsMes().length ? "Nenhuma postagem bate com os filtros." : "Este mês ainda está vazio. Adicione a primeira postagem."}</span>${addBtn()}</div>`);
 }
 
 async function setStatus(id, st) {
@@ -565,7 +565,7 @@ async function setStatus(id, st) {
 
 async function copiarTabela() {
   const cols = ["status", "data", "dia", "postagem", "fase", "formato", "produto", "pauta", "objetivo", "cta", "rede", "gravacao", "observacao", "inspiracao", "legenda", "criativo"];
-  const header = ["Status", "Marca", "Data", "Dia", "Postagem", "Fase", "Formato", "Produto", "Pauta / ângulo", "Objetivo (jornada de compra)", "CTA / destino", "Rede", "Gravação", "Observação", "Inspiração", "Legenda", "Criativo"];
+  const header = ["Status", "Marca", "Data", "Dia", "Postagem", "Fase", "Formato", "Produto", "Ângulo da postagem", "Objetivo (jornada de compra)", "CTA / destino", "Rede", "Gravação", "Observação", "Inspiração", "Legenda", "Criativo"];
   const clean = v => String(v ?? "").replace(/[\t\r\n]+/g, " ");
   const lines = [header.join("\t")].concat(filtered().map(p => {
     const row = cols.map(c => c === "data" ? brFull(p.data) : c === "dia" ? wd(p.data) : clean(p[c]));
@@ -950,7 +950,7 @@ function vMarca() {
         <button class="btn primary" type="submit">Salvar marca</button>
         <span style="flex:1"></span>
         <span id="delMarcaBox"${ehAdmin() ? "" : " hidden"}>${S.confirmDel
-          ? `<span class="confirm">Excluir a marca e as ${postsMarca().length} pautas dela?
+          ? `<span class="confirm">Excluir a marca e as ${postsMarca().length} postagens dela?
               <button class="btn sm danger" type="button" onclick="excluirMarca()">Excluir de vez</button>
               <button class="btn sm" type="button" onclick="S.confirmDel=false;render()">Cancelar</button></span>`
           : `<button class="btn danger" type="button" onclick="S.confirmDel=true;render()">Excluir marca</button>`}</span>
@@ -1013,8 +1013,8 @@ function drawEditor() {
   const area = (id, label, val, rows = 3) => `<label class="field full"><span>${label}</span><textarea id="${id}" rows="${rows}"${ro}>${esc(val)}</textarea></label>`;
   const src = blobSrc(p);
   $("#dlgForm").innerHTML = `
-    <div class="dlg-head"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600">${esc(m.nome)} · ${p.id ? `${brFull(p.data)} · ${wd(p.data)}` : "Nova pauta"}</div>
-      <h2>${esc(p.id ? nm(p) : "Nova pauta")}</h2></div>
+    <div class="dlg-head"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600">${esc(m.nome)} · ${p.id ? `${brFull(p.data)} · ${wd(p.data)}` : "Nova postagem"}</div>
+      <h2>${esc(p.id ? nm(p) : "Nova postagem")}</h2></div>
       <button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#dlg').close()">×</button></div>
     <div class="dlg-body">
       ${p.id ? `<div class="full">${fluxoHtml(p)}</div>` : ""}
@@ -1023,8 +1023,8 @@ function drawEditor() {
       <label class="field"><span>Formato</span>${sel("eFormato", FORMATOS, p.formato)}</label>
       <label class="field"><span>Fase</span>${sel("eFase", fasesDe(m).map(f => f.nome), p.fase, true)}</label>
       <label class="field"><span>Produto</span><input id="eProduto" list="prodList" value="${esc(p.produto)}"${ro}><datalist id="prodList">${produtosDe(m).map(x => `<option value="${esc(x)}">`).join("")}</datalist></label>
-      ${txt("ePostagem", "Postagem (título)", p.postagem, false, "Ex.: Conheça o produto")}
-      ${txt("ePauta", "Pauta / ângulo", p.pauta, true)}
+      ${txt("ePostagem", "Título da postagem", p.postagem, false, "Ex.: Conheça o produto")}
+      ${txt("ePauta", "Ângulo da postagem", p.pauta, true)}
       <label class="field"><span>Objetivo (jornada de compra)</span>${sel("eObjetivo", OBJETIVOS, p.objetivo, true)}</label>
       ${txt("eCta", "CTA / destino", p.cta, false, "Ex.: Link do e-commerce")}
       <label class="field"><span>Rede</span>${sel("eRede", REDES, p.rede, true)}</label>
@@ -1042,11 +1042,11 @@ function drawEditor() {
     </div>
     <div class="dlg-foot">
       ${S.canWrite && p.id ? (S.delPost
-        ? `<span class="confirm">Excluir esta pauta? <button class="btn sm danger" type="button" onclick="excluirPost()">Excluir</button><button class="btn sm" type="button" onclick="S.delPost=false;drawEditor()">Cancelar</button></span>`
+        ? `<span class="confirm">Excluir esta postagem? <button class="btn sm danger" type="button" onclick="excluirPost()">Excluir</button><button class="btn sm" type="button" onclick="S.delPost=false;drawEditor()">Cancelar</button></span>`
         : `<button class="btn danger" type="button" onclick="S.delPost=true;drawEditor()">Excluir</button><button class="btn" type="button" onclick="duplicar()">Duplicar</button>`) : ""}
       <span class="sp"></span>
       <button class="btn" type="button" onclick="$('#dlg').close()">${S.canWrite ? "Cancelar" : "Fechar"}</button>
-      ${S.canWrite ? `<button class="btn primary" type="submit" id="eSalvar">Salvar pauta</button>` : ""}
+      ${S.canWrite ? `<button class="btn primary" type="submit" id="eSalvar">Salvar postagem</button>` : ""}
     </div>`;
 }
 function gather() {
@@ -1068,10 +1068,10 @@ async function salvarEditor(fechar = true) {
     if (fechar) $("#dlg").close();
     await carregar();
     if (body.data.slice(0, 7) !== S.month) setMonth(body.data.slice(0, 7));
-    if (fechar) toast("Pauta salva");
+    if (fechar) toast("Postagem salva");
     return r.id;
   } catch (err) {
-    if (btn) { btn.disabled = false; btn.textContent = "Salvar pauta"; }
+    if (btn) { btn.disabled = false; btn.textContent = "Salvar postagem"; }
     writeFail(err);
     return null;
   }
@@ -1135,7 +1135,7 @@ function apvCard(p, k1, k2) {
       <div class="meta">${esc(nomeMarca(p.marcaId))} · ${br(p.data)} ${wd(p.data).slice(0, 3)} · ${FMT_ICON[p.formato] || ""} ${esc(p.formato)}</div>
       <div class="t">${esc(nm(p))}</div>
       ${p.motivo ? `<div class="motivo"><b>${esc(p.status)}</b>${esc(p.motivo)}</div>` : ""}
-      ${linha("Pauta", p.pauta)}${linha("Objetivo", p.objetivo)}${linha("CTA", p.cta)}${linha("Fase", p.fase)}${conteudo ? "" : linha("Inspiração", p.inspiracao)}
+      ${linha("Ângulo", p.pauta)}${linha("Objetivo", p.objetivo)}${linha("CTA", p.cta)}${linha("Fase", p.fase)}${conteudo ? "" : linha("Inspiração", p.inspiracao)}
       ${conteudo && cheio(p.legenda) ? `<div class="leg">${esc(p.legenda)}</div>` : ""}
       ${/^https?:\/\//.test(p.criativo || "") ? `<a class="lnk" href="${esc(p.criativo)}" target="_blank" rel="noopener">Abrir criativo</a>` : ""}
     </div>
@@ -1144,7 +1144,7 @@ function apvCard(p, k1, k2) {
           <div style="display:flex;gap:8px"><button class="btn danger" type="button" onclick="confirmarRej('${esc(p.id)}')">Confirmar</button><button class="btn" type="button" onclick="S.rej=null;render()">Cancelar</button></div></div>`
         : `${k1 && podeAcao(p, k1) ? `<button class="btn ok" type="button" onclick="acao('${esc(p.id)}','${k1}')">${ACOES[k1].label}</button>` : ""}
            ${k2 && podeAcao(p, k2) ? `<button class="btn danger" type="button" onclick="S.rej={id:'${esc(p.id)}',k:'${k2}'};render();$('#rej-${esc(p.id)}').focus()">${k2 === "pedirAjustes" ? "Não aprovar" : "Reprovar"}</button>` : ""}
-           <button class="btn" type="button" onclick="openEditor('${esc(p.id)}')">Abrir pauta</button>`}
+           <button class="btn" type="button" onclick="openEditor('${esc(p.id)}')">Abrir postagem</button>`}
     </div>
   </article>`;
 }
@@ -1255,7 +1255,7 @@ async function salvarUsuario() {
   catch (e) { writeFail(e); }
 }
 async function excluirPost() {
-  try { await api("excluirPauta", { id: EDIT.id }); $("#dlg").close(); await carregar(); toast("Pauta excluída"); } catch (e) { writeFail(e); }
+  try { await api("excluirPauta", { id: EDIT.id }); $("#dlg").close(); await carregar(); toast("Postagem excluída"); } catch (e) { writeFail(e); }
 }
 function duplicar() {
   const body = gather();
