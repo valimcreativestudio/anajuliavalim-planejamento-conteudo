@@ -8,6 +8,8 @@
  *
  * Papéis:
  *   admin     — vê e faz tudo, cadastra a equipe e as marcas
+ *   diretor   — tudo do gestor + cadastra gestores, social medias e aprovadores, cria marcas,
+ *               muda configurações e força status; não exclui marcas nem mexe em admins/diretores
  *   gestor    — vê todas as marcas, alimenta, valida e aprova; não mexe na equipe nem nas configurações
  *   social    — vê e alimenta só as marcas liberadas para ele
  *   aprovador — vê as marcas liberadas, valida ideias e aprova conteúdos
@@ -41,7 +43,8 @@ const CAMPOS_USUARIO = [
   ['marcas', 'Marcas liberadas (IDs)'], ['ativo', 'Ativo'], ['hash', 'Senha (protegida)'],
   ['sal', 'Sal'], ['criado', 'Criado em'], ['whatsapp', 'WhatsApp'], ['ultimoAcesso', 'Último acesso']
 ];
-const PAPEIS = ['admin', 'gestor', 'social', 'aprovador'];
+const PAPEIS = ['admin', 'diretor', 'gestor', 'social', 'aprovador'];
+const VEEM_TODAS = ['admin', 'diretor', 'gestor'];
 
 const STATUS = ['Ideia', 'Em validação', 'Ideia reprovada', 'Em produção', 'Em aprovação', 'Ajustes solicitados', 'Aprovado', 'Agendado', 'Postado'];
 const STATUS_ANTIGOS = { 'Validado': 'Em produção', 'Produzido': 'Em aprovação' };
@@ -97,7 +100,7 @@ function doPost(e) {
         case 'acao': acaoPauta_(eu, req.id, req.acao, req.motivo, req.status, req.dados || {}); return json_({ ok: true });
         case 'salvarMarca': return json_({ ok: true, id: salvarMarca_(eu, req.marca || {}) });
         case 'excluirMarca': soAdmin_(eu); excluirMarca_(req.id); return json_({ ok: true });
-        case 'salvarUsuario': soAdmin_(eu); return json_({ ok: true, id: salvarUsuario_(eu, req.usuario || {}) });
+        case 'salvarUsuario': gerencia_(eu); return json_({ ok: true, id: salvarUsuario_(eu, req.usuario || {}) });
         case 'trocarSenha': trocarSenha_(eu, req.atual, req.nova); return json_({ ok: true });
         case 'meuNome': salvarMeuNome_(eu, req.nome); return json_({ ok: true });
         case 'sair': PropertiesService.getScriptProperties().deleteProperty('tok_' + req.token); return json_({ ok: true });
@@ -154,13 +157,16 @@ function publicoUsuario_(u) {
 }
 
 function acesso_(eu, marcaId) {
-  return eu.papel === 'admin' || eu.papel === 'gestor' || eu.marcas.indexOf('*') >= 0 || eu.marcas.indexOf(marcaId) >= 0;
+  return VEEM_TODAS.indexOf(eu.papel) >= 0 || eu.marcas.indexOf('*') >= 0 || eu.marcas.indexOf(marcaId) >= 0;
 }
 function podeEditar_(eu, marcaId) {
-  return eu.papel === 'admin' || eu.papel === 'gestor' || (eu.papel === 'social' && acesso_(eu, marcaId));
+  return VEEM_TODAS.indexOf(eu.papel) >= 0 || (eu.papel === 'social' && acesso_(eu, marcaId));
 }
 function podeAprovar_(eu, marcaId) {
-  return eu.papel === 'admin' || eu.papel === 'gestor' || (eu.papel === 'aprovador' && acesso_(eu, marcaId));
+  return VEEM_TODAS.indexOf(eu.papel) >= 0 || (eu.papel === 'aprovador' && acesso_(eu, marcaId));
+}
+function gerencia_(eu) {
+  if (eu.papel !== 'admin' && eu.papel !== 'diretor') throw erro_('permissao', 'Só o administrador ou o diretor pode fazer isso.');
 }
 function soAdmin_(eu) {
   if (eu.papel !== 'admin') throw erro_('permissao', 'Só o administrador pode fazer isso.');
@@ -185,7 +191,7 @@ function listar_(eu) {
   const pautas = ler_(ABA_PAUTAS, CAMPOS_PAUTA).filter(p => acesso_(eu, p.marcaId)).map(pautaParaSite_);
   registrarAcesso_(eu);
   const r = { ok: true, eu: eu, marcas: marcas, pautas: pautas };
-  if (eu.papel === 'admin' || eu.papel === 'gestor') r.usuarios = ler_(ABA_USUARIOS, CAMPOS_USUARIO).map(publicoUsuario_);
+  if (VEEM_TODAS.indexOf(eu.papel) >= 0) r.usuarios = ler_(ABA_USUARIOS, CAMPOS_USUARIO).map(publicoUsuario_);
   return r;
 }
 
@@ -279,7 +285,7 @@ function acaoPauta_(eu, id, acao, motivo, status, dados) {
   motivo = String(motivo || '').trim();
   let para, texto;
   if (acao === 'definir') {
-    soAdmin_(eu);
+    gerencia_(eu);
     if (STATUS.indexOf(status) < 0) throw erro_('server', 'Status inválido.');
     para = status; texto = 'Mudou o status para ' + status;
   } else {
@@ -325,10 +331,10 @@ function nomeDaMarca_(id) {
 }
 
 function salvarMarca_(eu, m) {
-  if (!m.id) soAdmin_(eu);
+  if (!m.id) gerencia_(eu);
   else if (!podeEditar_(eu, m.id)) throw erro_('permissao', 'Você não pode editar esta marca.');
   const id = m.id || Utilities.getUuid().slice(0, 13);
-  if (m.id && eu.papel !== 'admin') {
+  if (m.id && eu.papel !== 'admin' && eu.papel !== 'diretor') {
     // nome e fases fazem parte da estrutura: só o administrador muda
     const atual = ler_(ABA_MARCAS, CAMPOS_MARCA).filter(x => x.id === m.id)[0];
     if (atual) { m.nome = atual.nome; m.fases = parseFases_(atual.fases); m.observacoes = atual.observacoes; m.criado = atual.criado; }
@@ -390,6 +396,11 @@ function salvarUsuario_(eu, u) {
   if (!login) throw erro_('server', 'Preencha o login.');
   if (todos.some(x => x.login === login && x.id !== u.id)) throw erro_('server', 'Já existe alguém com este login.');
   if (PAPEIS.indexOf(u.papel) < 0) throw erro_('server', 'Papel inválido.');
+  if (eu.papel === 'diretor') {
+    // o diretor não cria nem altera administradores e diretores (nem a si mesmo por aqui)
+    if (['gestor', 'social', 'aprovador'].indexOf(u.papel) < 0) throw erro_('permissao', 'O diretor só cadastra gestores, social medias e aprovadores.');
+    if (atual && ['admin', 'diretor'].indexOf(atual.papel) >= 0) throw erro_('permissao', 'Só o administrador altera este acesso.');
+  }
   if (atual && atual.id === eu.id && (u.papel !== 'admin' || u.ativo === false)) throw erro_('server', 'Você não pode tirar o seu próprio acesso de administrador.');
   if (!atual && !u.senha) throw erro_('server', 'Defina uma senha provisória.');
   if (u.senha && String(u.senha).length < 6) throw erro_('server', 'A senha precisa ter pelo menos 6 caracteres.');
@@ -399,7 +410,7 @@ function salvarUsuario_(eu, u) {
     nome: String(u.nome || '').trim() || login,
     login: login,
     papel: u.papel,
-    marcas: (u.papel === 'admin' || u.papel === 'gestor') ? '*' : (u.marcas || []).join(','),
+    marcas: VEEM_TODAS.indexOf(u.papel) >= 0 ? '*' : (u.marcas || []).join(','),
     ativo: u.ativo === false ? 'não' : 'sim',
     hash: u.senha ? hash_(u.senha, sal) : atual.hash,
     sal: sal,

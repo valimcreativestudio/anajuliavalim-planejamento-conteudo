@@ -45,6 +45,7 @@ Entre no site como administrador e abra a aba **Equipe** → **+ Pessoa**:
 | Papel | O que vê | O que faz |
 |---|---|---|
 | **Administrador** | Todas as marcas | Tudo: cadastra pessoas e marcas, aprova, muda qualquer status |
+| **Diretor** | Todas as marcas | Tudo o que o gestor faz + cadastra gestores, social medias e aprovadores, cria marcas, muda configurações e pode forçar status. Não exclui marcas e não mexe em administradores nem em outros diretores |
 | **Gestor** | Todas as marcas | Gerente da equipe: acompanha a **Atividade da equipe**, cria e edita postagens, preenche as marcas, valida e aprova. Não cadastra pessoas, não cria/exclui marcas e não muda configurações |
 | **Social media** | Só as marcas marcadas para ele | Cria e edita postagens, preenche a marca, envia para validação e aprovação, marca como agendado/postado |
 | **Aprovador** | As marcas marcadas para ele (ou "Todas") | Valida ideias e aprova conteúdos, sempre escrevendo o motivo quando não aprova |
@@ -54,7 +55,7 @@ Ao salvar uma pessoa com senha (use **Gerar senha**), aparece a mensagem de boas
 
 ## Atividade da equipe
 
-Em **Equipe → Atividade** (o administrador e o gestor veem): último acesso de cada pessoa, quantas postagens criou, editou e enviou, quantas validou/aprovou ou devolveu, pendências e a lista das últimas ações. Quem fica 3 dias sem sinal aparece em vermelho.
+Em **Equipe → Atividade** (o administrador, o diretor e o gestor veem): último acesso de cada pessoa, quantas postagens criou, editou e enviou, quantas validou/aprovou ou devolveu, pendências e a lista das últimas ações. Quem fica 3 dias sem sinal aparece em vermelho.
 
 ## Fluxo de aprovação (2 etapas)
 
