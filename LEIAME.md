@@ -45,11 +45,16 @@ Entre no site como administrador e abra a aba **Equipe** → **+ Pessoa**:
 | Papel | O que vê | O que faz |
 |---|---|---|
 | **Administrador** | Todas as marcas | Tudo: cadastra pessoas e marcas, aprova, muda qualquer status |
+| **Gestor** | Todas as marcas | Gerente da equipe: acompanha a **Atividade da equipe**, cria e edita postagens, preenche as marcas, valida e aprova. Não cadastra pessoas, não cria/exclui marcas e não muda configurações |
 | **Social media** | Só as marcas marcadas para ele | Cria e edita postagens, preenche a marca, envia para validação e aprovação, marca como agendado/postado |
 | **Aprovador** | As marcas marcadas para ele (ou "Todas") | Valida ideias e aprova conteúdos, sempre escrevendo o motivo quando não aprova |
 
 Não há limite de pessoas nem de marcas por pessoa. Para tirar o acesso de alguém, desmarque **Acesso ativo**.
-Ao salvar uma pessoa com senha (use **Gerar senha**), aparece a mensagem de boas-vindas pronta, com as marcas, o login, a senha provisória e o link do site, e o botão **Enviar pelo WhatsApp** (preencha o WhatsApp da pessoa com DDD). Ela troca a senha e o nome em **Minha conta**.
+Ao salvar uma pessoa com senha (use **Gerar senha**), aparece a mensagem de boas-vindas pronta, adaptada ao papel dela, com as marcas, o login, a senha provisória e o link do site, e o botão **Enviar pelo WhatsApp** (preencha o WhatsApp da pessoa com DDD). Ela troca a senha e o nome em **Minha conta**.
+
+## Atividade da equipe
+
+Em **Equipe → Atividade** (o administrador e o gestor veem): último acesso de cada pessoa, quantas postagens criou, editou e enviou, quantas validou/aprovou ou devolveu, pendências e a lista das últimas ações. Quem fica 3 dias sem sinal aparece em vermelho.
 
 ## Fluxo de aprovação (2 etapas)
 

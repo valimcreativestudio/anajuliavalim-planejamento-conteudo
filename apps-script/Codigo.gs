@@ -8,6 +8,7 @@
  *
  * Papéis:
  *   admin     — vê e faz tudo, cadastra a equipe e as marcas
+ *   gestor    — vê todas as marcas, alimenta, valida e aprova; não mexe na equipe nem nas configurações
  *   social    — vê e alimenta só as marcas liberadas para ele
  *   aprovador — vê as marcas liberadas, valida ideias e aprova conteúdos
  *
@@ -37,9 +38,9 @@ const CAMPOS_MARCA = [
 const CAMPOS_USUARIO = [
   ['id', 'ID'], ['nome', 'Nome'], ['login', 'Login (e-mail)'], ['papel', 'Papel'],
   ['marcas', 'Marcas liberadas (IDs)'], ['ativo', 'Ativo'], ['hash', 'Senha (protegida)'],
-  ['sal', 'Sal'], ['criado', 'Criado em'], ['whatsapp', 'WhatsApp']
+  ['sal', 'Sal'], ['criado', 'Criado em'], ['whatsapp', 'WhatsApp'], ['ultimoAcesso', 'Último acesso']
 ];
-const PAPEIS = ['admin', 'social', 'aprovador'];
+const PAPEIS = ['admin', 'gestor', 'social', 'aprovador'];
 
 const STATUS = ['Ideia', 'Em validação', 'Ideia reprovada', 'Em produção', 'Em aprovação', 'Ajustes solicitados', 'Aprovado', 'Agendado', 'Postado'];
 const STATUS_ANTIGOS = { 'Validado': 'Em produção', 'Produzido': 'Em aprovação' };
@@ -143,18 +144,19 @@ function usuarioDoToken_(token) {
 function publicoUsuario_(u) {
   return {
     id: u.id, nome: u.nome, login: u.login, papel: u.papel, ativo: u.ativo === 'sim', whatsapp: u.whatsapp || '',
+    ultimoAcesso: Number(u.ultimoAcesso) || 0,
     marcas: String(u.marcas || '').split(',').map(s => s.trim()).filter(String)
   };
 }
 
 function acesso_(eu, marcaId) {
-  return eu.papel === 'admin' || eu.marcas.indexOf('*') >= 0 || eu.marcas.indexOf(marcaId) >= 0;
+  return eu.papel === 'admin' || eu.papel === 'gestor' || eu.marcas.indexOf('*') >= 0 || eu.marcas.indexOf(marcaId) >= 0;
 }
 function podeEditar_(eu, marcaId) {
-  return eu.papel === 'admin' || (eu.papel === 'social' && acesso_(eu, marcaId));
+  return eu.papel === 'admin' || eu.papel === 'gestor' || (eu.papel === 'social' && acesso_(eu, marcaId));
 }
 function podeAprovar_(eu, marcaId) {
-  return eu.papel === 'admin' || (eu.papel === 'aprovador' && acesso_(eu, marcaId));
+  return eu.papel === 'admin' || eu.papel === 'gestor' || (eu.papel === 'aprovador' && acesso_(eu, marcaId));
 }
 function soAdmin_(eu) {
   if (eu.papel !== 'admin') throw erro_('permissao', 'Só o administrador pode fazer isso.');
@@ -177,9 +179,18 @@ function listar_(eu) {
     arquivos: parseJSON_(m.arquivos, [])
   }));
   const pautas = ler_(ABA_PAUTAS, CAMPOS_PAUTA).filter(p => acesso_(eu, p.marcaId)).map(pautaParaSite_);
+  registrarAcesso_(eu);
   const r = { ok: true, eu: eu, marcas: marcas, pautas: pautas };
-  if (eu.papel === 'admin') r.usuarios = ler_(ABA_USUARIOS, CAMPOS_USUARIO).map(publicoUsuario_);
+  if (eu.papel === 'admin' || eu.papel === 'gestor') r.usuarios = ler_(ABA_USUARIOS, CAMPOS_USUARIO).map(publicoUsuario_);
   return r;
+}
+
+// grava o último acesso no máximo a cada 10 minutos, para não escrever na planilha a cada atualização
+function registrarAcesso_(eu) {
+  if (!eu.id || Date.now() - (eu.ultimoAcesso || 0) < 10 * 60000) return;
+  const aba = aba_(ABA_USUARIOS, CAMPOS_USUARIO);
+  const r = linhaDoId_(aba, eu.id);
+  if (r) aba.getRange(r, colunaDe_(CAMPOS_USUARIO, 'ultimoAcesso')).setValue(String(Date.now()));
 }
 
 function pautaParaSite_(p) {
@@ -223,7 +234,13 @@ function salvarPauta_(eu, p) {
   const marcaId = atual ? atual.marcaId : p.marcaId;
   if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Você não pode editar postagens desta marca.');
   const id = atual ? atual.id : Utilities.getUuid().slice(0, 13);
-  const historico = atual ? atual.historico : [{ em: Date.now(), por: eu.nome, acao: 'Criou a postagem' }];
+  const historico = atual ? atual.historico : [{ em: Date.now(), por: eu.nome, uid: eu.id, acao: 'Criou a postagem' }];
+  if (atual) {
+    // edições seguidas da mesma pessoa em até 30 min contam como uma só
+    const ult = historico[historico.length - 1];
+    if (ult && ult.uid === eu.id && ult.acao === 'Editou a postagem' && Date.now() - ult.em < 30 * 60000) ult.em = Date.now();
+    else historico.push({ em: Date.now(), por: eu.nome, uid: eu.id, acao: 'Editou a postagem' });
+  }
   const linha = Object.assign({}, p, {
     id: id,
     marcaId: marcaId,
@@ -265,7 +282,7 @@ function acaoPauta_(eu, id, acao, motivo, status) {
     if (a.motivo && !motivo) throw erro_('server', 'Escreva o motivo.');
     para = a.para; texto = a.texto;
   }
-  const historico = p.historico.concat([{ em: Date.now(), por: eu.nome, acao: texto, de: p.status, para: para, motivo: motivo }]);
+  const historico = p.historico.concat([{ em: Date.now(), por: eu.nome, uid: eu.id, acao: texto, de: p.status, para: para, motivo: motivo }]);
   const aba = aba_(ABA_PAUTAS, CAMPOS_PAUTA);
   const r = linhaDoId_(aba, id);
   const set = (k, v) => aba.getRange(r, colunaDe_(CAMPOS_PAUTA, k)).setValue(v);
@@ -292,6 +309,11 @@ function salvarMarca_(eu, m) {
   if (!m.id) soAdmin_(eu);
   else if (!podeEditar_(eu, m.id)) throw erro_('permissao', 'Você não pode editar esta marca.');
   const id = m.id || Utilities.getUuid().slice(0, 13);
+  if (m.id && eu.papel !== 'admin') {
+    // nome e fases fazem parte da estrutura: só o administrador muda
+    const atual = ler_(ABA_MARCAS, CAMPOS_MARCA).filter(x => x.id === m.id)[0];
+    if (atual) { m.nome = atual.nome; m.fases = parseFases_(atual.fases); m.observacoes = atual.observacoes; m.criado = atual.criado; }
+  }
   gravar_(ABA_MARCAS, CAMPOS_MARCA, {
     id: id,
     nome: m.nome || 'Sem nome',
@@ -358,12 +380,13 @@ function salvarUsuario_(eu, u) {
     nome: String(u.nome || '').trim() || login,
     login: login,
     papel: u.papel,
-    marcas: (u.marcas || []).join(','),
+    marcas: (u.papel === 'admin' || u.papel === 'gestor') ? '*' : (u.marcas || []).join(','),
     ativo: u.ativo === false ? 'não' : 'sim',
     hash: u.senha ? hash_(u.senha, sal) : atual.hash,
     sal: sal,
     criado: atual ? atual.criado : String(Date.now()),
-    whatsapp: String(u.whatsapp || '').replace(/\D/g, '')
+    whatsapp: String(u.whatsapp || '').replace(/\D/g, ''),
+    ultimoAcesso: atual ? atual.ultimoAcesso : ''
   });
 }
 

@@ -362,7 +362,7 @@ const ACOES = {
   agendar: { de: ["Aprovado"], quem: "editar", label: "Marcar como agendado", ok: "Marcado como agendado" },
   postar: { de: ["Aprovado", "Agendado"], quem: "editar", label: "Marcar como postado", ok: "Marcado como postado" }
 };
-const PAPEIS = { admin: "Administrador", social: "Social media", aprovador: "Aprovador" };
+const PAPEIS = { admin: "Administrador", gestor: "Gestor", social: "Social media", aprovador: "Aprovador" };
 const normStatus = s => STATUS_ANTIGOS[s] || (STATUS.includes(s) ? s : "Ideia");
 const FORMATOS = ["Estático", "Carrossel", "Vídeo"];
 const FMT_ICON = { "Estático": "▢", "Carrossel": "▤", "Vídeo": "▶" };
@@ -410,9 +410,11 @@ function toast(msg) {
 }
 
 const ehAdmin = () => S.eu?.papel === "admin";
-const temAcesso = mid => ehAdmin() || (S.eu?.marcas || []).includes("*") || (S.eu?.marcas || []).includes(mid);
-const podeEditar = mid => ehAdmin() || (S.eu?.papel === "social" && temAcesso(mid));
-const podeAprovar = mid => ehAdmin() || (S.eu?.papel === "aprovador" && temAcesso(mid));
+const ehGestor = () => S.eu?.papel === "gestor";
+// gestor: vê tudo, alimenta e aprova, mas não mexe na estrutura (equipe, marcas, configurações)
+const temAcesso = mid => ehAdmin() || ehGestor() || (S.eu?.marcas || []).includes("*") || (S.eu?.marcas || []).includes(mid);
+const podeEditar = mid => ehAdmin() || ehGestor() || (S.eu?.papel === "social" && temAcesso(mid));
+const podeAprovar = mid => ehAdmin() || ehGestor() || (S.eu?.papel === "aprovador" && temAcesso(mid));
 const podeAcao = (p, k) => { const a = ACOES[k]; return a.de.includes(p.status) && (a.quem === "aprovar" ? podeAprovar(p.marcaId) : podeEditar(p.marcaId)); };
 const nomeMarca = id => (S.marcas.find(m => m.id === id) || {}).nome || "";
 const marca = () => S.marcas.find(m => m.id === S.marcaId) || null;
@@ -440,7 +442,7 @@ function setMonth(ym) { S.month = ym; store("mes." + S.marcaId, ym); render(); }
 /* ---------- Vistas ---------- */
 const view = () => {
   const h = location.hash.replace("#", "");
-  return ["calendario", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-config", "aprovacoes", "equipe", "conta"].includes(h) ? h : "calendario";
+  return ["calendario", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-config", "aprovacoes", "equipe", "equipe-atividade", "conta"].includes(h) ? h : "calendario";
 };
 
 function render() {
@@ -450,7 +452,7 @@ function render() {
   const app = $("#app");
   S.canWrite = podeEditar(S.marcaId);
   $("#novaMarca").hidden = !ehAdmin();
-  $("#tabEquipe").hidden = !ehAdmin();
+  $("#tabEquipe").hidden = !(ehAdmin() || ehGestor());
   $("#me").hidden = !S.eu;
   if (S.eu) $("#me").innerHTML = `<span class="who">Olá, <b>${esc(S.eu.nome)}</b></span><span class="papel">${esc(PAPEIS[S.eu.papel] || "")}</span><a href="#conta">Minha conta</a><button class="ghost-light" type="button" onclick="sair()">Sair</button>`;
   const pend = pendencias().length, bd = $("#apvBadge");
@@ -466,8 +468,8 @@ function render() {
   if (!S.token) { app.innerHTML = vLogin(); $("#lgLogin")?.focus(); return; }
   if (!S.loadedM || !S.loadedP) return;
   const v0 = view();
-  if (v0 === "equipe" || v0 === "conta" || v0 === "aprovacoes") {
-    app.innerHTML = (v0 === "equipe" ? vEquipe : v0 === "conta" ? vConta : vAprovacoes)();
+  if (v0 === "equipe" || v0 === "equipe-atividade" || v0 === "conta" || v0 === "aprovacoes") {
+    app.innerHTML = (v0 === "equipe" ? vEquipe : v0 === "equipe-atividade" ? vAtividade : v0 === "conta" ? vConta : vAprovacoes)();
     return;
   }
   if (!marca()) {
@@ -989,9 +991,9 @@ async function addProdutoEditor() {
 }
 
 function vMarca() {
-  const m = marca(), ro = S.canWrite ? "" : " disabled";
+  const m = marca(), adm = ehAdmin(), ro = adm ? "" : " disabled";
   const fases = fasesDe(m);
-  return head(m.nome, "Configurações") + subnav() +
+  return head(m.nome, "Configurações") + subnav() + (adm ? "" : `<p class="sec-intro">Só o administrador altera o nome, as fases e as configurações da marca.</p>`) +
     `<form id="marcaForm" class="form-grid" onsubmit="event.preventDefault();salvarMarca()">
       <div class="panel" style="display:grid;gap:12px">
         <label class="field"><span>Nome da marca</span><input id="mNome" required value="${esc(m.nome)}"${ro}></label>
@@ -1000,12 +1002,12 @@ function vMarca() {
       <div class="panel" style="display:grid;gap:10px">
         <div class="field"><span>Fases do mês e suas cores</span></div>
         <div id="fasesBox" style="display:grid;gap:8px">${fases.map((f, i) => faseRow(f, i, ro)).join("")}</div>
-        ${S.canWrite ? `<button class="btn sm" type="button" style="justify-self:start" onclick="addFase()">+ Fase</button>` : ""}
+        ${adm ? `<button class="btn sm" type="button" style="justify-self:start" onclick="addFase()">+ Fase</button>` : ""}
       </div>
       <div class="panel" style="grid-column:1/-1">
         <label class="field"><span>Observações</span><textarea id="mObs" rows="6"${ro}>${esc(m.observacoes || "")}</textarea></label>
       </div>
-      ${S.canWrite ? `<div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      ${adm ? `<div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <button class="btn primary" type="submit">Salvar marca</button>
         <span style="flex:1"></span>
         <span id="delMarcaBox"${ehAdmin() ? "" : " hidden"}>${S.confirmDel
@@ -1184,7 +1186,7 @@ function pendencias() {
   if (!S.eu) return [];
   return S.posts.filter(p =>
     (["Em validação", "Em aprovação"].includes(p.status) && podeAprovar(p.marcaId)) ||
-    (REPROVADOS.includes(p.status) && podeEditar(p.marcaId) && !ehAdmin()));
+    (REPROVADOS.includes(p.status) && podeEditar(p.marcaId) && S.eu.papel === "social"));
 }
 
 function apvCard(p, k1, k2) {
@@ -1294,10 +1296,16 @@ async function trocarSenha() {
   try { await api("trocarSenha", { atual: $("#cAtual").value, nova: $("#cNova").value }); S.dirty = false; toast("Senha trocada"); location.hash = "#calendario"; }
   catch (e) { writeFail(e); }
 }
+function equipeNav() {
+  if (!ehAdmin()) return "";
+  const v = view();
+  return `<nav class="subnav"><a href="#equipe"${v === "equipe" ? ' aria-current="page"' : ""}>Pessoas</a><a href="#equipe-atividade"${v === "equipe-atividade" ? ' aria-current="page"' : ""}>Atividade</a></nav>`;
+}
 function vEquipe() {
+  if (ehGestor()) return vAtividade();
   if (!ehAdmin()) return `<div class="empty"><strong>Só o administrador vê a equipe</strong></div>`;
   const u = S.uEdit;
-  const marcasTxt = x => x.papel === "admin" || x.marcas.includes("*") ? "Todas" : x.marcas.map(nomeMarca).filter(Boolean).join(", ") || "—";
+  const marcasTxt = x => x.papel === "admin" || x.papel === "gestor" || x.marcas.includes("*") ? "Todas" : x.marcas.map(nomeMarca).filter(Boolean).join(", ") || "—";
   const linhas = S.usuarios.slice().sort((a, b) => a.nome.localeCompare(b.nome)).map(x => `<tr onclick="S.uEdit=S.usuarios.find(y=>y.id==='${esc(x.id)}');render()">
     <td><b>${esc(x.nome)}</b><div class="muted">${esc(x.login)}${x.whatsapp ? " · " + esc(fmtTel(x.whatsapp)) : ""}</div></td><td>${esc(PAPEIS[x.papel] || x.papel)}</td><td>${esc(marcasTxt(x))}</td><td>${x.ativo ? "Ativo" : `<span class="muted">Desativado</span>`}</td></tr>`).join("");
   const form = u ? `<form class="panel" style="display:grid;gap:12px;margin-top:16px" onsubmit="event.preventDefault();salvarUsuario()">
@@ -1308,7 +1316,7 @@ function vEquipe() {
         <label class="field"><span>WhatsApp (com DDD)</span><input id="uTel" type="tel" inputmode="tel" placeholder="(11) 98765-4321" value="${esc(u.whatsapp ? fmtTel(u.whatsapp) : "")}"></label>
         <label class="field"><span>Papel</span><select id="uPapel" onchange="lerFormU();render()">${Object.entries(PAPEIS).map(([k, l]) => `<option value="${k}"${u.papel === k ? " selected" : ""}>${l}</option>`).join("")}</select></label>
         <label class="field"><span>${u.id ? "Nova senha (deixe em branco para manter)" : "Senha provisória"}</span><span class="prod-pick"><input id="uSenha" type="text" autocomplete="off" ${u.id ? "" : "required"} minlength="6" value="${esc(u.senhaTemp || "")}" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px"><button class="btn sm" type="button" onclick="$('#uSenha').value=gerarSenha();S.dirty=true">Gerar senha</button></span></label>
-        ${u.papel === "admin" ? `<div class="field full"><span>Marcas</span><span class="muted">O administrador vê todas as marcas.</span></div>`
+        ${u.papel === "admin" || u.papel === "gestor" ? `<div class="field full"><span>Marcas</span><span class="muted">${u.papel === "admin" ? "O administrador" : "O gestor"} vê todas as marcas.</span></div>`
           : `<div class="field full"><span>Marcas que ${u.papel === "aprovador" ? "aprova" : "alimenta"}</span><div class="chk-list" id="uMarcas">
             <label><input type="checkbox" value="*"${(u.marcas || []).includes("*") ? " checked" : ""}> <b>Todas as marcas</b></label>
             ${S.marcas.map(m => `<label><input type="checkbox" value="${esc(m.id)}"${(u.marcas || []).includes(m.id) ? " checked" : ""}> ${esc(m.nome)}</label>`).join("")}</div></div>`}
@@ -1316,8 +1324,8 @@ function vEquipe() {
       </div>
       <div style="display:flex;gap:8px"><button class="btn primary" type="submit">Salvar</button><button class="btn" type="button" onclick="S.uEdit=null;S.dirty=false;render()">Cancelar</button></div>
     </form>` : "";
-  return head("Administração", "Equipe", `<button class="btn primary" type="button" onclick="S.uEdit={papel:'social',marcas:[],ativo:true};render()">+ Pessoa</button>`) +
-    `<p class="sec-intro"><b>Social media</b> vê e alimenta só as marcas liberadas para ele e envia ideias e conteúdos para aprovação. <b>Aprovador</b> valida ideias e aprova conteúdos das marcas liberadas. <b>Administrador</b> vê e faz tudo. Não há limite de pessoas nem de marcas por pessoa.</p>
+  return head("Administração", "Equipe", `<button class="btn primary" type="button" onclick="S.uEdit={papel:'social',marcas:[],ativo:true};render()">+ Pessoa</button>`) + equipeNav() +
+    `<p class="sec-intro"><b>Social media</b> vê e alimenta só as marcas liberadas para ele e envia ideias e conteúdos para aprovação. <b>Aprovador</b> valida ideias e aprova conteúdos das marcas liberadas. <b>Gestor</b> vê todas as marcas, acompanha a atividade da equipe, alimenta, valida e aprova, mas não mexe na equipe nem nas configurações. <b>Administrador</b> vê e faz tudo. Não há limite de pessoas nem de marcas por pessoa.</p>
     ${boasVindasHtml()}
     <div class="table-wrap"><table style="min-width:620px"><thead><tr><th>Pessoa</th><th>Papel</th><th>Marcas</th><th>Acesso</th></tr></thead><tbody>${linhas}</tbody></table></div>` + form;
 }
@@ -1326,7 +1334,7 @@ function lerFormU() {
 }
 function lerMarcasU() { return [...document.querySelectorAll("#uMarcas input:checked")].map(i => i.value); }
 async function salvarUsuario() {
-  const u = { id: S.uEdit.id || "", nome: $("#uNome").value.trim(), login: $("#uLogin").value.trim(), whatsapp: soDigitos($("#uTel").value), papel: $("#uPapel").value, senha: $("#uSenha").value.trim(), ativo: $("#uAtivo").checked, marcas: $("#uPapel").value === "admin" ? ["*"] : lerMarcasU() };
+  const u = { id: S.uEdit.id || "", nome: $("#uNome").value.trim(), login: $("#uLogin").value.trim(), whatsapp: soDigitos($("#uTel").value), papel: $("#uPapel").value, senha: $("#uSenha").value.trim(), ativo: $("#uAtivo").checked, marcas: ["admin", "gestor"].includes($("#uPapel").value) ? ["*"] : lerMarcasU() };
   try {
     await api("salvarUsuario", { usuario: u });
     S.uEdit = null; S.dirty = false;
@@ -1347,17 +1355,68 @@ function gerarSenha() {
   const a = new Uint32Array(8); crypto.getRandomValues(a);
   return [...a].map(n => c[n % c.length]).join("");
 }
-function listaMarcas(u) {
-  if (u.papel === "admin" || (u.marcas || []).includes("*")) return "todas as marcas da agência";
+function listaMarcas(u, artigo) {
+  // artigo: "pela" (responsável pela marca X) ou "da" (conteúdos da marca X)
+  if (["admin", "gestor"].includes(u.papel) || (u.marcas || []).includes("*")) return (artigo === "pela" ? "por" : "de") + " todas as marcas da agência";
   const n = (u.marcas || []).map(nomeMarca).filter(Boolean);
-  if (!n.length) return "as marcas que vamos liberar para você em breve";
-  return (n.length === 1 ? "pela marca " : "pelas marcas ") + (n.length === 1 ? n[0] : n.slice(0, -1).join(", ") + " e " + n[n.length - 1]);
+  if (!n.length) return (artigo === "pela" ? "pelas" : "das") + " marcas que vamos liberar para você em breve";
+  const nomes = n.length === 1 ? n[0] : n.slice(0, -1).join(", ") + " e " + n[n.length - 1];
+  return (artigo === "pela" ? (n.length === 1 ? "pela marca " : "pelas marcas ") : (n.length === 1 ? "da marca " : "das marcas ")) + nomes;
 }
 function msgBoasVindas(u) {
   const site = location.origin + location.pathname;
-  const marcas = listaMarcas(u);
-  const resp = marcas.startsWith("pela") ? `Você está responsável ${marcas}.` : `Você está responsável por ${marcas}.`;
-  return `Olá, ${u.nome}! Seja bem-vindo(a) à nossa equipe. ${resp}\n\nSeu e-mail para acesso é ${u.login} e sua senha provisória é ${u.senha}.\n\nLembrando que você pode alterar essa senha em "Minha conta" para maior segurança.\n\nAcesse o sistema: ${site}`;
+  const papel = {
+    social: `Você vai atuar como social media e está responsável ${listaMarcas(u, "pela")}: vai planejar as ideias, montar os conteúdos e enviar para validação e aprovação.`,
+    aprovador: `Você vai atuar como aprovador(a): vai validar as ideias e aprovar os conteúdos ${listaMarcas(u, "da")} antes de serem agendados.`,
+    gestor: "Você vai atuar como gestor(a) da equipe: vai acompanhar o trabalho das social medias, validar as ideias e aprovar os conteúdos de todas as marcas da agência.",
+    admin: "Você tem acesso de administrador(a), com acesso completo a todas as marcas, à equipe e às configurações do sistema."
+  }[u.papel] || "";
+  return `Olá, ${u.nome}! Seja bem-vindo(a) à nossa equipe. ${papel}\n\nSeu e-mail para acesso é ${u.login} e sua senha provisória é ${u.senha}.\n\nLembrando que você pode alterar essa senha em "Minha conta" para maior segurança.\n\nAcesse o sistema: ${site}`;
+}
+
+/* ---------- Atividade da equipe ---------- */
+function quando(ms) {
+  if (!ms) return "nunca";
+  const min = Math.round((Date.now() - ms) / 60000);
+  if (min < 2) return "agora";
+  if (min < 60) return `há ${min} min`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `há ${h} h`;
+  const d = Math.round(h / 24);
+  return d === 1 ? "ontem" : `há ${d} dias`;
+}
+function vAtividade() {
+  const dias = S.ativDias || 7, desde = Date.now() - dias * 864e5;
+  const pessoas = S.usuarios.filter(u => u.ativo && u.id !== S.eu.id);
+  const eventos = [];
+  S.posts.forEach(p => (p.historico || []).forEach(h => eventos.push({ ...h, post: p })));
+  eventos.sort((a, b) => b.em - a.em);
+  const dele = u => eventos.filter(e => e.uid ? e.uid === u.id : e.por === u.nome);
+  const conta = (ev, txt) => ev.filter(e => e.em >= desde && txt.some(t => (e.acao || "").startsWith(t))).length;
+  const linhas = pessoas.sort((a, b) => a.nome.localeCompare(b.nome)).map(u => {
+    const ev = dele(u), ult = Math.max(Number(u.ultimoAcesso) || 0, ev[0]?.em || 0);
+    const marcasU = u.papel === "admin" || u.papel === "gestor" || u.marcas.includes("*") ? null : u.marcas;
+    const daMarca = p => !marcasU || marcasU.includes(p.marcaId);
+    const pend = u.papel === "social" ? S.posts.filter(p => daMarca(p) && REPROVADOS.includes(p.status)).length
+      : u.papel === "aprovador" ? S.posts.filter(p => daMarca(p) && ["Em validação", "Em aprovação"].includes(p.status)).length : 0;
+    const parado = !ult || Date.now() - ult > 3 * 864e5;
+    return `<tr>
+      <td><b>${esc(u.nome)}</b><div class="muted">${esc(PAPEIS[u.papel] || "")}</div></td>
+      <td class="num"${parado ? ' style="color:var(--danger)"' : ""}>${quando(ult)}</td>
+      <td class="num">${conta(ev, ["Criou"])}</td>
+      <td class="num">${conta(ev, ["Editou"])}</td>
+      <td class="num">${conta(ev, ["Enviou"])}</td>
+      <td class="num">${conta(ev, ["Validou", "Aprovou"])}</td>
+      <td class="num">${conta(ev, ["Reprovou", "Pediu"])}</td>
+      <td class="num">${pend ? `<span class="pill" style="--c:var(--danger)"><span class="dot"></span>${pend}</span>` : "0"}</td>
+    </tr>`;
+  }).join("");
+  const feed = eventos.slice(0, 40).map(e => `<li><span class="muted">${new Date(e.em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span> · <b>${esc(e.por)}</b> ${esc((e.acao || "").toLowerCase())} <a class="lnk" href="javascript:void 0" onclick="openEditor('${esc(e.post.id)}')">${esc(nm(e.post))}</a> <span class="muted">(${esc(nomeMarca(e.post.marcaId))})</span>${e.motivo ? `: "${esc(e.motivo)}"` : ""}</li>`).join("");
+  return head(ehAdmin() ? "Administração" : "Gestão", "Atividade da equipe", `<select id="ativDias" class="st-sel" aria-label="Período" onchange="S.ativDias=+this.value;render()">${[[1, "Hoje e ontem"], [7, "Últimos 7 dias"], [30, "Últimos 30 dias"]].map(([d, l]) => `<option value="${d}"${d === dias ? " selected" : ""}>${l}</option>`).join("")}</select>`) + equipeNav() +
+    `<p class="sec-intro">O que cada pessoa fez no período. "Último sinal" é o último acesso ou a última ação no sistema; fica em vermelho depois de 3 dias sem nada. "Pendências" são postagens devolvidas esperando a social media, ou ideias e conteúdos esperando o aprovador.</p>
+    ${pessoas.length ? `<div class="table-wrap"><table style="min-width:760px"><thead><tr><th>Pessoa</th><th>Último sinal</th><th>Criou</th><th>Editou</th><th>Enviou</th><th>Validou / aprovou</th><th>Reprovou / pediu ajustes</th><th>Pendências</th></tr></thead><tbody>${linhas}</tbody></table></div>`
+      : `<div class="empty"><strong>Ninguém na equipe ainda</strong><span>O administrador cadastra as pessoas na aba Equipe.</span></div>`}
+    <section class="apv-sec"><h2>Últimas ações</h2>${feed ? `<ul class="hist" style="font-size:13.5px;gap:6px">${feed}</ul>` : `<p class="muted">Nada registrado ainda.</p>`}</section>`;
 }
 function boasVindasHtml() {
   const b = S.boasVindas;
