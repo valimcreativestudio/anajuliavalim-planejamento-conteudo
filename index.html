@@ -544,13 +544,13 @@ function vPautas() {
   </tr>`).join("");
   return head(m.nome, "Postagens do mês", monthNav() + `<button class="btn" type="button" onclick="copiarTabela()">Copiar para planilha</button>` + addBtn()) +
     `<div class="filters">
-      <input id="fq" type="search" placeholder="Buscar em título, ângulo, legenda…" value="${esc(S.f.q)}" oninput="clearTimeout(window._fq);window._fq=setTimeout(()=>setF('q',this.value),250)">
+      <input id="fq" type="search" placeholder="Buscar em título, nome, legenda…" value="${esc(S.f.q)}" oninput="clearTimeout(window._fq);window._fq=setTimeout(()=>setF('q',this.value),250)">
       <select id="fst" aria-label="Status" onchange="setF('status',this.value)">${opt(STATUS, S.f.status, "Todos os status")}</select>
       <select id="ffm" aria-label="Formato" onchange="setF('formato',this.value)">${opt(FORMATOS, S.f.formato, "Todos os formatos")}</select>
       <select id="fpr" aria-label="Produto" onchange="setF('produto',this.value)">${opt(produtosDe(m), S.f.produto, "Todos os produtos")}</select>
     </div>` +
     (ps.length ? `<div class="table-wrap"><table>
-      <thead><tr><th>Status</th><th>Data</th><th>Fase</th><th>Formato</th><th>Produto</th><th>Postagem / ângulo</th><th>Objetivo</th><th>CTA / destino</th><th>Rede</th><th>Criativo</th></tr></thead>
+      <thead><tr><th>Status</th><th>Data</th><th>Fase</th><th>Formato</th><th>Produto</th><th>Postagem / nome</th><th>Objetivo</th><th>CTA / destino</th><th>Rede</th><th>Criativo</th></tr></thead>
       <tbody>${rows}</tbody></table></div>`
       : `<div class="empty"><strong>Nenhuma postagem aqui</strong><span>${postsMes().length ? "Nenhuma postagem bate com os filtros." : "Este mês ainda está vazio. Adicione a primeira postagem."}</span>${addBtn()}</div>`);
 }
@@ -565,7 +565,7 @@ async function setStatus(id, st) {
 
 async function copiarTabela() {
   const cols = ["status", "data", "dia", "postagem", "fase", "formato", "produto", "pauta", "objetivo", "cta", "rede", "gravacao", "observacao", "inspiracao", "legenda", "criativo"];
-  const header = ["Status", "Marca", "Data", "Dia", "Postagem", "Fase", "Formato", "Produto", "Ângulo da postagem", "Objetivo (jornada de compra)", "CTA / destino", "Rede", "Gravação", "Observação", "Inspiração", "Legenda", "Criativo"];
+  const header = ["Status", "Marca", "Data", "Dia", "Postagem", "Fase", "Formato", "Produto", "Nome", "Objetivo (jornada de compra)", "CTA / destino", "Rede", "Gravação", "Observação", "Inspiração", "Legenda", "Criativo"];
   const clean = v => String(v ?? "").replace(/[\t\r\n]+/g, " ");
   const lines = [header.join("\t")].concat(filtered().map(p => {
     const row = cols.map(c => c === "data" ? brFull(p.data) : c === "dia" ? wd(p.data) : clean(p[c]));
@@ -1024,7 +1024,7 @@ function drawEditor() {
       <label class="field"><span>Fase</span>${sel("eFase", fasesDe(m).map(f => f.nome), p.fase, true)}</label>
       <label class="field"><span>Produto</span><input id="eProduto" list="prodList" value="${esc(p.produto)}"${ro}><datalist id="prodList">${produtosDe(m).map(x => `<option value="${esc(x)}">`).join("")}</datalist></label>
       ${txt("ePostagem", "Título da postagem", p.postagem, false, "Ex.: Conheça o produto")}
-      ${txt("ePauta", "Ângulo da postagem", p.pauta, true)}
+      ${txt("ePauta", "Nome", p.pauta, true)}
       <label class="field"><span>Objetivo (jornada de compra)</span>${sel("eObjetivo", OBJETIVOS, p.objetivo, true)}</label>
       ${txt("eCta", "CTA / destino", p.cta, false, "Ex.: Link do e-commerce")}
       <label class="field"><span>Rede</span>${sel("eRede", REDES, p.rede, true)}</label>
@@ -1135,7 +1135,7 @@ function apvCard(p, k1, k2) {
       <div class="meta">${esc(nomeMarca(p.marcaId))} · ${br(p.data)} ${wd(p.data).slice(0, 3)} · ${FMT_ICON[p.formato] || ""} ${esc(p.formato)}</div>
       <div class="t">${esc(nm(p))}</div>
       ${p.motivo ? `<div class="motivo"><b>${esc(p.status)}</b>${esc(p.motivo)}</div>` : ""}
-      ${linha("Ângulo", p.pauta)}${linha("Objetivo", p.objetivo)}${linha("CTA", p.cta)}${linha("Fase", p.fase)}${conteudo ? "" : linha("Inspiração", p.inspiracao)}
+      ${linha("Nome", p.pauta)}${linha("Objetivo", p.objetivo)}${linha("CTA", p.cta)}${linha("Fase", p.fase)}${conteudo ? "" : linha("Inspiração", p.inspiracao)}
       ${conteudo && cheio(p.legenda) ? `<div class="leg">${esc(p.legenda)}</div>` : ""}
       ${/^https?:\/\//.test(p.criativo || "") ? `<a class="lnk" href="${esc(p.criativo)}" target="_blank" rel="noopener">Abrir criativo</a>` : ""}
     </div>

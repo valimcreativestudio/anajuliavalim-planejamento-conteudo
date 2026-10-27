@@ -23,7 +23,7 @@ const DIAS_DE_SESSAO = 30;
 const CAMPOS_PAUTA = [
   ['id', 'ID'], ['marcaId', 'Marca ID'], ['marca', 'Marca'], ['status', 'Status'],
   ['data', 'Data'], ['dia', 'Dia'], ['postagem', 'Postagem'], ['fase', 'Fase'],
-  ['formato', 'Formato'], ['produto', 'Produto'], ['pauta', 'Ângulo da postagem'],
+  ['formato', 'Formato'], ['produto', 'Produto'], ['pauta', 'Nome'],
   ['objetivo', 'Objetivo (jornada de compra)'], ['cta', 'CTA / destino'], ['rede', 'Rede'],
   ['gravacao', 'Gravação'], ['observacao', 'Observação'], ['inspiracao', 'Inspiração'],
   ['legenda', 'Legenda'], ['criativo', 'Criativo'], ['criado', 'Criado em'], ['atualizado', 'Atualizado em'],
