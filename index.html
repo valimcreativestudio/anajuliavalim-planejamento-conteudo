@@ -1219,9 +1219,10 @@ async function addProdutoEditor() {
 }
 
 function vMarca() {
-  const m = marca(), adm = podeGerir(), ro = adm ? "" : " disabled";
+  // nome, fases e observações: quem alimenta a marca também ajusta (admin, diretor, gestor e a social media da marca)
+  const m = marca(), adm = podeEditar(m.id), ro = adm ? "" : " disabled";
   const fases = fasesDe(m);
-  return head(m.nome, "Configurações") + subnav() + (adm ? "" : `<p class="sec-intro">Só o administrador e o diretor alteram o nome, as fases e as configurações da marca.</p>`) +
+  return head(m.nome, "Configurações") + subnav() + (adm ? "" : `<p class="sec-intro">Só quem alimenta a marca (social media, gestor, diretor e administrador) altera o nome, as fases e as configurações.</p>`) +
     `<form id="marcaForm" class="form-grid" onsubmit="event.preventDefault();salvarMarca()">
       <div class="panel" style="display:grid;gap:12px">
         <label class="field"><span>Nome da marca</span><input id="mNome" required value="${esc(m.nome)}"${ro}></label>
@@ -1634,7 +1635,7 @@ function vEquipe() {
       <div style="display:flex;gap:8px"><button class="btn primary" type="submit">Salvar</button><button class="btn" type="button" onclick="S.uEdit=null;S.dirty=false;render()">Cancelar</button></div>
     </form>` : "";
   return head(ehAdmin() ? "Administração" : "Direção", "Equipe", `<button class="btn primary" type="button" onclick="S.uEdit={papel:'social',marcas:[],ativo:true};render()">+ Pessoa</button>`) + equipeNav() +
-    `<p class="sec-intro"><b>Social media</b> vê e alimenta só as marcas liberadas para ele e envia ideias e conteúdos para aprovação. <b>Aprovador</b> valida ideias e aprova conteúdos das marcas liberadas. <b>Gestor</b> vê todas as marcas, acompanha a atividade da equipe, alimenta, valida e aprova, mas não mexe na equipe nem nas configurações. <b>Diretor</b> faz tudo o que o gestor faz e também cadastra gestores, social medias e aprovadores, cria marcas e ajusta as configurações; não exclui marcas nem mexe em administradores e diretores. <b>Administrador</b> vê e faz tudo. Não há limite de pessoas nem de marcas por pessoa.</p>
+    `<p class="sec-intro"><b>Social media</b> vê e alimenta só as marcas liberadas para ele (inclusive nome, fases e configurações) e envia ideias e conteúdos para aprovação. <b>Aprovador</b> valida ideias e aprova conteúdos das marcas liberadas. <b>Gestor</b> vê todas as marcas, acompanha a atividade da equipe, alimenta (inclusive as configurações das marcas), valida e aprova, mas não mexe na equipe. <b>Diretor</b> faz tudo o que o gestor faz e também cadastra gestores, social medias e aprovadores, cria marcas e ajusta as configurações; não exclui marcas nem mexe em administradores e diretores. <b>Administrador</b> vê e faz tudo. Não há limite de pessoas nem de marcas por pessoa.</p>
     ${boasVindasHtml()}
     <div class="table-wrap"><table style="min-width:620px"><thead><tr><th>Pessoa</th><th>Papel</th><th>Marcas</th><th>Acesso</th></tr></thead><tbody>${linhas}</tbody></table></div>` + form;
 }
@@ -1776,7 +1777,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-10-27.7"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-10-27.8"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",

@@ -9,16 +9,16 @@
  * Papéis:
  *   admin     — vê e faz tudo, cadastra a equipe e as marcas
  *   diretor   — tudo do gestor + cadastra gestores, social medias e aprovadores, cria marcas,
- *               muda configurações e força status; não exclui marcas nem mexe em admins/diretores
- *   gestor    — vê todas as marcas, alimenta, valida e aprova; não mexe na equipe nem nas configurações
- *   social    — vê e alimenta só as marcas liberadas para ele
+ *               força status; não exclui marcas nem mexe em admins/diretores
+ *   gestor    — vê todas as marcas, alimenta (inclusive nome, fases e configurações), valida e aprova; não mexe na equipe
+ *   social    — vê e alimenta só as marcas liberadas para ele, inclusive nome, fases e configurações
  *   aprovador — vê as marcas liberadas, valida ideias e aprova conteúdos
  *
  * Passo a passo no arquivo LEIAME.md.
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-10-27.7';
+const VERSAO = '2026-10-27.8';
 
 const ABA_PAUTAS = 'POSTAGENS';
 const ABA_MARCAS = 'MARCAS';
@@ -337,11 +337,6 @@ function salvarMarca_(eu, m) {
   if (!m.id) gerencia_(eu);
   else if (!podeEditar_(eu, m.id)) throw erro_('permissao', 'Você não pode editar esta marca.');
   const id = m.id || Utilities.getUuid().slice(0, 13);
-  if (m.id && eu.papel !== 'admin' && eu.papel !== 'diretor') {
-    // nome e fases fazem parte da estrutura: só o administrador muda
-    const atual = ler_(ABA_MARCAS, CAMPOS_MARCA).filter(x => x.id === m.id)[0];
-    if (atual) { m.nome = atual.nome; m.fases = parseFases_(atual.fases); m.observacoes = atual.observacoes; m.criado = atual.criado; }
-  }
   gravar_(ABA_MARCAS, CAMPOS_MARCA, {
     id: id,
     nome: m.nome || 'Sem nome',

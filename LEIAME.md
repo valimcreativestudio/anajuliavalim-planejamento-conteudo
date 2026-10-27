@@ -46,8 +46,8 @@ Entre no site como administrador e abra a aba **Equipe** → **+ Pessoa**:
 |---|---|---|
 | **Administrador** | Todas as marcas | Tudo: cadastra pessoas e marcas, aprova, muda qualquer status |
 | **Diretor** | Todas as marcas | Tudo o que o gestor faz + cadastra gestores, social medias e aprovadores, cria marcas, muda configurações e pode forçar status. Não exclui marcas e não mexe em administradores nem em outros diretores |
-| **Gestor** | Todas as marcas | Gerente da equipe: acompanha a **Atividade da equipe**, cria e edita postagens, preenche as marcas, valida e aprova. Não cadastra pessoas, não cria/exclui marcas e não muda configurações |
-| **Social media** | Só as marcas marcadas para ele | Cria e edita postagens, preenche a marca, envia para validação e aprovação, marca como agendado/postado |
+| **Gestor** | Todas as marcas | Gerente da equipe: acompanha a **Atividade da equipe**, cria e edita postagens, preenche as marcas, valida e aprova. Não cadastra pessoas e não cria/exclui marcas |
+| **Social media** | Só as marcas marcadas para ele | Cria e edita postagens, preenche a marca (inclusive nome, fases e configurações), envia para validação e aprovação, marca como agendado/postado |
 | **Aprovador** | As marcas marcadas para ele (ou "Todas") | Valida ideias e aprova conteúdos, sempre escrevendo o motivo quando não aprova |
 
 Não há limite de pessoas nem de marcas por pessoa. Para tirar o acesso de alguém, desmarque **Acesso ativo**.
