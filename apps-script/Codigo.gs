@@ -21,7 +21,8 @@ const CAMPOS_PAUTA = [
 ];
 const CAMPOS_MARCA = [
   ['id', 'ID'], ['nome', 'Nome'], ['produtos', 'Produtos'], ['fases', 'Fases'],
-  ['observacoes', 'Observações'], ['criado', 'Criado em']
+  ['observacoes', 'Observações'], ['criado', 'Criado em'],
+  ['perfil', 'Perfil (sobre, público, observações)'], ['arquivos', 'Arquivos']
 ];
 const DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 const FASES_PADRAO = [
@@ -31,7 +32,8 @@ const FASES_PADRAO = [
   { nome: 'Semana da promoção', cor: '#6B6B70' },
   { nome: 'Última chamada', cor: '#3F3F43' }
 ];
-const ACOES_DE_ESCRITA = ['salvarPauta', 'excluirPauta', 'status', 'salvarMarca', 'excluirMarca'];
+const ACOES_DE_ESCRITA = ['salvarPauta', 'excluirPauta', 'status', 'salvarMarca', 'excluirMarca', 'enviarArquivo'];
+const PASTA_ARQUIVOS = 'Planejamento de Conteúdo - Arquivos';
 
 /* ---------- Entrada do site ---------- */
 
@@ -46,6 +48,12 @@ function doPost(e) {
   if (ACOES_DE_ESCRITA.indexOf(req.action) >= 0) {
     const senha = PropertiesService.getScriptProperties().getProperty('SENHA');
     if (senha && req.senha !== senha) return json_({ ok: false, code: 'senha', error: 'Senha incorreta.' });
+  }
+
+  // envio de arquivo vai para o Drive, fora da trava da planilha
+  if (req.action === 'enviarArquivo') {
+    try { return json_(Object.assign({ ok: true }, enviarArquivo_(req))); }
+    catch (err) { return json_({ ok: false, error: String(err.message || err) }); }
   }
 
   const lock = LockService.getScriptLock();
@@ -76,7 +84,9 @@ function listar_() {
     produtos: String(m.produtos || '').split('\n').map(s => s.trim()).filter(String),
     fases: parseFases_(m.fases),
     observacoes: m.observacoes || '',
-    criado: Number(m.criado) || 0
+    criado: Number(m.criado) || 0,
+    perfil: parseJSON_(m.perfil, {}),
+    arquivos: parseJSON_(m.arquivos, [])
   }));
   const pautas = ler_(ABA_PAUTAS, CAMPOS_PAUTA).map(p => {
     p.data = paraISO_(p.data);
@@ -138,7 +148,9 @@ function salvarMarca_(m) {
     produtos: (m.produtos || []).join('\n'),
     fases: JSON.stringify(m.fases && m.fases.length ? m.fases : FASES_PADRAO),
     observacoes: m.observacoes || '',
-    criado: m.criado || Date.now()
+    criado: m.criado || Date.now(),
+    perfil: JSON.stringify(m.perfil || {}),
+    arquivos: JSON.stringify(m.arquivos || [])
   });
   // mantém o nome da marca em dia na aba PAUTAS
   const aba = aba_(ABA_PAUTAS, CAMPOS_PAUTA);
@@ -150,6 +162,22 @@ function salvarMarca_(m) {
     col.setValues(nomes);
   }
   return id;
+}
+
+function enviarArquivo_(req) {
+  if (!req.base64) throw new Error('Arquivo vazio.');
+  const marca = ler_(ABA_MARCAS, CAMPOS_MARCA).filter(m => m.id === req.marcaId)[0];
+  const raiz = pasta_(DriveApp.getRootFolder(), PASTA_ARQUIVOS);
+  const pasta = pasta_(raiz, marca ? marca.nome : 'Sem marca');
+  const blob = Utilities.newBlob(Utilities.base64Decode(req.base64), req.mime || 'application/octet-stream', req.nome || 'arquivo');
+  const arquivo = pasta.createFile(blob);
+  try { arquivo.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) { /* domínio pode bloquear link público */ }
+  return { url: arquivo.getUrl(), driveId: arquivo.getId() };
+}
+
+function pasta_(mae, nome) {
+  const it = mae.getFoldersByName(nome);
+  return it.hasNext() ? it.next() : mae.createFolder(nome);
 }
 
 function excluirMarca_(id) {
@@ -187,6 +215,15 @@ function aba_(nome, campos) {
     aba.getRange(1, 1, aba.getMaxRows(), campos.length).setNumberFormat('@');
     aba.setFrozenRows(1);
   }
+  // abas criadas por versões anteriores ganham as colunas novas
+  if (aba.getMaxColumns() < campos.length) aba.insertColumnsAfter(aba.getMaxColumns(), campos.length - aba.getMaxColumns());
+  const cab = aba.getRange(1, 1, 1, campos.length).getValues()[0];
+  cab.forEach((h, i) => {
+    if (h === '') {
+      aba.getRange(1, i + 1).setValue(campos[i][1]).setFontWeight('bold');
+      aba.getRange(1, i + 1, aba.getMaxRows(), 1).setNumberFormat('@');
+    }
+  });
   return aba;
 }
 
@@ -201,6 +238,11 @@ function linhaDoId_(aba, id) {
 
 function colunaDe_(campos, chave) {
   return campos.findIndex(c => c[0] === chave) + 1;
+}
+
+function parseJSON_(txt, padrao) {
+  try { const v = JSON.parse(txt); if (v && typeof v === 'object') return v; } catch (e) {}
+  return padrao;
 }
 
 function parseFases_(txt) {

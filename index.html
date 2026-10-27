@@ -82,6 +82,7 @@ main { padding-block: 22px 60px; }
 
 .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 14px; font-weight: 500; }
 .btn:hover { border-color: var(--caramelo); }
+a.btn { text-decoration: none; color: var(--ink); display: inline-flex; align-items: center; }
 .btn.primary { background: var(--vinho); color: var(--vinho-ink); border-color: var(--vinho); }
 .btn.primary:hover { filter: brightness(1.15); }
 .btn.danger { color: var(--danger); }
@@ -214,6 +215,47 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100dvh - 2
 .thumb img { width: 72px; aspect-ratio: 3/4; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); }
 .confirm { display: flex; gap: 8px; align-items: center; color: var(--danger); font-weight: 500; }
 
+/* Área da marca */
+.subnav { display: flex; gap: 6px; flex-wrap: wrap; margin: -4px 0 18px; }
+.subnav a { text-decoration: none; color: var(--muted); border: 1px solid var(--line); background: var(--surface); padding: 6px 12px; border-radius: 999px; font-weight: 500; font-size: 13px; display: inline-flex; gap: 6px; align-items: center; }
+.subnav a:hover { color: var(--ink); border-color: var(--caramelo); }
+.subnav a[aria-current="page"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.subnav .pct { font-size: 11px; opacity: .75; font-variant-numeric: tabular-nums; }
+.sec-intro { color: var(--muted); margin: -8px 0 16px; max-width: 70ch; }
+.pf-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
+.pf-grid .full { grid-column: 1 / -1; }
+@media (max-width: 640px) { .pf-grid { grid-template-columns: 1fr; } }
+.field small { color: var(--muted); font-size: 12px; }
+.field textarea.pf { min-height: 76px; }
+.field input.filled, .field textarea.filled { border-color: color-mix(in srgb, var(--st-postado) 45%, var(--line)); }
+.save-bar { position: sticky; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 10px; align-items: center; justify-content: flex-end; margin-top: 16px; padding: 10px 12px; background: color-mix(in srgb, var(--surface) 92%, transparent); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
+.save-bar .msg { margin-right: auto; color: var(--muted); font-size: 13px; }
+.persona { border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: var(--surface); display: grid; gap: 12px; }
+.persona-head { display: flex; align-items: center; gap: 10px; }
+.persona-head .av { width: 36px; height: 36px; border-radius: 99px; background: var(--surface-2); display: grid; place-items: center; font-family: var(--f-display); font-size: 18px; flex: none; }
+.persona-head b { font-family: var(--f-display); font-weight: 400; font-size: 22px; }
+.personas { display: grid; gap: 14px; }
+.ov-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; }
+.ov-card { display: grid; gap: 10px; align-content: start; text-decoration: none; color: inherit; }
+.ov-card:hover { border-color: var(--caramelo); }
+.ov-card h3 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 24px; }
+.prog { height: 8px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
+.prog i { display: block; height: 100%; background: var(--st-postado); border-radius: 99px; }
+.ov-card ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13px; display: grid; gap: 3px; }
+.ov-head { display: flex; flex-wrap: wrap; gap: 6px 18px; color: var(--muted); margin-bottom: 18px; }
+.ov-head b { color: var(--ink); font-weight: 600; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.sw { display: grid; gap: 4px; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.sw i { width: 54px; height: 40px; border-radius: 8px; border: 1px solid var(--line); display: block; }
+.files { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.file { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+.file .prev { aspect-ratio: 16 / 10; background: var(--surface-2); display: grid; place-items: center; position: relative; overflow: hidden; color: var(--muted); font-weight: 700; letter-spacing: .08em; font-size: 13px; }
+.file .prev img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--surface-2); }
+.file .info { padding: 10px; display: grid; gap: 4px; flex: 1; }
+.file .info b { overflow-wrap: anywhere; font-weight: 600; }
+.file .acts { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 10px 10px; }
+.file-group h3 { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 18px 0 10px; font-weight: 600; }
+.upl { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; align-items: end; }
 .empty { border: 1px dashed var(--line); border-radius: 14px; padding: 36px 20px; text-align: center; color: var(--muted); display: grid; gap: 12px; justify-items: center; }
 .empty strong { font-family: var(--f-display); font-weight: 400; font-size: 26px; color: var(--ink); }
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 999px; font-weight: 500; z-index: 50; box-shadow: var(--shadow); }
@@ -320,11 +362,11 @@ function setMonth(ym) { S.month = ym; store("mes." + S.marcaId, ym); render(); }
 /* ---------- Vistas ---------- */
 const view = () => {
   const h = location.hash.replace("#", "");
-  return ["calendario", "pautas", "fluxo", "grade", "resumo", "marca"].includes(h) ? h : "calendario";
+  return ["calendario", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-config"].includes(h) ? h : "calendario";
 };
 
 function render() {
-  document.querySelectorAll("#tabs a").forEach(a => a.setAttribute("aria-current", a.getAttribute("href") === "#" + view() ? "page" : "false"));
+  document.querySelectorAll("#tabs a").forEach(a => a.setAttribute("aria-current", view().split("-")[0] === a.getAttribute("href").slice(1) ? "page" : "false"));
   const sel = $("#marcaSel");
   sel.innerHTML = S.marcas.map(m => `<option value="${esc(m.id)}"${m.id === S.marcaId ? " selected" : ""}>${esc(m.nome)}</option>`).join("") || `<option>—</option>`;
   $("#novaMarca").hidden = !S.canWrite;
@@ -344,7 +386,7 @@ function render() {
   }
   if (!S.month) S.month = pickMonth();
   const v = view();
-  app.innerHTML = senhaBox() + ({ calendario: vCal, pautas: vPautas, fluxo: vFluxo, grade: vGrade, resumo: vResumo, marca: vMarca })[v]();
+  app.innerHTML = senhaBox() + ({ calendario: vCal, pautas: vPautas, fluxo: vFluxo, grade: vGrade, resumo: vResumo, marca: vMarcaGeral, "marca-sobre": () => vPerfil("sobre"), "marca-publico": vPublico, "marca-arquivos": vArquivos, "marca-notas": () => vPerfil("notas"), "marca-config": vMarca })[v]();
   if (v === "fluxo") wireBoard();
   if (v === "pautas") { const q = $("#fq"); if (q && S.f.q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); } }
 }
@@ -541,10 +583,280 @@ function vResumo() {
     </div>`;
 }
 
+
+/* ---------- Área da marca ---------- */
+const SECOES = {
+  sobre: {
+    titulo: "Sobre a marca", curto: "Sobre",
+    intro: "O básico que qualquer pessoa da equipe precisa saber antes de criar um post.",
+    campos: [
+      ["instagram", "@ do Instagram", "text", "@marca"],
+      ["site", "Site / e-commerce", "text", "https://"],
+      ["segmento", "Segmento / nicho", "text", "Ex.: cosméticos naturais"],
+      ["cidade", "Cidade / região de atuação", "text", "Ex.: São Paulo e envio para todo o Brasil"],
+      ["desde", "Desde quando existe", "text", "Ex.: 2019"],
+      ["canais", "Onde vende", "text", "E-commerce, loja física, WhatsApp, marketplace…"],
+      ["ticket", "Ticket médio / faixa de preço", "text", "Ex.: R$ 80 a R$ 250"],
+      ["responsavel", "Contato do cliente / responsável", "text", "Nome, WhatsApp, e-mail"],
+      ["historia", "História da marca", "area", "Como começou, quem está por trás, o que motivou."],
+      ["proposito", "Missão e propósito", "area", "Por que a marca existe, além de vender."],
+      ["diferenciais", "Diferenciais", "area", "Por que comprar daqui e não do concorrente."],
+      ["carroChefe", "Produtos ou serviços carro-chefe", "area", "O que mais vende e o que a marca quer vender mais."]
+    ]
+  },
+  publico: {
+    titulo: "Público-alvo", curto: "Público-alvo",
+    intro: "Quem compra e quem a marca quer atrair. Preencha o perfil geral e crie uma persona para cada tipo de cliente.",
+    campos: [
+      ["pResumo", "Resumo do público em uma frase", "area", "Ex.: mulheres de 28 a 45 anos que cuidam da pele mas não têm tempo para rotinas longas."],
+      ["pIdade", "Faixa etária", "text", "Ex.: 28 a 45"],
+      ["pGenero", "Gênero predominante", "text", "Ex.: 80% mulheres"],
+      ["pLocal", "Onde mora", "text", "Cidades, regiões, capital ou interior"],
+      ["pClasse", "Renda / classe social", "text", "Ex.: classe B, renda familiar de R$ 8 mil a R$ 15 mil"],
+      ["pMomento", "Momento de vida", "text", "Ex.: mães de primeira viagem, recém-formadas"],
+      ["pConsciencia", "Nível de consciência", "text", "Não sabe que tem o problema / conhece o problema / compara soluções / pronta para comprar"],
+      ["pValores", "Valores e crenças", "area", "O que é importante para esse público (sustentabilidade, praticidade, status…)."],
+      ["pHorarios", "Quando está mais ativo no Instagram", "text", "Ex.: 7h às 9h e 20h às 22h"],
+      ["pPublicoAtual", "Público atual x público desejado", "area", "Quem segue hoje e quem a marca quer atrair. Use os dados do Insights."]
+    ],
+    persona: [
+      ["nome", "Nome da persona", "text", "Ex.: Camila"],
+      ["idade", "Idade", "text", "Ex.: 34"],
+      ["profissao", "Profissão", "text", "Ex.: advogada"],
+      ["familia", "Família / com quem mora", "text", "Ex.: casada, um filho de 3 anos"],
+      ["rotina", "Como é a rotina", "area", "Um dia comum dela, do acordar ao dormir."],
+      ["dores", "Dores e problemas", "area", "O que incomoda, o que tira o sono, o que ela já tentou e não funcionou."],
+      ["desejos", "Desejos e sonhos", "area", "O que ela quer sentir ou conquistar."],
+      ["objecoes", "Objeções antes de comprar", "area", "Ex.: acha caro, não confia em compra online, já teve experiência ruim."],
+      ["gatilhos", "O que faz ela comprar", "area", "Prova social, frete grátis, indicação de amiga, antes e depois…"],
+      ["conteudo", "Que conteúdo consome e onde", "area", "Reels de humor, tutoriais, podcasts, TikTok, YouTube…"],
+      ["referencias", "Perfis e marcas que ela segue", "text", "@perfil1, @perfil2"],
+      ["linguagem", "Como ela fala", "text", "Gírias, expressões, formal ou informal"],
+      ["frase", "Uma frase que ela diria", "text", "Ex.: \"Eu só queria uma rotina que coubesse no meu dia.\""]
+    ]
+  },
+  visual: {
+    titulo: "Identidade visual", curto: "Arquivos",
+    campos: [
+      ["cores", "Cores da marca (códigos HEX)", "text", "#1D1D1F, #F5F5F3, #B4763A"],
+      ["fontes", "Fontes", "text", "Títulos: … / Textos: …"],
+      ["estiloFoto", "Estilo de foto e vídeo", "area", "Luz natural, fundo neutro, close de textura, pessoas reais…"],
+      ["naoFazer", "O que não fazer no visual", "area", "Ex.: não usar fundo preto, não distorcer o logo, não usar fotos de banco de imagem."]
+    ]
+  },
+  notas: {
+    titulo: "Observações", curto: "Observações",
+    intro: "Tudo o que ajuda a criar e aprovar conteúdo sem precisar perguntar de novo ao cliente.",
+    campos: [
+      ["tom", "Tom de voz", "area", "Ex.: próximo e bem-humorado, sem gírias pesadas. Fala com \"você\"."],
+      ["palavrasUsar", "Palavras e expressões que usamos", "area", "Bordões, nomes de produtos, termos da marca."],
+      ["palavrasEvitar", "Palavras e assuntos proibidos", "area", "O que nunca falar ou prometer."],
+      ["pilares", "Pilares de conteúdo", "area", "Ex.: educação, bastidores, prova social, produto, lifestyle."],
+      ["quadros", "Quadros fixos / séries", "area", "Ex.: #TerçaDaDica, Cliente da semana."],
+      ["concorrentes", "Concorrentes e o que fazem bem", "area", "@concorrente: o que funciona no perfil dele."],
+      ["referencias", "Referências de conteúdo", "area", "Perfis e posts que inspiram (com links)."],
+      ["datas", "Datas importantes e sazonalidade", "area", "Aniversário da marca, Black Friday, Dia das Mães, coleções…"],
+      ["promocoes", "Promoções e cupons recorrentes", "area", "Ex.: cupom PRIMEIRA10, frete grátis acima de R$ 199."],
+      ["hashtags", "Hashtags", "text", "#marca #nicho"],
+      ["links", "Links úteis", "area", "Link da bio, e-commerce, WhatsApp, catálogo, pasta de fotos."],
+      ["aprovacao", "Fluxo de aprovação", "area", "Quem aprova, por onde, prazo para aprovar, dia de envio do planejamento."],
+      ["restricoes", "Restrições legais e de comunicação", "area", "Anvisa, Conar, resultados que não podem ser prometidos, uso de imagem."],
+      ["funcionou", "O que já funcionou", "area", "Posts, formatos e temas com melhor resultado."],
+      ["naoFuncionou", "O que não funcionou", "area", "O que evitar repetir."],
+      ["metas", "Metas e indicadores", "area", "Ex.: chegar a 10 mil seguidores, 3% de engajamento, 50 vendas pelo Instagram."],
+      ["livre", "Anotações livres", "area", "Qualquer outra coisa importante."]
+    ]
+  }
+};
+const TIPOS_ARQ = ["Direcionamento de Instagram", "Manual da marca", "Logotipo", "Vetores e elementos", "Paleta e fontes", "Fotos e vídeos", "Apresentações", "Briefings e contratos", "Outros"];
+const ESSENCIAIS = ["Direcionamento de Instagram", "Manual da marca", "Logotipo"];
+
+const perfilDe = m => (m && m.perfil && typeof m.perfil === "object") ? m.perfil : {};
+const arquivosDe = m => (m && Array.isArray(m.arquivos)) ? m.arquivos : [];
+const cheio = v => String(v ?? "").trim() !== "";
+
+function progresso(m) {
+  const p = perfilDe(m), arqs = arquivosDe(m);
+  const conta = (campos, obj) => ({ ok: campos.filter(c => cheio(obj[c[0]])).length, total: campos.length, faltam: campos.filter(c => !cheio(obj[c[0]])).map(c => c[1]) });
+  const sobre = conta(SECOES.sobre.campos, p);
+  const pub = conta(SECOES.publico.campos, p);
+  const pers = (p.personas || [])[0] || {};
+  const pp = conta(SECOES.publico.persona, pers);
+  const publico = { ok: pub.ok + pp.ok, total: pub.total + pp.total, faltam: (p.personas || []).length ? pub.faltam.concat(pp.faltam.map(x => "Persona: " + x.toLowerCase())) : ["Criar a primeira persona"].concat(pub.faltam) };
+  const vis = conta(SECOES.visual.campos, p);
+  const tem = ESSENCIAIS.filter(t => arqs.some(a => a.tipo === t));
+  const arquivos = { ok: vis.ok + tem.length, total: vis.total + ESSENCIAIS.length, faltam: ESSENCIAIS.filter(t => !tem.includes(t)).map(t => "Arquivo: " + t).concat(vis.faltam) };
+  const notas = conta(SECOES.notas.campos, p);
+  return { sobre, publico, arquivos, notas };
+}
+const pct = x => x.total ? Math.round(x.ok / x.total * 100) : 0;
+
+function subnav() {
+  const pr = progresso(marca()), v = view();
+  const it = [["marca", "Visão geral"], ["marca-sobre", "Sobre", pr.sobre], ["marca-publico", "Público-alvo", pr.publico], ["marca-arquivos", "Arquivos e identidade", pr.arquivos], ["marca-notas", "Observações", pr.notas], ["marca-config", "Configurações"]];
+  return `<nav class="subnav" aria-label="Seções da marca">${it.map(([h, l, x]) => `<a href="#${h}"${v === h ? ' aria-current="page"' : ""}>${l}${x ? `<span class="pct">${pct(x)}%</span>` : ""}</a>`).join("")}</nav>`;
+}
+
+function vMarcaGeral() {
+  const m = marca(), p = perfilDe(m), pr = progresso(m);
+  const total = Object.values(pr).reduce((a, x) => ({ ok: a.ok + x.ok, total: a.total + x.total }), { ok: 0, total: 0 });
+  const card = (h, titulo, x, desc) => `<a class="panel ov-card" href="#${h}">
+      <h2>${pct(x)}% preenchido</h2><h3>${titulo}</h3><div class="prog"><i style="width:${pct(x)}%"></i></div>
+      <span class="muted">${desc}</span>
+      ${x.faltam.length ? `<div><b style="font-size:12px">Para completar</b><ul>${x.faltam.slice(0, 5).map(f => `<li>${esc(f)}</li>`).join("")}${x.faltam.length > 5 ? `<li>e mais ${x.faltam.length - 5}</li>` : ""}</ul></div>` : `<b style="color:var(--st-postado)">Completo</b>`}
+    </a>`;
+  const info = [["@", p.instagram], ["Segmento", p.segmento], ["Cidade", p.cidade], ["Vende em", p.canais]].filter(x => cheio(x[1]));
+  return head(m.nome, "Marca", `<span class="muted">${pct(total)}% do perfil preenchido</span>`) + subnav() +
+    (info.length ? `<div class="ov-head">${info.map(([k, v]) => `<span>${esc(k)} <b>${esc(v)}</b></span>`).join("")}</div>` : "") +
+    `<div class="ov-grid">
+      ${card("marca-sobre", "Sobre a marca", pr.sobre, "História, diferenciais, carro-chefe e contatos.")}
+      ${card("marca-publico", "Público-alvo", pr.publico, `${(p.personas || []).length} persona(s) cadastrada(s).`)}
+      ${card("marca-arquivos", "Arquivos e identidade", pr.arquivos, `${arquivosDe(m).length} arquivo(s): direcionamento, manual, logotipo e vetores.`)}
+      ${card("marca-notas", "Observações", pr.notas, "Tom de voz, pilares, datas, aprovação e aprendizados.")}
+    </div>`;
+}
+
+function campoHtml([k, label, tipo, ph], val, extra = "") {
+  const ro = S.canWrite ? "" : " disabled", cls = cheio(val) ? " filled" : "";
+  const full = tipo === "area" ? " full" : "";
+  const input = tipo === "area"
+    ? `<textarea class="pf${cls}" data-k="${k}" rows="3" placeholder="${esc(ph)}"${ro}>${esc(val)}</textarea>`
+    : `<input class="${cls}" data-k="${k}" value="${esc(val)}" placeholder="${esc(ph)}"${ro}>`;
+  return `<label class="field${full}"><span>${esc(label)}</span>${input}${extra}</label>`;
+}
+function saveBar(label = "Salvar") {
+  return S.canWrite ? `<div class="save-bar"><span class="msg">Tudo salvo</span><button class="btn primary" type="submit">${label}</button></div>` : "";
+}
+
+function vPerfil(sec) {
+  const m = marca(), p = perfilDe(m), d = SECOES[sec];
+  return head(m.nome, d.titulo) + subnav() + `<p class="sec-intro">${esc(d.intro)}</p>
+    <form class="panel" onsubmit="event.preventDefault();salvarPerfil(this)">
+      <div class="pf-grid">${d.campos.map(c => campoHtml(c, p[c[0]])).join("")}</div>
+      ${saveBar()}
+    </form>`;
+}
+
+function personaHtml(pe = {}, i = 0) {
+  const ini = (pe.nome || "?").trim().charAt(0).toUpperCase() || "?";
+  return `<div class="persona" data-persona>
+    <div class="persona-head"><span class="av">${esc(ini)}</span><b>${esc(pe.nome || "Nova persona")}</b>
+      ${S.canWrite ? `<button class="btn sm danger" type="button" style="margin-left:auto" onclick="this.closest('[data-persona]').remove();S.dirty=true;$('#app .save-bar .msg').textContent='Alterações não salvas'">Remover</button>` : ""}</div>
+    <div class="pf-grid">${SECOES.publico.persona.map(c => campoHtml(c, pe[c[0]])).join("")}</div>
+  </div>`;
+}
+function vPublico() {
+  const m = marca(), p = perfilDe(m), d = SECOES.publico, ps = p.personas || [];
+  return head(m.nome, d.titulo) + subnav() + `<p class="sec-intro">${esc(d.intro)}</p>
+    <form onsubmit="event.preventDefault();salvarPerfil(this)">
+      <div class="panel" data-geral><h2>Perfil geral</h2><div class="pf-grid">${d.campos.map(c => campoHtml(c, p[c[0]])).join("")}</div></div>
+      <div style="display:flex;align-items:center;gap:10px;margin:22px 0 12px"><h2 style="font-family:var(--f-display);font-weight:400;font-size:28px;margin:0">Personas</h2>
+        ${S.canWrite ? `<button class="btn sm" type="button" style="margin-left:auto" onclick="addPersona()">+ Persona</button>` : ""}</div>
+      <div class="personas" id="personas">${ps.length ? ps.map(personaHtml).join("") : `<div class="empty" id="semPersona"><strong>Nenhuma persona ainda</strong><span>Uma persona é um cliente fictício que representa um grupo real. Ela ajuda a escolher temas, linguagem e CTAs.</span></div>`}</div>
+      ${saveBar("Salvar público-alvo")}
+    </form>`;
+}
+function addPersona() {
+  $("#semPersona")?.remove();
+  $("#personas").insertAdjacentHTML("beforeend", personaHtml({}));
+  $("#personas [data-persona]:last-child input").focus();
+  S.dirty = true;
+}
+
+async function salvarPerfil(form, extra = {}) {
+  const novo = { ...perfilDe(marca()) };
+  const geral = form.querySelector("[data-geral]") || form;
+  geral.querySelectorAll("[data-k]").forEach(el => { if (!el.closest("[data-persona]")) novo[el.dataset.k] = el.value.trim(); });
+  if (form.querySelector("#personas")) {
+    novo.personas = [...form.querySelectorAll("[data-persona]")].map(card => {
+      const o = {}; card.querySelectorAll("[data-k]").forEach(el => o[el.dataset.k] = el.value.trim()); return o;
+    }).filter(o => Object.values(o).some(cheio));
+  }
+  Object.assign(novo, extra);
+  const btn = form.querySelector("button[type=submit]");
+  if (btn) { btn.disabled = true; btn.textContent = "Salvando…"; }
+  try {
+    await api("salvarMarca", { marca: { ...marca(), perfil: novo } });
+    S.dirty = false; await carregar(); toast("Salvo");
+  } catch (e) { if (btn) { btn.disabled = false; btn.textContent = "Salvar"; } writeFail(e); }
+}
+
+/* Arquivos */
+const ext = a => ((a.nome || "").match(/\.([a-z0-9]{2,5})$/i) || [, ""])[1].toUpperCase();
+function arquivoCard(a) {
+  const did = a.driveId || driveId(a.url);
+  const conf = S.delArq === a.id;
+  return `<div class="file">
+    <div class="prev">${ext(a) || esc((a.tipo || "").slice(0, 3).toUpperCase())}${did ? `<img src="https://drive.google.com/thumbnail?id=${esc(did)}&sz=w400" alt="" loading="lazy" onerror="this.remove()">` : ""}</div>
+    <div class="info"><b>${esc(a.nome || "Sem nome")}</b><span class="muted" style="font-size:12px">${esc(a.tipo || "")}${a.data ? " · " + esc(brFull(a.data)) : ""}</span>${a.nota ? `<span style="font-size:12.5px">${esc(a.nota)}</span>` : ""}</div>
+    <div class="acts">
+      ${/^https?:\/\//.test(a.url || "") ? `<a class="btn sm" href="${esc(a.url)}" target="_blank" rel="noopener">Abrir</a><button class="btn sm" type="button" onclick="copiarTexto('${esc(a.url)}','Link copiado')">Copiar link</button>` : ""}
+      ${S.canWrite ? (conf ? `<span class="confirm" style="font-size:12.5px">Remover? <button class="btn sm danger" type="button" onclick="removerArquivo('${esc(a.id)}')">Sim</button><button class="btn sm" type="button" onclick="S.delArq=null;render()">Não</button></span>`
+        : `<button class="btn sm danger" type="button" onclick="S.delArq='${esc(a.id)}';render()">Remover</button>`) : ""}
+    </div></div>`;
+}
+function vArquivos() {
+  const m = marca(), p = perfilDe(m), arqs = arquivosDe(m), d = SECOES.visual;
+  const cores = (String(p.cores || "").match(/#[0-9a-f]{6}\b|#[0-9a-f]{3}\b/gi) || []);
+  const grupos = TIPOS_ARQ.map(t => [t, arqs.filter(a => (TIPOS_ARQ.includes(a.tipo) ? a.tipo : "Outros") === t)]).filter(g => g[1].length);
+  const ro = S.canWrite ? "" : " disabled";
+  return head(m.nome, "Arquivos e identidade") + subnav() +
+    `<p class="sec-intro">Direcionamento de Instagram, manual da marca, logotipos, vetores e tudo que a equipe precisa ter à mão. Os arquivos enviados vão para uma pasta no Google Drive, compartilhada com quem tiver o link.</p>
+    ${S.canWrite ? `<form class="panel" id="uplForm" onsubmit="event.preventDefault();adicionarArquivo()" style="margin-bottom:16px">
+      <h2>Adicionar arquivo</h2>
+      <div class="upl">
+        <label class="field"><span>Tipo</span><select id="aTipo">${TIPOS_ARQ.map(t => `<option>${t}</option>`).join("")}</select></label>
+        <label class="field"><span>Nome</span><input id="aNome" placeholder="Ex.: Logo horizontal (vetor)"></label>
+        <label class="field"><span>Enviar do computador</span><input id="aFile" type="file"></label>
+        <label class="field"><span>ou colar um link</span><input id="aUrl" placeholder="Drive, Canva, Figma, Dropbox…"></label>
+        <label class="field" style="grid-column:1/-1"><span>Observação (opcional)</span><input id="aNota" placeholder="Ex.: usar a versão branca sobre fundo escuro"></label>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn primary" type="submit" id="aBtn">Adicionar</button></div>
+    </form>` : ""}
+    ${grupos.length ? grupos.map(([t, as]) => `<section class="file-group"><h3>${esc(t)} · ${as.length}</h3><div class="files">${as.map(arquivoCard).join("")}</div></section>`).join("")
+      : `<div class="empty"><strong>Nenhum arquivo ainda</strong><span>Comece pelo direcionamento de Instagram, o manual da marca e o logotipo em vetor (.ai, .svg, .pdf ou .eps).</span></div>`}
+    <form class="panel" style="margin-top:22px" onsubmit="event.preventDefault();salvarPerfil(this)">
+      <h2>Identidade visual</h2>
+      ${cores.length ? `<div class="swatches" style="margin-bottom:12px">${cores.map(c => `<span class="sw"><i style="background:${esc(c)}"></i>${esc(c.toUpperCase())}</span>`).join("")}</div>` : ""}
+      <div class="pf-grid">${d.campos.map(c => campoHtml(c, p[c[0]])).join("")}</div>
+      ${saveBar("Salvar identidade visual")}
+    </form>`;
+}
+function lerBase64(file) {
+  return new Promise((ok, err) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1] || ""); r.onerror = err; r.readAsDataURL(file); });
+}
+async function adicionarArquivo() {
+  const file = $("#aFile").files[0], url = $("#aUrl").value.trim();
+  if (!file && !url) return toast("Escolha um arquivo ou cole um link.");
+  if (file && file.size > 25 * 1024 * 1024) return toast("Arquivo grande demais (máx. 25 MB). Envie pelo Drive e cole o link.");
+  const btn = $("#aBtn"); btn.disabled = true;
+  try {
+    const item = { id: "a" + Date.now().toString(36), tipo: $("#aTipo").value, nome: $("#aNome").value.trim() || (file ? file.name : url), nota: $("#aNota").value.trim(), data: iso(new Date()), url };
+    if (file) {
+      btn.textContent = "Enviando…";
+      const r = await api("enviarArquivo", { marcaId: S.marcaId, nome: file.name, mime: file.type || "application/octet-stream", base64: await lerBase64(file) });
+      item.url = r.url; item.driveId = r.driveId;
+      if (!$("#aNome").value.trim()) item.nome = file.name;
+    }
+    btn.textContent = "Salvando…";
+    await api("salvarMarca", { marca: { ...marca(), arquivos: arquivosDe(marca()).concat(item) } });
+    S.dirty = false; await carregar(); toast("Arquivo adicionado");
+  } catch (e) { btn.disabled = false; btn.textContent = "Adicionar"; writeFail(e); }
+}
+async function removerArquivo(id) {
+  try {
+    await api("salvarMarca", { marca: { ...marca(), arquivos: arquivosDe(marca()).filter(a => a.id !== id) } });
+    S.delArq = null; await carregar(); toast("Arquivo removido da lista");
+  } catch (e) { writeFail(e); }
+}
+async function copiarTexto(t, ok) {
+  try { await navigator.clipboard.writeText(t); toast(ok); } catch (e) { toast(t); }
+}
+
 function vMarca() {
   const m = marca(), ro = S.canWrite ? "" : " disabled";
   const fases = fasesDe(m);
-  return head("Configurações", esc(m.nome)) +
+  return head(m.nome, "Configurações") + subnav() +
     `<form id="marcaForm" class="form-grid" onsubmit="event.preventDefault();salvarMarca()">
       <div class="panel" style="display:grid;gap:12px">
         <label class="field"><span>Nome da marca</span><input id="mNome" required value="${esc(m.nome)}"${ro}></label>
@@ -581,7 +893,7 @@ async function salvarMarca() {
     produtos: $("#mProd").value.split("\n").map(s => s.trim()).filter(Boolean),
     fases, observacoes: $("#mObs").value, atualizado: Date.now()
   };
-  try { await api("salvarMarca", { marca: { ...marca(), ...body } }); await carregar(); toast("Marca salva"); } catch (e) { writeFail(e); }
+  try { await api("salvarMarca", { marca: { ...marca(), ...body } }); S.dirty = false; await carregar(); toast("Marca salva"); } catch (e) { writeFail(e); }
 }
 async function novaMarca() {
   const n = S.marcas.length + 1;
@@ -589,7 +901,7 @@ async function novaMarca() {
     const r = await api("salvarMarca", { marca: { nome: `Marca ${n}`, produtos: [], fases: DEFAULT_FASES, observacoes: "", criado: Date.now() } });
     S.marcaId = r.id; store("marca", r.id); S.month = null;
     await carregar();
-    location.hash = "#marca"; toast("Marca criada. Dê um nome a ela.");
+    location.hash = "#marca-config"; toast("Marca criada. Dê um nome a ela.");
   } catch (e) { writeFail(e); }
 }
 async function excluirMarca() {
@@ -716,9 +1028,10 @@ function senhaBox() {
 }
 
 /* ---------- Eventos ---------- */
-$("#marcaSel").addEventListener("change", e => { S.marcaId = e.target.value; store("marca", S.marcaId); S.month = null; S.f = { status: "", formato: "", produto: "", q: "" }; S.confirmDel = false; render(); });
+$("#marcaSel").addEventListener("change", e => { S.marcaId = e.target.value; store("marca", S.marcaId); S.month = null; S.f = { status: "", formato: "", produto: "", q: "" }; S.confirmDel = false; S.dirty = false; render(); });
 $("#novaMarca").addEventListener("click", novaMarca);
-addEventListener("hashchange", () => { S.confirmDel = false; render(); });
+addEventListener("hashchange", () => { S.confirmDel = false; S.delArq = null; S.dirty = false; render(); window.scrollTo(0, 0); });
+document.addEventListener("input", e => { if (e.target.closest("#app form")) { S.dirty = true; const m = $("#app .save-bar .msg"); if (m) m.textContent = "Alterações não salvas"; } });
 $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg").close(); });
 
 /* ---------- Planilha (Google Apps Script) ---------- */
@@ -744,7 +1057,7 @@ async function carregar() {
   } catch (e) {
     if (!S.loadedP) S.failed = true; else toast("Sem conexão com a planilha agora.");
   }
-  if (!$("#dlg").open) render();
+  if (!$("#dlg").open && !S.dirty) render();
 }
 setInterval(() => { if (API && document.visibilityState === "visible" && !$("#dlg").open) carregar(); }, 30000);
 carregar();

@@ -46,6 +46,21 @@ Sem senha, qualquer pessoa com o link pode editar e apagar pautas. Para exigir u
 
 Quem só olha continua vendo tudo. Na primeira vez que alguém tentar salvar, o site pede a senha e guarda nesse navegador.
 
+## Área da marca
+
+Na aba **Marca** ficam:
+
+- **Visão geral:** quanto de cada parte já foi preenchido e o que falta completar.
+- **Sobre:** @, site, segmento, história, diferenciais, carro-chefe, contato do cliente.
+- **Público-alvo:** perfil geral do público e personas detalhadas (rotina, dores, desejos, objeções, gatilhos de compra, conteúdo que consome…).
+- **Arquivos e identidade:** direcionamento de Instagram, manual da marca, logotipos, vetores, fotos. Dá para enviar o arquivo do computador (até 25 MB) ou colar um link. Os arquivos enviados vão para a pasta **Planejamento de Conteúdo - Arquivos** no seu Google Drive, uma subpasta por marca, compartilhada com quem tiver o link. Também guarda cores (com amostras), fontes e estilo de foto.
+- **Observações:** tom de voz, palavras proibidas, pilares, quadros fixos, concorrentes, datas, promoções, fluxo de aprovação, restrições legais, o que funcionou e metas.
+- **Configurações:** nome, produtos, fases do mês.
+
+Tudo fica na aba `MARCAS` da planilha (colunas Perfil e Arquivos).
+
+**Importante:** o envio de arquivos usa o Google Drive. Se você já tinha implantado uma versão anterior do script, depois de colar o código novo rode **configurar** de novo para autorizar o acesso ao Drive, e depois faça **Implantar → Gerenciar implantações → lápis → Versão: Nova versão → Implantar**.
+
 ## Dicas
 
 - **Imagens na grade:** cole no campo Criativo o link de um arquivo do Google Drive compartilhado como "Qualquer pessoa com o link". A prévia aparece na pauta e na grade.
