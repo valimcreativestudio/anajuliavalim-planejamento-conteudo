@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Planejamento de Conteúdo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: faixa de cabeçalho escura com marca + abas; abaixo, a visão ativa (calendário, pautas, fluxo, grade, resumo, marca) */
+:root {
+  --bg: #F5F5F3;
+  --surface: #FFFFFF;
+  --surface-2: #EDEDEA;
+  --ink: #1D1D1F;
+  --muted: #6E6E73;
+  --line: #E0E0DC;
+  --vinho: #26262A;
+  --vinho-ink: #F5F5F3;
+  --verde: #6B7470;
+  --caramelo: #55555B;
+  --manteiga: #D6D6D2;
+  --danger: #B3362F;
+  --st-ideia: #9A9A9E;
+  --st-validado: #A08A5C;
+  --st-produzido: #5F7891;
+  --st-aprovado: #7E7096;
+  --st-agendado: #946672;
+  --st-postado: #5F7D66;
+  --shadow: 0 10px 30px rgba(20, 20, 22, .12);
+  --f-display: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+  --f-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141415; --surface: #1E1E20; --surface-2: #27272A; --ink: #EDEDEB; --muted: #A1A1A6; --line: #333336;
+    --vinho: #2A2A2E; --vinho-ink: #F0F0EE; --verde: #A3ABA7; --caramelo: #B8B8BD; --manteiga: #45454A; --danger: #EE7B70;
+    --st-ideia: #A1A1A6; --st-validado: #CDB98E; --st-produzido: #96AFC8; --st-aprovado: #B2A6CC; --st-agendado: #C99BA7; --st-postado: #98B5A0;
+    --shadow: 0 10px 30px rgba(0, 0, 0, .45);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141415; --surface: #1E1E20; --surface-2: #27272A; --ink: #EDEDEB; --muted: #A1A1A6; --line: #333336;
+  --vinho: #2A2A2E; --vinho-ink: #F0F0EE; --verde: #A3ABA7; --caramelo: #B8B8BD; --manteiga: #45454A; --danger: #EE7B70;
+  --st-ideia: #A1A1A6; --st-validado: #CDB98E; --st-produzido: #96AFC8; --st-aprovado: #B2A6CC; --st-agendado: #C99BA7; --st-postado: #98B5A0;
+  --shadow: 0 10px 30px rgba(0, 0, 0, .45);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { color-scheme: light; }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 14px; line-height: 1.45; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--vinho); }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--caramelo); outline-offset: 2px; }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1320px; margin: 0 auto; }
+
+/* Cabeçalho */
+header.top { background: var(--vinho); color: var(--vinho-ink); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; }
+header.top .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding-block: 12px 0; }
+.brand { font-family: var(--f-display); font-size: 26px; line-height: 1; letter-spacing: .01em; white-space: nowrap; }
+.brand em { color: var(--manteiga); }
+.marca-pick { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.marca-pick select { background: transparent; border: 1px solid color-mix(in srgb, var(--vinho-ink) 40%, transparent); color: var(--vinho-ink); border-radius: 999px; padding: 6px 12px; max-width: 220px; }
+.marca-pick select option { color: #1D1D1F; background: #fff; }
+.ghost-light { background: transparent; border: 1px solid color-mix(in srgb, var(--vinho-ink) 40%, transparent); color: var(--vinho-ink); border-radius: 999px; padding: 6px 12px; }
+.ghost-light:hover { background: color-mix(in srgb, var(--vinho-ink) 12%, transparent); }
+nav.tabs { flex-basis: 100%; display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+nav.tabs a { color: color-mix(in srgb, var(--vinho-ink) 72%, transparent); text-decoration: none; padding: 10px 14px 11px; border-radius: 10px 10px 0 0; white-space: nowrap; font-weight: 500; }
+nav.tabs a:hover { color: var(--vinho-ink); }
+nav.tabs a[aria-current="page"] { background: var(--bg); color: var(--ink); }
+
+main { padding-block: 22px 60px; }
+.view-head { display: flex; flex-wrap: wrap; align-items: end; gap: 12px 20px; margin-bottom: 18px; }
+.view-head h1 { font-family: var(--f-display); font-weight: 400; font-size: clamp(30px, 4vw, 42px); line-height: 1; margin: 0; text-wrap: balance; }
+.view-head h1 small { display: block; font-family: var(--f-body); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+.view-head .tools { margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 14px; font-weight: 500; }
+.btn:hover { border-color: var(--caramelo); }
+.btn.primary { background: var(--vinho); color: var(--vinho-ink); border-color: var(--vinho); }
+.btn.primary:hover { filter: brightness(1.15); }
+.btn.danger { color: var(--danger); }
+.btn.sm { padding: 5px 10px; font-size: 13px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.month-nav { display: flex; align-items: center; gap: 4px; }
+.month-nav .lbl { min-width: 150px; text-align: center; font-weight: 600; }
+.icon-btn { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-size: 16px; line-height: 1; }
+
+/* Fases */
+.fases { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-bottom: 14px; font-size: 13px; color: var(--muted); }
+.fases span { display: inline-flex; align-items: center; gap: 6px; }
+.fases i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+/* Calendário */
+.cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--line); gap: 1px; }
+.cal .dow { background: var(--surface-2); padding: 8px 10px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
+.day { background: var(--surface); min-height: 128px; padding: 8px; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.day.out { background: var(--bg); }
+.day.out .dnum { opacity: .45; }
+.day.today .dnum b { background: var(--ink); color: var(--bg); }
+.dhead { display: flex; align-items: center; justify-content: space-between; }
+.dnum { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); }
+.dnum b { display: inline-grid; place-items: center; min-width: 24px; height: 24px; border-radius: 999px; font-weight: 600; color: var(--ink); }
+.dnum .wd { display: none; }
+.add-day { opacity: 0; border: 0; background: transparent; color: var(--muted); font-size: 18px; width: 24px; height: 24px; border-radius: 6px; line-height: 1; }
+.day:hover .add-day, .add-day:focus-visible { opacity: 1; }
+.add-day:hover { background: var(--surface-2); color: var(--ink); }
+.chip { --fase: var(--line); text-align: left; border: 0; border-left: 4px solid var(--fase); background: color-mix(in srgb, var(--fase) 16%, var(--surface)); border-radius: 6px; padding: 5px 7px; font-size: 12.5px; line-height: 1.3; display: grid; gap: 2px; width: 100%; }
+.chip:hover { background: color-mix(in srgb, var(--fase) 28%, var(--surface)); }
+.chip .meta { display: flex; align-items: center; gap: 6px; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.chip .t { overflow-wrap: anywhere; }
+.chip .t b { font-weight: 600; }
+.dot { width: 8px; height: 8px; border-radius: 99px; display: inline-block; flex: none; }
+.fmt { display: inline-flex; align-items: center; gap: 4px; }
+@media (max-width: 760px) {
+  .cal { grid-template-columns: 1fr; }
+  .cal .dow { display: none; }
+  .day { min-height: 0; flex-direction: row; flex-wrap: wrap; align-items: flex-start; }
+  .day .dhead { width: 100%; }
+  .day.out:not(.has) { display: none; }
+  .day:not(.has) { padding-block: 6px; }
+  .dnum .wd { display: inline; margin-left: 6px; }
+  .add-day { opacity: 1; }
+}
+
+/* Tabela */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.filters select, .filters input, .field input, .field select, .field textarea { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 10px; min-width: 0; }
+.filters input { flex: 1 1 200px; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 980px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: var(--surface-2); position: sticky; top: 0; }
+tbody tr { cursor: pointer; }
+tbody tr:hover td { background: color-mix(in srgb, var(--manteiga) 22%, var(--surface)); }
+tbody tr:last-child td { border-bottom: 0; }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.st-sel { border: 1px solid var(--line); border-radius: 999px; padding: 3px 8px; background: var(--surface); font-size: 12.5px; font-weight: 600; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: color-mix(in srgb, var(--c) 16%, var(--surface)); color: var(--ink); }
+.pill .dot { background: var(--c); }
+a.lnk { color: var(--caramelo); font-weight: 600; text-decoration: none; }
+a.lnk:hover { text-decoration: underline; }
+.muted { color: var(--muted); }
+
+/* Fluxo */
+.board { display: grid; grid-template-columns: repeat(6, minmax(220px, 1fr)); gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+.col { background: var(--surface-2); border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 160px; }
+.col.over { outline: 2px dashed var(--caramelo); outline-offset: -2px; }
+.col h3 { margin: 2px 4px 4px; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+.col h3 .n { margin-left: auto; color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; display: grid; gap: 4px; cursor: grab; }
+.card:hover { border-color: var(--caramelo); }
+.card .meta { font-size: 11px; color: var(--muted); display: flex; gap: 8px; align-items: center; font-variant-numeric: tabular-nums; }
+.card .t { font-weight: 600; font-size: 13px; }
+.card .mv { display: flex; gap: 4px; justify-content: flex-end; }
+.card .mv button { border: 1px solid var(--line); background: transparent; border-radius: 6px; width: 26px; height: 22px; font-size: 12px; color: var(--muted); }
+
+/* Grade */
+.grade-box { max-width: 520px; margin: 0 auto; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px 0 0; overflow: hidden; }
+.profile { display: flex; align-items: center; gap: 14px; padding: 0 16px 14px; }
+.avatar { width: 58px; height: 58px; border-radius: 999px; background: var(--vinho); color: var(--vinho-ink); display: grid; place-items: center; font-family: var(--f-display); font-size: 26px; flex: none; }
+.profile b { font-size: 15px; }
+.grade { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; }
+.tile { position: relative; aspect-ratio: 3 / 4; max-width: 100%; border: 0; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; text-align: left; overflow: hidden; background: color-mix(in srgb, var(--fase, var(--caramelo)) 22%, var(--surface-2)); }
+.tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tile .tt { position: relative; font-family: var(--f-display); font-size: clamp(14px, 3.4vw, 19px); line-height: 1.08; overflow-wrap: anywhere; }
+.tile .tm { position: relative; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.tile.has-img .tt, .tile.has-img .tm { display: none; }
+.tile .fic { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,.45); color: #fff; font-size: 10px; border-radius: 4px; padding: 1px 5px; font-weight: 600; }
+.tile:hover { filter: brightness(.96); }
+.grade-note { max-width: 520px; margin: 12px auto 0; font-size: 12.5px; color: var(--muted); text-align: center; }
+
+/* Resumo */
+.sum-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; min-width: 0; }
+.panel h2 { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; font-weight: 600; }
+.big { font-family: var(--f-display); font-size: 64px; line-height: .9; }
+.bars { display: grid; gap: 8px; }
+.bar { display: grid; grid-template-columns: minmax(0, 9em) 1fr 2.2em; gap: 10px; align-items: center; font-size: 13px; }
+.bar .lb { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar .tr { height: 10px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
+.bar .fl { height: 100%; border-radius: 99px; background: var(--c, var(--caramelo)); }
+.bar .v { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.obs { white-space: pre-wrap; margin: 0; }
+
+/* Marca */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.field { display: grid; gap: 5px; min-width: 0; }
+.field > span { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.field textarea { resize: vertical; min-height: 80px; line-height: 1.45; }
+.fase-row { display: flex; gap: 8px; align-items: center; }
+.fase-row input[type=text] { flex: 1; min-width: 0; }
+.fase-row input[type=color] { width: 40px; height: 36px; border: 1px solid var(--line); border-radius: 8px; padding: 2px; background: var(--surface); }
+
+/* Editor */
+dialog { border: 0; padding: 0; border-radius: 18px; background: var(--surface); color: var(--ink); box-shadow: var(--shadow); width: min(780px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); }
+dialog::backdrop { background: rgba(15, 15, 17, .55); }
+dialog form { display: flex; flex-direction: column; max-height: calc(100dvh - 24px); }
+.dlg-head { padding: 18px 20px 12px; display: flex; align-items: start; gap: 12px; border-bottom: 1px solid var(--line); }
+.dlg-head h2 { font-family: var(--f-display); font-weight: 400; font-size: 28px; line-height: 1.05; margin: 0; text-wrap: balance; }
+.dlg-head .x { margin-left: auto; }
+.dlg-body { padding: 16px 20px; overflow-y: auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
+.dlg-body .full { grid-column: 1 / -1; }
+.dlg-body h4 { grid-column: 1 / -1; margin: 8px 0 -4px; font-size: 12px; color: var(--caramelo); letter-spacing: .12em; text-transform: uppercase; }
+@media (max-width: 560px) { .dlg-body { grid-template-columns: 1fr; } }
+.dlg-foot { padding: 12px 20px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.dlg-foot .sp { flex: 1; }
+.thumb { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.thumb img { width: 72px; aspect-ratio: 3/4; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); }
+.confirm { display: flex; gap: 8px; align-items: center; color: var(--danger); font-weight: 500; }
+
+.empty { border: 1px dashed var(--line); border-radius: 14px; padding: 36px 20px; text-align: center; color: var(--muted); display: grid; gap: 12px; justify-items: center; }
+.empty strong { font-family: var(--f-display); font-weight: 400; font-size: 26px; color: var(--ink); }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 999px; font-weight: 500; z-index: 50; box-shadow: var(--shadow); }
+@media (prefers-reduced-motion: no-preference) { .chip, .card, .tile, .btn { transition: background .15s, border-color .15s, filter .15s; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand">Planejamento <em>de conteúdo</em></div>
+    <div class="marca-pick">
+      <label for="marcaSel" class="muted" style="color:inherit;opacity:.75;font-size:13px">Marca</label>
+      <select id="marcaSel"></select>
+      <button class="ghost-light" id="novaMarca" type="button">+ Nova marca</button>
+    </div>
+    <nav class="tabs" id="tabs">
+      <a href="#calendario">Calendário</a>
+      <a href="#pautas">Pautas</a>
+      <a href="#fluxo">Fluxo de produção</a>
+      <a href="#grade">Grade do Insta</a>
+      <a href="#resumo">Resumo do mês</a>
+      <a href="#marca">Marca</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap" id="app">
+  <div class="empty"><strong>Carregando o planejamento…</strong><span>As marcas e pautas aparecem aqui assim que a planilha responder.</span></div>
+</main>
+
+<dialog id="dlg"><form id="dlgForm" method="dialog"></form></dialog>
+<div class="toast" id="toast" hidden></div>
+
+<script src="config.js"></script>
+<script>
+const STATUS = ["Ideia", "Validado", "Produzido", "Aprovado", "Agendado", "Postado"];
+const ST_VAR = { Ideia: "--st-ideia", Validado: "--st-validado", Produzido: "--st-produzido", Aprovado: "--st-aprovado", Agendado: "--st-agendado", Postado: "--st-postado" };
+const FORMATOS = ["Estático", "Carrossel", "Vídeo"];
+const FMT_ICON = { "Estático": "▢", "Carrossel": "▤", "Vídeo": "▶" };
+const OBJETIVOS = ["Descoberta", "Desejo", "Consideração", "Educação", "Autoridade", "Quebra de objeção", "Prova social", "Conversão"];
+const REDES = ["Feed", "Feed + Stories", "Instagram + TikTok", "Reels", "Stories", "TikTok"];
+const WD = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+const DEFAULT_FASES = [
+  { nome: "Lançamento", cor: "#A9A9A4" },
+  { nome: "Aquecimento da promoção", cor: "#8E9690" },
+  { nome: "Contagem regressiva", cor: "#8C8A96" },
+  { nome: "Semana da promoção", cor: "#6B6B70" },
+  { nome: "Última chamada", cor: "#3F3F43" }
+];
+
+const S = {
+  canWrite: true, askSenha: false,
+  marcas: [], posts: [], loadedM: false, loadedP: false, failed: false,
+  marcaId: store("marca"), month: null,
+  f: { status: "", formato: "", produto: "", q: "" },
+  confirmDel: false
+};
+
+function store(k, v) {
+  try {
+    if (v === undefined) return localStorage.getItem("plan." + k);
+    localStorage.setItem("plan." + k, v);
+  } catch (e) { return null; }
+}
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pad = n => String(n).padStart(2, "0");
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parse = s => { const [y, m, d] = (s || "").split("-").map(Number); return new Date(y, (m || 1) - 1, d || 1); };
+const br = s => s ? `${s.slice(8, 10)}/${s.slice(5, 7)}` : "";
+const brFull = s => s ? `${s.slice(8, 10)}/${s.slice(5, 7)}/${s.slice(0, 4)}` : "";
+const wd = s => s ? WD[parse(s).getDay()] : "";
+const monthLabel = ym => { const t = parse(ym + "-01").toLocaleDateString("pt-BR", { month: "long", year: "numeric" }); return t.charAt(0).toUpperCase() + t.slice(1); };
+const shiftMonth = (ym, n) => { const d = parse(ym + "-01"); d.setMonth(d.getMonth() + n); return iso(d).slice(0, 7); };
+const stColor = st => `var(${ST_VAR[st] || "--st-ideia"})`;
+const nm = p => p.produto ? `${p.produto}: ${p.postagem || "sem título"}` : (p.postagem || "sem título");
+
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.hidden = false;
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 2200);
+}
+
+const marca = () => S.marcas.find(m => m.id === S.marcaId) || null;
+const fasesDe = m => (m && Array.isArray(m.fases) && m.fases.length) ? m.fases : DEFAULT_FASES;
+const faseCor = (m, nome) => (fasesDe(m).find(f => f.nome === nome) || {}).cor || "var(--line)";
+const postsMarca = () => S.posts.filter(p => p.marcaId === S.marcaId).sort((a, b) => (a.data || "").localeCompare(b.data || "") || (a.ordem || 0) - (b.ordem || 0));
+const postsMes = () => postsMarca().filter(p => (p.data || "").startsWith(S.month));
+const produtosDe = m => {
+  const set = new Set((m && m.produtos) || []);
+  postsMarca().forEach(p => p.produto && set.add(p.produto));
+  return [...set];
+};
+
+function pickMonth() {
+  const saved = store("mes." + S.marcaId);
+  if (saved) return saved;
+  const today = iso(new Date()).slice(0, 7);
+  const ps = postsMarca();
+  if (!ps.length || ps.some(p => p.data.startsWith(today))) return today;
+  const next = ps.find(p => p.data.slice(0, 7) >= today);
+  return (next || ps[ps.length - 1]).data.slice(0, 7);
+}
+function setMonth(ym) { S.month = ym; store("mes." + S.marcaId, ym); render(); }
+
+/* ---------- Vistas ---------- */
+const view = () => {
+  const h = location.hash.replace("#", "");
+  return ["calendario", "pautas", "fluxo", "grade", "resumo", "marca"].includes(h) ? h : "calendario";
+};
+
+function render() {
+  document.querySelectorAll("#tabs a").forEach(a => a.setAttribute("aria-current", a.getAttribute("href") === "#" + view() ? "page" : "false"));
+  const sel = $("#marcaSel");
+  sel.innerHTML = S.marcas.map(m => `<option value="${esc(m.id)}"${m.id === S.marcaId ? " selected" : ""}>${esc(m.nome)}</option>`).join("") || `<option>—</option>`;
+  $("#novaMarca").hidden = !S.canWrite;
+  const app = $("#app");
+  if (!API) {
+    app.innerHTML = `<div class="empty"><strong>Falta conectar a planilha</strong><span>Abra o arquivo <b>config.js</b> e cole em API_URL o endereço do App da Web do Google Apps Script. O passo a passo está no LEIAME.</span></div>`;
+    return;
+  }
+  if (S.failed) {
+    app.innerHTML = `<div class="empty"><strong>Não consegui ler a planilha</strong><span>Confira se o endereço em config.js está certo e se o App da Web foi implantado com acesso para "Qualquer pessoa".</span><button class="btn" type="button" onclick="S.failed=false;carregar()">Tentar de novo</button></div>`;
+    return;
+  }
+  if (!S.loadedM || !S.loadedP) return;
+  if (!marca()) {
+    app.innerHTML = `<div class="empty"><strong>Nenhuma marca ainda</strong><span>Crie a primeira marca para começar a planejar o mês.</span>${S.canWrite ? `<button class="btn primary" type="button" onclick="novaMarca()">Criar marca</button>` : ""}</div>`;
+    return;
+  }
+  if (!S.month) S.month = pickMonth();
+  const v = view();
+  app.innerHTML = senhaBox() + ({ calendario: vCal, pautas: vPautas, fluxo: vFluxo, grade: vGrade, resumo: vResumo, marca: vMarca })[v]();
+  if (v === "fluxo") wireBoard();
+  if (v === "pautas") { const q = $("#fq"); if (q && S.f.q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); } }
+}
+
+function monthNav() {
+  return `<div class="month-nav">
+    <button class="icon-btn" type="button" aria-label="Mês anterior" onclick="setMonth(shiftMonth(S.month,-1))">‹</button>
+    <div class="lbl">${esc(monthLabel(S.month))}</div>
+    <button class="icon-btn" type="button" aria-label="Próximo mês" onclick="setMonth(shiftMonth(S.month,1))">›</button>
+  </div>`;
+}
+function head(eyebrow, title, extra = "") {
+  return `<div class="view-head"><h1><small>${esc(eyebrow)}</small>${title}</h1><div class="tools">${extra}</div></div>`;
+}
+const addBtn = (date = "") => S.canWrite ? `<button class="btn primary" type="button" onclick="openEditor(null,'${date}')">+ Nova pauta</button>` : "";
+
+function legendaFases() {
+  const m = marca();
+  return `<div class="fases"><b style="color:var(--ink);font-weight:600">Fases do mês</b>${fasesDe(m).map(f => `<span><i style="background:${esc(f.cor)}"></i>${esc(f.nome)}</span>`).join("")}</div>`;
+}
+
+function vCal() {
+  const m = marca();
+  const first = parse(S.month + "-01");
+  const start = new Date(first); start.setDate(1 - first.getDay());
+  const last = new Date(first.getFullYear(), first.getMonth() + 1, 0);
+  const end = new Date(last); end.setDate(last.getDate() + (6 - last.getDay()));
+  const byDay = {};
+  postsMarca().forEach(p => (byDay[p.data] ||= []).push(p));
+  const today = iso(new Date());
+  let cells = WD.map(d => `<div class="dow">${d}</div>`).join("");
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const k = iso(d), ps = byDay[k] || [];
+    const out = d.getMonth() !== first.getMonth();
+    ps.sort((a, b) => FORMATOS.indexOf(a.formato) - FORMATOS.indexOf(b.formato));
+    cells += `<div class="day${out ? " out" : ""}${ps.length ? " has" : ""}${k === today ? " today" : ""}">
+      <div class="dhead"><span class="dnum"><b>${d.getDate()}</b><span class="wd">${WD[d.getDay()]}</span></span>
+      ${S.canWrite ? `<button class="add-day" type="button" aria-label="Nova pauta em ${br(k)}" onclick="openEditor(null,'${k}')">+</button>` : ""}</div>
+      ${ps.map(p => `<button class="chip" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="openEditor('${esc(p.id)}')">
+        <span class="meta"><span class="fmt">${FMT_ICON[p.formato] || ""} ${esc(p.formato || "")}</span><span class="dot" style="background:${stColor(p.status)}" title="${esc(p.status)}"></span></span>
+        <span class="t"><b>${esc(p.produto || "")}${p.produto ? ":" : ""}</b> ${esc(p.postagem || "sem título")}</span></button>`).join("")}
+    </div>`;
+  }
+  const n = postsMes().length;
+  return head(m.nome, "Calendário", monthNav() + addBtn()) + legendaFases() +
+    `<div class="cal">${cells}</div>
+    <p class="muted" style="margin-top:12px">${n} ${n === 1 ? "publicação" : "publicações"} em ${esc(monthLabel(S.month))}. A cor de cada post indica a fase; a bolinha, o status. Clique num post para abrir o detalhamento.</p>`;
+}
+
+function filtered() {
+  const q = S.f.q.trim().toLowerCase();
+  return postsMes().filter(p =>
+    (!S.f.status || p.status === S.f.status) &&
+    (!S.f.formato || p.formato === S.f.formato) &&
+    (!S.f.produto || p.produto === S.f.produto) &&
+    (!q || [p.postagem, p.pauta, p.legenda, p.produto, p.observacao].join(" ").toLowerCase().includes(q)));
+}
+function setF(k, v) { S.f[k] = v; render(); }
+
+function vPautas() {
+  const m = marca(), ps = filtered();
+  const opt = (arr, cur, all) => `<option value="">${all}</option>` + arr.map(x => `<option${x === cur ? " selected" : ""}>${esc(x)}</option>`).join("");
+  const rows = ps.map(p => `<tr onclick="openEditor('${esc(p.id)}')">
+    <td onclick="event.stopPropagation()">${S.canWrite
+      ? `<select class="st-sel" aria-label="Status" style="color:${stColor(p.status)}" onchange="setStatus('${esc(p.id)}',this.value)">${STATUS.map(s => `<option${s === p.status ? " selected" : ""}>${s}</option>`).join("")}</select>`
+      : `<span class="pill" style="--c:${stColor(p.status)}"><span class="dot"></span>${esc(p.status)}</span>`}</td>
+    <td class="num">${brFull(p.data)}<div class="muted">${wd(p.data)}</div></td>
+    <td><span class="pill" style="--c:${esc(faseCor(m, p.fase))}"><span class="dot"></span>${esc(p.fase || "—")}</span></td>
+    <td>${FMT_ICON[p.formato] || ""} ${esc(p.formato)}</td>
+    <td>${esc(p.produto)}</td>
+    <td><b>${esc(p.postagem)}</b><div class="muted">${esc(p.pauta)}</div></td>
+    <td>${esc(p.objetivo)}</td>
+    <td>${esc(p.cta)}</td>
+    <td>${esc(p.rede)}</td>
+    <td onclick="event.stopPropagation()">${/^https?:\/\//.test(p.criativo || "") ? `<a class="lnk" href="${esc(p.criativo)}" target="_blank" rel="noopener">Abrir</a>` : `<span class="muted">—</span>`}</td>
+  </tr>`).join("");
+  return head(m.nome, "Pautas do mês", monthNav() + `<button class="btn" type="button" onclick="copiarTabela()">Copiar para planilha</button>` + addBtn()) +
+    `<div class="filters">
+      <input id="fq" type="search" placeholder="Buscar em título, pauta, legenda…" value="${esc(S.f.q)}" oninput="clearTimeout(window._fq);window._fq=setTimeout(()=>setF('q',this.value),250)">
+      <select id="fst" aria-label="Status" onchange="setF('status',this.value)">${opt(STATUS, S.f.status, "Todos os status")}</select>
+      <select id="ffm" aria-label="Formato" onchange="setF('formato',this.value)">${opt(FORMATOS, S.f.formato, "Todos os formatos")}</select>
+      <select id="fpr" aria-label="Produto" onchange="setF('produto',this.value)">${opt(produtosDe(m), S.f.produto, "Todos os produtos")}</select>
+    </div>` +
+    (ps.length ? `<div class="table-wrap"><table>
+      <thead><tr><th>Status</th><th>Data</th><th>Fase</th><th>Formato</th><th>Produto</th><th>Postagem / pauta</th><th>Objetivo</th><th>CTA / destino</th><th>Rede</th><th>Criativo</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>`
+      : `<div class="empty"><strong>Nenhuma pauta aqui</strong><span>${postsMes().length ? "Nenhuma pauta bate com os filtros." : "Este mês ainda está vazio. Adicione a primeira pauta."}</span>${addBtn()}</div>`);
+}
+
+async function setStatus(id, st) {
+  const p = S.posts.find(x => x.id === id);
+  const antes = p && p.status;
+  if (p) { p.status = st; render(); }
+  try { await api("status", { id, status: st }); toast(`Status: ${st}`); }
+  catch (e) { if (p) { p.status = antes; render(); } writeFail(e); }
+}
+
+async function copiarTabela() {
+  const cols = ["status", "data", "dia", "postagem", "fase", "formato", "produto", "pauta", "objetivo", "cta", "rede", "gravacao", "observacao", "inspiracao", "legenda", "criativo"];
+  const header = ["Status", "Marca", "Data", "Dia", "Postagem", "Fase", "Formato", "Produto", "Pauta / ângulo", "Objetivo (jornada de compra)", "CTA / destino", "Rede", "Gravação", "Observação", "Inspiração", "Legenda", "Criativo"];
+  const clean = v => String(v ?? "").replace(/[\t\r\n]+/g, " ");
+  const lines = [header.join("\t")].concat(filtered().map(p => {
+    const row = cols.map(c => c === "data" ? brFull(p.data) : c === "dia" ? wd(p.data) : clean(p[c]));
+    row.splice(1, 0, marca().nome);
+    return row.join("\t");
+  }));
+  const txt = lines.join("\n");
+  try { await navigator.clipboard.writeText(txt); toast("Tabela copiada. Cole no Google Sheets."); }
+  catch (e) {
+    const ta = document.createElement("textarea"); ta.value = txt; document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); toast("Tabela copiada."); } catch (_) { toast("Não deu para copiar."); }
+    ta.remove();
+  }
+}
+
+function vFluxo() {
+  const m = marca(), ps = postsMes();
+  const cols = STATUS.map((st, i) => {
+    const items = ps.filter(p => (p.status || "Ideia") === st);
+    return `<section class="col" data-st="${st}">
+      <h3><span class="dot" style="background:${stColor(st)}"></span>${st}<span class="n">${items.length}</span></h3>
+      ${items.map(p => `<article class="card" draggable="${S.canWrite}" data-id="${esc(p.id)}" onclick="openEditor('${esc(p.id)}')" style="border-left:4px solid ${esc(faseCor(m, p.fase))}">
+        <div class="meta"><span>${br(p.data)} · ${wd(p.data).slice(0, 3)}</span><span>${FMT_ICON[p.formato] || ""} ${esc(p.formato)}</span></div>
+        <div class="t">${esc(nm(p))}</div>
+        ${S.canWrite ? `<div class="mv" onclick="event.stopPropagation()">
+          ${i > 0 ? `<button type="button" aria-label="Voltar para ${STATUS[i - 1]}" onclick="setStatus('${esc(p.id)}','${STATUS[i - 1]}')">←</button>` : ""}
+          ${i < STATUS.length - 1 ? `<button type="button" aria-label="Avançar para ${STATUS[i + 1]}" onclick="setStatus('${esc(p.id)}','${STATUS[i + 1]}')">→</button>` : ""}
+        </div>` : ""}
+      </article>`).join("")}
+    </section>`;
+  }).join("");
+  return head(m.nome, "Fluxo de produção", monthNav() + addBtn()) +
+    `<p class="muted" style="margin:-6px 0 14px">Arraste os cards entre as colunas, ou use as setas, para mudar o status.</p><div class="board">${cols}</div>`;
+}
+function wireBoard() {
+  if (!S.canWrite) return;
+  document.querySelectorAll(".card").forEach(c => c.addEventListener("dragstart", e => e.dataTransfer.setData("text/plain", c.dataset.id)));
+  document.querySelectorAll(".col").forEach(col => {
+    col.addEventListener("dragover", e => { e.preventDefault(); col.classList.add("over"); });
+    col.addEventListener("dragleave", () => col.classList.remove("over"));
+    col.addEventListener("drop", e => {
+      e.preventDefault(); col.classList.remove("over");
+      const id = e.dataTransfer.getData("text/plain");
+      const p = S.posts.find(x => x.id === id);
+      if (p && p.status !== col.dataset.st) setStatus(id, col.dataset.st);
+    });
+  });
+}
+
+const driveId = u => { const m = String(u || "").match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=|thumbnail\?id=)([\w-]{20,})/); return m ? m[1] : ""; };
+const blobSrc = p => { const id = driveId(p.criativo); return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w600` : ""; };
+function vGrade() {
+  const m = marca();
+  const ps = postsMes().filter(p => !["Stories", "TikTok"].includes(p.rede)).reverse();
+  const tiles = ps.map(p => {
+    const src = blobSrc(p);
+    return `<button class="tile${src ? " has-img" : ""}" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="openEditor('${esc(p.id)}')" title="${esc(nm(p))}">
+      ${src ? `<img src="${esc(src)}" alt="${esc(nm(p))}" loading="lazy" onerror="this.parentNode.classList.remove('has-img');this.remove()">` : ""}
+      <span class="fic">${FMT_ICON[p.formato] || ""}</span>
+      <span class="tt">${esc(nm(p))}</span>
+      <span class="tm">${br(p.data)} · ${esc(p.formato)}</span>
+    </button>`;
+  }).join("");
+  const ini = (m.nome || "?").trim().charAt(0).toUpperCase();
+  return head(m.nome, "Grade do Instagram", monthNav()) +
+    `<div class="grade-box">
+      <div class="profile"><div class="avatar">${esc(ini)}</div><div><b>${esc(m.nome)}</b><div class="muted">${ps.length} posts planejados em ${esc(monthLabel(S.month))}</div></div></div>
+      ${ps.length ? `<div class="grade">${tiles}</div>` : `<div class="empty" style="margin:0 16px 16px">Nenhum post de feed neste mês.</div>`}
+    </div>
+    <p class="grade-note">Do post mais recente (canto superior esquerdo) ao mais antigo. A arte aparece quando o Criativo é um link de arquivo do Drive compartilhado como "Qualquer pessoa com o link"; sem imagem, aparece o nome do post na cor da fase.</p>`;
+}
+
+function bars(map, colorFn) {
+  const entries = Object.entries(map).sort((a, b) => b[1] - a[1]);
+  const max = Math.max(1, ...entries.map(e => e[1]));
+  if (!entries.length) return `<p class="muted">Sem dados.</p>`;
+  return `<div class="bars">${entries.map(([k, v]) => `<div class="bar" style="--c:${colorFn ? colorFn(k) : "var(--caramelo)"}">
+    <span class="lb" title="${esc(k)}">${esc(k)}</span><span class="tr"><span class="fl" style="display:block;width:${(v / max * 100).toFixed(1)}%"></span></span><span class="v">${v}</span></div>`).join("")}</div>`;
+}
+function vResumo() {
+  const m = marca(), ps = postsMes();
+  const count = key => ps.reduce((o, p) => { const k = p[key] || "—"; o[k] = (o[k] || 0) + 1; return o; }, {});
+  const st = {}; STATUS.forEach(s => { const n = ps.filter(p => (p.status || "Ideia") === s).length; if (n) st[s] = n; });
+  const postado = ps.filter(p => p.status === "Postado").length;
+  return head(m.nome, "Resumo do mês", monthNav()) +
+    `<div class="sum-grid">
+      <div class="panel"><h2>Total</h2><div class="big">${ps.length}</div><p class="muted" style="margin:8px 0 0">${ps.length === 1 ? "publicação planejada" : "publicações planejadas"} · ${postado} já ${postado === 1 ? "postada" : "postadas"}</p></div>
+      <div class="panel"><h2>Por produto</h2>${bars(count("produto"))}</div>
+      <div class="panel"><h2>Por formato</h2>${bars(count("formato"), () => "var(--vinho)")}</div>
+      <div class="panel"><h2>Por status</h2>${bars(st, stColor)}</div>
+      <div class="panel"><h2>Por fase</h2>${bars(count("fase"), k => esc(faseCor(m, k)))}</div>
+      <div class="panel"><h2>Por objetivo</h2>${bars(count("objetivo"), () => "var(--verde)")}</div>
+      <div class="panel" style="grid-column:1/-1"><h2>Observações da marca</h2>${m.observacoes ? `<p class="obs">${esc(m.observacoes)}</p>` : `<p class="muted">Nenhuma observação. Adicione na aba Marca.</p>`}</div>
+    </div>`;
+}
+
+function vMarca() {
+  const m = marca(), ro = S.canWrite ? "" : " disabled";
+  const fases = fasesDe(m);
+  return head("Configurações", esc(m.nome)) +
+    `<form id="marcaForm" class="form-grid" onsubmit="event.preventDefault();salvarMarca()">
+      <div class="panel" style="display:grid;gap:12px">
+        <label class="field"><span>Nome da marca</span><input id="mNome" required value="${esc(m.nome)}"${ro}></label>
+        <label class="field"><span>Produtos (um por linha)</span><textarea id="mProd" rows="5"${ro}>${esc((m.produtos || []).join("\n"))}</textarea></label>
+      </div>
+      <div class="panel" style="display:grid;gap:10px">
+        <div class="field"><span>Fases do mês e suas cores</span></div>
+        <div id="fasesBox" style="display:grid;gap:8px">${fases.map((f, i) => faseRow(f, i, ro)).join("")}</div>
+        ${S.canWrite ? `<button class="btn sm" type="button" style="justify-self:start" onclick="addFase()">+ Fase</button>` : ""}
+      </div>
+      <div class="panel" style="grid-column:1/-1">
+        <label class="field"><span>Observações</span><textarea id="mObs" rows="6"${ro}>${esc(m.observacoes || "")}</textarea></label>
+      </div>
+      ${S.canWrite ? `<div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn primary" type="submit">Salvar marca</button>
+        <span style="flex:1"></span>
+        <span id="delMarcaBox">${S.confirmDel
+          ? `<span class="confirm">Excluir a marca e as ${postsMarca().length} pautas dela?
+              <button class="btn sm danger" type="button" onclick="excluirMarca()">Excluir de vez</button>
+              <button class="btn sm" type="button" onclick="S.confirmDel=false;render()">Cancelar</button></span>`
+          : `<button class="btn danger" type="button" onclick="S.confirmDel=true;render()">Excluir marca</button>`}</span>
+      </div>` : ""}
+    </form>`;
+}
+function faseRow(f, i, ro = "") {
+  return `<div class="fase-row"><input type="color" aria-label="Cor da fase" value="${esc(f.cor)}"${ro}><input type="text" aria-label="Nome da fase" value="${esc(f.nome)}"${ro}>
+    ${ro ? "" : `<button class="icon-btn" type="button" aria-label="Remover fase" onclick="this.parentNode.remove()">×</button>`}</div>`;
+}
+function addFase() { $("#fasesBox").insertAdjacentHTML("beforeend", faseRow({ nome: "", cor: "#8A8A8F" }, 0)); $("#fasesBox .fase-row:last-child input[type=text]").focus(); }
+async function salvarMarca() {
+  const fases = [...document.querySelectorAll("#fasesBox .fase-row")].map(r => ({ cor: r.querySelector("input[type=color]").value, nome: r.querySelector("input[type=text]").value.trim() })).filter(f => f.nome);
+  const body = {
+    nome: $("#mNome").value.trim() || "Sem nome",
+    produtos: $("#mProd").value.split("\n").map(s => s.trim()).filter(Boolean),
+    fases, observacoes: $("#mObs").value, atualizado: Date.now()
+  };
+  try { await api("salvarMarca", { marca: { ...marca(), ...body } }); await carregar(); toast("Marca salva"); } catch (e) { writeFail(e); }
+}
+async function novaMarca() {
+  const n = S.marcas.length + 1;
+  try {
+    const r = await api("salvarMarca", { marca: { nome: `Marca ${n}`, produtos: [], fases: DEFAULT_FASES, observacoes: "", criado: Date.now() } });
+    S.marcaId = r.id; store("marca", r.id); S.month = null;
+    await carregar();
+    location.hash = "#marca"; toast("Marca criada. Dê um nome a ela.");
+  } catch (e) { writeFail(e); }
+}
+async function excluirMarca() {
+  try {
+    await api("excluirMarca", { id: S.marcaId });
+    S.confirmDel = false; S.marcaId = null; S.month = null;
+    await carregar();
+    location.hash = "#calendario"; toast("Marca excluída");
+  } catch (e) { writeFail(e); }
+}
+
+/* ---------- Editor de pauta ---------- */
+let EDIT = null;
+function openEditor(id, date) {
+  const m = marca();
+  const p = id ? S.posts.find(x => x.id === id) : null;
+  if (id && !p) return;
+  EDIT = p ? { ...p } : { status: "Ideia", data: date || (S.month + "-01"), formato: "Vídeo", fase: fasesDe(m)[0]?.nome || "", produto: (m.produtos || [])[0] || "", rede: "Instagram + TikTok" };
+  S.delPost = false;
+  drawEditor();
+  $("#dlg").showModal();
+}
+function drawEditor() {
+  const m = marca(), p = EDIT, ro = S.canWrite ? "" : " disabled";
+  const sel = (id, arr, cur, free) => {
+    const list = [...arr]; if (cur && !list.includes(cur)) list.push(cur);
+    return `<select id="${id}"${ro}>${free ? `<option value=""></option>` : ""}${list.map(x => `<option${x === cur ? " selected" : ""}>${esc(x)}</option>`).join("")}</select>`;
+  };
+  const txt = (id, label, val, full, ph = "") => `<label class="field${full ? " full" : ""}"><span>${label}</span><input id="${id}" value="${esc(val)}" placeholder="${esc(ph)}"${ro}></label>`;
+  const area = (id, label, val, rows = 3) => `<label class="field full"><span>${label}</span><textarea id="${id}" rows="${rows}"${ro}>${esc(val)}</textarea></label>`;
+  const src = blobSrc(p);
+  $("#dlgForm").innerHTML = `
+    <div class="dlg-head"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600">${esc(m.nome)} · ${p.id ? `${brFull(p.data)} · ${wd(p.data)}` : "Nova pauta"}</div>
+      <h2>${esc(p.id ? nm(p) : "Nova pauta")}</h2></div>
+      <button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#dlg').close()">×</button></div>
+    <div class="dlg-body">
+      <h4>Planejamento</h4>
+      <label class="field"><span>Data</span><input id="eData" type="date" required value="${esc(p.data)}"${ro}></label>
+      <label class="field"><span>Status</span>${sel("eStatus", STATUS, p.status)}</label>
+      <label class="field"><span>Formato</span>${sel("eFormato", FORMATOS, p.formato)}</label>
+      <label class="field"><span>Fase</span>${sel("eFase", fasesDe(m).map(f => f.nome), p.fase, true)}</label>
+      <label class="field"><span>Produto</span><input id="eProduto" list="prodList" value="${esc(p.produto)}"${ro}><datalist id="prodList">${produtosDe(m).map(x => `<option value="${esc(x)}">`).join("")}</datalist></label>
+      ${txt("ePostagem", "Postagem (título)", p.postagem, false, "Ex.: Conheça o produto")}
+      ${txt("ePauta", "Pauta / ângulo", p.pauta, true)}
+      <label class="field"><span>Objetivo (jornada de compra)</span>${sel("eObjetivo", OBJETIVOS, p.objetivo, true)}</label>
+      ${txt("eCta", "CTA / destino", p.cta, false, "Ex.: Link do e-commerce")}
+      <label class="field"><span>Rede</span>${sel("eRede", REDES, p.rede, true)}</label>
+      ${txt("eGravacao", "Gravação", p.gravacao, false, "Ex.: Vídeo novo (matriz)")}
+      <h4>Produção</h4>
+      ${area("eObs", "Observação", p.observacao, 2)}
+      ${area("eInsp", "Inspiração", p.inspiracao, 2)}
+      ${area("eLegenda", "Legenda", p.legenda, 5)}
+      <div class="full" style="margin-top:-6px"><button class="btn sm" type="button" onclick="copiarLegenda()">Copiar legenda</button></div>
+      ${txt("eCriativo", "Link do criativo (Drive ou Canva)", p.criativo, true, "https://")}
+      <div class="field full"><span>Prévia do criativo</span>
+        <div class="thumb">${src ? `<img src="${esc(src)}" alt="Prévia do criativo" onerror="this.remove()">` : `<span class="muted">Cole um link de arquivo do Drive para ver a prévia aqui e na grade.</span>`}
+          ${/^https?:\/\//.test(p.criativo || "") ? `<a class="lnk" href="${esc(p.criativo)}" target="_blank" rel="noopener">Abrir link do criativo</a>` : ""}
+        </div></div>
+    </div>
+    <div class="dlg-foot">
+      ${S.canWrite && p.id ? (S.delPost
+        ? `<span class="confirm">Excluir esta pauta? <button class="btn sm danger" type="button" onclick="excluirPost()">Excluir</button><button class="btn sm" type="button" onclick="S.delPost=false;drawEditor()">Cancelar</button></span>`
+        : `<button class="btn danger" type="button" onclick="S.delPost=true;drawEditor()">Excluir</button><button class="btn" type="button" onclick="duplicar()">Duplicar</button>`) : ""}
+      <span class="sp"></span>
+      <button class="btn" type="button" onclick="$('#dlg').close()">${S.canWrite ? "Cancelar" : "Fechar"}</button>
+      ${S.canWrite ? `<button class="btn primary" type="submit" id="eSalvar">Salvar pauta</button>` : ""}
+    </div>`;
+}
+function gather() {
+  const v = id => ($("#" + id)?.value ?? "").trim();
+  return {
+    marcaId: S.marcaId, data: v("eData"), status: v("eStatus") || "Ideia", formato: v("eFormato"), fase: v("eFase"),
+    produto: v("eProduto"), postagem: v("ePostagem"), pauta: v("ePauta"), objetivo: v("eObjetivo"), cta: v("eCta"),
+    rede: v("eRede"), gravacao: v("eGravacao"), observacao: $("#eObs").value, inspiracao: $("#eInsp").value,
+    legenda: $("#eLegenda").value, criativo: v("eCriativo"), atualizado: Date.now()
+  };
+}
+$("#dlgForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (!S.canWrite) return;
+  const btn = $("#eSalvar"); btn.disabled = true; btn.textContent = "Salvando…";
+  try {
+    const body = gather();
+    if (!body.data) throw { code: "local", message: "Escolha uma data." };
+    await api("salvarPauta", { pauta: { ...body, id: EDIT.id || "", criado: EDIT.criado || Date.now() } });
+    $("#dlg").close();
+    await carregar();
+    if (body.data.slice(0, 7) !== S.month) setMonth(body.data.slice(0, 7));
+    toast("Pauta salva");
+  } catch (err) {
+    btn.disabled = false; btn.textContent = "Salvar pauta";
+    writeFail(err);
+  }
+});
+async function excluirPost() {
+  try { await api("excluirPauta", { id: EDIT.id }); $("#dlg").close(); await carregar(); toast("Pauta excluída"); } catch (e) { writeFail(e); }
+}
+function duplicar() {
+  const body = gather();
+  EDIT = { ...body, status: "Ideia", postagem: (body.postagem || "") + " (cópia)" };
+  S.delPost = false; drawEditor(); toast("Cópia aberta. Ajuste e salve.");
+}
+async function copiarLegenda() {
+  const t = $("#eLegenda").value;
+  try { await navigator.clipboard.writeText(t); toast("Legenda copiada"); }
+  catch (e) { $("#eLegenda").select(); toast("Selecionada. Use Ctrl+C."); }
+}
+function writeFail(e) {
+  const c = e && e.code;
+  const msg = c === "local" ? e.message
+    : c === "senha" ? "Digite a senha da equipe para salvar."
+    : c === "server" && e.message ? "A planilha recusou: " + e.message
+    : "Não foi possível salvar. Confira a internet e tente de novo.";
+  if (c === "senha") { S.askSenha = true; if ($("#dlg").open) $("#dlg").close(); render(); }
+  toast(msg);
+}
+function senhaBox() {
+  if (!S.askSenha) return "";
+  return `<form class="panel" style="display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-bottom:16px" onsubmit="event.preventDefault();store('senha',$('#senhaIn').value);S.askSenha=false;render();toast('Senha guardada. Faça a alteração de novo.')">
+    <label class="field" style="flex:1 1 220px"><span>Senha da equipe</span><input id="senhaIn" type="password" autocomplete="current-password" required></label>
+    <button class="btn primary" type="submit">Guardar senha</button>
+    <button class="btn" type="button" onclick="S.askSenha=false;render()">Agora não</button>
+  </form>`;
+}
+
+/* ---------- Eventos ---------- */
+$("#marcaSel").addEventListener("change", e => { S.marcaId = e.target.value; store("marca", S.marcaId); S.month = null; S.f = { status: "", formato: "", produto: "", q: "" }; S.confirmDel = false; render(); });
+$("#novaMarca").addEventListener("click", novaMarca);
+addEventListener("hashchange", () => { S.confirmDel = false; render(); });
+$("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg").close(); });
+
+/* ---------- Planilha (Google Apps Script) ---------- */
+const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
+async function api(action, payload = {}) {
+  const r = await fetch(API, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action, senha: store("senha") || "", ...payload })
+  });
+  const j = await r.json();
+  if (!j.ok) throw { code: j.code || "server", message: j.error || "" };
+  return j;
+}
+async function carregar() {
+  if (!API) return render();
+  try {
+    const j = await api("listar");
+    S.marcas = (j.marcas || []).sort((a, b) => (a.criado || 0) - (b.criado || 0) || String(a.nome).localeCompare(b.nome));
+    S.posts = j.pautas || [];
+    if (!S.marcas.find(m => m.id === S.marcaId)) { S.marcaId = S.marcas[0]?.id || null; S.month = null; }
+    S.loadedM = S.loadedP = true; S.failed = false;
+  } catch (e) {
+    if (!S.loadedP) S.failed = true; else toast("Sem conexão com a planilha agora.");
+  }
+  if (!$("#dlg").open) render();
+}
+setInterval(() => { if (API && document.visibilityState === "visible" && !$("#dlg").open) carregar(); }, 30000);
+carregar();
+render();
+</script>
+</body>
+</html>
