@@ -57,6 +57,17 @@ Ao salvar uma pessoa com senha (use **Gerar senha**), aparece a mensagem de boas
 
 A aba **Resumo do mês** mostra o relatório pronto para apresentar: postagens planejadas e postadas, % aprovado de primeira, ideias validadas de primeira, tempo médio até aprovar, andamento, postagens por semana, formatos, tipos de agendamento, produtos, objetivos, desempenho por marca e por pessoa e os motivos das devoluções. Dá para ver uma marca ou **todas as marcas** e baixar em **PDF** (A4 deitado), **imagem (PNG)** ou **planilha (CSV)**.
 
+## Avisos por e-mail
+
+O sistema manda e-mail (pela conta Google dona da planilha) quando:
+
+- **uma ideia ou conteúdo é enviado** → para o **aprovador** da marca (sem aprovador: gestor; sem gestor: diretor e administrador);
+- **uma ideia é validada ou reprovada** e **um conteúdo é aprovado ou volta com ajustes** → para **quem enviou**, com o motivo.
+
+Cada pessoa liga ou desliga os avisos em **Minha conta**. O Gmail comum permite cerca de **100 e-mails por dia**; acima disso os avisos param até o dia seguinte, mas o sistema continua funcionando.
+
+**Na primeira vez**, depois de colar o código novo, rode **configurar** de novo no Apps Script para autorizar o envio de e-mails, e só então faça **Implantar → Gerenciar implantações → ✏️ → Nova versão**.
+
 ## Atividade da equipe
 
 Em **Equipe → Atividade** (o administrador, o diretor e o gestor veem): último acesso de cada pessoa, quantas postagens criou, editou e enviou, quantas validou/aprovou ou devolveu, pendências e a lista das últimas ações. Quem fica 3 dias sem sinal aparece em vermelho.

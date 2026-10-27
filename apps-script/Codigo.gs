@@ -18,7 +18,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-10-27.8';
+const VERSAO = '2026-10-27.9';
 
 const ABA_PAUTAS = 'POSTAGENS';
 const ABA_MARCAS = 'MARCAS';
@@ -44,7 +44,7 @@ const CAMPOS_MARCA = [
 const CAMPOS_USUARIO = [
   ['id', 'ID'], ['nome', 'Nome'], ['login', 'Login (e-mail)'], ['papel', 'Papel'],
   ['marcas', 'Marcas liberadas (IDs)'], ['ativo', 'Ativo'], ['hash', 'Senha (protegida)'],
-  ['sal', 'Sal'], ['criado', 'Criado em'], ['whatsapp', 'WhatsApp'], ['ultimoAcesso', 'Último acesso']
+  ['sal', 'Sal'], ['criado', 'Criado em'], ['whatsapp', 'WhatsApp'], ['ultimoAcesso', 'Último acesso'], ['notificar', 'Notificações por e-mail']
 ];
 const PAPEIS = ['admin', 'diretor', 'gestor', 'social', 'aprovador'];
 const VEEM_TODAS = ['admin', 'diretor', 'gestor'];
@@ -100,12 +100,13 @@ function doPost(e) {
         case 'listar': return json_(listar_(eu));
         case 'salvarPauta': return json_({ ok: true, id: salvarPauta_(eu, req.pauta || {}) });
         case 'excluirPauta': excluirPauta_(eu, req.id); return json_({ ok: true });
-        case 'acao': acaoPauta_(eu, req.id, req.acao, req.motivo, req.status, req.dados || {}); return json_({ ok: true });
+        case 'acao': acaoPauta_(eu, req.id, req.acao, req.motivo, req.status, req.dados || {}, req.site); return json_({ ok: true });
         case 'salvarMarca': return json_({ ok: true, id: salvarMarca_(eu, req.marca || {}) });
         case 'excluirMarca': soAdmin_(eu); excluirMarca_(req.id); return json_({ ok: true });
         case 'salvarUsuario': gerencia_(eu); return json_({ ok: true, id: salvarUsuario_(eu, req.usuario || {}) });
         case 'trocarSenha': trocarSenha_(eu, req.atual, req.nova); return json_({ ok: true });
         case 'meuNome': salvarMeuNome_(eu, req.nome); return json_({ ok: true });
+        case 'minhasNotificacoes': salvarPreferencia_(eu, 'notificar', req.notificar === false ? 'não' : 'sim'); return json_({ ok: true });
         case 'sair': PropertiesService.getScriptProperties().deleteProperty('tok_' + req.token); return json_({ ok: true });
         default: return json_({ ok: false, error: 'Ação desconhecida: ' + req.action });
       }
@@ -155,6 +156,7 @@ function publicoUsuario_(u) {
   return {
     id: u.id, nome: u.nome, login: u.login, papel: u.papel, ativo: u.ativo === 'sim', whatsapp: u.whatsapp || '',
     ultimoAcesso: Number(u.ultimoAcesso) || 0,
+    notificar: u.notificar !== 'não',
     marcas: String(u.marcas || '').split(',').map(s => s.trim()).filter(String)
   };
 }
@@ -282,7 +284,7 @@ function excluirPauta_(eu, id) {
   excluirLinha_(ABA_PAUTAS, CAMPOS_PAUTA, id);
 }
 
-function acaoPauta_(eu, id, acao, motivo, status, dados) {
+function acaoPauta_(eu, id, acao, motivo, status, dados, site) {
   const p = pautaPorId_(id);
   if (!p) throw erro_('server', 'Postagem não encontrada. Atualize a página.');
   motivo = String(motivo || '').trim();
@@ -318,6 +320,59 @@ function acaoPauta_(eu, id, acao, motivo, status, dados) {
     set('agQuando', paraBR_(dados.agData) + ' ' + dados.agHora);
   }
   if (acao === 'postar' && dados.postLink) set('postLink', String(dados.postLink).trim());
+  // o e-mail nunca pode impedir a ação de ser registrada
+  try { notificar_(eu, p, acao, motivo, historico, site); } catch (e) { Logger.log('Falha ao enviar notificação: ' + e); }
+}
+
+/* ---------- Notificações por e-mail ---------- */
+
+const AVISOS = {
+  enviarValidacao: { para: 'aprovador', titulo: '💡 Nova ideia para validar', frase: 'enviou uma ideia para validação' },
+  enviarAprovacao: { para: 'aprovador', titulo: '📝 Conteúdo para aprovar', frase: 'enviou um conteúdo pronto para aprovação' },
+  validar: { para: 'autor', titulo: '✅ Ideia validada', frase: 'validou a sua ideia. Pode seguir para a produção.' },
+  reprovarIdeia: { para: 'autor', titulo: '❌ Ideia reprovada', frase: 'reprovou a sua ideia' },
+  aprovar: { para: 'autor', titulo: '✅ Conteúdo aprovado', frase: 'aprovou o seu conteúdo. Já pode agendar.' },
+  pedirAjustes: { para: 'autor', titulo: '✏️ Ajustes pedidos', frase: 'pediu ajustes no seu conteúdo' }
+};
+
+function notificar_(eu, p, acao, motivo, historico, site) {
+  const av = AVISOS[acao];
+  if (!av) return;
+  const pessoas = ler_(ABA_USUARIOS, CAMPOS_USUARIO).map(publicoUsuario_)
+    .filter(u => u.ativo && u.notificar && u.id !== eu.id && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(u.login));
+  let dest = [];
+  if (av.para === 'aprovador') {
+    // aprovador da marca; sem aprovador, o gestor; sem gestor, diretor e administrador
+    dest = pessoas.filter(u => u.papel === 'aprovador' && acesso_(u, p.marcaId));
+    if (!dest.length) dest = pessoas.filter(u => u.papel === 'gestor');
+    if (!dest.length) dest = pessoas.filter(u => u.papel === 'diretor' || u.papel === 'admin');
+  } else {
+    // quem enviou para esta etapa; se não der para saber, as social medias da marca
+    const envio = historico.slice().reverse().filter(h => String(h.acao || '').indexOf('Enviou') === 0)[0];
+    dest = envio && envio.uid ? pessoas.filter(u => u.id === envio.uid) : [];
+    if (!dest.length) dest = pessoas.filter(u => u.papel === 'social' && acesso_(u, p.marcaId));
+  }
+  if (!dest.length || MailApp.getRemainingDailyQuota() < dest.length) return;
+
+  const marca = nomeDaMarca_(p.marcaId);
+  const titulo = (p.produto ? p.produto + ': ' : '') + (p.postagem || 'Postagem');
+  const link = /^https:\/\//.test(String(site || '')) ? String(site).split('#')[0] + '#aprovacoes' : '';
+  const assunto = av.titulo + ': ' + titulo + ' (' + marca + ')';
+  const linha = (k, v) => v ? '<tr><td style="padding:4px 12px 4px 0;color:#6b6b70">' + k + '</td><td style="padding:4px 0">' + escH_(v) + '</td></tr>' : '';
+  const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#1d1d1f;max-width:560px">' +
+    '<p style="margin:0 0 6px;color:#6b6b70;font-size:12px;letter-spacing:.08em;text-transform:uppercase">' + escH_(marca) + '</p>' +
+    '<h2 style="margin:0 0 14px;font-size:22px;font-weight:600">' + escH_(av.titulo) + '</h2>' +
+    '<p style="margin:0 0 14px"><b>' + escH_(eu.nome) + '</b> ' + escH_(av.frase) + ':</p>' +
+    '<p style="margin:0 0 14px;font-size:18px"><b>' + escH_(titulo) + '</b></p>' +
+    (motivo ? '<div style="border-left:4px solid #b3362f;background:#fbeeed;padding:10px 14px;margin:0 0 14px"><b style="color:#b3362f">Motivo</b><br>' + escH_(motivo) + '</div>' : '') +
+    '<table style="border-collapse:collapse;font-size:14px;margin:0 0 18px">' + linha('Data planejada', paraBR_(p.data)) + linha('Formato', p.formato) + linha('Nome', p.pauta) + '</table>' +
+    (link ? '<p style="margin:0 0 18px"><a href="' + link + '" style="background:#1d1d1f;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none;display:inline-block">Abrir o sistema</a></p>' : '') +
+    '<p style="margin:0;color:#6b6b70;font-size:12px">Você recebe este aviso porque está na equipe do Planejamento de Conteúdo. Para não receber mais, desligue em "Minha conta".</p></div>';
+  dest.forEach(u => MailApp.sendEmail({ to: u.login, subject: assunto, htmlBody: html, name: 'Planejamento de Conteúdo' }));
+}
+
+function escH_(t) {
+  return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 function normStatus_(s) {
@@ -414,8 +469,15 @@ function salvarUsuario_(eu, u) {
     sal: sal,
     criado: atual ? atual.criado : String(Date.now()),
     whatsapp: String(u.whatsapp || '').replace(/\D/g, ''),
-    ultimoAcesso: atual ? atual.ultimoAcesso : ''
+    ultimoAcesso: atual ? atual.ultimoAcesso : '',
+    notificar: atual ? atual.notificar : ''
   });
+}
+
+function salvarPreferencia_(eu, campo, valor) {
+  const u = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(x => x.id === eu.id)[0];
+  u[campo] = valor;
+  gravar_(ABA_USUARIOS, CAMPOS_USUARIO, u);
 }
 
 function salvarMeuNome_(eu, nome) {

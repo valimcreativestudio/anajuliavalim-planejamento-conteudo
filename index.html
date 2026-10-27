@@ -1584,6 +1584,14 @@ function vConta() {
     <span class="muted" style="font-size:13px">Aparece no "Olá" lá em cima e no histórico das postagens. Seu login continua <b>${esc(S.eu.login)}</b>.</span>
     <button class="btn primary" type="submit" style="justify-self:start">Salvar nome</button>
   </form>
+  <div class="panel" style="max-width:460px;display:grid;gap:10px;margin-bottom:16px">
+    <h2>Notificações por e-mail</h2>
+    <label style="display:flex;gap:8px;align-items:center"><input id="cNotif" type="checkbox"${S.eu.notificar !== false ? " checked" : ""} onchange="salvarNotif(this.checked)"> Receber avisos em <b>${esc(S.eu.login)}</b></label>
+    <span class="muted" style="font-size:13px">${{
+      social: "Você recebe um e-mail quando as suas ideias forem validadas ou reprovadas e quando os seus conteúdos forem aprovados ou voltarem com pedido de ajuste.",
+      aprovador: "Você recebe um e-mail quando chegar uma ideia para validar ou um conteúdo para aprovar nas suas marcas."
+    }[S.eu.papel] || "Você recebe um e-mail quando chegar algo para validar ou aprovar e a marca não tiver aprovador, e quando algo que você enviou for validado, aprovado ou devolvido."}</span>
+  </div>
   <form class="panel" style="max-width:460px;display:grid;gap:12px" onsubmit="event.preventDefault();trocarSenha()">
     <h2>Trocar senha</h2>
     <label class="field"><span>Senha atual</span><input id="cAtual" type="password" autocomplete="current-password" required></label>
@@ -1591,6 +1599,10 @@ function vConta() {
     <label class="field"><span>Repita a nova senha</span><input id="cNova2" type="password" autocomplete="new-password" minlength="6" required></label>
     <button class="btn primary" type="submit" style="justify-self:start">Trocar senha</button>
   </form>`;
+}
+async function salvarNotif(sim) {
+  try { await api("minhasNotificacoes", { notificar: sim }); S.eu.notificar = sim; toast(sim ? "Avisos por e-mail ligados" : "Avisos por e-mail desligados"); }
+  catch (e) { $("#cNotif").checked = !sim; writeFail(e); }
 }
 async function salvarMeuNome() {
   const nome = $("#cNome").value.trim();
@@ -1777,12 +1789,12 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-10-27.8"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-10-27.9"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({ action, token: S.token, ...payload })
+    body: JSON.stringify({ action, token: S.token, site: location.origin + location.pathname, ...payload })
   });
   const j = await r.json();
   if (!j.ok) throw { code: j.code || "server", message: j.error || "" };
