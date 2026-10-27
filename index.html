@@ -16,6 +16,8 @@
   --muted: #6E6E73;
   --line: #E0E0DC;
   --vinho: #26262A;
+  --primary: #26262A;
+  --primary-ink: #F5F5F3;
   --vinho-ink: #F5F5F3;
   --verde: #6B7470;
   --caramelo: #55555B;
@@ -34,7 +36,7 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #141415; --surface: #1E1E20; --surface-2: #27272A; --ink: #EDEDEB; --muted: #A1A1A6; --line: #333336;
-    --vinho: #2A2A2E; --vinho-ink: #F0F0EE; --verde: #A3ABA7; --caramelo: #B8B8BD; --manteiga: #45454A; --danger: #EE7B70;
+    --vinho: #2A2A2E; --vinho-ink: #F0F0EE; --primary: #EDEDEB; --primary-ink: #141415; --verde: #A3ABA7; --caramelo: #B8B8BD; --manteiga: #45454A; --danger: #EE7B70;
     --st-ideia: #A1A1A6; --st-validado: #CDB98E; --st-produzido: #96AFC8; --st-aprovado: #B2A6CC; --st-agendado: #C99BA7; --st-postado: #98B5A0;
     --shadow: 0 10px 30px rgba(0, 0, 0, .45);
     color-scheme: dark;
@@ -42,7 +44,7 @@
 }
 :root[data-theme="dark"] {
   --bg: #141415; --surface: #1E1E20; --surface-2: #27272A; --ink: #EDEDEB; --muted: #A1A1A6; --line: #333336;
-  --vinho: #2A2A2E; --vinho-ink: #F0F0EE; --verde: #A3ABA7; --caramelo: #B8B8BD; --manteiga: #45454A; --danger: #EE7B70;
+  --vinho: #2A2A2E; --vinho-ink: #F0F0EE; --primary: #EDEDEB; --primary-ink: #141415; --verde: #A3ABA7; --caramelo: #B8B8BD; --manteiga: #45454A; --danger: #EE7B70;
   --st-ideia: #A1A1A6; --st-validado: #CDB98E; --st-produzido: #96AFC8; --st-aprovado: #B2A6CC; --st-agendado: #C99BA7; --st-postado: #98B5A0;
   --shadow: 0 10px 30px rgba(0, 0, 0, .45);
   color-scheme: dark;
@@ -63,7 +65,7 @@ button { cursor: pointer; }
 header.top { background: var(--vinho); color: var(--vinho-ink); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; }
 header.top .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding-block: 12px 0; }
 .brand { font-family: var(--f-display); font-size: 26px; line-height: 1; letter-spacing: .01em; white-space: nowrap; }
-.brand em { color: var(--manteiga); }
+.brand em { color: color-mix(in srgb, var(--vinho-ink) 62%, transparent); }
 .marca-pick { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .marca-pick select { background: transparent; border: 1px solid color-mix(in srgb, var(--vinho-ink) 40%, transparent); color: var(--vinho-ink); border-radius: 999px; padding: 6px 12px; max-width: 220px; }
 .marca-pick select option { color: #1D1D1F; background: #fff; }
@@ -83,8 +85,9 @@ main { padding-block: 22px 60px; }
 .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 14px; font-weight: 500; }
 .btn:hover { border-color: var(--caramelo); }
 a.btn { text-decoration: none; color: var(--ink); display: inline-flex; align-items: center; }
-.btn.primary { background: var(--vinho); color: var(--vinho-ink); border-color: var(--vinho); }
+.btn.primary { background: var(--primary); color: var(--primary-ink); border-color: var(--primary); }
 .btn.primary:hover { filter: brightness(1.15); }
+:root:not([data-theme="light"]) .btn.primary:hover { filter: none; opacity: .88; }
 .btn.danger { color: var(--danger); }
 .btn.sm { padding: 5px 10px; font-size: 13px; }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
@@ -296,6 +299,15 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 .rej textarea { border: 1px solid var(--danger); border-radius: 10px; padding: 8px 10px; background: var(--surface); min-height: 70px; resize: vertical; }
 .chk-list { display: flex; flex-wrap: wrap; gap: 6px 14px; }
 .chk-list label { display: inline-flex; gap: 6px; align-items: center; }
+.prod-pick { display: flex; gap: 6px; }
+.prod-pick select { flex: 1; min-width: 0; }
+.prod-pick .icon-btn { width: 40px; height: auto; font-size: 20px; flex: none; }
+.prod-new { display: flex; gap: 6px; margin-top: 6px; }
+.prod-new input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 10px; }
+.prod-list { display: grid; gap: 8px; }
+.prod-row { display: flex; gap: 8px; align-items: center; }
+.prod-row input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 10px; }
+.prod-row .n { color: var(--muted); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .empty { border: 1px dashed var(--line); border-radius: 14px; padding: 36px 20px; text-align: center; color: var(--muted); display: grid; gap: 12px; justify-items: center; }
 .empty strong { font-family: var(--f-display); font-weight: 400; font-size: 26px; color: var(--ink); }
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 999px; font-weight: 500; z-index: 50; box-shadow: var(--shadow); }
@@ -428,7 +440,7 @@ function setMonth(ym) { S.month = ym; store("mes." + S.marcaId, ym); render(); }
 /* ---------- Vistas ---------- */
 const view = () => {
   const h = location.hash.replace("#", "");
-  return ["calendario", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-config", "aprovacoes", "equipe", "conta"].includes(h) ? h : "calendario";
+  return ["calendario", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-config", "aprovacoes", "equipe", "conta"].includes(h) ? h : "calendario";
 };
 
 function render() {
@@ -466,7 +478,7 @@ function render() {
   }
   if (!S.month) S.month = pickMonth();
   const v = view();
-  app.innerHTML = ({ calendario: vCal, pautas: vPautas, fluxo: vFluxo, grade: vGrade, resumo: vResumo, marca: vMarcaGeral, "marca-sobre": () => vPerfil("sobre"), "marca-publico": vPublico, "marca-arquivos": vArquivos, "marca-notas": () => vPerfil("notas"), "marca-config": vMarca })[v]();
+  app.innerHTML = ({ calendario: vCal, pautas: vPautas, fluxo: vFluxo, grade: vGrade, resumo: vResumo, marca: vMarcaGeral, "marca-sobre": () => vPerfil("sobre"), "marca-publico": vPublico, "marca-arquivos": vArquivos, "marca-notas": () => vPerfil("notas"), "marca-produtos": vProdutos, "marca-config": vMarca })[v]();
   if (v === "fluxo") wireBoard();
   if (v === "pautas") { const q = $("#fq"); if (q && S.f.q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); } }
 }
@@ -771,7 +783,7 @@ const pct = x => x.total ? Math.round(x.ok / x.total * 100) : 0;
 
 function subnav() {
   const pr = progresso(marca()), v = view();
-  const it = [["marca", "Visão geral"], ["marca-sobre", "Sobre", pr.sobre], ["marca-publico", "Público-alvo", pr.publico], ["marca-arquivos", "Arquivos e identidade", pr.arquivos], ["marca-notas", "Observações", pr.notas], ["marca-config", "Configurações"]];
+  const it = [["marca", "Visão geral"], ["marca-sobre", "Sobre", pr.sobre], ["marca-produtos", "Produtos"], ["marca-publico", "Público-alvo", pr.publico], ["marca-arquivos", "Arquivos e identidade", pr.arquivos], ["marca-notas", "Observações", pr.notas], ["marca-config", "Configurações"]];
   return `<nav class="subnav" aria-label="Seções da marca">${it.map(([h, l, x]) => `<a href="#${h}"${v === h ? ' aria-current="page"' : ""}>${l}${x ? `<span class="pct">${pct(x)}%</span>` : ""}</a>`).join("")}</nav>`;
 }
 
@@ -931,6 +943,55 @@ async function copiarTexto(t, ok) {
   try { await navigator.clipboard.writeText(t); toast(ok); } catch (e) { toast(t); }
 }
 
+/* Produtos */
+function vProdutos() {
+  const m = marca(), ro = S.canWrite ? "" : " disabled";
+  const prods = m.produtos || [];
+  const usados = produtosDe(m).filter(x => !prods.includes(x));
+  const conta = x => postsMarca().filter(p => p.produto === x).length;
+  return head(m.nome, "Produtos") + subnav() +
+    `<p class="sec-intro">Os produtos cadastrados aqui aparecem no campo Produto de cada postagem e no Resumo do mês.</p>
+    <form class="panel" style="max-width:640px" onsubmit="event.preventDefault();salvarProdutos()">
+      <div class="prod-list" id="prodList">${prods.map(x => prodRow(x, conta(x), ro)).join("") || `<p class="muted" id="semProd">Nenhum produto ainda. Clique em + Produto.</p>`}</div>
+      ${S.canWrite ? `<button class="btn sm" type="button" style="margin-top:12px" onclick="addProdRow()">+ Produto</button>` : ""}
+      ${usados.length ? `<p class="muted" style="font-size:13px;margin:14px 0 0">Usados em postagens mas fora da lista: ${usados.map(esc).join(", ")}${S.canWrite ? ` <button class="btn sm" type="button" onclick="${usados.map(x => `addProdRow(${esc(JSON.stringify(x))})`).join(";")}">Adicionar à lista</button>` : ""}</p>` : ""}
+      ${saveBar("Salvar produtos")}
+    </form>`;
+}
+function prodRow(x = "", n = 0, ro = "") {
+  return `<div class="prod-row"><input data-prod value="${esc(x)}" placeholder="Nome do produto"${ro}>${n ? `<span class="n">${n} postage${n === 1 ? "m" : "ns"}</span>` : ""}
+    ${ro ? "" : `<button class="icon-btn" type="button" aria-label="Remover produto" onclick="this.parentNode.remove();S.dirty=true;$('#app .save-bar .msg').textContent='Alterações não salvas'">×</button>`}</div>`;
+}
+function addProdRow(x = "") {
+  $("#semProd")?.remove();
+  $("#prodList").insertAdjacentHTML("beforeend", prodRow(x));
+  if (!x) $("#prodList .prod-row:last-child input").focus();
+  S.dirty = true;
+}
+async function salvarProdutos() {
+  const lista = [...new Set([...document.querySelectorAll("[data-prod]")].map(i => i.value.trim()).filter(Boolean))];
+  try { await api("salvarMarca", { marca: { ...marca(), produtos: lista } }); S.dirty = false; await carregar(); toast("Produtos salvos"); }
+  catch (e) { writeFail(e); }
+}
+function toggleNovoProd() {
+  const box = $("#prodNovo"); box.hidden = !box.hidden;
+  if (!box.hidden) $("#eProdNovo").focus();
+}
+async function addProdutoEditor() {
+  const nome = $("#eProdNovo").value.trim();
+  if (!nome) return toast("Escreva o nome do produto.");
+  const m = marca(), lista = m.produtos || [];
+  const sel = $("#eProduto");
+  if (!lista.includes(nome)) {
+    try { await api("salvarMarca", { marca: { ...m, produtos: lista.concat(nome) } }); m.produtos = lista.concat(nome); }
+    catch (e) { return writeFail(e); }
+  }
+  if (![...sel.options].some(o => o.value === nome)) sel.add(new Option(nome, nome));
+  sel.value = nome;
+  $("#eProdNovo").value = ""; $("#prodNovo").hidden = true;
+  toast(`"${nome}" adicionado aos produtos da marca`);
+}
+
 function vMarca() {
   const m = marca(), ro = S.canWrite ? "" : " disabled";
   const fases = fasesDe(m);
@@ -938,7 +999,7 @@ function vMarca() {
     `<form id="marcaForm" class="form-grid" onsubmit="event.preventDefault();salvarMarca()">
       <div class="panel" style="display:grid;gap:12px">
         <label class="field"><span>Nome da marca</span><input id="mNome" required value="${esc(m.nome)}"${ro}></label>
-        <label class="field"><span>Produtos (um por linha)</span><textarea id="mProd" rows="5"${ro}>${esc((m.produtos || []).join("\n"))}</textarea></label>
+        <span class="muted" style="font-size:13px">Os produtos agora ficam em <a class="lnk" href="#marca-produtos">Marca → Produtos</a>.</span>
       </div>
       <div class="panel" style="display:grid;gap:10px">
         <div class="field"><span>Fases do mês e suas cores</span></div>
@@ -968,7 +1029,7 @@ async function salvarMarca() {
   const fases = [...document.querySelectorAll("#fasesBox .fase-row")].map(r => ({ cor: r.querySelector("input[type=color]").value, nome: r.querySelector("input[type=text]").value.trim() })).filter(f => f.nome);
   const body = {
     nome: $("#mNome").value.trim() || "Sem nome",
-    produtos: $("#mProd").value.split("\n").map(s => s.trim()).filter(Boolean),
+    produtos: marca().produtos || [],
     fases, observacoes: $("#mObs").value, atualizado: Date.now()
   };
   try { await api("salvarMarca", { marca: { ...marca(), ...body } }); S.dirty = false; await carregar(); toast("Marca salva"); } catch (e) { writeFail(e); }
@@ -1024,7 +1085,10 @@ function drawEditor() {
       <label class="field"><span>Data</span><input id="eData" type="date" required value="${esc(p.data)}"${ro}></label>
       <label class="field"><span>Formato</span>${sel("eFormato", FORMATOS, p.formato)}</label>
       <label class="field"><span>Fase</span>${sel("eFase", fasesDe(m).map(f => f.nome), p.fase, true)}</label>
-      <label class="field"><span>Produto</span><input id="eProduto" list="prodList" value="${esc(p.produto)}"${ro}><datalist id="prodList">${produtosDe(m).map(x => `<option value="${esc(x)}">`).join("")}</datalist></label>
+      <div class="field"><span>Produto</span>
+        <div class="prod-pick">${sel("eProduto", m.produtos || [], p.produto, true)}${S.canWrite ? `<button class="icon-btn" type="button" aria-label="Adicionar produto" title="Adicionar produto" onclick="toggleNovoProd()">+</button>` : ""}</div>
+        <div class="prod-new" id="prodNovo" hidden><input id="eProdNovo" placeholder="Nome do novo produto" onkeydown="if(event.key==='Enter'){event.preventDefault();addProdutoEditor()}"><button class="btn sm primary" type="button" onclick="addProdutoEditor()">Adicionar</button></div>
+      </div>
       ${txt("ePostagem", "Título da postagem", p.postagem, false, "Ex.: Conheça o produto")}
       ${txt("ePauta", "Nome", p.pauta, true)}
       <label class="field"><span>Objetivo (jornada de compra)</span>${sel("eObjetivo", OBJETIVOS, p.objetivo, true)}</label>
