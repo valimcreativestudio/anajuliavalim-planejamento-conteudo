@@ -62,7 +62,8 @@ Em **Equipe → Atividade** (o administrador e o gestor veem): último acesso de
 2. **Em validação** → o aprovador **valida** ou **reprova** (com o motivo). Reprovada, ela volta para a social media com o motivo à mostra.
 3. **Em produção** → a social media monta o conteúdo (legenda, criativo) e clica em **Enviar conteúdo para aprovação**.
 4. **Em aprovação** → o aprovador **aprova** ou clica em **Não aprovar** e escreve o que precisa mudar.
-5. **Aprovado** → pode agendar. Depois: **Agendado** → **Postado**.
+5. **Aprovado** → clique em **Agendar**: escolha Feed, Carrossel, Reels ou Story, a data e a hora; baixe o criativo, copie a legenda, agende no **Meta Business Suite** e confirme. A postagem vai para **Agendado** com a hora no calendário (dá para **Alterar agendamento**).
+6. **Postado** → clique em **Marcar como postado** e, se quiser, cole o link do post publicado.
 
 A aba **Aprovações** reúne o que está esperando cada pessoa (com um número vermelho de pendências). Cada postagem guarda o histórico de quem fez o quê e quando, com os motivos.
 

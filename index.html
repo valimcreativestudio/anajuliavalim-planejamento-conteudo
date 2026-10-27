@@ -308,6 +308,17 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 .prod-row { display: flex; gap: 8px; align-items: center; }
 .prod-row input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 10px; }
 .prod-row .n { color: var(--muted); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+#agDlg { width: min(560px, calc(100vw - 24px)); }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg label { cursor: pointer; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg span { display: inline-block; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-weight: 500; }
+.seg input:checked + span { background: var(--primary); color: var(--primary-ink); border-color: var(--primary); }
+.seg input:focus-visible + span { outline: 2px solid var(--caramelo); outline-offset: 2px; }
+.passos { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; counter-reset: passo; }
+.passos li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; }
+.passos li::before { counter-increment: passo; content: counter(passo); width: 26px; height: 26px; border-radius: 99px; background: var(--surface-2); display: grid; place-items: center; font-weight: 700; font-size: 12px; }
+.passos .acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
 .empty { border: 1px dashed var(--line); border-radius: 14px; padding: 36px 20px; text-align: center; color: var(--muted); display: grid; gap: 12px; justify-items: center; }
 .empty strong { font-family: var(--f-display); font-weight: 400; font-size: 26px; color: var(--ink); }
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 999px; font-weight: 500; z-index: 50; box-shadow: var(--shadow); }
@@ -341,6 +352,7 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 </main>
 
 <dialog id="dlg"><form id="dlgForm" method="dialog"></form></dialog>
+<dialog id="agDlg"><form id="agForm" method="dialog"></form></dialog>
 <div class="toast" id="toast" hidden></div>
 
 <script src="config.js"></script>
@@ -359,8 +371,9 @@ const ACOES = {
   enviarAprovacao: { de: ["Em produção", "Ajustes solicitados"], quem: "editar", label: "Enviar conteúdo para aprovação", ok: "Conteúdo enviado para aprovação" },
   aprovar: { de: ["Em aprovação"], quem: "aprovar", label: "Aprovar conteúdo", ok: "Conteúdo aprovado. Pode agendar.", tipo: "ok" },
   pedirAjustes: { de: ["Em aprovação"], quem: "aprovar", label: "Não aprovar (pedir ajustes)", ok: "Ajustes pedidos", motivo: true },
-  agendar: { de: ["Aprovado"], quem: "editar", label: "Marcar como agendado", ok: "Marcado como agendado" },
-  postar: { de: ["Aprovado", "Agendado"], quem: "editar", label: "Marcar como postado", ok: "Marcado como postado" }
+  agendar: { de: ["Aprovado"], quem: "editar", label: "Agendar", ok: "Agendamento registrado", tipo: "ok", painel: true },
+  reagendar: { de: ["Agendado"], quem: "editar", label: "Alterar agendamento", ok: "Agendamento alterado", painel: true },
+  postar: { de: ["Aprovado", "Agendado"], quem: "editar", label: "Marcar como postado", ok: "Marcado como postado", painel: true }
 };
 const PAPEIS = { admin: "Administrador", gestor: "Gestor", social: "Social media", aprovador: "Aprovador" };
 const normStatus = s => STATUS_ANTIGOS[s] || (STATUS.includes(s) ? s : "Ideia");
@@ -516,7 +529,7 @@ function vCal() {
       <div class="dhead"><span class="dnum"><b>${d.getDate()}</b><span class="wd">${WD[d.getDay()]}</span></span>
       ${S.canWrite ? `<button class="add-day" type="button" aria-label="Nova postagem em ${br(k)}" onclick="openEditor(null,'${k}')">+</button>` : ""}</div>
       ${ps.map(p => `<button class="chip" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="openEditor('${esc(p.id)}')">
-        <span class="meta"><span class="fmt">${FMT_ICON[p.formato] || ""} ${esc(p.formato || "")}</span><span class="dot" style="background:${stColor(p.status)}" title="${esc(p.status)}"></span>${REPROVADOS.includes(p.status) ? `<span class="flag">${p.status === "Ideia reprovada" ? "Reprovada" : "Ajustes"}</span>` : ""}</span>
+        <span class="meta"><span class="fmt">${FMT_ICON[p.formato] || ""} ${esc(p.formato || "")}</span><span class="dot" style="background:${stColor(p.status)}" title="${esc(p.status)}"></span>${REPROVADOS.includes(p.status) ? `<span class="flag">${p.status === "Ideia reprovada" ? "Reprovada" : "Ajustes"}</span>` : ""}${p.status === "Agendado" && p.agHora ? `<span title="Agendado">⏰ ${esc(p.agHora)}${p.agData && p.agData !== p.data ? " " + br(p.agData) : ""}</span>` : ""}</span>
         <span class="t"><b>${esc(p.produto || "")}${p.produto ? ":" : ""}</b> ${esc(p.postagem || "sem título")}</span></button>`).join("")}
     </div>`;
   }
@@ -1154,6 +1167,7 @@ function fluxoHtml(p) {
     <div class="row"><span class="pill" style="--c:${stColor(p.status)}"><span class="dot"></span>${esc(p.status)}</span>
       <div class="steps">${ETAPAS.map((e, i) => `<span class="${i === at ? "on" : i < at ? "done" : ""}">${i < at ? "✓ " : ""}${e}</span>`).join("")}</div></div>
     ${p.motivo ? `<div class="motivo"><b>${p.status === "Ideia reprovada" ? "Ideia reprovada" : "Ajustes pedidos"}</b>${esc(p.motivo)}</div>` : ""}
+    ${p.agTipo && ["Agendado", "Postado"].includes(p.status) ? `<div class="kv" style="font-size:13.5px">⏰ <b>${esc(p.agTipo)}</b> agendado para ${esc(brFull(p.agData))} às ${esc(p.agHora)}${p.postLink ? ` · <a class="lnk" href="${esc(p.postLink)}" target="_blank" rel="noopener">Ver post publicado</a>` : ""}</div>` : ""}
     ${rej ? `<div class="rej"><label class="field"><span>${rej === "reprovarIdeia" ? "Por que a ideia não foi validada?" : "Por que o conteúdo não foi aprovado? O que precisa mudar?"}</span><textarea id="rejMotivo" placeholder="Escreva o motivo para a social media ajustar"></textarea></label>
         <div class="row"><button class="btn danger" type="button" onclick="acaoEditor('${rej}')">Confirmar</button><button class="btn" type="button" onclick="S.rejDlg=null;drawEditor()">Cancelar</button></div></div>`
       : acoes.length ? `<div class="row">${acoes.map(k => {
@@ -1164,24 +1178,94 @@ function fluxoHtml(p) {
     ${hist.length ? `<details><summary class="muted" style="cursor:pointer;font-size:13px">Histórico (${hist.length})</summary><ul class="hist">${hist.map(h => `<li>${new Date(h.em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })} · <b>${esc(h.por)}</b> ${esc((h.acao || "").toLowerCase())}${h.motivo ? `: "${esc(h.motivo)}"` : ""}</li>`).join("")}</ul></details>` : ""}
   </div>`;
 }
+function editorMudou() {
+  if (!EDIT.id) return true;
+  const g = gather();
+  return Object.keys(g).some(k => !["atualizado", "marcaId"].includes(k) && String(g[k] ?? "").trim() !== String(EDIT[k] ?? "").trim());
+}
 async function acaoEditor(k) {
   const a = ACOES[k];
+  if (a.painel) {
+    if (S.canWrite && editorMudou()) { const id = await salvarEditor(false); if (!id) return; }
+    const id = EDIT.id; $("#dlg").close(); abrirAgenda(id, k); return;
+  }
   const motivo = a.motivo ? ($("#rejMotivo")?.value || "").trim() : "";
   if (a.motivo && !motivo) return toast("Escreva o motivo.");
   // quem edita salva o que mudou antes de mandar para a próxima etapa
-  if (a.quem === "editar" && S.canWrite) { const id = await salvarEditor(false); if (!id) return; }
+  if (a.quem === "editar" && S.canWrite && editorMudou()) { const id = await salvarEditor(false); if (!id) return; }
   await acao(EDIT.id, k, motivo);
   const p = S.posts.find(x => x.id === EDIT.id);
   if (p && $("#dlg").open) { EDIT = { ...p }; S.rejDlg = null; drawEditor(); }
 }
-async function acao(id, k, motivo = "") {
+async function acao(id, k, motivo = "", dados = {}) {
   try {
-    await api("acao", { id, acao: k, motivo });
+    await api("acao", { id, acao: k, motivo, dados });
     S.rej = null; S.dirty = false;
     await carregar();
     toast(ACOES[k].ok);
   } catch (e) { writeFail(e); }
 }
+/* ---------- Agendamento assistido ---------- */
+const TIPOS_AGENDA = ["Feed", "Carrossel", "Reels", "Story"];
+const META_PLANNER = "https://business.facebook.com/latest/content_calendar";
+let AG = null;
+function tipoSugerido(p) {
+  if (p.agTipo) return p.agTipo;
+  if (/stor/i.test(p.rede || "")) return "Story";
+  return p.formato === "Vídeo" ? "Reels" : p.formato === "Carrossel" ? "Carrossel" : "Feed";
+}
+function abrirAgenda(id, k) {
+  const p = S.posts.find(x => x.id === id);
+  if (!p) return;
+  AG = { id, k };
+  const m = S.marcas.find(x => x.id === p.marcaId) || {};
+  const insta = (perfilDe(m).instagram || "").trim();
+  const did = driveId(p.criativo);
+  const tipo = tipoSugerido(p);
+  const postar = k === "postar";
+  $("#agForm").innerHTML = `
+    <div class="dlg-head"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600">${esc(m.nome || "")}${insta ? " · " + esc(insta) : ""}</div>
+      <h2>${postar ? "Marcar como postado" : k === "reagendar" ? "Alterar agendamento" : "Agendar"}: ${esc(nm(p))}</h2></div>
+      <button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#agDlg').close()">×</button></div>
+    <div class="dlg-body" style="grid-template-columns:1fr">
+      ${postar ? `<label class="field"><span>Link do post publicado (opcional)</span><input id="agLink" type="url" placeholder="https://www.instagram.com/p/…" value="${esc(p.postLink || "")}"></label>
+        <span class="muted" style="font-size:13px">Com o link salvo, dá para abrir o post direto da postagem depois.</span>`
+      : `<div class="field"><span>Publicar como</span><div class="seg">${TIPOS_AGENDA.map(t => `<label><input type="radio" name="agTipo" value="${t}"${t === tipo ? " checked" : ""}><span>${t}</span></label>`).join("")}</div></div>
+      <div class="pf-grid">
+        <label class="field"><span>Data</span><input id="agData" type="date" required value="${esc(p.agData || p.data || "")}"></label>
+        <label class="field"><span>Hora</span><input id="agHora" type="time" required value="${esc(p.agHora || "")}"></label>
+      </div>
+      <h4 style="margin:6px 0 0">Agende no Meta Business Suite</h4>
+      <ol class="passos">
+        <li><div><b>Pegue o criativo</b>${did ? `<div class="acts"><a class="btn sm" href="https://drive.google.com/uc?export=download&id=${esc(did)}" target="_blank" rel="noopener">Baixar arquivo</a><a class="btn sm" href="${esc(p.criativo)}" target="_blank" rel="noopener">Abrir no Drive</a></div>`
+          : /^https?:\/\//.test(p.criativo || "") ? `<div class="acts"><a class="btn sm" href="${esc(p.criativo)}" target="_blank" rel="noopener">Abrir criativo</a></div>` : `<div class="muted" style="font-size:13px">Esta postagem ainda não tem link do criativo.</div>`}</div></li>
+        <li><div><b>Copie a legenda</b>${cheio(p.legenda) ? `<div class="acts"><button class="btn sm" type="button" onclick="copiarTexto(S.posts.find(x=>x.id==='${esc(p.id)}').legenda,'Legenda copiada')">Copiar legenda</button></div>` : `<div class="muted" style="font-size:13px">Sem legenda cadastrada.</div>`}
+          <div class="muted" style="font-size:12.5px;margin-top:4px">Story não usa legenda; figurinhas, link e música entram direto no app.</div></div></li>
+        <li><div><b>Agende lá</b> com a conta ${insta ? `<b>${esc(insta)}</b>` : "da marca"}, no dia e na hora escolhidos acima.<div class="acts"><a class="btn sm primary" href="${META_PLANNER}" target="_blank" rel="noopener">Abrir Meta Business Suite</a></div></div></li>
+        <li><div><b>Confirme aqui</b> para a postagem ir para <b>Agendado</b> com o dia e a hora no calendário.</div></li>
+      </ol>`}
+    </div>
+    <div class="dlg-foot"><span class="sp"></span>
+      <button class="btn" type="button" onclick="$('#agDlg').close()">Cancelar</button>
+      <button class="btn ${postar ? "primary" : "ok"}" type="submit" id="agOk">${postar ? "Marcar como postado" : "Confirmar agendamento"}</button>
+    </div>`;
+  $("#agDlg").showModal();
+}
+$("#agForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const { id, k } = AG;
+  let dados = {};
+  if (k === "postar") dados = { postLink: ($("#agLink").value || "").trim() };
+  else {
+    dados = { agTipo: ($("#agForm input[name=agTipo]:checked") || {}).value, agData: $("#agData").value, agHora: $("#agHora").value };
+    if (!dados.agTipo || !dados.agData || !dados.agHora) return toast("Escolha o tipo, a data e a hora.");
+  }
+  const b = $("#agOk"); b.disabled = true;
+  await acao(id, k, "", dados);
+  $("#agDlg").close();
+});
+$("#agDlg").addEventListener("close", () => { AG = null; render(); });
+
 function pendencias() {
   if (!S.eu) return [];
   return S.posts.filter(p =>
@@ -1206,7 +1290,7 @@ function apvCard(p, k1, k2) {
     <div class="acts">
       ${rej ? `<div class="rej"><textarea id="rej-${esc(p.id)}" placeholder="${S.rej.k === "reprovarIdeia" ? "Por que a ideia não foi validada?" : "Por que não foi aprovado? O que precisa mudar?"}"></textarea>
           <div style="display:flex;gap:8px"><button class="btn danger" type="button" onclick="confirmarRej('${esc(p.id)}')">Confirmar</button><button class="btn" type="button" onclick="S.rej=null;render()">Cancelar</button></div></div>`
-        : `${k1 && podeAcao(p, k1) ? `<button class="btn ok" type="button" onclick="acao('${esc(p.id)}','${k1}')">${ACOES[k1].label}</button>` : ""}
+        : `${k1 && podeAcao(p, k1) ? `<button class="btn ok" type="button" onclick="${ACOES[k1].painel ? `abrirAgenda('${esc(p.id)}','${k1}')` : `acao('${esc(p.id)}','${k1}')`}">${ACOES[k1].label}</button>` : ""}
            ${k2 && podeAcao(p, k2) ? `<button class="btn danger" type="button" onclick="S.rej={id:'${esc(p.id)}',k:'${k2}'};render();$('#rej-${esc(p.id)}').focus()">${k2 === "pedirAjustes" ? "Não aprovar" : "Reprovar"}</button>` : ""}
            <button class="btn" type="button" onclick="openEditor('${esc(p.id)}')">Abrir postagem</button>`}
     </div>
@@ -1461,6 +1545,7 @@ $("#novaMarca").addEventListener("click", novaMarca);
 addEventListener("hashchange", () => { S.confirmDel = false; S.delArq = null; S.dirty = false; render(); window.scrollTo(0, 0); });
 document.addEventListener("input", e => { if (e.target.closest("#app form")) { S.dirty = true; const m = $("#app .save-bar .msg"); if (m) m.textContent = "Alterações não salvas"; } });
 $("#dlg").addEventListener("close", () => render());
+$("#agDlg").addEventListener("click", e => { if (e.target === $("#agDlg")) $("#agDlg").close(); });
 $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg").close(); });
 
 /* ---------- Planilha (Google Apps Script) ---------- */
@@ -1488,9 +1573,9 @@ async function carregar() {
     if (e.code === "sessao") return writeFail(e);
     if (!S.loadedP) S.failed = true; else toast("Sem conexão com a planilha agora.");
   }
-  if (!$("#dlg").open && !S.dirty && !S.rej && !S.uEdit && !S.boasVindas) render();
+  if (!$("#dlg").open && !$("#agDlg").open && !S.dirty && !S.rej && !S.uEdit && !S.boasVindas) render();
 }
-setInterval(() => { if (API && S.token && document.visibilityState === "visible" && !$("#dlg").open) carregar(); }, 30000);
+setInterval(() => { if (API && S.token && document.visibilityState === "visible" && !$("#dlg").open && !$("#agDlg").open) carregar(); }, 30000);
 carregar();
 render();
 </script>

@@ -28,7 +28,8 @@ const CAMPOS_PAUTA = [
   ['objetivo', 'Objetivo (jornada de compra)'], ['cta', 'CTA / destino'], ['rede', 'Rede'],
   ['gravacao', 'Gravação'], ['observacao', 'Observação'], ['inspiracao', 'Inspiração'],
   ['legenda', 'Legenda'], ['criativo', 'Criativo'], ['criado', 'Criado em'], ['atualizado', 'Atualizado em'],
-  ['motivo', 'Motivo da reprovação'], ['historico', 'Histórico']
+  ['motivo', 'Motivo da reprovação'], ['historico', 'Histórico'],
+  ['agTipo', 'Agendado como'], ['agQuando', 'Agendado para'], ['postLink', 'Link do post publicado']
 ];
 const CAMPOS_MARCA = [
   ['id', 'ID'], ['nome', 'Nome'], ['produtos', 'Produtos'], ['fases', 'Fases'],
@@ -53,9 +54,12 @@ const ACOES = {
   enviarAprovacao: { de: ['Em produção', 'Ajustes solicitados'], para: 'Em aprovação', quem: 'editar', texto: 'Enviou o conteúdo para aprovação' },
   aprovar: { de: ['Em aprovação'], para: 'Aprovado', quem: 'aprovar', texto: 'Aprovou o conteúdo' },
   pedirAjustes: { de: ['Em aprovação'], para: 'Ajustes solicitados', quem: 'aprovar', motivo: true, texto: 'Pediu ajustes no conteúdo' },
-  agendar: { de: ['Aprovado'], para: 'Agendado', quem: 'editar', texto: 'Marcou como agendado' },
+  agendar: { de: ['Aprovado'], para: 'Agendado', quem: 'editar', texto: 'Agendou', agenda: true },
+  reagendar: { de: ['Agendado'], para: 'Agendado', quem: 'editar', texto: 'Alterou o agendamento', agenda: true },
   postar: { de: ['Aprovado', 'Agendado'], para: 'Postado', quem: 'editar', texto: 'Marcou como postado' }
 };
+
+const TIPOS_AGENDA = ['Feed', 'Carrossel', 'Reels', 'Story'];
 
 const DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 const FASES_PADRAO = [
@@ -90,7 +94,7 @@ function doPost(e) {
         case 'listar': return json_(listar_(eu));
         case 'salvarPauta': return json_({ ok: true, id: salvarPauta_(eu, req.pauta || {}) });
         case 'excluirPauta': excluirPauta_(eu, req.id); return json_({ ok: true });
-        case 'acao': acaoPauta_(eu, req.id, req.acao, req.motivo, req.status); return json_({ ok: true });
+        case 'acao': acaoPauta_(eu, req.id, req.acao, req.motivo, req.status, req.dados || {}); return json_({ ok: true });
         case 'salvarMarca': return json_({ ok: true, id: salvarMarca_(eu, req.marca || {}) });
         case 'excluirMarca': soAdmin_(eu); excluirMarca_(req.id); return json_({ ok: true });
         case 'salvarUsuario': soAdmin_(eu); return json_({ ok: true, id: salvarUsuario_(eu, req.usuario || {}) });
@@ -199,6 +203,11 @@ function pautaParaSite_(p) {
   p.atualizado = Number(p.atualizado) || 0;
   p.status = normStatus_(p.status);
   p.historico = parseJSON_(p.historico, []);
+  // "05/11/2026 18:30" -> agData "2026-11-05" e agHora "18:30"
+  const q = String(p.agQuando || '').match(/^(\S+)\s+(\d{1,2}:\d{2})$/);
+  p.agData = q ? paraISO_(q[1]) : '';
+  p.agHora = q ? q[2] : '';
+  delete p.agQuando;
   delete p.dia;
   delete p.marca;
   return p;
@@ -264,7 +273,7 @@ function excluirPauta_(eu, id) {
   excluirLinha_(ABA_PAUTAS, CAMPOS_PAUTA, id);
 }
 
-function acaoPauta_(eu, id, acao, motivo, status) {
+function acaoPauta_(eu, id, acao, motivo, status, dados) {
   const p = pautaPorId_(id);
   if (!p) throw erro_('server', 'Postagem não encontrada. Atualize a página.');
   motivo = String(motivo || '').trim();
@@ -281,6 +290,11 @@ function acaoPauta_(eu, id, acao, motivo, status) {
     if (a.de.indexOf(p.status) < 0) throw erro_('server', 'Esta postagem está em "' + p.status + '" e não pode passar por esta etapa. Atualize a página.');
     if (a.motivo && !motivo) throw erro_('server', 'Escreva o motivo.');
     para = a.para; texto = a.texto;
+    if (a.agenda) {
+      if (TIPOS_AGENDA.indexOf(dados.agTipo) < 0) throw erro_('server', 'Escolha se é Feed, Carrossel, Reels ou Story.');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dados.agData || '') || !/^\d{1,2}:\d{2}$/.test(dados.agHora || '')) throw erro_('server', 'Preencha a data e a hora do agendamento.');
+      texto += ': ' + dados.agTipo + ' em ' + paraBR_(dados.agData).slice(0, 5) + ' às ' + dados.agHora;
+    }
   }
   const historico = p.historico.concat([{ em: Date.now(), por: eu.nome, uid: eu.id, acao: texto, de: p.status, para: para, motivo: motivo }]);
   const aba = aba_(ABA_PAUTAS, CAMPOS_PAUTA);
@@ -290,6 +304,11 @@ function acaoPauta_(eu, id, acao, motivo, status) {
   set('motivo', (para === 'Ideia reprovada' || para === 'Ajustes solicitados') ? motivo : '');
   set('historico', JSON.stringify(historico));
   set('atualizado', String(Date.now()));
+  if (ACOES[acao] && ACOES[acao].agenda) {
+    set('agTipo', dados.agTipo);
+    set('agQuando', paraBR_(dados.agData) + ' ' + dados.agHora);
+  }
+  if (acao === 'postar' && dados.postLink) set('postLink', String(dados.postLink).trim());
 }
 
 function normStatus_(s) {
