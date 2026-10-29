@@ -438,7 +438,16 @@ const normStatus = s => STATUS_ANTIGOS[s] || (STATUS.includes(s) ? s : "Ideia");
 const FORMATOS = ["Estático", "Carrossel", "Vídeo"];
 const FMT_ICON = { "Estático": "▢", "Carrossel": "▤", "Vídeo": "▶" };
 const OBJETIVOS = ["Descoberta", "Desejo", "Consideração", "Educação", "Autoridade", "Quebra de objeção", "Prova social", "Conversão"];
-const REDES = ["Feed", "Feed + Stories", "Instagram + TikTok", "Reels", "Stories", "TikTok"];
+const REDES = ["Feed", "Reels", "Stories", "TikTok", "YouTube Shorts", "Facebook", "Pinterest", "LinkedIn", "Threads"];
+// a rede é guardada como texto ("Feed + Stories"); aqui vira lista e volta
+const redesDe = t => String(t || "").split(/\s*\+\s*|\s*,\s*/).map(x => x.trim()).filter(Boolean);
+const NAO_FEED = ["Stories", "TikTok", "YouTube Shorts", "Facebook", "Pinterest", "LinkedIn", "Threads"];
+function opcoesRede() {
+  // padrão + qualquer rede que alguém já tenha usado em uma postagem
+  const extra = new Set();
+  S.posts.forEach(p => redesDe(p.rede).forEach(r => { if (!REDES.includes(r)) extra.add(r); }));
+  return REDES.concat([...extra].sort((a, b) => a.localeCompare(b)));
+}
 const WD = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 const DEFAULT_FASES = [
   { nome: "Lançamento", cor: "#A9A9A4" },
@@ -734,7 +743,8 @@ const thumbDe = u => { const id = driveId(u); return id ? `https://drive.google.
 const blobSrc = p => thumbDe(p.capa) || thumbDe(p.criativo);
 function vGrade() {
   const m = marca();
-  const ps = postsMes().filter(p => !["Stories", "TikTok"].includes(p.rede)).reverse();
+  // fica fora da grade só o que não vai para o feed (por exemplo, só Stories ou só TikTok)
+  const ps = postsMes().filter(p => { const r = redesDe(p.rede); return !r.length || r.some(x => !NAO_FEED.includes(x)); }).reverse();
   const tiles = ps.map(p => {
     const src = blobSrc(p);
     return `<button class="tile${src ? " has-img" : ""}" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="openEditor('${esc(p.id)}')" title="${esc(nm(p))}">
@@ -838,7 +848,7 @@ function relatorioHtml() {
           ${w.post ? `<span class="s b" style="height:${(w.post / maxW * 120).toFixed(0)}px${w.plan - w.post ? "" : ";border-radius:4px 4px 0 0"}"></span>` : ""}</div>`).join("")}</div>
         <div class="wk-lb">${r.semanas.map(w => `<span>${w.ini}–${w.fim}</span>`).join("")}</div></section>
       <section><h3>Por formato</h3>${rbars(r.by("formato"), n)}</section>
-      <section><h3>${Object.keys(r.tipos).length ? "Agendadas como" : "Por rede"}</h3>${Object.keys(r.tipos).length ? rbars(r.tipos, Object.values(r.tipos).reduce((a, b) => a + b, 0)) : rbars(r.by("rede"), n)}</section>
+      <section><h3>${Object.keys(r.tipos).length ? "Agendadas como" : "Por rede"}</h3>${Object.keys(r.tipos).length ? rbars(r.tipos, Object.values(r.tipos).reduce((a, b) => a + b, 0)) : rbars(ps.reduce((o, p) => { const l = redesDe(p.rede); (l.length ? l : ["Não definido"]).forEach(x => o[x] = (o[x] || 0) + 1); return o; }, {}), n)}</section>
       <section><h3>Por produto</h3>${rbars(r.by("produto"), n)}</section>
       <section><h3>Por objetivo</h3>${rbars(r.by("objetivo"), n)}</section>
       ${todas ? `<section class="full"><h3>Por marca</h3><div style="overflow-x:auto"><table class="rtab"><thead><tr><th>Marca</th><th class="n">Planejadas</th><th class="n">Aprovadas ou adiante</th><th class="n">Postadas</th><th class="n">% postado</th><th class="n">Devoluções</th></tr></thead><tbody>
@@ -1320,7 +1330,7 @@ function openEditor(id, date) {
   if (p && p.marcaId !== S.marcaId) { S.marcaId = p.marcaId; store("marca", p.marcaId); S.canWrite = podeEditar(p.marcaId); render(); }
   m = marca();
   S.rejDlg = null;
-  EDIT = p ? { ...p } : { status: "Ideia", data: date || (S.month + "-01"), formato: "Vídeo", fase: fasesDe(m)[0]?.nome || "", produto: (m.produtos || [])[0] || "", rede: "Instagram + TikTok" };
+  EDIT = p ? { ...p } : { status: "Ideia", data: date || (S.month + "-01"), formato: "Vídeo", fase: fasesDe(m)[0]?.nome || "", produto: (m.produtos || [])[0] || "", rede: "Reels + TikTok" };
   S.delPost = false;
   drawEditor();
   $("#dlg").showModal();
@@ -1352,7 +1362,12 @@ function drawEditor() {
       ${txt("ePauta", "Nome", p.pauta, true)}
       <label class="field"><span>Objetivo (jornada de compra)</span>${sel("eObjetivo", OBJETIVOS, p.objetivo, true)}</label>
       ${txt("eCta", "CTA / destino", p.cta, false, "Ex.: Link do e-commerce")}
-      <label class="field"><span>Rede</span>${sel("eRede", REDES, p.rede, true)}</label>
+      <div class="field full"><span>Redes (pode marcar mais de uma)</span>
+        <div class="seg" id="eRedes">${(() => { const marcadas = redesDe(p.rede); const ops = opcoesRede(); marcadas.forEach(x => { if (!ops.includes(x)) ops.push(x); });
+          return ops.map(r => `<label><input type="checkbox" value="${esc(r)}"${marcadas.includes(r) ? " checked" : ""}${ro}><span>${esc(r)}</span></label>`).join(""); })()}
+          ${S.canWrite ? `<button class="btn sm" type="button" onclick="$('#redeNova').hidden=false;$('#eRedeNova').focus()">+ Outra</button>` : ""}</div>
+        <div class="prod-new" id="redeNova" hidden><input id="eRedeNova" placeholder="Nome da rede (ex.: Kwai)" onkeydown="if(event.key==='Enter'){event.preventDefault();addRede()}"><button class="btn sm primary" type="button" onclick="addRede()">Adicionar</button></div>
+      </div>
       ${txt("eGravacao", "Gravação", p.gravacao, false, "Ex.: Vídeo novo (matriz)")}
       <h4>Produção</h4>
       ${area("eObs", "Observação", p.observacao, 2)}
@@ -1386,12 +1401,20 @@ function atualizarPrevia() {
   const atual = box.querySelector("img, .muted");
   if (atual) atual.outerHTML = previaHtml(src); else box.insertAdjacentHTML("afterbegin", previaHtml(src));
 }
+function addRede() {
+  const nome = $("#eRedeNova").value.trim().replace(/\s*\+\s*/g, " ");
+  if (!nome) return toast("Escreva o nome da rede.");
+  const ja = [...document.querySelectorAll("#eRedes input")].find(i => i.value.toLowerCase() === nome.toLowerCase());
+  if (ja) ja.checked = true;
+  else $("#eRedes > button").insertAdjacentHTML("beforebegin", `<label><input type="checkbox" value="${esc(nome)}" checked><span>${esc(nome)}</span></label>`);
+  $("#eRedeNova").value = ""; $("#redeNova").hidden = true;
+}
 function gather() {
   const v = id => ($("#" + id)?.value ?? "").trim();
   return {
     marcaId: S.marcaId, data: v("eData"), formato: v("eFormato"), fase: v("eFase"),
     produto: v("eProduto"), postagem: v("ePostagem"), pauta: v("ePauta"), objetivo: v("eObjetivo"), cta: v("eCta"),
-    rede: v("eRede"), gravacao: v("eGravacao"), observacao: $("#eObs").value, inspiracao: $("#eInsp").value,
+    rede: [...document.querySelectorAll("#eRedes input:checked")].map(i => i.value).join(" + "), gravacao: v("eGravacao"), observacao: $("#eObs").value, inspiracao: $("#eInsp").value,
     legenda: $("#eLegenda").value, criativo: v("eCriativo"), capa: v("eCapa"), atualizado: Date.now()
   };
 }
@@ -1472,7 +1495,8 @@ const META_PLANNER = "https://business.facebook.com/latest/content_calendar";
 let AG = null;
 function tipoSugerido(p) {
   if (p.agTipo) return p.agTipo;
-  if (/stor/i.test(p.rede || "")) return "Story";
+  const redes = redesDe(p.rede);
+  if (redes.length === 1 && redes[0] === "Stories") return "Story";
   return p.formato === "Vídeo" ? "Reels" : p.formato === "Carrossel" ? "Carrossel" : "Feed";
 }
 function abrirAgenda(id, k) {
