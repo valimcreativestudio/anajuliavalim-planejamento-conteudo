@@ -482,7 +482,10 @@ const wd = s => s ? WD[parse(s).getDay()] : "";
 const monthLabel = ym => { const t = parse(ym + "-01").toLocaleDateString("pt-BR", { month: "long", year: "numeric" }); return t.charAt(0).toUpperCase() + t.slice(1); };
 const shiftMonth = (ym, n) => { const d = parse(ym + "-01"); d.setMonth(d.getMonth() + n); return iso(d).slice(0, 7); };
 const stColor = st => `var(${ST_VAR[st] || "--st-ideia"})`;
-const nm = p => p.produto ? `${p.produto}: ${p.postagem || "sem título"}` : (p.postagem || "sem título");
+// vários produtos ficam guardados como "Produto A + Produto B"
+const prodsDe = t => String(t || "").split(/\s+\+\s+/).map(x => x.trim()).filter(Boolean);
+const prodCurto = p => { const l = prodsDe(p.produto); return l.length > 1 ? `${l[0]} +${l.length - 1}` : (l[0] || ""); };
+const nm = p => prodCurto(p) ? `${prodCurto(p)}: ${p.postagem || "sem título"}` : (p.postagem || "sem título");
 
 function toast(msg) {
   const t = $("#toast"); t.textContent = msg; t.hidden = false;
@@ -507,7 +510,7 @@ const postsMarca = () => S.posts.filter(p => p.marcaId === S.marcaId).sort((a, b
 const postsMes = () => postsMarca().filter(p => (p.data || "").startsWith(S.month));
 const produtosDe = m => {
   const set = new Set((m && m.produtos) || []);
-  postsMarca().forEach(p => p.produto && set.add(p.produto));
+  postsMarca().forEach(p => prodsDe(p.produto).forEach(x => set.add(x)));
   return [...set];
 };
 
@@ -630,7 +633,7 @@ function vCal() {
       ${ps.map(p => `<button class="chip" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="openEditor('${esc(p.id)}')">
         ${blobSrc(p) ? `<span class="prev"><img src="${esc(blobSrc(p))}" alt="" loading="lazy" onerror="this.parentNode.remove()"></span>` : ""}
         <span class="meta"><span class="fmt">${FMT_ICON[p.formato] || ""} ${esc(p.formato || "")}</span><span class="dot" style="background:${stColor(p.status)}" title="${esc(p.status)}"></span>${REPROVADOS.includes(p.status) ? `<span class="flag">${p.status === "Ideia reprovada" ? "Reprovada" : "Ajustes"}</span>` : ""}${p.status === "Agendado" && p.agHora ? `<span title="Agendado">⏰ ${esc(p.agHora)}${p.agData && p.agData !== p.data ? " " + br(p.agData) : ""}</span>` : ""}</span>
-        <span class="t"><b>${esc(p.produto || "")}${p.produto ? ":" : ""}</b> ${esc(p.postagem || "sem título")}</span></button>`).join("")}
+        <span class="t" title="${esc(prodsDe(p.produto).join(", "))}"><b>${esc(prodCurto(p))}${prodCurto(p) ? ":" : ""}</b> ${esc(p.postagem || "sem título")}</span></button>`).join("")}
     </div>`;
   }
   const n = postsMes().length;
@@ -644,7 +647,7 @@ function filtered() {
   return postsMes().filter(p =>
     (!S.f.status || p.status === S.f.status) &&
     (!S.f.formato || p.formato === S.f.formato) &&
-    (!S.f.produto || p.produto === S.f.produto) &&
+    (!S.f.produto || prodsDe(p.produto).includes(S.f.produto)) &&
     (!q || [p.postagem, p.pauta, p.legenda, p.produto, p.observacao].join(" ").toLowerCase().includes(q)));
 }
 function setF(k, v) { S.f[k] = v; render(); }
@@ -660,7 +663,7 @@ function vPautas() {
     <td class="num">${brFull(p.data)}<div class="muted">${wd(p.data)}</div></td>
     <td><span class="pill" style="--c:${esc(faseCor(m, p.fase))}"><span class="dot"></span>${esc(p.fase || "—")}</span></td>
     <td>${FMT_ICON[p.formato] || ""} ${esc(p.formato)}</td>
-    <td>${esc(p.produto)}</td>
+    <td>${prodsDe(p.produto).map(esc).join("<br>")}</td>
     <td><b>${esc(p.postagem)}</b><div class="muted">${esc(p.pauta)}</div></td>
     <td>${esc(p.objetivo)}</td>
     <td>${esc(p.cta)}</td>
@@ -849,7 +852,7 @@ function relatorioHtml() {
         <div class="wk-lb">${r.semanas.map(w => `<span>${w.ini}–${w.fim}</span>`).join("")}</div></section>
       <section><h3>Por formato</h3>${rbars(r.by("formato"), n)}</section>
       <section><h3>${Object.keys(r.tipos).length ? "Agendadas como" : "Por rede"}</h3>${Object.keys(r.tipos).length ? rbars(r.tipos, Object.values(r.tipos).reduce((a, b) => a + b, 0)) : rbars(ps.reduce((o, p) => { const l = redesDe(p.rede); (l.length ? l : ["Não definido"]).forEach(x => o[x] = (o[x] || 0) + 1); return o; }, {}), n)}</section>
-      <section><h3>Por produto</h3>${rbars(r.by("produto"), n)}</section>
+      <section><h3>Por produto</h3>${rbars(ps.reduce((o, p) => { const l = prodsDe(p.produto); (l.length ? l : ["Não definido"]).forEach(x => o[x] = (o[x] || 0) + 1); return o; }, {}), n)}</section>
       <section><h3>Por objetivo</h3>${rbars(r.by("objetivo"), n)}</section>
       ${todas ? `<section class="full"><h3>Por marca</h3><div style="overflow-x:auto"><table class="rtab"><thead><tr><th>Marca</th><th class="n">Planejadas</th><th class="n">Aprovadas ou adiante</th><th class="n">Postadas</th><th class="n">% postado</th><th class="n">Devoluções</th></tr></thead><tbody>
         ${Object.entries(r.marcas).sort((a, b) => b[1].plan - a[1].plan).map(([id, o]) => `<tr><td>${esc(nomeMarca(id))}</td><td class="n">${o.plan}</td><td class="n">${o.prontas}</td><td class="n">${o.post}</td><td class="n">${pctTxt(o.post, o.plan)}</td><td class="n">${o.devol}</td></tr>`).join("")}</tbody></table></div></section>` : ""}
@@ -1216,7 +1219,7 @@ function vProdutos() {
   const m = marca(), ro = S.canWrite ? "" : " disabled";
   const prods = m.produtos || [];
   const usados = produtosDe(m).filter(x => !prods.includes(x));
-  const conta = x => postsMarca().filter(p => p.produto === x).length;
+  const conta = x => postsMarca().filter(p => prodsDe(p.produto).includes(x)).length;
   return headM(m.nome, "Produtos") + subnav() +
     `<p class="sec-intro">Os produtos cadastrados aqui aparecem no campo Produto de cada postagem e no Resumo do mês.</p>
     <form class="panel" style="max-width:640px" onsubmit="event.preventDefault();salvarProdutos()">
@@ -1249,13 +1252,14 @@ async function addProdutoEditor() {
   const nome = $("#eProdNovo").value.trim();
   if (!nome) return toast("Escreva o nome do produto.");
   const m = marca(), lista = m.produtos || [];
-  const sel = $("#eProduto");
   if (!lista.includes(nome)) {
     try { await api("salvarMarca", { marca: { ...m, produtos: lista.concat(nome) } }); m.produtos = lista.concat(nome); }
     catch (e) { return writeFail(e); }
   }
-  if (![...sel.options].some(o => o.value === nome)) sel.add(new Option(nome, nome));
-  sel.value = nome;
+  const ja = [...document.querySelectorAll("#eProdutos input")].find(i => i.value === nome);
+  $("#eProdutos > .muted")?.remove();
+  if (ja) ja.checked = true;
+  else $("#eProdutos").insertAdjacentHTML("beforeend", `<label><input type="checkbox" value="${esc(nome)}" checked><span>${esc(nome)}</span></label>`);
   $("#eProdNovo").value = ""; $("#prodNovo").hidden = true;
   toast(`"${nome}" adicionado aos produtos da marca`);
 }
@@ -1330,7 +1334,7 @@ function openEditor(id, date) {
   if (p && p.marcaId !== S.marcaId) { S.marcaId = p.marcaId; store("marca", p.marcaId); S.canWrite = podeEditar(p.marcaId); render(); }
   m = marca();
   S.rejDlg = null;
-  EDIT = p ? { ...p } : { status: "Ideia", data: date || (S.month + "-01"), formato: "Vídeo", fase: fasesDe(m)[0]?.nome || "", produto: (m.produtos || [])[0] || "", rede: "Reels + TikTok" };
+  EDIT = p ? { ...p } : { status: "Ideia", data: date || (S.month + "-01"), formato: "Vídeo", fase: fasesDe(m)[0]?.nome || "", produto: "", rede: "Reels + TikTok" };
   S.delPost = false;
   drawEditor();
   $("#dlg").showModal();
@@ -1354,8 +1358,11 @@ function drawEditor() {
       <label class="field"><span>Data</span><input id="eData" type="date" required value="${esc(p.data)}"${ro}></label>
       <label class="field"><span>Formato</span>${sel("eFormato", FORMATOS, p.formato)}</label>
       <label class="field"><span>Fase</span>${sel("eFase", fasesDe(m).map(f => f.nome), p.fase, true)}</label>
-      <div class="field"><span>Produto</span>
-        <div class="prod-pick">${sel("eProduto", m.produtos || [], p.produto, true)}${S.canWrite ? `<button class="icon-btn" type="button" aria-label="Adicionar produto" title="Adicionar produto" onclick="toggleNovoProd()">+</button>` : ""}</div>
+      <div class="field full"><span>Produtos (pode marcar mais de um)</span>
+        <div style="display:flex;gap:6px;align-items:flex-start">
+          <div class="seg" id="eProdutos" style="flex:1">${(() => { const marc = prodsDe(p.produto), ops = [...(m.produtos || [])]; marc.forEach(x => { if (!ops.includes(x)) ops.push(x); });
+            return ops.length ? ops.map(x => `<label><input type="checkbox" value="${esc(x)}"${marc.includes(x) ? " checked" : ""}${ro}><span>${esc(x)}</span></label>`).join("") : `<span class="muted" style="font-size:13px">Nenhum produto cadastrado. Use o + para criar.</span>`; })()}</div>
+          ${S.canWrite ? `<button class="icon-btn" type="button" aria-label="Adicionar produto" title="Adicionar produto" onclick="toggleNovoProd()">+</button>` : ""}</div>
         <div class="prod-new" id="prodNovo" hidden><input id="eProdNovo" placeholder="Nome do novo produto" onkeydown="if(event.key==='Enter'){event.preventDefault();addProdutoEditor()}"><button class="btn sm primary" type="button" onclick="addProdutoEditor()">Adicionar</button></div>
       </div>
       ${txt("ePostagem", "Título da postagem", p.postagem, false, "Ex.: Conheça o produto")}
@@ -1413,7 +1420,7 @@ function gather() {
   const v = id => ($("#" + id)?.value ?? "").trim();
   return {
     marcaId: S.marcaId, data: v("eData"), formato: v("eFormato"), fase: v("eFase"),
-    produto: v("eProduto"), postagem: v("ePostagem"), pauta: v("ePauta"), objetivo: v("eObjetivo"), cta: v("eCta"),
+    produto: [...document.querySelectorAll("#eProdutos input:checked")].map(i => i.value).join(" + "), postagem: v("ePostagem"), pauta: v("ePauta"), objetivo: v("eObjetivo"), cta: v("eCta"),
     rede: [...document.querySelectorAll("#eRedes input:checked")].map(i => i.value).join(" + "), gravacao: v("eGravacao"), observacao: $("#eObs").value, inspiracao: $("#eInsp").value,
     legenda: $("#eLegenda").value, criativo: v("eCriativo"), capa: v("eCapa"), atualizado: Date.now()
   };
