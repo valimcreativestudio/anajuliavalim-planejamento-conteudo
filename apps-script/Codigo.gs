@@ -18,7 +18,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-10-29.1';
+const VERSAO = '2026-10-29.2';
 
 const ABA_PAUTAS = 'POSTAGENS';
 const ABA_MARCAS = 'MARCAS';
@@ -93,6 +93,10 @@ function doPost(e) {
 
     // envio de arquivo vai para o Drive, fora da trava da planilha
     if (req.action === 'enviarArquivo') return json_(Object.assign({ ok: true }, enviarArquivo_(eu, req)));
+    // Instagram: chamadas externas, também fora da trava
+    if (req.action === 'instaConectar') return json_(Object.assign({ ok: true }, instaConectar_(eu, req.marcaId, req.chave)));
+    if (req.action === 'instaDesconectar') return json_(Object.assign({ ok: true }, instaDesconectar_(eu, req.marcaId)));
+    if (req.action === 'instaMidias') return json_(Object.assign({ ok: true }, instaMidias_(eu, req.marcaId, req.forcar)));
 
     const lock = LockService.getScriptLock();
     lock.waitLock(20000);
@@ -192,7 +196,8 @@ function listar_(eu) {
     observacoes: m.observacoes || '',
     criado: Number(m.criado) || 0,
     perfil: parseJSON_(m.perfil, {}),
-    arquivos: parseJSON_(m.arquivos, [])
+    arquivos: parseJSON_(m.arquivos, []),
+    insta: instaStatus_(m.id)
   }));
   const pautas = ler_(ABA_PAUTAS, CAMPOS_PAUTA).filter(p => acesso_(eu, p.marcaId)).map(pautaParaSite_);
   registrarAcesso_(eu);
@@ -414,6 +419,82 @@ function salvarMarca_(eu, m) {
   return id;
 }
 
+/* ---------- Instagram (leitura dos posts do perfil) ----------
+ * A chave de acesso fica só nas Propriedades do script (ig_<marca>); nunca vai para o site.
+ * Usa a API do Instagram com login do Instagram (graph.instagram.com). */
+
+function instaDados_(marcaId) {
+  const raw = PropertiesService.getScriptProperties().getProperty('ig_' + marcaId);
+  return raw ? parseJSON_(raw, null) : null;
+}
+
+function instaStatus_(marcaId) {
+  const d = instaDados_(marcaId);
+  return d ? { conectado: true, usuario: d.usuario || '' } : { conectado: false };
+}
+
+function instaGet_(url) {
+  const r = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+  let j;
+  try { j = JSON.parse(r.getContentText()); } catch (e) { throw erro_('insta', 'O Instagram não respondeu. Tente de novo em alguns minutos.'); }
+  if (j.error) {
+    const venceu = j.error.code === 190;
+    throw erro_('insta', venceu ? 'A chave do Instagram expirou ou foi revogada. Gere uma nova e conecte de novo.' : 'Instagram: ' + j.error.message);
+  }
+  return j;
+}
+
+function instaConectar_(eu, marcaId, token) {
+  if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Você não pode conectar o Instagram desta marca.');
+  token = String(token || '').trim();
+  if (token.length < 20) throw erro_('server', 'Cole a chave de acesso completa.');
+  const me = instaGet_('https://graph.instagram.com/me?fields=user_id,username&access_token=' + encodeURIComponent(token));
+  PropertiesService.getScriptProperties().setProperty('ig_' + marcaId, JSON.stringify({ token: token, usuario: me.username || '', salvo: Date.now(), renovado: Date.now() }));
+  CacheService.getScriptCache().remove('igm_' + marcaId);
+  return { usuario: me.username || '' };
+}
+
+function instaDesconectar_(eu, marcaId) {
+  if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Você não pode desconectar o Instagram desta marca.');
+  PropertiesService.getScriptProperties().deleteProperty('ig_' + marcaId);
+  CacheService.getScriptCache().remove('igm_' + marcaId);
+  return {};
+}
+
+function instaMidias_(eu, marcaId, forcar) {
+  if (!acesso_(eu, marcaId)) throw erro_('permissao', 'Sem acesso a esta marca.');
+  const d = instaDados_(marcaId);
+  if (!d) return { conectado: false };
+  const cache = CacheService.getScriptCache();
+  if (!forcar) {
+    const c = cache.get('igm_' + marcaId);
+    if (c) return JSON.parse(c);
+  }
+  // a chave vale 60 dias; renova sozinha quando passa de 20 dias
+  if (Date.now() - (d.renovado || 0) > 20 * 864e5) {
+    try {
+      const n = instaGet_('https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=' + encodeURIComponent(d.token));
+      if (n.access_token) { d.token = n.access_token; d.renovado = Date.now(); PropertiesService.getScriptProperties().setProperty('ig_' + marcaId, JSON.stringify(d)); }
+    } catch (e) { /* tenta de novo na próxima vez */ }
+  }
+  let res;
+  try {
+    const j = instaGet_('https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&limit=36&access_token=' + encodeURIComponent(d.token));
+    res = {
+      conectado: true, usuario: d.usuario,
+      midias: (j.data || []).map(x => ({
+        id: x.id, tipo: x.media_type, link: x.permalink, em: x.timestamp,
+        img: x.media_type === 'VIDEO' ? (x.thumbnail_url || '') : (x.media_url || ''),
+        legenda: String(x.caption || '').slice(0, 140)
+      }))
+    };
+  } catch (e) {
+    return { conectado: true, usuario: d.usuario, erro: String(e.message || e) };
+  }
+  try { cache.put('igm_' + marcaId, JSON.stringify(res), 900); } catch (e) {}
+  return res;
+}
+
 function excluirMarca_(id) {
   const aba = aba_(ABA_PAUTAS, CAMPOS_PAUTA);
   const n = aba.getLastRow() - 1;
@@ -422,6 +503,7 @@ function excluirMarca_(id) {
     for (let i = ids.length - 1; i >= 0; i--) if (ids[i][0] === id) aba.deleteRow(i + 2);
   }
   excluirLinha_(ABA_MARCAS, CAMPOS_MARCA, id);
+  PropertiesService.getScriptProperties().deleteProperty('ig_' + id);
 }
 
 function enviarArquivo_(eu, req) {

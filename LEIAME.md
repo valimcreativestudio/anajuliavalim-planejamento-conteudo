@@ -68,6 +68,21 @@ Cada pessoa liga ou desliga os avisos em **Minha conta**. O Gmail comum permite 
 
 **Na primeira vez**, depois de colar o código novo, rode **configurar** de novo no Apps Script para autorizar o envio de e-mails, e só então faça **Implantar → Gerenciar implantações → ✏️ → Nova versão**.
 
+## Grade do Insta com os posts reais do perfil
+
+Na **Grade do Insta**, a **bolinha verde** marca o que já foi postado; sem bolinha, ainda não foi. Ligando o Instagram de uma marca, a grade mostra também os posts que já estão no perfil (os 36 mais recentes), misturados por data com os planejados.
+
+**Conectar uma marca (uma vez, uns 10 minutos na primeira):**
+
+1. A conta do Instagram da marca precisa ser **profissional** (Empresa ou Criador de conteúdo).
+2. Entre em [developers.facebook.com](https://developers.facebook.com) com o seu Facebook → **Meus apps → Criar app**. Escolha o caso de uso de **Instagram** / "Gerenciar mensagens e conteúdo no Instagram" e conclua (o app pode ficar em modo de desenvolvimento; é só para a agência).
+3. No app, abra **Instagram → Configuração da API com login do Instagram**.
+4. Em **Funções do app → Funções**, adicione o @ da marca como **Testador do Instagram**. No Instagram da marca, aceite o convite em **Configurações → Apps e sites → Convites de testador** (pelo navegador, em instagram.com).
+5. Volte em **Gerar tokens de acesso**, clique em **Adicionar conta**, entre com o Instagram da marca e clique em **Gerar token**. Copie a chave.
+6. No sistema: **Marca → Configurações → Instagram da marca**, cole a chave e clique em **Conectar**.
+
+O mesmo app serve para todas as marcas: para as próximas, repita só os passos 4 a 6. A chave fica guardada só no script da planilha (o site nunca mostra) e é renovada sozinha; se o cliente trocar a senha do Instagram, gere outra e conecte de novo. Os nomes dos menus da Meta mudam de vez em quando; se algo estiver diferente, mande um print.
+
 ## Atividade da equipe
 
 Em **Equipe → Atividade** (o administrador, o diretor e o gestor veem): último acesso de cada pessoa, quantas postagens criou, editou e enviou, quantas validou/aprovou ou devolveu, pendências e a lista das últimas ações. Quem fica 3 dias sem sinal aparece em vermelho.

@@ -178,11 +178,20 @@ a.lnk:hover { text-decoration: underline; }
 .grade { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; }
 .tile { position: relative; aspect-ratio: 3 / 4; max-width: 100%; border: 0; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; text-align: left; overflow: hidden; background: color-mix(in srgb, var(--fase, var(--caramelo)) 22%, var(--surface-2)); }
 .tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tile:has(.ok) .tt { padding-top: 18px; }
 .tile .tt { position: relative; font-family: var(--f-display); font-size: clamp(14px, 3.4vw, 19px); line-height: 1.08; overflow-wrap: anywhere; }
 .tile .tm { position: relative; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
 .tile.has-img .tt, .tile.has-img .tm { display: none; }
 .tile .fic { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,.45); color: #fff; font-size: 10px; border-radius: 4px; padding: 1px 5px; font-weight: 600; }
 .tile:hover { filter: brightness(.96); }
+.tile .ok { position: absolute; left: 8px; top: 8px; width: 14px; height: 14px; border-radius: 99px; background: #2FBF71; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4); z-index: 2; }
+.tile.ig { display: block; padding: 0; }
+.tile.carregando { background: var(--surface-2); }
+.grade-legenda { display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: center; font-size: 12.5px; color: var(--muted); margin: 12px auto 0; max-width: 520px; }
+.grade-legenda i { display: inline-block; width: 10px; height: 10px; border-radius: 99px; background: #2FBF71; margin-right: 6px; vertical-align: -1px; }
+.ig-box { display: grid; gap: 10px; }
+.ig-box .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ig-box input { flex: 1 1 260px; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 10px; font-family: ui-monospace, monospace; font-size: 12.5px; }
 .grade-note { max-width: 520px; margin: 12px auto 0; font-size: 12.5px; color: var(--muted); text-align: center; }
 
 /* Resumo */
@@ -478,7 +487,7 @@ const DEFAULT_FASES = [
 ];
 
 const S = {
-  canWrite: false, eu: null, usuarios: [], token: store("token") || "", rej: null, uEdit: null,
+  canWrite: false, insta: {}, eu: null, usuarios: [], token: store("token") || "", rej: null, uEdit: null,
   marcas: [], posts: [], loadedM: false, loadedP: false, failed: false,
   marcaId: store("marca"), month: null,
   f: { status: "", formato: "", produto: "", q: "" },
@@ -764,26 +773,61 @@ const driveId = u => { const m = String(u || "").match(/drive\.google\.com\/(?:f
 // prévia: primeiro o link da imagem; se não tiver, o próprio criativo quando ele é um arquivo do Drive
 const thumbDe = u => { const id = driveId(u); return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w600` : ""; };
 const blobSrc = p => thumbDe(p.capa) || thumbDe(p.criativo);
+/* ---------- Grade do Instagram: planejados + posts reais do perfil ---------- */
+const codigoIg = u => (String(u || "").match(/instagram\.com\/(?:[\w.]+\/)?(?:p|reel|reels|tv)\/([\w-]+)/i) || [])[1] || "";
+function carregarInsta(mid, forcar) {
+  const c = S.insta[mid];
+  if (!forcar && c && (c.carregando || Date.now() - c.em < 10 * 60000)) return;
+  S.insta[mid] = { ...(c || {}), carregando: true, em: Date.now() };
+  api("instaMidias", { marcaId: mid, forcar: !!forcar })
+    .then(r => { S.insta[mid] = { em: Date.now(), dados: r }; })
+    .catch(e => { S.insta[mid] = { em: Date.now(), dados: { conectado: true, erro: e.message || "Não consegui ler o Instagram agora." } }; })
+    .finally(() => { if (view() === "grade" && S.marcaId === mid && !$("#dlg").open && !S.dirty) render(); });
+}
 function vGrade() {
-  const m = marca();
+  const m = marca(), ig = m.insta && m.insta.conectado;
+  if (ig) carregarInsta(m.id);
+  const cache = S.insta[m.id] || {}, d = cache.dados || {};
+  const midias = ig && d.midias ? d.midias : [];
+  const codigos = new Set(midias.map(x => codigoIg(x.link)).filter(Boolean));
   // fica fora da grade só o que não vai para o feed (por exemplo, só Stories ou só TikTok)
-  const ps = postsMes().filter(p => { const r = redesDe(p.rede); return !r.length || r.some(x => !NAO_FEED.includes(x)); }).reverse();
-  const tiles = ps.map(p => {
-    const src = blobSrc(p);
-    return `<button class="tile${src ? " has-img" : ""}" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="openEditor('${esc(p.id)}')" title="${esc(nm(p))}">
+  const ps = postsMes().filter(p => { const r = redesDe(p.rede); return !r.length || r.some(x => !NAO_FEED.includes(x)); })
+    // um post já marcado como postado, com o link igual a um post do perfil, aparece uma vez só (com a imagem real)
+    .filter(p => !(p.status === "Postado" && codigos.has(codigoIg(p.postLink))));
+  const itens = ps.map(p => ({ t: "plan", em: (p.agData || p.data || "") + "T" + (p.agHora || "12:00"), p }))
+    .concat(midias.map(x => ({ t: "ig", em: x.em || "", x })))
+    .sort((a, b) => String(b.em).localeCompare(String(a.em)));
+  const ponto = `<span class="ok" title="Já postado"></span>`;
+  const tiles = itens.map(it => {
+    if (it.t === "ig") {
+      const x = it.x;
+      return `<a class="tile ig has-img" href="${esc(x.link)}" target="_blank" rel="noopener" title="${esc(x.legenda || "Post do Instagram")}">
+        ${x.img ? `<img src="${esc(x.img)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ""}
+        ${x.tipo === "VIDEO" ? `<span class="fic">▶</span>` : x.tipo === "CAROUSEL_ALBUM" ? `<span class="fic">▤</span>` : ""}${ponto}</a>`;
+    }
+    const p = it.p, src = blobSrc(p);
+    return `<button class="tile${src ? " has-img" : ""}" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="openEditor('${esc(p.id)}')" title="${esc(nm(p))} · ${esc(p.status)}">
       ${src ? `<img src="${esc(src)}" alt="${esc(nm(p))}" loading="lazy" onerror="this.parentNode.classList.remove('has-img');this.remove()">` : ""}
       <span class="fic">${FMT_ICON[p.formato] || ""}</span>
       <span class="tt">${esc(nm(p))}</span>
       <span class="tm">${br(p.data)} · ${esc(p.formato)}</span>
+      ${p.status === "Postado" ? ponto : ""}
     </button>`;
   }).join("");
   const ini = (m.nome || "?").trim().charAt(0).toUpperCase();
-  return headM(m.nome, "Grade do Instagram", monthNav()) +
+  const usuario = (d.usuario || (m.insta && m.insta.usuario) || "");
+  const sub = ig ? `${midias.length ? `${midias.length} posts do perfil` : "Perfil conectado"} + ${ps.length} planejados em ${esc(monthLabel(S.month))}` : `${ps.length} posts planejados em ${esc(monthLabel(S.month))}`;
+  const aviso = !ig ? `<p class="grade-note">Para ver aqui também os posts que já estão no perfil, conecte o Instagram da marca em <a class="lnk" href="#marca-config">Marca → Configurações</a>.</p>`
+    : d.erro ? `<p class="grade-note" style="color:var(--danger)">${esc(d.erro)}</p>`
+    : cache.carregando && !d.midias ? `<p class="grade-note">Buscando os posts do Instagram…</p>` : "";
+  return headM(m.nome, "Grade do Instagram", monthNav() + (ig ? `<button class="btn sm" type="button" onclick="carregarInsta(S.marcaId, true);render()">Atualizar do Instagram</button>` : "")) +
     `<div class="grade-box">
-      <div class="profile"><div class="avatar">${esc(ini)}</div><div><b>${esc(m.nome)}</b><div class="muted">${ps.length} posts planejados em ${esc(monthLabel(S.month))}</div></div></div>
-      ${ps.length ? `<div class="grade">${tiles}</div>` : `<div class="empty" style="margin:0 16px 16px">Nenhum post de feed neste mês.</div>`}
+      <div class="profile"><div class="avatar">${esc(ini)}</div><div><b>${usuario ? "@" + esc(usuario) : esc(m.nome)}</b><div class="muted">${sub}</div></div></div>
+      ${itens.length ? `<div class="grade">${tiles}</div>` : `<div class="empty" style="margin:0 16px 16px">Nenhum post de feed neste mês.</div>`}
     </div>
-    <p class="grade-note">Do post mais recente (canto superior esquerdo) ao mais antigo. A arte aparece quando o Criativo é um link de arquivo do Drive compartilhado como "Qualquer pessoa com o link"; sem imagem, aparece o nome do post na cor da fase.</p>`;
+    <div class="grade-legenda"><span><i></i>Já postado</span><span>Sem bolinha: ainda não postado</span></div>
+    ${aviso}
+    <p class="grade-note">Do mais recente (canto superior esquerdo) ao mais antigo. Os planejados mostram a arte quando a postagem tem a imagem de prévia; os posts do perfil abrem no Instagram.</p>`;
 }
 
 /* ---------- Resumo do mês: dashboard para apresentar ---------- */
@@ -1337,6 +1381,7 @@ function vMarca() {
     `<form id="marcaForm" class="form-grid" onsubmit="event.preventDefault();salvarMarca()">
       <div class="panel" style="display:grid;gap:12px">
         <label class="field"><span>Nome da marca</span><input id="mNome" required value="${esc(m.nome)}"${ro}></label>
+        ${instaConfigHtml(m, adm)}
         <span class="muted" style="font-size:13px">Os produtos agora ficam em <a class="lnk" href="#marca-produtos">Marca → Produtos</a>.</span>
       </div>
       <div class="panel" style="display:grid;gap:10px">
@@ -1357,6 +1402,26 @@ function vMarca() {
           : `<button class="btn danger" type="button" onclick="S.confirmDel=true;render()">Excluir marca</button>`}</span>
       </div>` : ""}
     </form>`;
+}
+function instaConfigHtml(m, pode) {
+  const st = m.insta || {};
+  return `<div class="ig-box field"><span>Instagram da marca</span>
+    ${st.conectado ? `<div class="row"><span>Conectado como <b>@${esc(st.usuario || "")}</b>. A Grade do Insta mostra os posts do perfil.</span>
+        ${pode ? `<button class="btn sm danger" type="button" onclick="instaDesconectar()">Desconectar</button>` : ""}</div>`
+      : `<span class="muted" style="font-size:13px">Conecte para ver na Grade do Insta os posts que já estão no perfil. Gere a chave de acesso no painel da Meta (passo a passo no LEIAME) e cole aqui.</span>`}
+    ${pode ? `<div class="row"><input id="igToken" type="password" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();instaConectar()}" placeholder="${st.conectado ? "Colar uma chave nova" : "Cole a chave de acesso do Instagram"}"><button class="btn sm primary" type="button" id="igBtn" onclick="instaConectar()">${st.conectado ? "Trocar chave" : "Conectar"}</button></div>` : ""}
+  </div>`;
+}
+async function instaConectar() {
+  const t = $("#igToken").value.trim();
+  if (!t) return toast("Cole a chave de acesso.");
+  const b = $("#igBtn"); b.disabled = true; b.textContent = "Conectando…";
+  try { const r = await api("instaConectar", { marcaId: S.marcaId, chave: t }); delete S.insta[S.marcaId]; S.dirty = false; await carregar(); toast(`Instagram @${r.usuario} conectado`); }
+  catch (e) { b.disabled = false; b.textContent = "Conectar"; toast(e.message || "Não consegui conectar."); }
+}
+async function instaDesconectar() {
+  try { await api("instaDesconectar", { marcaId: S.marcaId }); delete S.insta[S.marcaId]; await carregar(); toast("Instagram desconectado"); }
+  catch (e) { writeFail(e); }
 }
 function faseRow(f, i, ro = "") {
   return `<div class="fase-row"><input type="color" aria-label="Cor da fase" value="${esc(f.cor)}"${ro}><input type="text" aria-label="Nome da fase" value="${esc(f.nome)}"${ro}>
@@ -1906,7 +1971,7 @@ function writeFail(e) {
   const c = e && e.code;
   if (c === "sessao") { S.token = ""; store("token", ""); S.eu = null; if ($("#dlg").open) $("#dlg").close(); render(); return toast("Sua sessão expirou. Entre de novo."); }
   const msg = c === "local" ? e.message
-    : (c === "server" || c === "permissao") && e.message ? e.message
+    : (c === "server" || c === "permissao" || c === "insta") && e.message ? e.message
     : "Não foi possível salvar. Confira a internet e tente de novo.";
   toast(msg);
 }
@@ -1922,7 +1987,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-10-29.1"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-10-29.2"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",
