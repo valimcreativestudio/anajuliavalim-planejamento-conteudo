@@ -199,7 +199,9 @@ a.lnk:hover { text-decoration: underline; }
 .obs { white-space: pre-wrap; margin: 0; }
 
 /* Marca */
-.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 14px; }
+.form-grid > * { min-width: 0; }
+.prod-row .icon-btn { flex: none; }
 .field { display: grid; gap: 5px; min-width: 0; }
 .field > span { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
 .field textarea { resize: vertical; min-height: 80px; line-height: 1.45; }
@@ -442,11 +444,10 @@ const REDES = ["Feed", "Reels", "Stories", "TikTok", "YouTube Shorts", "Facebook
 // a rede é guardada como texto ("Feed + Stories"); aqui vira lista e volta
 const redesDe = t => String(t || "").split(/\s*\+\s*|\s*,\s*/).map(x => x.trim()).filter(Boolean);
 const NAO_FEED = ["Stories", "TikTok", "YouTube Shorts", "Facebook", "Pinterest", "LinkedIn", "Threads"];
-function opcoesRede() {
-  // padrão + qualquer rede que alguém já tenha usado em uma postagem
-  const extra = new Set();
-  S.posts.forEach(p => redesDe(p.rede).forEach(r => { if (!REDES.includes(r)) extra.add(r); }));
-  return REDES.concat([...extra].sort((a, b) => a.localeCompare(b)));
+// cada marca tem a sua lista de redes (Marca → Redes); sem lista própria, vale a padrão
+function opcoesRede(m = marca()) {
+  const l = m && m.perfil && Array.isArray(m.perfil.redes) ? m.perfil.redes : null;
+  return l ? [...l] : [...REDES];
 }
 const WD = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 const DEFAULT_FASES = [
@@ -528,7 +529,7 @@ function setMonth(ym) { S.month = ym; store("mes." + S.marcaId, ym); render(); }
 /* ---------- Vistas ---------- */
 const view = () => {
   const h = location.hash.replace("#", "");
-  return ["calendario", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-config", "aprovacoes", "equipe", "equipe-atividade", "conta"].includes(h) ? h : "calendario";
+  return ["calendario", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-config", "aprovacoes", "equipe", "equipe-atividade", "conta"].includes(h) ? h : "calendario";
 };
 
 function render() {
@@ -566,7 +567,7 @@ function render() {
   }
   if (!S.month) S.month = pickMonth();
   const v = view();
-  app.innerHTML = avisoVersao() + ({ calendario: vCal, pautas: vPautas, fluxo: vFluxo, grade: vGrade, resumo: vResumo, marca: vMarcaGeral, "marca-sobre": () => vPerfil("sobre"), "marca-publico": vPublico, "marca-arquivos": vArquivos, "marca-notas": () => vPerfil("notas"), "marca-produtos": vProdutos, "marca-config": vMarca })[v]();
+  app.innerHTML = avisoVersao() + ({ calendario: vCal, pautas: vPautas, fluxo: vFluxo, grade: vGrade, resumo: vResumo, marca: vMarcaGeral, "marca-sobre": () => vPerfil("sobre"), "marca-publico": vPublico, "marca-arquivos": vArquivos, "marca-notas": () => vPerfil("notas"), "marca-produtos": vProdutos, "marca-redes": vRedes, "marca-config": vMarca })[v]();
   if (v === "fluxo") wireBoard();
   if (v === "pautas") { const q = $("#fq"); if (q && S.f.q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); } }
 }
@@ -1054,7 +1055,7 @@ const pct = x => x.total ? Math.round(x.ok / x.total * 100) : 0;
 
 function subnav() {
   const pr = progresso(marca()), v = view();
-  const it = [["marca", "Visão geral"], ["marca-sobre", "Sobre", pr.sobre], ["marca-produtos", "Produtos"], ["marca-publico", "Público-alvo", pr.publico], ["marca-arquivos", "Arquivos e identidade", pr.arquivos], ["marca-notas", "Observações", pr.notas], ["marca-config", "Configurações"]];
+  const it = [["marca", "Visão geral"], ["marca-sobre", "Sobre", pr.sobre], ["marca-produtos", "Produtos"], ["marca-redes", "Redes"], ["marca-publico", "Público-alvo", pr.publico], ["marca-arquivos", "Arquivos e identidade", pr.arquivos], ["marca-notas", "Observações", pr.notas], ["marca-config", "Configurações"]];
   return `<nav class="subnav" aria-label="Seções da marca">${it.map(([h, l, x]) => `<a href="#${h}"${v === h ? ' aria-current="page"' : ""}>${l}${x ? `<span class="pct">${pct(x)}%</span>` : ""}</a>`).join("")}</nav>`;
 }
 
@@ -1221,27 +1222,46 @@ function vProdutos() {
   const usados = produtosDe(m).filter(x => !prods.includes(x));
   const conta = x => postsMarca().filter(p => prodsDe(p.produto).includes(x)).length;
   return headM(m.nome, "Produtos") + subnav() +
-    `<p class="sec-intro">Os produtos cadastrados aqui aparecem no campo Produto de cada postagem e no Resumo do mês.</p>
-    <form class="panel" style="max-width:640px" onsubmit="event.preventDefault();salvarProdutos()">
+    `<p class="sec-intro">Os produtos daqui aparecem para marcar em cada postagem e no Resumo do mês. Apagar um produto tira ele da lista; as postagens que já usam continuam com ele marcado até alguém desmarcar.</p>
+    <form class="panel" style="max-width:640px" onsubmit="event.preventDefault();salvarLista('prod')">
       <div class="prod-list" id="prodList">${prods.map(x => prodRow(x, conta(x), ro)).join("") || `<p class="muted" id="semProd">Nenhum produto ainda. Clique em + Produto.</p>`}</div>
       ${S.canWrite ? `<button class="btn sm" type="button" style="margin-top:12px" onclick="addProdRow()">+ Produto</button>` : ""}
       ${usados.length ? `<p class="muted" style="font-size:13px;margin:14px 0 0">Usados em postagens mas fora da lista: ${usados.map(esc).join(", ")}${S.canWrite ? ` <button class="btn sm" type="button" onclick="${usados.map(x => `addProdRow(${esc(JSON.stringify(x))})`).join(";")}">Adicionar à lista</button>` : ""}</p>` : ""}
       ${saveBar("Salvar produtos")}
     </form>`;
 }
-function prodRow(x = "", n = 0, ro = "") {
-  return `<div class="prod-row"><input data-prod value="${esc(x)}" placeholder="Nome do produto"${ro}>${n ? `<span class="n">${n} postage${n === 1 ? "m" : "ns"}</span>` : ""}
-    ${ro ? "" : `<button class="icon-btn" type="button" aria-label="Remover produto" onclick="this.parentNode.remove();S.dirty=true;$('#app .save-bar .msg').textContent='Alterações não salvas'">×</button>`}</div>`;
+function vRedes() {
+  const m = marca(), ro = S.canWrite ? "" : " disabled";
+  const conta = x => postsMarca().filter(p => redesDe(p.rede).includes(x)).length;
+  return headM(m.nome, "Redes") + subnav() +
+    `<p class="sec-intro">As redes daqui aparecem para marcar em cada postagem desta marca. Apagar uma rede tira ela da lista; as postagens que já usam continuam com ela marcada até alguém desmarcar.</p>
+    <form class="panel" style="max-width:640px" onsubmit="event.preventDefault();salvarLista('rede')">
+      <div class="prod-list" id="redeList">${opcoesRede(m).map(x => prodRow(x, conta(x), ro, "rede")).join("") || `<p class="muted" id="semRede">Nenhuma rede. Clique em + Rede.</p>`}</div>
+      ${S.canWrite ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn sm" type="button" onclick="addProdRow('', 'rede')">+ Rede</button>
+        <button class="btn sm" type="button" onclick="restaurarRedes()">Voltar para a lista padrão</button></div>` : ""}
+      ${saveBar("Salvar redes")}
+    </form>`;
 }
-function addProdRow(x = "") {
-  $("#semProd")?.remove();
-  $("#prodList").insertAdjacentHTML("beforeend", prodRow(x));
-  if (!x) $("#prodList .prod-row:last-child input").focus();
+function prodRow(x = "", n = 0, ro = "", tipo = "prod") {
+  return `<div class="prod-row"><input data-${tipo} value="${esc(x)}" placeholder="${tipo === "rede" ? "Nome da rede" : "Nome do produto"}"${ro}>${n ? `<span class="n">${n} postage${n === 1 ? "m" : "ns"}</span>` : ""}
+    ${ro ? "" : `<button class="icon-btn" type="button" aria-label="Remover" onclick="this.parentNode.remove();S.dirty=true;$('#app .save-bar .msg').textContent='Alterações não salvas'">×</button>`}</div>`;
+}
+function addProdRow(x = "", tipo = "prod") {
+  const box = tipo === "rede" ? "#redeList" : "#prodList";
+  $(tipo === "rede" ? "#semRede" : "#semProd")?.remove();
+  $(box).insertAdjacentHTML("beforeend", prodRow(x, 0, "", tipo));
+  if (!x) $(box + " .prod-row:last-child input").focus();
   S.dirty = true;
 }
-async function salvarProdutos() {
-  const lista = [...new Set([...document.querySelectorAll("[data-prod]")].map(i => i.value.trim()).filter(Boolean))];
-  try { await api("salvarMarca", { marca: { ...marca(), produtos: lista } }); S.dirty = false; await carregar(); toast("Produtos salvos"); }
+function restaurarRedes() {
+  $("#redeList").innerHTML = REDES.map(x => prodRow(x, 0, "", "rede")).join("");
+  S.dirty = true; $("#app .save-bar .msg").textContent = "Alterações não salvas";
+}
+async function salvarLista(tipo) {
+  const lista = [...new Set([...document.querySelectorAll(`[data-${tipo}]`)].map(i => i.value.trim().replace(/\s+\+\s+/g, " ")).filter(Boolean))];
+  const m = marca();
+  const nova = tipo === "rede" ? { ...m, perfil: { ...perfilDe(m), redes: lista } } : { ...m, produtos: lista };
+  try { await api("salvarMarca", { marca: nova }); S.dirty = false; await carregar(); toast(tipo === "rede" ? "Redes salvas" : "Produtos salvos"); }
   catch (e) { writeFail(e); }
 }
 function toggleNovoProd() {
@@ -1408,9 +1428,15 @@ function atualizarPrevia() {
   const atual = box.querySelector("img, .muted");
   if (atual) atual.outerHTML = previaHtml(src); else box.insertAdjacentHTML("afterbegin", previaHtml(src));
 }
-function addRede() {
+async function addRede() {
   const nome = $("#eRedeNova").value.trim().replace(/\s*\+\s*/g, " ");
   if (!nome) return toast("Escreva o nome da rede.");
+  // entra na lista de redes da marca, como acontece com os produtos
+  const m = marca(), lista = opcoesRede(m);
+  if (!lista.some(x => x.toLowerCase() === nome.toLowerCase())) {
+    try { await api("salvarMarca", { marca: { ...m, perfil: { ...perfilDe(m), redes: lista.concat(nome) } } }); m.perfil = { ...perfilDe(m), redes: lista.concat(nome) }; }
+    catch (e) { return writeFail(e); }
+  }
   const ja = [...document.querySelectorAll("#eRedes input")].find(i => i.value.toLowerCase() === nome.toLowerCase());
   if (ja) ja.checked = true;
   else $("#eRedes > button").insertAdjacentHTML("beforebegin", `<label><input type="checkbox" value="${esc(nome)}" checked><span>${esc(nome)}</span></label>`);
