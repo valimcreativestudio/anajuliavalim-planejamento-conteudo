@@ -729,7 +729,9 @@ function wireBoard() {
 }
 
 const driveId = u => { const m = String(u || "").match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=|thumbnail\?id=)([\w-]{20,})/); return m ? m[1] : ""; };
-const blobSrc = p => { const id = driveId(p.criativo); return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w600` : ""; };
+// prévia: primeiro o link da imagem; se não tiver, o próprio criativo quando ele é um arquivo do Drive
+const thumbDe = u => { const id = driveId(u); return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w600` : ""; };
+const blobSrc = p => thumbDe(p.capa) || thumbDe(p.criativo);
 function vGrade() {
   const m = marca();
   const ps = postsMes().filter(p => !["Stories", "TikTok"].includes(p.rede)).reverse();
@@ -923,7 +925,7 @@ async function baixarRelatorio(tipo) {
 }
 function baixarCsv() {
   const { ps, todas } = dadosResumo();
-  const cols = [["Marca", p => nomeMarca(p.marcaId)], ["Data", p => brFull(p.data)], ["Dia", p => wd(p.data)], ["Status", p => p.status], ["Título", p => p.postagem], ["Nome", p => p.pauta], ["Formato", p => p.formato], ["Produto", p => p.produto], ["Fase", p => p.fase], ["Objetivo", p => p.objetivo], ["Rede", p => p.rede], ["Agendado como", p => p.agTipo], ["Agendado para", p => p.agData ? brFull(p.agData) + " " + (p.agHora || "") : ""], ["Link do post", p => p.postLink], ["Devoluções", p => (p.historico || []).filter(h => h.motivo).length], ["Último motivo", p => p.motivo]];
+  const cols = [["Marca", p => nomeMarca(p.marcaId)], ["Data", p => brFull(p.data)], ["Dia", p => wd(p.data)], ["Status", p => p.status], ["Título", p => p.postagem], ["Nome", p => p.pauta], ["Formato", p => p.formato], ["Produto", p => p.produto], ["Fase", p => p.fase], ["Objetivo", p => p.objetivo], ["Rede", p => p.rede], ["Agendado como", p => p.agTipo], ["Agendado para", p => p.agData ? brFull(p.agData) + " " + (p.agHora || "") : ""], ["Link da publicação", p => p.criativo], ["Imagem de prévia", p => p.capa], ["Link do post", p => p.postLink], ["Devoluções", p => (p.historico || []).filter(h => h.motivo).length], ["Último motivo", p => p.motivo]];
   const cel = v => { const t = String(v ?? ""); return /[";\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
   const linhas = [cols.map(c => c[0]).join(";")].concat(ps.map(p => cols.map(c => cel(c[1](p))).join(";")));
   baixarBlob(new Blob(["﻿" + linhas.join("\r\n")], { type: "text/csv;charset=utf-8" }), nomeArquivo("csv"));
@@ -1357,10 +1359,12 @@ function drawEditor() {
       ${area("eInsp", "Inspiração", p.inspiracao, 2)}
       ${area("eLegenda", "Legenda", p.legenda, 5)}
       <div class="full" style="margin-top:-6px"><button class="btn sm" type="button" onclick="copiarLegenda()">Copiar legenda</button></div>
-      ${txt("eCriativo", "Link do criativo (Drive ou Canva)", p.criativo, true, "https://")}
-      <div class="field full"><span>Prévia do criativo</span>
-        <div class="thumb">${src ? `<img src="${esc(src)}" alt="Prévia do criativo" onerror="this.remove()">` : `<span class="muted">Cole um link de arquivo do Drive para ver a prévia aqui e na grade.</span>`}
-          ${/^https?:\/\//.test(p.criativo || "") ? `<a class="lnk" href="${esc(p.criativo)}" target="_blank" rel="noopener">Abrir link do criativo</a>` : ""}
+      ${txt("eCriativo", "Link da publicação (pasta ou arquivo no Drive, ou Canva)", p.criativo, true, "https://drive.google.com/drive/folders/…")}
+      <label class="field full"><span>Link da imagem de prévia (arquivo de imagem no Drive)</span><input id="eCapa" value="${esc(p.capa || "")}" placeholder="https://drive.google.com/file/d/…" oninput="atualizarPrevia()"${ro}>
+        <small>Abra a imagem no Drive, clique em Compartilhar → Copiar link. Ela precisa estar como "Qualquer pessoa com o link".</small></label>
+      <div class="field full"><span>Prévia</span>
+        <div class="thumb" id="eThumb">${previaHtml(src)}
+          ${/^https?:\/\//.test(p.criativo || "") ? `<a class="lnk" href="${esc(p.criativo)}" target="_blank" rel="noopener">Abrir a publicação</a>` : ""}
         </div></div>
     </div>
     <div class="dlg-foot">
@@ -1372,13 +1376,23 @@ function drawEditor() {
       ${S.canWrite ? `<button class="btn primary" type="submit" id="eSalvar">Salvar postagem</button>` : ""}
     </div>`;
 }
+function previaHtml(src) {
+  return src ? `<img src="${esc(src)}" alt="Prévia da publicação" onerror="this.outerHTML='<span class=&quot;muted&quot;>Não consegui abrir a imagem. Confira se o link é de um arquivo e se está compartilhado como Qualquer pessoa com o link.</span>'">`
+    : `<span class="muted">Cole o link de uma imagem do Drive para ver a prévia aqui, no calendário e na grade.</span>`;
+}
+function atualizarPrevia() {
+  const box = $("#eThumb"); if (!box) return;
+  const src = thumbDe($("#eCapa").value) || thumbDe($("#eCriativo").value);
+  const atual = box.querySelector("img, .muted");
+  if (atual) atual.outerHTML = previaHtml(src); else box.insertAdjacentHTML("afterbegin", previaHtml(src));
+}
 function gather() {
   const v = id => ($("#" + id)?.value ?? "").trim();
   return {
     marcaId: S.marcaId, data: v("eData"), formato: v("eFormato"), fase: v("eFase"),
     produto: v("eProduto"), postagem: v("ePostagem"), pauta: v("ePauta"), objetivo: v("eObjetivo"), cta: v("eCta"),
     rede: v("eRede"), gravacao: v("eGravacao"), observacao: $("#eObs").value, inspiracao: $("#eInsp").value,
-    legenda: $("#eLegenda").value, criativo: v("eCriativo"), atualizado: Date.now()
+    legenda: $("#eLegenda").value, criativo: v("eCriativo"), capa: v("eCapa"), atualizado: Date.now()
   };
 }
 async function salvarEditor(fechar = true) {
@@ -1399,6 +1413,7 @@ async function salvarEditor(fechar = true) {
     return null;
   }
 }
+$("#dlgForm").addEventListener("input", e => { if (e.target.id === "eCriativo") atualizarPrevia(); });
 $("#dlgForm").addEventListener("submit", e => { e.preventDefault(); if (S.canWrite) salvarEditor(true); });
 
 /* ---------- Fluxo de aprovação ---------- */
@@ -1819,7 +1834,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-10-27.9"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-10-29.1"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",

@@ -18,7 +18,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-10-27.9';
+const VERSAO = '2026-10-29.1';
 
 const ABA_PAUTAS = 'POSTAGENS';
 const ABA_MARCAS = 'MARCAS';
@@ -34,7 +34,8 @@ const CAMPOS_PAUTA = [
   ['gravacao', 'Gravação'], ['observacao', 'Observação'], ['inspiracao', 'Inspiração'],
   ['legenda', 'Legenda'], ['criativo', 'Criativo'], ['criado', 'Criado em'], ['atualizado', 'Atualizado em'],
   ['motivo', 'Motivo da reprovação'], ['historico', 'Histórico'],
-  ['agTipo', 'Agendado como'], ['agQuando', 'Agendado para'], ['postLink', 'Link do post publicado']
+  ['agTipo', 'Agendado como'], ['agQuando', 'Agendado para'], ['postLink', 'Link do post publicado'],
+  ['capa', 'Imagem de prévia']
 ];
 const CAMPOS_MARCA = [
   ['id', 'ID'], ['nome', 'Nome'], ['produtos', 'Produtos'], ['fases', 'Fases'],
