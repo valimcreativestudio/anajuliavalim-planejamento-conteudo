@@ -587,6 +587,8 @@ function monthNav() {
     <button class="icon-btn" type="button" aria-label="Próximo mês" onclick="setMonth(shiftMonth(S.month,1))">›</button>
   </div>`;
 }
+// nas telas de uma marca, o nome da marca é o título grande e a seção fica em cima, pequena
+const headM = (nomeMarca, secao, extra = "") => head(secao, esc(nomeMarca), extra);
 function head(eyebrow, title, extra = "") {
   return `<div class="view-head"><h1><small>${esc(eyebrow)}</small>${title}</h1><div class="tools">${extra}</div></div>`;
 }
@@ -616,7 +618,7 @@ function vCal() {
     </div>`;
   }
   const n = postsMes().length;
-  return head(m.nome, "Calendário", monthNav() + addBtn()) +
+  return headM(m.nome, "Calendário", monthNav() + addBtn()) +
     `<div class="cal">${cells}</div>
     <p class="muted" style="margin-top:12px">${n} ${n === 1 ? "publicação" : "publicações"} em ${esc(monthLabel(S.month))}. A bolinha indica o status. Clique num post para abrir o detalhamento.</p>`;
 }
@@ -649,7 +651,7 @@ function vPautas() {
     <td>${esc(p.rede)}</td>
     <td onclick="event.stopPropagation()">${/^https?:\/\//.test(p.criativo || "") ? `<a class="lnk" href="${esc(p.criativo)}" target="_blank" rel="noopener">Abrir</a>` : `<span class="muted">—</span>`}</td>
   </tr>`).join("");
-  return head(m.nome, "Postagens do mês", monthNav() + `<button class="btn" type="button" onclick="copiarTabela()">Copiar para planilha</button>` + addBtn()) +
+  return headM(m.nome, "Postagens do mês", monthNav() + `<button class="btn" type="button" onclick="copiarTabela()">Copiar para planilha</button>` + addBtn()) +
     `<div class="filters">
       <input id="fq" type="search" placeholder="Buscar em título, nome, legenda…" value="${esc(S.f.q)}" oninput="clearTimeout(window._fq);window._fq=setTimeout(()=>setF('q',this.value),250)">
       <select id="fst" aria-label="Status" onchange="setF('status',this.value)">${opt(STATUS, S.f.status, "Todos os status")}</select>
@@ -701,7 +703,7 @@ function vFluxo() {
       </article>`).join("")}
     </section>`;
   }).join("");
-  return head(m.nome, "Fluxo de produção", monthNav() + addBtn()) +
+  return headM(m.nome, "Fluxo de produção", monthNav() + addBtn()) +
     `<p class="muted" style="margin:-6px 0 14px">Abra um card para enviar para validação, aprovar ou pedir ajustes.${adm ? " Como administrador, você também pode arrastar os cards entre as colunas." : ""}</p><div class="board">${cols}</div>`;
 }
 function wireBoard() {
@@ -734,7 +736,7 @@ function vGrade() {
     </button>`;
   }).join("");
   const ini = (m.nome || "?").trim().charAt(0).toUpperCase();
-  return head(m.nome, "Grade do Instagram", monthNav()) +
+  return headM(m.nome, "Grade do Instagram", monthNav()) +
     `<div class="grade-box">
       <div class="profile"><div class="avatar">${esc(ini)}</div><div><b>${esc(m.nome)}</b><div class="muted">${ps.length} posts planejados em ${esc(monthLabel(S.month))}</div></div></div>
       ${ps.length ? `<div class="grade">${tiles}</div>` : `<div class="empty" style="margin:0 16px 16px">Nenhum post de feed neste mês.</div>`}
@@ -841,7 +843,7 @@ function relatorioHtml() {
 function vResumo() {
   const m = marca(), varias = S.marcas.length > 1;
   const escopo = varias ? `<div class="escopo" role="group" aria-label="Escopo"><button type="button" aria-pressed="${!S.resumoTodas}" onclick="S.resumoTodas=false;render()">${esc(m.nome)}</button><button type="button" aria-pressed="${!!S.resumoTodas}" onclick="S.resumoTodas=true;render()">Todas as marcas</button></div>` : "";
-  return head(S.resumoTodas && varias ? "Todas as marcas" : m.nome, "Resumo do mês", escopo + monthNav()) +
+  return headM(S.resumoTodas && varias ? "Todas as marcas" : m.nome, "Resumo do mês", escopo + monthNav()) +
     `<div class="dl-bar" style="margin:-4px 0 14px">
       <button class="btn primary" type="button" id="dlPdf" onclick="baixarRelatorio('pdf')">Baixar PDF</button>
       <button class="btn" type="button" id="dlPng" onclick="baixarRelatorio('png')">Baixar imagem</button>
@@ -1043,7 +1045,7 @@ function vMarcaGeral() {
       ${x.faltam.length ? `<div><b style="font-size:12px">Para completar</b><ul>${x.faltam.slice(0, 5).map(f => `<li>${esc(f)}</li>`).join("")}${x.faltam.length > 5 ? `<li>e mais ${x.faltam.length - 5}</li>` : ""}</ul></div>` : `<b style="color:var(--st-postado)">Completo</b>`}
     </a>`;
   const info = [["@", p.instagram], ["Segmento", p.segmento], ["Cidade", p.cidade], ["Vende em", p.canais]].filter(x => cheio(x[1]));
-  return head(m.nome, "Marca", `<span class="muted">${pct(total)}% do perfil preenchido</span>`) + subnav() +
+  return headM(m.nome, "Marca", `<span class="muted">${pct(total)}% do perfil preenchido</span>`) + subnav() +
     (info.length ? `<div class="ov-head">${info.map(([k, v]) => `<span>${esc(k)} <b>${esc(v)}</b></span>`).join("")}</div>` : "") +
     `<div class="ov-grid">
       ${card("marca-sobre", "Sobre a marca", pr.sobre, "História, diferenciais, carro-chefe e contatos.")}
@@ -1067,7 +1069,7 @@ function saveBar(label = "Salvar") {
 
 function vPerfil(sec) {
   const m = marca(), p = perfilDe(m), d = SECOES[sec];
-  return head(m.nome, d.titulo) + subnav() + `<p class="sec-intro">${esc(d.intro)}</p>
+  return headM(m.nome, d.titulo) + subnav() + `<p class="sec-intro">${esc(d.intro)}</p>
     <form class="panel" onsubmit="event.preventDefault();salvarPerfil(this)">
       <div class="pf-grid">${d.campos.map(c => campoHtml(c, p[c[0]])).join("")}</div>
       ${saveBar()}
@@ -1084,7 +1086,7 @@ function personaHtml(pe = {}, i = 0) {
 }
 function vPublico() {
   const m = marca(), p = perfilDe(m), d = SECOES.publico, ps = p.personas || [];
-  return head(m.nome, d.titulo) + subnav() + `<p class="sec-intro">${esc(d.intro)}</p>
+  return headM(m.nome, d.titulo) + subnav() + `<p class="sec-intro">${esc(d.intro)}</p>
     <form onsubmit="event.preventDefault();salvarPerfil(this)">
       <div class="panel" data-geral><h2>Perfil geral</h2><div class="pf-grid">${d.campos.map(c => campoHtml(c, p[c[0]])).join("")}</div></div>
       <div style="display:flex;align-items:center;gap:10px;margin:22px 0 12px"><h2 style="font-family:var(--f-display);font-weight:400;font-size:28px;margin:0">Personas</h2>
@@ -1137,7 +1139,7 @@ function vArquivos() {
   const cores = (String(p.cores || "").match(/#[0-9a-f]{6}\b|#[0-9a-f]{3}\b/gi) || []);
   const grupos = TIPOS_ARQ.map(t => [t, arqs.filter(a => (TIPOS_ARQ.includes(a.tipo) ? a.tipo : "Outros") === t)]).filter(g => g[1].length);
   const ro = S.canWrite ? "" : " disabled";
-  return head(m.nome, "Arquivos e identidade") + subnav() +
+  return headM(m.nome, "Arquivos e identidade") + subnav() +
     `<p class="sec-intro">Direcionamento de Instagram, manual da marca, logotipos, vetores e tudo que a equipe precisa ter à mão. Os arquivos enviados vão para uma pasta no Google Drive, compartilhada com quem tiver o link.</p>
     ${S.canWrite ? `<form class="panel" id="uplForm" onsubmit="event.preventDefault();adicionarArquivo()" style="margin-bottom:16px">
       <h2>Adicionar arquivo</h2>
@@ -1196,7 +1198,7 @@ function vProdutos() {
   const prods = m.produtos || [];
   const usados = produtosDe(m).filter(x => !prods.includes(x));
   const conta = x => postsMarca().filter(p => p.produto === x).length;
-  return head(m.nome, "Produtos") + subnav() +
+  return headM(m.nome, "Produtos") + subnav() +
     `<p class="sec-intro">Os produtos cadastrados aqui aparecem no campo Produto de cada postagem e no Resumo do mês.</p>
     <form class="panel" style="max-width:640px" onsubmit="event.preventDefault();salvarProdutos()">
       <div class="prod-list" id="prodList">${prods.map(x => prodRow(x, conta(x), ro)).join("") || `<p class="muted" id="semProd">Nenhum produto ainda. Clique em + Produto.</p>`}</div>
@@ -1243,7 +1245,7 @@ function vMarca() {
   // nome, fases e observações: quem alimenta a marca também ajusta (admin, diretor, gestor e a social media da marca)
   const m = marca(), adm = podeEditar(m.id), ro = adm ? "" : " disabled";
   const fases = fasesDe(m);
-  return head(m.nome, "Configurações") + subnav() + (adm ? "" : `<p class="sec-intro">Só quem alimenta a marca (social media, gestor, diretor e administrador) altera o nome, as fases e as configurações.</p>`) +
+  return headM(m.nome, "Configurações") + subnav() + (adm ? "" : `<p class="sec-intro">Só quem alimenta a marca (social media, gestor, diretor e administrador) altera o nome, as fases e as configurações.</p>`) +
     `<form id="marcaForm" class="form-grid" onsubmit="event.preventDefault();salvarMarca()">
       <div class="panel" style="display:grid;gap:12px">
         <label class="field"><span>Nome da marca</span><input id="mNome" required value="${esc(m.nome)}"${ro}></label>
