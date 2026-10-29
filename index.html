@@ -541,9 +541,9 @@ function render() {
     return;
   }
   if (!marca()) {
-    app.innerHTML = podeGerir()
+    app.innerHTML = avisoVersao() + (podeGerir()
       ? `<div class="empty"><strong>Nenhuma marca ainda</strong><span>Crie a primeira marca para começar a planejar o mês.</span><button class="btn primary" type="button" onclick="novaMarca()">Criar marca</button></div>`
-      : `<div class="empty"><strong>Nenhuma marca liberada para você</strong><span>Peça ao administrador para liberar as suas marcas na aba Equipe.</span></div>`;
+      : `<div class="empty"><strong>Nenhuma marca liberada para você</strong><span>Peça ao administrador para liberar as suas marcas na aba Equipe.</span></div>`);
     return;
   }
   if (!S.month) S.month = pickMonth();
@@ -555,9 +555,30 @@ function render() {
 
 function avisoVersao() {
   if (!S.versao || S.versao === VERSAO_SCRIPT || !podeGerir()) return "";
-  return `<div class="motivo" style="margin-bottom:16px"><b>O script da planilha está desatualizado</b>
-    A planilha está rodando a versão <strong>${esc(S.versao)}</strong> e o site espera a <strong>${VERSAO_SCRIPT}</strong>. As funções mais novas não vão funcionar até atualizar.
-    No Apps Script: cole o Codigo.gs do GitHub, salve e vá em <strong>Implantar → Gerenciar implantações → ✏️ → Versão: Nova versão → Implantar</strong>.</div>`;
+  return `<div class="motivo" style="margin-bottom:16px;display:grid;gap:10px"><b>O script da planilha está desatualizado</b>
+    <span>A planilha está rodando a versão <strong>${esc(S.versao)}</strong> e o site espera a <strong>${VERSAO_SCRIPT}</strong>. As funções mais novas não vão funcionar até atualizar.</span>
+    <ol style="margin:0;padding-left:20px;display:grid;gap:4px">
+      <li>Clique em <strong>Copiar código novo</strong> aqui embaixo.</li>
+      <li>Na planilha, abra <strong>Extensões → Apps Script</strong>, clique no código, aperte <strong>Ctrl+A</strong> (Mac: Cmd+A), cole por cima e <strong>salve</strong>.</li>
+      <li>Escolha a função <strong>configurar</strong> e clique em <strong>Executar</strong>. Se o Google pedir permissão, autorize.</li>
+      <li><strong>Implantar → Gerenciar implantações → ✏️ → Versão: Nova versão → Implantar</strong>. Depois recarregue esta página.</li>
+    </ol>
+    <div><button class="btn primary" type="button" id="btCod" onclick="copiarCodigo()">Copiar código novo</button></div></div>`;
+}
+async function copiarCodigo() {
+  const b = $("#btCod"); b.disabled = true; b.textContent = "Copiando…";
+  try {
+    // o Codigo.gs vai junto com o site no GitHub Pages, então é sempre a versão certa
+    const r = await fetch("apps-script/Codigo.gs?v=" + VERSAO_SCRIPT, { cache: "no-store" });
+    if (!r.ok) throw new Error("http " + r.status);
+    const txt = await r.text();
+    if (!txt.includes(VERSAO_SCRIPT)) throw new Error("versão diferente");
+    await navigator.clipboard.writeText(txt);
+    b.textContent = "Código copiado ✓"; toast("Código copiado. Agora cole no Apps Script.");
+  } catch (e) {
+    b.disabled = false; b.textContent = "Copiar código novo";
+    toast("Não consegui copiar. Abra o Codigo.gs no GitHub e copie por lá.");
+  }
 }
 function monthNav() {
   return `<div class="month-nav">
