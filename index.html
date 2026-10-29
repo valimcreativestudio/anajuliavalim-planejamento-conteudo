@@ -378,6 +378,25 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 .escopo { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
 .escopo button { border: 0; background: var(--surface); padding: 7px 12px; font-size: 13px; }
 .escopo button[aria-pressed="true"] { background: var(--primary); color: var(--primary-ink); }
+/* caixa de seleção que abre uma lista e aceita vários itens */
+.msel { position: relative; min-width: 0; }
+.msel-btn { width: 100%; display: flex; align-items: center; gap: 8px; text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 10px; min-height: 38px; }
+.msel-btn .txt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.msel-btn .txt.vazio { color: var(--muted); }
+.msel-btn .cnt { font-size: 11.5px; font-weight: 700; background: var(--surface-2); border-radius: 99px; padding: 1px 7px; }
+.msel-btn::after { content: ""; width: 7px; height: 7px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg) translateY(-2px); flex: none; opacity: .7; }
+.msel-btn:disabled { opacity: .7; cursor: default; }
+.msel-pop { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 4px); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); padding: 5px; max-height: 280px; overflow-y: auto; }
+.msel-op { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-radius: 7px; cursor: pointer; }
+.msel-op:hover { background: var(--surface-2); }
+.msel-op input { position: absolute; opacity: 0; pointer-events: none; }
+.msel-op .ck { width: 16px; flex: none; font-weight: 700; text-align: center; }
+.msel-op input:checked + .ck::before { content: "✓"; }
+.msel-op input:checked ~ .nm { font-weight: 600; }
+.msel-op:has(input:focus-visible) { outline: 2px solid var(--caramelo); outline-offset: -2px; }
+.msel-add { display: flex; gap: 6px; padding: 6px 4px 3px; border-top: 1px solid var(--line); margin-top: 4px; }
+.msel-add input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 8px; }
+.msel-vazio { padding: 8px 9px; font-size: 13px; color: var(--muted); }
 .empty { border: 1px dashed var(--line); border-radius: 14px; padding: 36px 20px; text-align: center; color: var(--muted); display: grid; gap: 12px; justify-items: center; }
 .empty strong { font-family: var(--f-display); font-weight: 400; font-size: 26px; color: var(--ink); }
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 999px; font-weight: 500; z-index: 50; box-shadow: var(--shadow); }
@@ -1264,23 +1283,49 @@ async function salvarLista(tipo) {
   try { await api("salvarMarca", { marca: nova }); S.dirty = false; await carregar(); toast(tipo === "rede" ? "Redes salvas" : "Produtos salvos"); }
   catch (e) { writeFail(e); }
 }
-function toggleNovoProd() {
-  const box = $("#prodNovo"); box.hidden = !box.hidden;
-  if (!box.hidden) $("#eProdNovo").focus();
+/* caixa de seleção múltipla: botão que abre a lista, marca vários e permite adicionar um item novo */
+function msel(id, ops, marcados, vazio, phNovo, addFn) {
+  const ro = !S.canWrite;
+  return `<div class="msel" id="${id}" data-vazio="${esc(vazio)}">
+    <button type="button" class="msel-btn" onclick="abrirMsel('${id}')" aria-haspopup="listbox"${ro ? " disabled" : ""}>${mselTexto(marcados, vazio)}</button>
+    <div class="msel-pop" hidden role="listbox" aria-multiselectable="true">
+      ${ops.length ? ops.map(x => mselOp(x, marcados.includes(x))).join("") : `<div class="msel-vazio">Nada cadastrado ainda.</div>`}
+      ${ro ? "" : `<div class="msel-add"><input placeholder="${esc(phNovo)}" onkeydown="if(event.key==='Enter'){event.preventDefault();${addFn}}"><button class="btn sm primary" type="button" onclick="${addFn}">Adicionar</button></div>`}
+    </div></div>`;
 }
+const mselOp = (x, on) => `<label class="msel-op"><input type="checkbox" value="${esc(x)}"${on ? " checked" : ""} onchange="mselAtualiza(this)"><span class="ck"></span><span class="nm">${esc(x)}</span></label>`;
+function mselTexto(l, vazio) {
+  return l.length ? `<span class="txt" title="${esc(l.join(", "))}">${esc(l.join(", "))}</span>${l.length > 1 ? `<span class="cnt">${l.length}</span>` : ""}` : `<span class="txt vazio">${esc(vazio)}</span>`;
+}
+function mselAtualiza(el) {
+  const box = el.closest(".msel");
+  box.querySelector(".msel-btn").innerHTML = mselTexto([...box.querySelectorAll(".msel-op input:checked")].map(i => i.value), box.dataset.vazio);
+}
+function abrirMsel(id) {
+  const pop = $("#" + id + " .msel-pop"), abrir = pop.hidden;
+  document.querySelectorAll(".msel-pop").forEach(p => p.hidden = true);
+  pop.hidden = !abrir;
+}
+function mselAdiciona(id, nome) {
+  const box = $("#" + id), ja = [...box.querySelectorAll(".msel-op input")].find(i => i.value.toLowerCase() === nome.toLowerCase());
+  box.querySelector(".msel-vazio")?.remove();
+  if (ja) ja.checked = true;
+  else box.querySelector(".msel-add").insertAdjacentHTML("beforebegin", mselOp(nome, true));
+  box.querySelector(".msel-add input").value = "";
+  mselAtualiza(box.querySelector(".msel-op input"));
+}
+// fecha a lista ao clicar fora ou apertar Esc
+document.addEventListener("click", e => { if (!e.target.closest(".msel")) document.querySelectorAll(".msel-pop").forEach(p => p.hidden = true); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && [...document.querySelectorAll(".msel-pop")].some(p => !p.hidden)) { e.preventDefault(); document.querySelectorAll(".msel-pop").forEach(p => p.hidden = true); } }, true);
 async function addProdutoEditor() {
-  const nome = $("#eProdNovo").value.trim();
+  const nome = ($("#eProdutos .msel-add input").value || "").trim().replace(/\s+\+\s+/g, " ");
   if (!nome) return toast("Escreva o nome do produto.");
   const m = marca(), lista = m.produtos || [];
   if (!lista.includes(nome)) {
     try { await api("salvarMarca", { marca: { ...m, produtos: lista.concat(nome) } }); m.produtos = lista.concat(nome); }
     catch (e) { return writeFail(e); }
   }
-  const ja = [...document.querySelectorAll("#eProdutos input")].find(i => i.value === nome);
-  $("#eProdutos > .muted")?.remove();
-  if (ja) ja.checked = true;
-  else $("#eProdutos").insertAdjacentHTML("beforeend", `<label><input type="checkbox" value="${esc(nome)}" checked><span>${esc(nome)}</span></label>`);
-  $("#eProdNovo").value = ""; $("#prodNovo").hidden = true;
+  mselAdiciona("eProdutos", nome);
   toast(`"${nome}" adicionado aos produtos da marca`);
 }
 
@@ -1378,23 +1423,12 @@ function drawEditor() {
       <label class="field"><span>Data</span><input id="eData" type="date" required value="${esc(p.data)}"${ro}></label>
       <label class="field"><span>Formato</span>${sel("eFormato", FORMATOS, p.formato)}</label>
       <label class="field"><span>Fase</span>${sel("eFase", fasesDe(m).map(f => f.nome), p.fase, true)}</label>
-      <div class="field full"><span>Produtos (pode marcar mais de um)</span>
-        <div style="display:flex;gap:6px;align-items:flex-start">
-          <div class="seg" id="eProdutos" style="flex:1">${(() => { const marc = prodsDe(p.produto), ops = [...(m.produtos || [])]; marc.forEach(x => { if (!ops.includes(x)) ops.push(x); });
-            return ops.length ? ops.map(x => `<label><input type="checkbox" value="${esc(x)}"${marc.includes(x) ? " checked" : ""}${ro}><span>${esc(x)}</span></label>`).join("") : `<span class="muted" style="font-size:13px">Nenhum produto cadastrado. Use o + para criar.</span>`; })()}</div>
-          ${S.canWrite ? `<button class="icon-btn" type="button" aria-label="Adicionar produto" title="Adicionar produto" onclick="toggleNovoProd()">+</button>` : ""}</div>
-        <div class="prod-new" id="prodNovo" hidden><input id="eProdNovo" placeholder="Nome do novo produto" onkeydown="if(event.key==='Enter'){event.preventDefault();addProdutoEditor()}"><button class="btn sm primary" type="button" onclick="addProdutoEditor()">Adicionar</button></div>
-      </div>
+      <div class="field"><span>Produtos</span>${msel("eProdutos", (() => { const ops = [...(m.produtos || [])]; prodsDe(p.produto).forEach(x => { if (!ops.includes(x)) ops.push(x); }); return ops; })(), prodsDe(p.produto), "Selecione os produtos", "Novo produto", "addProdutoEditor()")}</div>
       ${txt("ePostagem", "Título da postagem", p.postagem, false, "Ex.: Conheça o produto")}
       ${txt("ePauta", "Nome", p.pauta, true)}
       <label class="field"><span>Objetivo (jornada de compra)</span>${sel("eObjetivo", OBJETIVOS, p.objetivo, true)}</label>
       ${txt("eCta", "CTA / destino", p.cta, false, "Ex.: Link do e-commerce")}
-      <div class="field full"><span>Redes (pode marcar mais de uma)</span>
-        <div class="seg" id="eRedes">${(() => { const marcadas = redesDe(p.rede); const ops = opcoesRede(); marcadas.forEach(x => { if (!ops.includes(x)) ops.push(x); });
-          return ops.map(r => `<label><input type="checkbox" value="${esc(r)}"${marcadas.includes(r) ? " checked" : ""}${ro}><span>${esc(r)}</span></label>`).join(""); })()}
-          ${S.canWrite ? `<button class="btn sm" type="button" onclick="$('#redeNova').hidden=false;$('#eRedeNova').focus()">+ Outra</button>` : ""}</div>
-        <div class="prod-new" id="redeNova" hidden><input id="eRedeNova" placeholder="Nome da rede (ex.: Kwai)" onkeydown="if(event.key==='Enter'){event.preventDefault();addRede()}"><button class="btn sm primary" type="button" onclick="addRede()">Adicionar</button></div>
-      </div>
+      <div class="field"><span>Redes</span>${msel("eRedes", (() => { const ops = opcoesRede(); redesDe(p.rede).forEach(x => { if (!ops.includes(x)) ops.push(x); }); return ops; })(), redesDe(p.rede), "Selecione as redes", "Nova rede (ex.: Kwai)", "addRede()")}</div>
       ${txt("eGravacao", "Gravação", p.gravacao, false, "Ex.: Vídeo novo (matriz)")}
       <h4>Produção</h4>
       ${area("eObs", "Observação", p.observacao, 2)}
@@ -1429,7 +1463,7 @@ function atualizarPrevia() {
   if (atual) atual.outerHTML = previaHtml(src); else box.insertAdjacentHTML("afterbegin", previaHtml(src));
 }
 async function addRede() {
-  const nome = $("#eRedeNova").value.trim().replace(/\s*\+\s*/g, " ");
+  const nome = ($("#eRedes .msel-add input").value || "").trim().replace(/\s*\+\s*/g, " ");
   if (!nome) return toast("Escreva o nome da rede.");
   // entra na lista de redes da marca, como acontece com os produtos
   const m = marca(), lista = opcoesRede(m);
@@ -1437,17 +1471,14 @@ async function addRede() {
     try { await api("salvarMarca", { marca: { ...m, perfil: { ...perfilDe(m), redes: lista.concat(nome) } } }); m.perfil = { ...perfilDe(m), redes: lista.concat(nome) }; }
     catch (e) { return writeFail(e); }
   }
-  const ja = [...document.querySelectorAll("#eRedes input")].find(i => i.value.toLowerCase() === nome.toLowerCase());
-  if (ja) ja.checked = true;
-  else $("#eRedes > button").insertAdjacentHTML("beforebegin", `<label><input type="checkbox" value="${esc(nome)}" checked><span>${esc(nome)}</span></label>`);
-  $("#eRedeNova").value = ""; $("#redeNova").hidden = true;
+  mselAdiciona("eRedes", nome);
 }
 function gather() {
   const v = id => ($("#" + id)?.value ?? "").trim();
   return {
     marcaId: S.marcaId, data: v("eData"), formato: v("eFormato"), fase: v("eFase"),
-    produto: [...document.querySelectorAll("#eProdutos input:checked")].map(i => i.value).join(" + "), postagem: v("ePostagem"), pauta: v("ePauta"), objetivo: v("eObjetivo"), cta: v("eCta"),
-    rede: [...document.querySelectorAll("#eRedes input:checked")].map(i => i.value).join(" + "), gravacao: v("eGravacao"), observacao: $("#eObs").value, inspiracao: $("#eInsp").value,
+    produto: [...document.querySelectorAll("#eProdutos .msel-op input:checked")].map(i => i.value).join(" + "), postagem: v("ePostagem"), pauta: v("ePauta"), objetivo: v("eObjetivo"), cta: v("eCta"),
+    rede: [...document.querySelectorAll("#eRedes .msel-op input:checked")].map(i => i.value).join(" + "), gravacao: v("eGravacao"), observacao: $("#eObs").value, inspiracao: $("#eInsp").value,
     legenda: $("#eLegenda").value, criativo: v("eCriativo"), capa: v("eCapa"), atualizado: Date.now()
   };
 }
