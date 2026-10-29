@@ -18,7 +18,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-10-29.2';
+const VERSAO = '2026-10-29.3';
 
 const ABA_PAUTAS = 'POSTAGENS';
 const ABA_MARCAS = 'MARCAS';
@@ -421,7 +421,10 @@ function salvarMarca_(eu, m) {
 
 /* ---------- Instagram (leitura dos posts do perfil) ----------
  * A chave de acesso fica só nas Propriedades do script (ig_<marca>); nunca vai para o site.
- * Usa a API do Instagram com login do Instagram (graph.instagram.com). */
+ * Aceita dois tipos de chave:
+ *  - login do Instagram (começa com "IG"): lê direto em graph.instagram.com;
+ *  - login do Facebook (Explorador da Graph API): acha a Página ligada ao Instagram da marca
+ *    e guarda a chave da Página, que não vence quando vem de uma chave estendida. */
 
 function instaDados_(marcaId) {
   const raw = PropertiesService.getScriptProperties().getProperty('ig_' + marcaId);
@@ -448,10 +451,35 @@ function instaConectar_(eu, marcaId, token) {
   if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Você não pode conectar o Instagram desta marca.');
   token = String(token || '').trim();
   if (token.length < 20) throw erro_('server', 'Cole a chave de acesso completa.');
-  const me = instaGet_('https://graph.instagram.com/me?fields=user_id,username&access_token=' + encodeURIComponent(token));
-  PropertiesService.getScriptProperties().setProperty('ig_' + marcaId, JSON.stringify({ token: token, usuario: me.username || '', salvo: Date.now(), renovado: Date.now() }));
+  let dados;
+  if (/^IG/.test(token)) {
+    const me = instaGet_('https://graph.instagram.com/me?fields=user_id,username&access_token=' + encodeURIComponent(token));
+    dados = { tipo: 'ig', token: token, usuario: me.username || '' };
+  } else {
+    dados = instaPelaPagina_(marcaId, token);
+  }
+  dados.salvo = Date.now(); dados.renovado = Date.now();
+  PropertiesService.getScriptProperties().setProperty('ig_' + marcaId, JSON.stringify(dados));
   CacheService.getScriptCache().remove('igm_' + marcaId);
-  return { usuario: me.username || '' };
+  return { usuario: dados.usuario };
+}
+
+// chave do login do Facebook: lista as Páginas que a pessoa administra e pega a que tem o Instagram desta marca
+function instaPelaPagina_(marcaId, token) {
+  const j = instaGet_('https://graph.facebook.com/me/accounts?fields=name,access_token,instagram_business_account%7Bid,username%7D&limit=100&access_token=' + encodeURIComponent(token));
+  const paginas = (j.data || []).filter(p => p.instagram_business_account && p.instagram_business_account.id);
+  if (!paginas.length) throw erro_('insta', 'Essa chave não mostra nenhuma Página do Facebook ligada a um Instagram. Confira se marcou as permissões instagram_basic, pages_show_list e pages_read_engagement e se o Instagram da marca está ligado à Página.');
+  const m = ler_(ABA_MARCAS, CAMPOS_MARCA).filter(x => x.id === marcaId)[0];
+  const arroba = String((parseJSON_(m && m.perfil, {}) || {}).instagram || '').replace(/^.*instagram\.com\//i, '').replace(/[@\/\s]/g, '').toLowerCase();
+  let p = arroba ? paginas.filter(x => String(x.instagram_business_account.username || '').toLowerCase() === arroba)[0] : null;
+  if (!p && paginas.length === 1) p = paginas[0];
+  if (!p) {
+    const lista = paginas.map(x => '@' + x.instagram_business_account.username).join(', ');
+    throw erro_('insta', arroba
+      ? 'Não achei o @' + arroba + ' nesta chave. Instagrams encontrados: ' + lista + '.'
+      : 'Essa chave tem vários Instagrams (' + lista + '). Preencha o @ da marca em Marca → Sobre e conecte de novo.');
+  }
+  return { tipo: 'fb', token: p.access_token, igId: p.instagram_business_account.id, usuario: p.instagram_business_account.username || '', pagina: p.name || '' };
 }
 
 function instaDesconectar_(eu, marcaId) {
@@ -470,8 +498,8 @@ function instaMidias_(eu, marcaId, forcar) {
     const c = cache.get('igm_' + marcaId);
     if (c) return JSON.parse(c);
   }
-  // a chave vale 60 dias; renova sozinha quando passa de 20 dias
-  if (Date.now() - (d.renovado || 0) > 20 * 864e5) {
+  // chave do login do Instagram vale 60 dias; renova sozinha quando passa de 20 dias (a da Página não precisa)
+  if (d.tipo !== 'fb' && Date.now() - (d.renovado || 0) > 20 * 864e5) {
     try {
       const n = instaGet_('https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=' + encodeURIComponent(d.token));
       if (n.access_token) { d.token = n.access_token; d.renovado = Date.now(); PropertiesService.getScriptProperties().setProperty('ig_' + marcaId, JSON.stringify(d)); }
@@ -479,7 +507,8 @@ function instaMidias_(eu, marcaId, forcar) {
   }
   let res;
   try {
-    const j = instaGet_('https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&limit=36&access_token=' + encodeURIComponent(d.token));
+    const campos = 'fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&limit=36&access_token=' + encodeURIComponent(d.token);
+    const j = instaGet_(d.tipo === 'fb' ? 'https://graph.facebook.com/' + d.igId + '/media?' + campos : 'https://graph.instagram.com/me/media?' + campos);
     res = {
       conectado: true, usuario: d.usuario,
       midias: (j.data || []).map(x => ({

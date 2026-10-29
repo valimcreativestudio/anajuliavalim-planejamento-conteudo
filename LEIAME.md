@@ -72,16 +72,18 @@ Cada pessoa liga ou desliga os avisos em **Minha conta**. O Gmail comum permite 
 
 Na **Grade do Insta**, a **bolinha verde** marca o que já foi postado; sem bolinha, ainda não foi. Ligando o Instagram de uma marca, a grade mostra também os posts que já estão no perfil (os 36 mais recentes), misturados por data com os planejados.
 
-**Conectar uma marca (uma vez, uns 10 minutos na primeira):**
+**Conectar (pelo login do Facebook):**
 
-1. A conta do Instagram da marca precisa ser **profissional** (Empresa ou Criador de conteúdo).
-2. Entre em [developers.facebook.com](https://developers.facebook.com) com o seu Facebook → **Meus apps → Criar app**. Escolha o caso de uso de **Instagram** / "Gerenciar mensagens e conteúdo no Instagram" e conclua (o app pode ficar em modo de desenvolvimento; é só para a agência).
-3. No app, abra **Instagram → Configuração da API com login do Instagram**.
-4. Em **Funções do app → Funções**, adicione o @ da marca como **Testador do Instagram**. No Instagram da marca, aceite o convite em **Configurações → Apps e sites → Convites de testador** (pelo navegador, em instagram.com).
-5. Volte em **Gerar tokens de acesso**, clique em **Adicionar conta**, entre com o Instagram da marca e clique em **Gerar token**. Copie a chave.
-6. No sistema: **Marca → Configurações → Instagram da marca**, cole a chave e clique em **Conectar**.
+Requisitos: o Instagram de cada marca precisa ser **profissional** e estar **ligado a uma Página do Facebook** que você administra.
 
-O mesmo app serve para todas as marcas: para as próximas, repita só os passos 4 a 6. A chave fica guardada só no script da planilha (o site nunca mostra) e é renovada sozinha; se o cliente trocar a senha do Instagram, gere outra e conecte de novo. Os nomes dos menus da Meta mudam de vez em quando; se algo estiver diferente, mande um print.
+1. Em [developers.facebook.com](https://developers.facebook.com), use o app com o caso de uso **"Gerenciar mensagens e conteúdo no Instagram"** (login do Facebook). Em **Casos de uso → Personalizar → Permissões e recursos**, deixe adicionadas **instagram_basic**, **pages_show_list** e **pages_read_engagement** (e **business_management**, se as Páginas estão num portfólio empresarial).
+2. Abra o **Explorador da Graph API**: [developers.facebook.com/tools/explorer](https://developers.facebook.com/tools/explorer). À direita, escolha o seu app, **Token do usuário**, adicione as permissões acima e clique em **Gerar token de acesso**. Na janela do Facebook, marque **as Páginas das marcas** e os Instagrams delas.
+3. **Estenda a chave** (senão ela vence em 1 hora): abra [developers.facebook.com/tools/debug/accesstoken](https://developers.facebook.com/tools/debug/accesstoken), cole a chave, clique em **Depurar** e, no fim da página, em **Estender token de acesso**. Copie a chave nova.
+4. No sistema: preencha o **@ da marca** em **Marca → Sobre** e, em **Marca → Configurações → Instagram da marca**, cole a chave e clique em **Conectar**.
+
+A mesma chave serve para **todas as marcas** cujas Páginas você marcou no passo 2: é só repetir o passo 4 em cada marca. O sistema guarda a chave da Página (que não vence) só no script da planilha. Se você tirar o acesso do app no Facebook ou perder a administração da Página, gere outra chave.
+
+Também funciona com a chave do **login do Instagram** (começa com "IG"), se esse tipo aparecer no seu app.
 
 ## Atividade da equipe
 

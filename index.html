@@ -1408,7 +1408,7 @@ function instaConfigHtml(m, pode) {
   return `<div class="ig-box field"><span>Instagram da marca</span>
     ${st.conectado ? `<div class="row"><span>Conectado como <b>@${esc(st.usuario || "")}</b>. A Grade do Insta mostra os posts do perfil.</span>
         ${pode ? `<button class="btn sm danger" type="button" onclick="instaDesconectar()">Desconectar</button>` : ""}</div>`
-      : `<span class="muted" style="font-size:13px">Conecte para ver na Grade do Insta os posts que já estão no perfil. Gere a chave de acesso no painel da Meta (passo a passo no LEIAME) e cole aqui.</span>`}
+      : `<span class="muted" style="font-size:13px">Conecte para ver na Grade do Insta os posts que já estão no perfil. Cole a chave gerada na Meta (passo a passo no LEIAME). Se a chave for do login do Facebook, preencha antes o @ da marca em Marca → Sobre.</span>`}
     ${pode ? `<div class="row"><input id="igToken" type="password" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();instaConectar()}" placeholder="${st.conectado ? "Colar uma chave nova" : "Cole a chave de acesso do Instagram"}"><button class="btn sm primary" type="button" id="igBtn" onclick="instaConectar()">${st.conectado ? "Trocar chave" : "Conectar"}</button></div>` : ""}
   </div>`;
 }
@@ -1987,7 +1987,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-10-29.2"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-10-29.3"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",
