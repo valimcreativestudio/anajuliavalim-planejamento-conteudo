@@ -1701,7 +1701,9 @@ function fluxoHtml(p) {
 function editorMudou() {
   if (!EDIT.id) return true;
   const g = gather();
-  return Object.keys(g).some(k => !["atualizado", "marcaId"].includes(k) && String(g[k] ?? "").trim() !== String(EDIT[k] ?? "").trim());
+  // redes e produtos são listas: a ordem não importa
+  const norm = (k, v) => k === "rede" ? redesDe(v).sort().join("|") : k === "produto" ? prodsDe(v).sort().join("|") : String(v ?? "").trim();
+  return Object.keys(g).some(k => !["atualizado", "marcaId"].includes(k) && norm(k, g[k]) !== norm(k, EDIT[k]));
 }
 async function acaoEditor(k) {
   const a = ACOES[k];
