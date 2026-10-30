@@ -18,7 +18,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-10-29.3';
+const VERSAO = '2026-10-30.1';
 
 const ABA_PAUTAS = 'POSTAGENS';
 const ABA_MARCAS = 'MARCAS';
@@ -97,6 +97,8 @@ function doPost(e) {
     if (req.action === 'instaConectar') return json_(Object.assign({ ok: true }, instaConectar_(eu, req.marcaId, req.chave)));
     if (req.action === 'instaDesconectar') return json_(Object.assign({ ok: true }, instaDesconectar_(eu, req.marcaId)));
     if (req.action === 'instaMidias') return json_(Object.assign({ ok: true }, instaMidias_(eu, req.marcaId, req.forcar)));
+    if (req.action === 'acessosListar') return json_(Object.assign({ ok: true }, acessosListar_(eu, req.marcaId)));
+    if (req.action === 'acessosSalvar') return json_(Object.assign({ ok: true }, acessosSalvar_(eu, req.marcaId, req.acessos)));
 
     const lock = LockService.getScriptLock();
     lock.waitLock(20000);
@@ -524,6 +526,28 @@ function instaMidias_(eu, marcaId, forcar) {
   return res;
 }
 
+/* ---------- Acessos das contas da marca (login, senha, chave) ----------
+ * Ficam nas Propriedades do script (cred_<marca>), fora da planilha, e só vão para
+ * quem alimenta a marca: social media da marca, gestor, diretor e administrador. */
+
+function acessosListar_(eu, marcaId) {
+  if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Só quem alimenta a marca vê os acessos.');
+  const d = parseJSON_(PropertiesService.getScriptProperties().getProperty('cred_' + marcaId), null) || {};
+  return { acessos: Array.isArray(d.acessos) ? d.acessos : [], por: d.por || '', em: d.em || 0 };
+}
+
+function acessosSalvar_(eu, marcaId, acessos) {
+  if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Só quem alimenta a marca altera os acessos.');
+  const campos = ['plataforma', 'usuario', 'email', 'senha', 'chave', 'obs'];
+  const lista = (Array.isArray(acessos) ? acessos : []).slice(0, 60).map(a => {
+    const o = {}; campos.forEach(k => o[k] = String((a && a[k]) || '').slice(0, k === 'chave' ? 2000 : 500)); return o;
+  }).filter(a => campos.some(k => a[k].trim()));
+  const valor = JSON.stringify({ acessos: lista, por: eu.nome, em: Date.now() });
+  if (valor.length > 60000) throw erro_('server', 'Acessos demais para esta marca. Apague alguns e tente de novo.');
+  PropertiesService.getScriptProperties().setProperty('cred_' + marcaId, valor);
+  return { total: lista.length };
+}
+
 function excluirMarca_(id) {
   const aba = aba_(ABA_PAUTAS, CAMPOS_PAUTA);
   const n = aba.getLastRow() - 1;
@@ -533,6 +557,7 @@ function excluirMarca_(id) {
   }
   excluirLinha_(ABA_MARCAS, CAMPOS_MARCA, id);
   PropertiesService.getScriptProperties().deleteProperty('ig_' + id);
+  PropertiesService.getScriptProperties().deleteProperty('cred_' + id);
 }
 
 function enviarArquivo_(eu, req) {

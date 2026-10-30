@@ -68,6 +68,17 @@ Cada pessoa liga ou desliga os avisos em **Minha conta**. O Gmail comum permite 
 
 **Na primeira vez**, depois de colar o código novo, rode **configurar** de novo no Apps Script para autorizar o envio de e-mails, e só então faça **Implantar → Gerenciar implantações → ✏️ → Nova versão**.
 
+## Acessos das contas da marca
+
+Em **Marca → Acessos** ficam os logins de cada conta (Instagram, TikTok, Facebook, Canva…): plataforma, usuário/@, e-mail, senha, chave de acesso (se tiver) e observação. Dá para adicionar quantas contas quiser.
+
+- Os acessos **não ficam na planilha**: vão para as Propriedades do script, que só quem abre o Apps Script vê.
+- Só aparecem para a **social media da marca, o gestor, o diretor e o administrador**. O aprovador não vê.
+- Senha e chave ficam escondidas: 👁 mostra, ⧉ copia.
+- Numa conta de Instagram com chave preenchida, o botão **Usar esta chave na Grade do Insta** conecta a grade.
+
+Recomendação: ative a verificação em duas etapas nas contas dos clientes e troque a senha quando alguém sair da equipe.
+
 ## Grade do Insta com os posts reais do perfil
 
 Na **Grade do Insta**, a **bolinha verde** marca o que já foi postado; sem bolinha, ainda não foi. Ligando o Instagram de uma marca, a grade mostra também os posts que já estão no perfil (os 36 mais recentes), misturados por data com os planejados.

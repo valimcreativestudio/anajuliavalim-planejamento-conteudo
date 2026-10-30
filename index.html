@@ -406,6 +406,14 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 .msel-add { display: flex; gap: 6px; padding: 6px 4px 3px; border-top: 1px solid var(--line); margin-top: 4px; }
 .msel-add input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 8px; }
 .msel-vazio { padding: 8px 9px; font-size: 13px; color: var(--muted); }
+/* Acessos das contas */
+.acc-list { display: grid; gap: 12px; }
+.acc { border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: var(--surface); display: grid; gap: 10px; }
+.acc-head { display: flex; align-items: center; gap: 10px; }
+.acc-head .pl { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 10px; font-weight: 600; }
+.sec-in { display: flex; gap: 6px; }
+.sec-in input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 10px; font-size: 14px; }
+.sec-in .icon-btn { flex: none; width: 38px; height: auto; }
 .empty { border: 1px dashed var(--line); border-radius: 14px; padding: 36px 20px; text-align: center; color: var(--muted); display: grid; gap: 12px; justify-items: center; }
 .empty strong { font-family: var(--f-display); font-weight: 400; font-size: 26px; color: var(--ink); }
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 999px; font-weight: 500; z-index: 50; box-shadow: var(--shadow); }
@@ -487,7 +495,7 @@ const DEFAULT_FASES = [
 ];
 
 const S = {
-  canWrite: false, insta: {}, eu: null, usuarios: [], token: store("token") || "", rej: null, uEdit: null,
+  canWrite: false, insta: {}, acessos: {}, eu: null, usuarios: [], token: store("token") || "", rej: null, uEdit: null,
   marcas: [], posts: [], loadedM: false, loadedP: false, failed: false,
   marcaId: store("marca"), month: null,
   f: { status: "", formato: "", produto: "", q: "" },
@@ -557,7 +565,7 @@ function setMonth(ym) { S.month = ym; store("mes." + S.marcaId, ym); render(); }
 /* ---------- Vistas ---------- */
 const view = () => {
   const h = location.hash.replace("#", "");
-  return ["calendario", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-config", "aprovacoes", "equipe", "equipe-atividade", "conta"].includes(h) ? h : "calendario";
+  return ["calendario", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-acessos", "marca-config", "aprovacoes", "equipe", "equipe-atividade", "conta"].includes(h) ? h : "calendario";
 };
 
 function render() {
@@ -595,7 +603,7 @@ function render() {
   }
   if (!S.month) S.month = pickMonth();
   const v = view();
-  app.innerHTML = avisoVersao() + ({ calendario: vCal, pautas: vPautas, fluxo: vFluxo, grade: vGrade, resumo: vResumo, marca: vMarcaGeral, "marca-sobre": () => vPerfil("sobre"), "marca-publico": vPublico, "marca-arquivos": vArquivos, "marca-notas": () => vPerfil("notas"), "marca-produtos": vProdutos, "marca-redes": vRedes, "marca-config": vMarca })[v]();
+  app.innerHTML = avisoVersao() + ({ calendario: vCal, pautas: vPautas, fluxo: vFluxo, grade: vGrade, resumo: vResumo, marca: vMarcaGeral, "marca-sobre": () => vPerfil("sobre"), "marca-publico": vPublico, "marca-arquivos": vArquivos, "marca-notas": () => vPerfil("notas"), "marca-produtos": vProdutos, "marca-redes": vRedes, "marca-acessos": vAcessos, "marca-config": vMarca })[v]();
   if (v === "fluxo") wireBoard();
   if (v === "pautas") { const q = $("#fq"); if (q && S.f.q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); } }
 }
@@ -1118,7 +1126,7 @@ const pct = x => x.total ? Math.round(x.ok / x.total * 100) : 0;
 
 function subnav() {
   const pr = progresso(marca()), v = view();
-  const it = [["marca", "Visão geral"], ["marca-sobre", "Sobre", pr.sobre], ["marca-produtos", "Produtos"], ["marca-redes", "Redes"], ["marca-publico", "Público-alvo", pr.publico], ["marca-arquivos", "Arquivos e identidade", pr.arquivos], ["marca-notas", "Observações", pr.notas], ["marca-config", "Configurações"]];
+  const it = [["marca", "Visão geral"], ["marca-sobre", "Sobre", pr.sobre], ["marca-produtos", "Produtos"], ["marca-redes", "Redes"], ["marca-publico", "Público-alvo", pr.publico], ["marca-arquivos", "Arquivos e identidade", pr.arquivos], ["marca-notas", "Observações", pr.notas], ["marca-acessos", "Acessos"], ["marca-config", "Configurações"]];
   return `<nav class="subnav" aria-label="Seções da marca">${it.map(([h, l, x]) => `<a href="#${h}"${v === h ? ' aria-current="page"' : ""}>${l}${x ? `<span class="pct">${pct(x)}%</span>` : ""}</a>`).join("")}</nav>`;
 }
 
@@ -1371,6 +1379,77 @@ async function addProdutoEditor() {
   }
   mselAdiciona("eProdutos", nome);
   toast(`"${nome}" adicionado aos produtos da marca`);
+}
+
+/* ---------- Acessos das contas da marca ---------- */
+const PLATAFORMAS = ["Instagram", "TikTok", "Facebook", "YouTube", "Pinterest", "LinkedIn", "Threads", "Kwai", "Meta Business Suite", "Google / Gmail", "Canva", "Site / e-commerce", "Outro"];
+function carregarAcessos(mid) {
+  S.acessos[mid] = { carregando: true };
+  api("acessosListar", { marcaId: mid })
+    .then(r => { S.acessos[mid] = r; })
+    .catch(e => { S.acessos[mid] = { erro: e.message || "Não consegui carregar os acessos." }; })
+    .finally(() => { if (view() === "marca-acessos" && S.marcaId === mid && !S.dirty) render(); });
+}
+function accHtml(a = {}) {
+  const ro = S.canWrite ? "" : " disabled";
+  const campoSec = (k, label, ph) => `<label class="field"><span>${label}</span><span class="sec-in"><input type="password" data-a="${k}" value="${esc(a[k] || "")}" placeholder="${esc(ph)}" autocomplete="new-password"${ro}>
+      <button class="icon-btn" type="button" title="Mostrar" aria-label="Mostrar ${label.toLowerCase()}" onclick="const i=this.previousElementSibling;i.type=i.type==='password'?'text':'password'">👁</button>
+      <button class="icon-btn" type="button" title="Copiar" aria-label="Copiar ${label.toLowerCase()}" onclick="copiarTexto(this.parentNode.querySelector('input').value,'Copiado')">⧉</button></span></label>`;
+  const campo = (k, label, ph, tipo = "text") => `<label class="field"><span>${label}</span><span class="sec-in"><input type="${tipo}" data-a="${k}" value="${esc(a[k] || "")}" placeholder="${esc(ph)}" autocomplete="off"${ro}>
+      <button class="icon-btn" type="button" title="Copiar" aria-label="Copiar ${label.toLowerCase()}" onclick="copiarTexto(this.parentNode.querySelector('input').value,'Copiado')">⧉</button></span></label>`;
+  return `<div class="acc" data-acc>
+    <div class="acc-head"><input class="pl" data-a="plataforma" list="plataformas" value="${esc(a.plataforma || "")}" placeholder="Plataforma (Instagram, TikTok…)" aria-label="Plataforma"${ro}>
+      ${S.canWrite ? `<button class="btn sm danger" type="button" onclick="this.closest('[data-acc]').remove();S.dirty=true;$('#app .save-bar .msg').textContent='Alterações não salvas'">Remover</button>` : ""}</div>
+    <div class="pf-grid">
+      ${campo("usuario", "Usuário / @", "@marca")}
+      ${campo("email", "E-mail de login", "login@marca.com", "email")}
+      ${campoSec("senha", "Senha", "Senha da conta")}
+      ${campoSec("chave", "Chave de acesso (se tiver)", "Token, código de API…")}
+      <label class="field full"><span>Observação</span><input data-a="obs" value="${esc(a.obs || "")}" placeholder="Ex.: código de verificação vai para o celular do cliente" style="border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px"${ro}></label>
+      ${/instagram/i.test(a.plataforma || "") && a.chave && S.canWrite ? `<div class="full"><button class="btn sm" type="button" onclick="usarChaveNaGrade(this)">Usar esta chave na Grade do Insta</button></div>` : ""}
+    </div></div>`;
+}
+function vAcessos() {
+  const m = marca();
+  if (!S.canWrite) return headM(m.nome, "Acessos") + subnav() + `<div class="empty"><strong>Acessos restritos</strong><span>Só a social media da marca, o gestor, o diretor e o administrador veem os logins e senhas.</span></div>`;
+  const c = S.acessos[m.id];
+  if (!c) carregarAcessos(m.id);
+  const corpo = !c || c.carregando ? `<div class="empty"><strong>Carregando os acessos…</strong></div>`
+    : c.erro ? `<div class="empty"><strong>Não consegui abrir os acessos</strong><span>${esc(c.erro)}</span><button class="btn" type="button" onclick="carregarAcessos(S.marcaId);render()">Tentar de novo</button></div>`
+    : `<form onsubmit="event.preventDefault();salvarAcessos()">
+        <div class="acc-list" id="accList">${c.acessos.length ? c.acessos.map(accHtml).join("") : `<div class="empty" id="semAcc"><strong>Nenhuma conta ainda</strong><span>Adicione o Instagram, TikTok e as outras contas da marca.</span></div>`}</div>
+        <datalist id="plataformas">${PLATAFORMAS.map(p => `<option value="${esc(p)}">`).join("")}</datalist>
+        <button class="btn sm" type="button" style="margin-top:12px" onclick="addAcesso()">+ Conta</button>
+        ${c.em ? `<p class="muted" style="font-size:12.5px;margin:10px 0 0">Última alteração por ${esc(c.por)} em ${new Date(c.em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}.</p>` : ""}
+        ${saveBar("Salvar acessos")}
+      </form>`;
+  return headM(m.nome, "Acessos") + subnav() +
+    `<p class="sec-intro">Logins das contas da marca. Ficam guardados fora da planilha e só aparecem para a social media da marca, o gestor, o diretor e o administrador. As senhas ficam escondidas: clique em 👁 para ver ou em ⧉ para copiar.</p>` + corpo;
+}
+function addAcesso() {
+  $("#semAcc")?.remove();
+  $("#accList").insertAdjacentHTML("beforeend", accHtml({}));
+  $("#accList [data-acc]:last-child .pl").focus();
+  S.dirty = true;
+}
+function lerAcessos() {
+  return [...document.querySelectorAll("#accList [data-acc]")].map(card => {
+    const o = {}; card.querySelectorAll("[data-a]").forEach(i => o[i.dataset.a] = i.value.trim()); return o;
+  }).filter(o => Object.values(o).some(Boolean));
+}
+async function salvarAcessos() {
+  const btn = $("#app .save-bar button"); if (btn) btn.disabled = true;
+  try {
+    await api("acessosSalvar", { marcaId: S.marcaId, acessos: lerAcessos() });
+    S.dirty = false; carregarAcessos(S.marcaId); toast("Acessos salvos");
+  } catch (e) { if (btn) btn.disabled = false; writeFail(e); }
+}
+async function usarChaveNaGrade(b) {
+  const chave = b.closest("[data-acc]").querySelector('[data-a="chave"]').value.trim();
+  b.disabled = true; b.textContent = "Conectando…";
+  try { const r = await api("instaConectar", { marcaId: S.marcaId, chave }); delete S.insta[S.marcaId]; toast(`Grade conectada ao @${r.usuario}`); await carregar(); }
+  catch (e) { toast(e.message || "Não consegui conectar com essa chave."); }
+  b.disabled = false; b.textContent = "Usar esta chave na Grade do Insta";
 }
 
 function vMarca() {
@@ -1766,6 +1845,7 @@ async function entrar() {
 // estado de tela que não pode passar de uma pessoa para outra
 function limparTela() {
   S.dirty = false; S.rej = null; S.uEdit = null; S.boasVindas = null; S.confirmDel = false; S.delArq = null;
+  S.acessos = {}; S.insta = {}; // senhas e chaves não passam de uma pessoa para outra no mesmo navegador
   if ($("#dlg").open) $("#dlg").close();
   if ($("#agDlg").open) $("#agDlg").close();
 }
@@ -1987,7 +2067,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-10-29.3"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-10-30.1"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",
