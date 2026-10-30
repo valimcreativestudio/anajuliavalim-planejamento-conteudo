@@ -103,6 +103,9 @@ a.btn { text-decoration: none; color: var(--ink); display: inline-flex; align-it
 /* Calendário */
 .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--line); gap: 1px; }
 .cal .dow { background: var(--surface-2); padding: 8px 10px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
+.day.over { outline: 2px dashed var(--caramelo); outline-offset: -3px; background: color-mix(in srgb, var(--caramelo) 10%, var(--surface)); }
+.chip[draggable="true"] { cursor: grab; }
+.chip.arrastando { opacity: .45; }
 .day { background: var(--surface); min-height: 128px; padding: 8px; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .day.out { background: var(--bg); }
 .day.out .dnum { opacity: .45; }
@@ -605,6 +608,7 @@ function render() {
   const v = view();
   app.innerHTML = avisoVersao() + ({ calendario: vCal, pautas: vPautas, fluxo: vFluxo, grade: vGrade, resumo: vResumo, marca: vMarcaGeral, "marca-sobre": () => vPerfil("sobre"), "marca-publico": vPublico, "marca-arquivos": vArquivos, "marca-notas": () => vPerfil("notas"), "marca-produtos": vProdutos, "marca-redes": vRedes, "marca-acessos": vAcessos, "marca-config": vMarca })[v]();
   if (v === "fluxo") wireBoard();
+  if (v === "calendario") wireCalendario();
   if (v === "pautas") { const q = $("#fq"); if (q && S.f.q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); } }
 }
 
@@ -664,10 +668,10 @@ function vCal() {
     const k = iso(d), ps = byDay[k] || [];
     const out = d.getMonth() !== first.getMonth();
     ps.sort((a, b) => FORMATOS.indexOf(a.formato) - FORMATOS.indexOf(b.formato));
-    cells += `<div class="day${out ? " out" : ""}${ps.length ? " has" : ""}${k === today ? " today" : ""}">
+    cells += `<div class="day${out ? " out" : ""}${ps.length ? " has" : ""}${k === today ? " today" : ""}" data-dia="${k}">
       <div class="dhead"><span class="dnum"><b>${d.getDate()}</b><span class="wd">${WD[d.getDay()]}</span></span>
       ${S.canWrite ? `<button class="add-day" type="button" aria-label="Nova postagem em ${br(k)}" onclick="openEditor(null,'${k}')">+</button>` : ""}</div>
-      ${ps.map(p => `<button class="chip" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="openEditor('${esc(p.id)}')">
+      ${ps.map(p => `<button class="chip" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="openEditor('${esc(p.id)}')"${S.canWrite ? ` draggable="true" data-id="${esc(p.id)}"` : ""}>
         ${blobSrc(p) ? `<span class="prev"><img src="${esc(blobSrc(p))}" alt="" loading="lazy" onerror="this.parentNode.remove()"></span>` : ""}
         <span class="meta"><span class="fmt">${FMT_ICON[p.formato] || ""} ${esc(p.formato || "")}</span><span class="dot" style="background:${stColor(p.status)}" title="${esc(p.status)}"></span>${REPROVADOS.includes(p.status) ? `<span class="flag">${p.status === "Ideia reprovada" ? "Reprovada" : "Ajustes"}</span>` : ""}${p.status === "Agendado" && p.agHora ? `<span title="Agendado">⏰ ${esc(p.agHora)}${p.agData && p.agData !== p.data ? " " + br(p.agData) : ""}</span>` : ""}</span>
         <span class="t" title="${esc(prodsDe(p.produto).join(", "))}"><b>${esc(prodCurto(p))}${prodCurto(p) ? ":" : ""}</b> ${esc(p.postagem || "sem título")}</span></button>`).join("")}
@@ -676,7 +680,7 @@ function vCal() {
   const n = postsMes().length;
   return headM(m.nome, "Calendário", monthNav() + addBtn()) +
     `<div class="cal">${cells}</div>
-    <p class="muted" style="margin-top:12px">${n} ${n === 1 ? "publicação" : "publicações"} em ${esc(monthLabel(S.month))}. A bolinha indica o status. Clique num post para abrir o detalhamento.</p>`;
+    <p class="muted" style="margin-top:12px">${n} ${n === 1 ? "publicação" : "publicações"} em ${esc(monthLabel(S.month))}. A bolinha indica o status. Clique num post para abrir o detalhamento${S.canWrite ? " ou arraste para outro dia para mudar a data" : ""}.</p>`;
 }
 
 function filtered() {
@@ -761,6 +765,30 @@ function vFluxo() {
   }).join("");
   return headM(m.nome, "Fluxo de produção", monthNav() + addBtn()) +
     `<p class="muted" style="margin:-6px 0 14px">Abra um card para enviar para validação, aprovar ou pedir ajustes.${adm ? " Como administrador, você também pode arrastar os cards entre as colunas." : ""}</p><div class="board">${cols}</div>`;
+}
+/* arrastar a postagem para outro dia do calendário */
+function wireCalendario() {
+  if (!S.canWrite) return;
+  document.querySelectorAll(".chip[draggable]").forEach(c => {
+    c.addEventListener("dragstart", e => { e.dataTransfer.setData("text/plain", c.dataset.id); e.dataTransfer.effectAllowed = "move"; c.classList.add("arrastando"); });
+    c.addEventListener("dragend", () => c.classList.remove("arrastando"));
+  });
+  document.querySelectorAll(".day[data-dia]").forEach(d => {
+    d.addEventListener("dragover", e => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; d.classList.add("over"); });
+    d.addEventListener("dragleave", e => { if (!d.contains(e.relatedTarget)) d.classList.remove("over"); });
+    d.addEventListener("drop", e => { e.preventDefault(); d.classList.remove("over"); moverPostagem(e.dataTransfer.getData("text/plain"), d.dataset.dia); });
+  });
+}
+async function moverPostagem(id, dia) {
+  const p = S.posts.find(x => x.id === id);
+  if (!p || !dia || p.data === dia) return;
+  const antes = p.data;
+  p.data = dia; render(); // muda na hora; volta se a planilha recusar
+  try {
+    await api("salvarPauta", { pauta: { id, data: dia } });
+    toast(`Movida para ${brFull(dia)} (${wd(dia).toLowerCase()})${p.agData && p.agData !== dia ? ". O agendamento continua em " + brFull(p.agData) : ""}`);
+    await carregar();
+  } catch (e) { p.data = antes; render(); writeFail(e); }
 }
 function wireBoard() {
   if (!podeGerir()) return;
@@ -2067,7 +2095,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-10-30.1"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-10-30.2"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",

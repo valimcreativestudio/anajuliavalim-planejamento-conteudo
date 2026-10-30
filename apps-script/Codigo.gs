@@ -18,7 +18,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-10-30.1';
+const VERSAO = '2026-10-30.2';
 
 const ABA_PAUTAS = 'POSTAGENS';
 const ABA_MARCAS = 'MARCAS';
@@ -269,15 +269,22 @@ function salvarPauta_(eu, p) {
     if (ult && ult.uid === eu.id && ult.acao === 'Editou a postagem' && Date.now() - ult.em < 30 * 60000) ult.em = Date.now();
     else historico.push({ em: Date.now(), por: eu.nome, uid: eu.id, acao: 'Editou a postagem' });
   }
-  const linha = Object.assign({}, p, {
+  // começa do que já está salvo e só troca os campos que vieram; status, agendamento e link do post
+  // só mudam pelas ações do fluxo (assim editar ou arrastar não apaga o agendamento)
+  const PROTEGIDOS = ['id', 'marcaId', 'status', 'motivo', 'historico', 'agTipo', 'agQuando', 'agData', 'agHora', 'postLink', 'criado', 'atualizado'];
+  const base = atual ? Object.assign({}, atual, { agQuando: atual.agData ? paraBR_(atual.agData) + ' ' + atual.agHora : '' }) : {};
+  const novos = {};
+  Object.keys(p).forEach(k => { if (PROTEGIDOS.indexOf(k) < 0) novos[k] = p[k]; });
+  const dataNova = novos.data || (atual && atual.data) || '';
+  const linha = Object.assign(base, novos, {
     id: id,
     marcaId: marcaId,
     marca: nomeDaMarca_(marcaId),
     status: atual ? atual.status : 'Ideia',
     motivo: atual ? atual.motivo : '',
     historico: JSON.stringify(historico),
-    data: paraBR_(p.data),
-    dia: diaDaSemana_(p.data),
+    data: paraBR_(dataNova),
+    dia: diaDaSemana_(dataNova),
     criado: atual ? atual.criado : Date.now(),
     atualizado: Date.now()
   });
