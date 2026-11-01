@@ -281,6 +281,26 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100dvh - 2
 .upl { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; align-items: end; }
 /* Login, equipe e aprovações */
 .me { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+header.top .wrap { position: relative; }
+.sino { position: relative; width: 36px; height: 36px; border-radius: 99px; border: 1px solid color-mix(in srgb, var(--vinho-ink) 40%, transparent); background: transparent; color: var(--vinho-ink); display: grid; place-items: center; flex: none; }
+.sino:hover, .sino[aria-expanded="true"] { background: color-mix(in srgb, var(--vinho-ink) 14%, transparent); }
+.sino svg { width: 18px; height: 18px; }
+.sino .badge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 99px; background: var(--danger); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+.notif-pop { position: absolute; z-index: 40; top: 58px; right: max(16px, env(safe-area-inset-right, 0px)); width: min(400px, calc(100vw - 32px)); max-height: min(70vh, 560px); display: flex; flex-direction: column; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+.notif-pop .np-head { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.notif-pop .np-head b { font-family: var(--f-display); font-weight: 400; font-size: 22px; flex: 1; }
+.notif-pop .np-list { overflow-y: auto; }
+.np-item { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 11px 14px; border: 0; border-bottom: 1px solid var(--line); border-left: 3px solid transparent; text-align: left; width: 100%; background: transparent; color: inherit; }
+.np-item:hover { background: var(--surface-2); }
+.np-item.novo { border-left-color: var(--danger); background: color-mix(in srgb, var(--danger) 6%, var(--surface)); }
+.np-item .ic { width: 28px; height: 28px; border-radius: 99px; display: grid; place-items: center; font-size: 13px; font-weight: 700; background: var(--surface-2); }
+.np-item .ic.ok { background: color-mix(in srgb, var(--st-postado) 22%, var(--surface)); color: var(--st-postado); }
+.np-item .ic.no { background: color-mix(in srgb, var(--danger) 18%, var(--surface)); color: var(--danger); }
+.np-item .tx { font-size: 13.5px; line-height: 1.35; min-width: 0; }
+.np-item .tx .post { display: block; font-weight: 600; overflow-wrap: anywhere; }
+.np-item .tx .mot { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+.np-item .tx .qd { display: block; color: var(--muted); font-size: 11.5px; margin-top: 3px; }
+.np-vazio { padding: 26px 16px; text-align: center; color: var(--muted); font-size: 13.5px; }
 .me .who { white-space: nowrap; font-size: 15px; }
 .me .who b { font-weight: 600; }
 .me .papel { opacity: .7; font-size: 12px; white-space: nowrap; }
@@ -433,6 +453,7 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
       <button class="ghost-light" id="novaMarca" type="button">+ Nova marca</button>
     </div>
     <div class="me" id="me" hidden></div>
+    <div class="notif-pop" id="notifPop" hidden role="dialog" aria-label="Notificações"></div>
     <nav class="tabs" id="tabs">
       <a href="#calendario">Calendário</a>
       <a href="#pautas">Postagens</a>
@@ -580,7 +601,8 @@ function render() {
   $("#novaMarca").hidden = !podeGerir();
   $("#tabEquipe").hidden = !TODAS.includes(S.eu?.papel);
   $("#me").hidden = !S.eu;
-  if (S.eu) $("#me").innerHTML = `<span class="who">Olá, <b>${esc(S.eu.nome)}</b></span><span class="papel">${esc(PAPEIS[S.eu.papel] || "")}</span><a href="#conta">Minha conta</a><button class="ghost-light" type="button" onclick="sair()">Sair</button>`;
+  if (S.eu) $("#me").innerHTML = sinoHtml() + `<span class="who">Olá, <b>${esc(S.eu.nome)}</b></span><span class="papel">${esc(PAPEIS[S.eu.papel] || "")}</span><a href="#conta">Minha conta</a><button class="ghost-light" type="button" onclick="sair()">Sair</button>`;
+  if (S.eu && !$("#notifPop").hidden) desenharNotif();
   const pend = pendencias().length, bd = $("#apvBadge");
   bd.hidden = !pend; bd.textContent = pend;
   if (!API) {
@@ -1847,6 +1869,72 @@ function vAprovacoes() {
   return html;
 }
 
+/* ---------- Notificações (sino no topo) ---------- */
+// lidas por pessoa neste navegador; o que aconteceu depois da última abertura do sino conta como novo
+const TIPOS_NOTIF = [
+  ["Enviou a ideia", "💡", "", "aprovar"], ["Enviou o conteúdo", "↑", "", "aprovar"],
+  ["Validou", "✓", "ok", "editar"], ["Aprovou", "✓", "ok", "editar"],
+  ["Reprovou", "✕", "no", "editar"], ["Pediu ajustes", "✎", "no", "editar"],
+  ["Agendou", "⏰", "", "todos"], ["Alterou o agendamento", "⏰", "", "todos"], ["Marcou como postado", "●", "ok", "todos"]
+];
+function notificacoes() {
+  if (!S.eu) return [];
+  const papel = S.eu.papel, chefia = ["admin", "diretor", "gestor"].includes(papel);
+  const meu = h => h.uid ? h.uid === S.eu.id : h.por === S.eu.nome;
+  const desde = Date.now() - 30 * 864e5, lista = [];
+  S.posts.forEach(p => (p.historico || []).forEach(h => {
+    if (!h.em || h.em < desde || meu(h)) return;
+    const t = TIPOS_NOTIF.find(x => (h.acao || "").startsWith(x[0]));
+    if (!t) return;
+    // social media: o que voltou ou foi liberado nas marcas dela; aprovador: o que chegou para ele; chefia: tudo
+    const serve = chefia || (t[3] === "aprovar" ? podeAprovar(p.marcaId) && papel === "aprovador" : t[3] === "editar" ? podeEditar(p.marcaId) && papel === "social" : false);
+    if (serve) lista.push({ h, p, t });
+  }));
+  return lista.sort((a, b) => b.h.em - a.h.em).slice(0, 40);
+}
+const chaveNotif = () => "notif." + (S.eu ? S.eu.id : "");
+const vistoEm = () => Number(store(chaveNotif())) || (Date.now() - 2 * 864e5);
+function sinoHtml() {
+  const novas = notificacoes().filter(n => n.h.em > vistoEm()).length;
+  document.title = (novas ? `(${novas}) ` : "") + "Planejamento de Conteúdo";
+  const aberto = !$("#notifPop").hidden;
+  return `<button class="sino" type="button" id="sinoBtn" aria-label="Notificações${novas ? `: ${novas} novas` : ""}" aria-expanded="${aberto}" onclick="abrirNotif(event)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+    ${novas ? `<span class="badge">${novas > 9 ? "9+" : novas}</span>` : ""}</button>`;
+}
+function desenharNotif() {
+  const pop = $("#notifPop"), base = S.notifBase || vistoEm(), lista = notificacoes();
+  pop.innerHTML = `<div class="np-head"><b>Notificações</b><button class="icon-btn" type="button" aria-label="Fechar" onclick="fecharNotif()">×</button></div>
+    <div class="np-list">${lista.length ? lista.map(({ h, p, t }) => `<button class="np-item${h.em > base ? " novo" : ""}" type="button" onclick="fecharNotif();openEditor('${esc(p.id)}')">
+      <span class="ic ${t[2]}">${t[1]}</span>
+      <span class="tx"><b>${esc(h.por)}</b> ${esc((h.acao || "").charAt(0).toLowerCase() + (h.acao || "").slice(1))}
+        <span class="post">${esc(nm(p))}${S.marcas.length > 1 ? ` · <span class="muted" style="font-weight:400">${esc(nomeMarca(p.marcaId))}</span>` : ""}</span>
+        ${h.motivo ? `<span class="mot">"${esc(h.motivo)}"</span>` : ""}
+        <span class="qd">${esc(quando(h.em))}</span></span></button>`).join("")
+      : `<div class="np-vazio">Nenhuma novidade nos últimos 30 dias.<br>Aqui aparecem aprovações, devoluções e envios da equipe.</div>`}</div>`;
+}
+function abrirNotif(e) {
+  e.stopPropagation();
+  const pop = $("#notifPop");
+  if (!pop.hidden) return fecharNotif();
+  S.notifBase = vistoEm(); // destaca o que é novo enquanto o painel estiver aberto
+  desenharNotif();
+  // abre logo abaixo do sino (no celular o cabeçalho é mais alto)
+  const sb = $("#sinoBtn").getBoundingClientRect(), hb = $("header.top .wrap").getBoundingClientRect();
+  pop.style.top = Math.round(sb.bottom - hb.top + 8) + "px";
+  pop.hidden = false;
+  store(chaveNotif(), String(Date.now()));
+  $("#me").innerHTML = $("#me").innerHTML.replace(/<span class="badge">[^<]*<\/span>/, "");
+  $("#sinoBtn")?.setAttribute("aria-expanded", "true");
+  document.title = "Planejamento de Conteúdo";
+}
+function fecharNotif() {
+  $("#notifPop").hidden = true; S.notifBase = null;
+  $("#sinoBtn")?.setAttribute("aria-expanded", "false");
+}
+document.addEventListener("click", e => { if (!$("#notifPop").hidden && !e.target.closest("#notifPop, #sinoBtn")) fecharNotif(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#notifPop").hidden) fecharNotif(); });
+
 /* ---------- Login, conta e equipe ---------- */
 function vLogin() {
   return `<form class="login panel" onsubmit="event.preventDefault();entrar()">
@@ -1878,6 +1966,7 @@ function limparTela() {
   S.acessos = {}; S.insta = {}; // senhas e chaves não passam de uma pessoa para outra no mesmo navegador
   if ($("#dlg").open) $("#dlg").close();
   if ($("#agDlg").open) $("#agDlg").close();
+  fecharNotif();
 }
 async function sair() {
   try { await api("sair"); } catch (e) {}
