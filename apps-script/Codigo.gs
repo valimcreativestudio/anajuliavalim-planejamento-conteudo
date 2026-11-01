@@ -18,11 +18,12 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-10-30.2';
+const VERSAO = '2026-11-01.1';
 
 const ABA_PAUTAS = 'POSTAGENS';
 const ABA_MARCAS = 'MARCAS';
 const ABA_USUARIOS = 'USUARIOS';
+const ABA_TAREFAS = 'TAREFAS';
 const PASTA_ARQUIVOS = 'Planejamento de Conteúdo - Arquivos';
 const DIAS_DE_SESSAO = 30;
 
@@ -42,6 +43,13 @@ const CAMPOS_MARCA = [
   ['observacoes', 'Observações'], ['criado', 'Criado em'],
   ['perfil', 'Perfil (sobre, público, observações)'], ['arquivos', 'Arquivos']
 ];
+const CAMPOS_TAREFA = [
+  ['id', 'ID'], ['marcaId', 'Marca ID'], ['marca', 'Marca'], ['titulo', 'O que fazer'], ['descricao', 'Detalhes'],
+  ['prioridade', 'Prioridade'], ['data', 'Data'], ['prazo', 'Prazo máximo'], ['responsavelId', 'Responsável ID'],
+  ['responsavel', 'Responsável'], ['status', 'Status'], ['criadoPorId', 'Criado por ID'], ['criadoPor', 'Criado por'],
+  ['criado', 'Criado em'], ['concluidoPor', 'Concluída por'], ['concluidoEm', 'Concluída em'], ['atualizado', 'Atualizado em']
+];
+const PRIORIDADES = ['Urgente', 'Alta', 'Média', 'Baixa'];
 const CAMPOS_USUARIO = [
   ['id', 'ID'], ['nome', 'Nome'], ['login', 'Login (e-mail)'], ['papel', 'Papel'],
   ['marcas', 'Marcas liberadas (IDs)'], ['ativo', 'Ativo'], ['hash', 'Senha (protegida)'],
@@ -112,6 +120,9 @@ function doPost(e) {
         case 'excluirMarca': soAdmin_(eu); excluirMarca_(req.id); return json_({ ok: true });
         case 'salvarUsuario': gerencia_(eu); return json_({ ok: true, id: salvarUsuario_(eu, req.usuario || {}) });
         case 'trocarSenha': trocarSenha_(eu, req.atual, req.nova); return json_({ ok: true });
+        case 'salvarTarefa': return json_({ ok: true, id: salvarTarefa_(eu, req.tarefa || {}, req.site) });
+        case 'concluirTarefa': concluirTarefa_(eu, req.id, req.feita !== false); return json_({ ok: true });
+        case 'excluirTarefa': excluirTarefa_(eu, req.id); return json_({ ok: true });
         case 'meuNome': salvarMeuNome_(eu, req.nome); return json_({ ok: true });
         case 'minhasNotificacoes': salvarPreferencia_(eu, 'notificar', req.notificar === false ? 'não' : 'sim'); return json_({ ok: true });
         case 'sair': PropertiesService.getScriptProperties().deleteProperty('tok_' + req.token); return json_({ ok: true });
@@ -204,6 +215,9 @@ function listar_(eu) {
   const pautas = ler_(ABA_PAUTAS, CAMPOS_PAUTA).filter(p => acesso_(eu, p.marcaId)).map(pautaParaSite_);
   registrarAcesso_(eu);
   const r = { ok: true, versao: VERSAO, eu: eu, marcas: marcas, pautas: pautas };
+  r.tarefas = ler_(ABA_TAREFAS, CAMPOS_TAREFA).filter(t => veTarefa_(eu, t)).map(tarefaParaSite_);
+  // nomes da equipe (sem dados sensíveis) para escolher o responsável de uma tarefa
+  r.equipe = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(u => u.ativo === 'sim').map(u => ({ id: u.id, nome: u.nome, papel: u.papel }));
   if (VEEM_TODAS.indexOf(eu.papel) >= 0) r.usuarios = ler_(ABA_USUARIOS, CAMPOS_USUARIO).map(publicoUsuario_);
   return r;
 }
@@ -384,6 +398,89 @@ function notificar_(eu, p, acao, motivo, historico, site) {
     (link ? '<p style="margin:0 0 18px"><a href="' + link + '" style="background:#1d1d1f;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none;display:inline-block">Abrir o sistema</a></p>' : '') +
     '<p style="margin:0;color:#6b6b70;font-size:12px">Você recebe este aviso porque está na equipe do Planejamento de Conteúdo. Para não receber mais, desligue em "Minha conta".</p></div>';
   dest.forEach(u => MailApp.sendEmail({ to: u.login, subject: assunto, htmlBody: html, name: 'Planejamento de Conteúdo' }));
+}
+
+/* ---------- Tarefas (checklist da equipe) ---------- */
+
+function tarefaParaSite_(t) {
+  t.data = paraISO_(t.data); t.prazo = paraISO_(t.prazo);
+  t.criado = Number(t.criado) || 0; t.concluidoEm = Number(t.concluidoEm) || 0; t.atualizado = Number(t.atualizado) || 0;
+  delete t.marca;
+  return t;
+}
+const chefia_ = eu => VEEM_TODAS.indexOf(eu.papel) >= 0;
+function veTarefa_(eu, t) {
+  return chefia_(eu) || t.responsavelId === eu.id || t.criadoPorId === eu.id || (t.marcaId && acesso_(eu, t.marcaId));
+}
+function podeMexerTarefa_(eu, t) {
+  return chefia_(eu) || t.responsavelId === eu.id || t.criadoPorId === eu.id;
+}
+function tarefaPorId_(id) {
+  return ler_(ABA_TAREFAS, CAMPOS_TAREFA).filter(x => x.id === String(id))[0] || null;
+}
+
+function salvarTarefa_(eu, t, site) {
+  const atual = t.id ? tarefaPorId_(t.id) : null;
+  if (t.id && !atual) throw erro_('server', 'Tarefa não encontrada. Atualize a página.');
+  if (atual && !podeMexerTarefa_(eu, atual)) throw erro_('permissao', 'Só quem criou, o responsável ou a gestão pode editar esta tarefa.');
+  const titulo = String(t.titulo || '').trim().slice(0, 200);
+  if (!titulo) throw erro_('server', 'Escreva o que precisa ser feito.');
+  const marcaId = String(t.marcaId || '');
+  if (marcaId && !acesso_(eu, marcaId)) throw erro_('permissao', 'Você não tem acesso a esta marca.');
+  const pessoas = ler_(ABA_USUARIOS, CAMPOS_USUARIO);
+  const resp = pessoas.filter(u => u.id === t.responsavelId && u.ativo === 'sim')[0];
+  const id = atual ? atual.id : Utilities.getUuid().slice(0, 13);
+  const linha = {
+    id: id, marcaId: marcaId, marca: marcaId ? nomeDaMarca_(marcaId) : '',
+    titulo: titulo, descricao: String(t.descricao || '').slice(0, 3000),
+    prioridade: PRIORIDADES.indexOf(t.prioridade) >= 0 ? t.prioridade : 'Média',
+    data: paraBR_(t.data), prazo: paraBR_(t.prazo),
+    responsavelId: resp ? resp.id : '', responsavel: resp ? resp.nome : '',
+    status: atual ? atual.status : 'Pendente',
+    criadoPorId: atual ? atual.criadoPorId : eu.id, criadoPor: atual ? atual.criadoPor : eu.nome,
+    criado: atual ? atual.criado : String(Date.now()),
+    concluidoPor: atual ? atual.concluidoPor : '', concluidoEm: atual ? atual.concluidoEm : '',
+    atualizado: String(Date.now())
+  };
+  gravar_(ABA_TAREFAS, CAMPOS_TAREFA, linha);
+  // avisa por e-mail quem recebeu a tarefa (se não foi a própria pessoa)
+  if (resp && resp.id !== eu.id && (!atual || atual.responsavelId !== resp.id)) {
+    try { avisarTarefa_(eu, linha, publicoUsuario_(resp), site); } catch (e) { Logger.log('Falha no aviso da tarefa: ' + e); }
+  }
+  return id;
+}
+
+function concluirTarefa_(eu, id, feita) {
+  const t = tarefaPorId_(id);
+  if (!t) throw erro_('server', 'Tarefa não encontrada. Atualize a página.');
+  if (!podeMexerTarefa_(eu, t)) throw erro_('permissao', 'Só quem criou, o responsável ou a gestão pode marcar esta tarefa.');
+  t.status = feita ? 'Feita' : 'Pendente';
+  t.concluidoPor = feita ? eu.nome : ''; t.concluidoEm = feita ? String(Date.now()) : '';
+  t.atualizado = String(Date.now());
+  gravar_(ABA_TAREFAS, CAMPOS_TAREFA, t);
+}
+
+function excluirTarefa_(eu, id) {
+  const t = tarefaPorId_(id);
+  if (!t) return;
+  if (!(chefia_(eu) || t.criadoPorId === eu.id)) throw erro_('permissao', 'Só quem criou a tarefa ou a gestão pode excluir.');
+  excluirLinha_(ABA_TAREFAS, CAMPOS_TAREFA, id);
+}
+
+function avisarTarefa_(eu, t, u, site) {
+  if (!u.notificar || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(u.login) || MailApp.getRemainingDailyQuota() < 1) return;
+  const link = /^https:\/\//.test(String(site || '')) ? String(site).split('#')[0] + '#tarefas' : '';
+  const linha = (k, v) => v ? '<tr><td style="padding:4px 12px 4px 0;color:#6b6b70">' + k + '</td><td style="padding:4px 0">' + escH_(v) + '</td></tr>' : '';
+  const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#1d1d1f;max-width:560px">' +
+    (t.marca ? '<p style="margin:0 0 6px;color:#6b6b70;font-size:12px;letter-spacing:.08em;text-transform:uppercase">' + escH_(t.marca) + '</p>' : '') +
+    '<h2 style="margin:0 0 14px;font-size:22px;font-weight:600">📋 Nova tarefa para você</h2>' +
+    '<p style="margin:0 0 14px"><b>' + escH_(eu.nome) + '</b> passou uma tarefa:</p>' +
+    '<p style="margin:0 0 14px;font-size:18px"><b>' + escH_(t.titulo) + '</b></p>' +
+    (t.descricao ? '<p style="margin:0 0 14px;white-space:pre-wrap">' + escH_(t.descricao) + '</p>' : '') +
+    '<table style="border-collapse:collapse;font-size:14px;margin:0 0 18px">' + linha('Prioridade', t.prioridade) + linha('Data', t.data) + linha('Prazo máximo', t.prazo) + '</table>' +
+    (link ? '<p style="margin:0 0 18px"><a href="' + link + '" style="background:#1d1d1f;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none;display:inline-block">Ver tarefas</a></p>' : '') +
+    '<p style="margin:0;color:#6b6b70;font-size:12px">Para não receber mais avisos por e-mail, desligue em "Minha conta".</p></div>';
+  MailApp.sendEmail({ to: u.login, subject: '📋 Nova tarefa: ' + t.titulo + (t.prazo ? ' (até ' + t.prazo + ')' : ''), htmlBody: html, name: 'Planejamento de Conteúdo' });
 }
 
 function escH_(t) {

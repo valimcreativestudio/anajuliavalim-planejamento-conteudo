@@ -17,6 +17,7 @@
   --line: #E0E0DC;
   --vinho: #26262A;
   --primary: #26262A;
+  --pr-alta: #B8621B;
   --primary-ink: #F5F5F3;
   --vinho-ink: #F5F5F3;
   --verde: #6B7470;
@@ -36,7 +37,7 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #141415; --surface: #1E1E20; --surface-2: #27272A; --ink: #EDEDEB; --muted: #A1A1A6; --line: #333336;
-    --vinho: #2A2A2E; --vinho-ink: #F0F0EE; --primary: #EDEDEB; --primary-ink: #141415; --verde: #A3ABA7; --caramelo: #B8B8BD; --manteiga: #45454A; --danger: #EE7B70;
+    --vinho: #2A2A2E; --vinho-ink: #F0F0EE; --primary: #EDEDEB; --primary-ink: #141415; --pr-alta: #F0A35E; --verde: #A3ABA7; --caramelo: #B8B8BD; --manteiga: #45454A; --danger: #EE7B70;
     --st-ideia: #A1A1A6; --st-validado: #CDB98E; --st-produzido: #96AFC8; --st-aprovado: #B2A6CC; --st-agendado: #C99BA7; --st-postado: #98B5A0;
     --shadow: 0 10px 30px rgba(0, 0, 0, .45);
     color-scheme: dark;
@@ -44,7 +45,7 @@
 }
 :root[data-theme="dark"] {
   --bg: #141415; --surface: #1E1E20; --surface-2: #27272A; --ink: #EDEDEB; --muted: #A1A1A6; --line: #333336;
-  --vinho: #2A2A2E; --vinho-ink: #F0F0EE; --primary: #EDEDEB; --primary-ink: #141415; --verde: #A3ABA7; --caramelo: #B8B8BD; --manteiga: #45454A; --danger: #EE7B70;
+  --vinho: #2A2A2E; --vinho-ink: #F0F0EE; --primary: #EDEDEB; --primary-ink: #141415; --pr-alta: #F0A35E; --verde: #A3ABA7; --caramelo: #B8B8BD; --manteiga: #45454A; --danger: #EE7B70;
   --st-ideia: #A1A1A6; --st-validado: #CDB98E; --st-produzido: #96AFC8; --st-aprovado: #B2A6CC; --st-agendado: #C99BA7; --st-postado: #98B5A0;
   --shadow: 0 10px 30px rgba(0, 0, 0, .45);
   color-scheme: dark;
@@ -437,6 +438,24 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 .sec-in { display: flex; gap: 6px; }
 .sec-in input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 10px; font-size: 14px; }
 .sec-in .icon-btn { flex: none; width: 38px; height: auto; }
+/* Tarefas */
+.tf-filtros { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
+.tf-filtros select { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 7px 10px; }
+.tf-grupo h2 { font-family: var(--f-display); font-weight: 400; font-size: 24px; margin: 22px 0 10px; display: flex; gap: 10px; align-items: baseline; }
+.tf-grupo h2 .n { font-family: var(--f-body); font-size: 13px; color: var(--muted); }
+.tf-grupo.atrasadas h2 { color: var(--danger); }
+.tf-lista { display: grid; gap: 8px; }
+.tf { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 12px; align-items: start; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--pc, var(--line)); border-radius: 12px; padding: 12px 14px; }
+.tf.feita { opacity: .6; }
+.tf.feita .tt { text-decoration: line-through; }
+.tf input[type=checkbox] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--st-postado); cursor: pointer; }
+.tf .corpo { cursor: pointer; min-width: 0; }
+.tf .tt { font-weight: 600; font-size: 15px; overflow-wrap: anywhere; }
+.tf .ds { color: var(--muted); font-size: 13px; margin-top: 2px; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tf .meta { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+.tf .meta .atraso { color: var(--danger); font-weight: 600; }
+.tf .prio { font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--pc); white-space: nowrap; }
+#tfDlg { width: min(620px, calc(100vw - 24px)); }
 .empty { border: 1px dashed var(--line); border-radius: 14px; padding: 36px 20px; text-align: center; color: var(--muted); display: grid; gap: 12px; justify-items: center; }
 .empty strong { font-family: var(--f-display); font-weight: 400; font-size: 26px; color: var(--ink); }
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 999px; font-weight: 500; z-index: 50; box-shadow: var(--shadow); }
@@ -462,6 +481,7 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
       <a href="#resumo">Resumo do mês</a>
       <a href="#marca">Marca</a>
       <a href="#aprovacoes">Aprovações<span class="badge" id="apvBadge" hidden></span></a>
+      <a href="#tarefas">Tarefas<span class="badge" id="tfBadge" hidden></span></a>
       <a href="#equipe" id="tabEquipe" hidden>Equipe</a>
     </nav>
   </div>
@@ -472,6 +492,7 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 
 <dialog id="dlg"><form id="dlgForm" method="dialog"></form></dialog>
 <dialog id="agDlg"><form id="agForm" method="dialog"></form></dialog>
+<dialog id="tfDlg"><form id="tfForm" method="dialog"></form></dialog>
 <div class="toast" id="toast" hidden></div>
 
 <script src="config.js"></script>
@@ -519,7 +540,7 @@ const DEFAULT_FASES = [
 ];
 
 const S = {
-  canWrite: false, insta: {}, acessos: {}, eu: null, usuarios: [], token: store("token") || "", rej: null, uEdit: null,
+  canWrite: false, insta: {}, acessos: {}, tarefas: [], equipe: [], tf: { quem: "minhas", marca: "", feitas: false }, eu: null, usuarios: [], token: store("token") || "", rej: null, uEdit: null,
   marcas: [], posts: [], loadedM: false, loadedP: false, failed: false,
   marcaId: store("marca"), month: null,
   f: { status: "", formato: "", produto: "", q: "" },
@@ -589,7 +610,7 @@ function setMonth(ym) { S.month = ym; store("mes." + S.marcaId, ym); render(); }
 /* ---------- Vistas ---------- */
 const view = () => {
   const h = location.hash.replace("#", "");
-  return ["calendario", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-acessos", "marca-config", "aprovacoes", "equipe", "equipe-atividade", "conta"].includes(h) ? h : "calendario";
+  return ["calendario", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-acessos", "marca-config", "aprovacoes", "equipe", "equipe-atividade", "conta", "tarefas"].includes(h) ? h : "calendario";
 };
 
 function render() {
@@ -605,6 +626,8 @@ function render() {
   if (S.eu && !$("#notifPop").hidden) desenharNotif();
   const pend = pendencias().length, bd = $("#apvBadge");
   bd.hidden = !pend; bd.textContent = pend;
+  const urg = minhasUrgentes(), tb = $("#tfBadge");
+  tb.hidden = !urg; tb.textContent = urg;
   if (!API) {
     app.innerHTML = `<div class="empty"><strong>Falta conectar a planilha</strong><span>Abra o arquivo <b>config.js</b> e cole em API_URL o endereço do App da Web do Google Apps Script. O passo a passo está no LEIAME.</span></div>`;
     return;
@@ -616,8 +639,8 @@ function render() {
   if (!S.token) { app.innerHTML = vLogin(); $("#lgLogin")?.focus(); return; }
   if (!S.loadedM || !S.loadedP) return;
   const v0 = view();
-  if (v0 === "equipe" || v0 === "equipe-atividade" || v0 === "conta" || v0 === "aprovacoes") {
-    app.innerHTML = avisoVersao() + (v0 === "equipe" ? vEquipe : v0 === "equipe-atividade" ? vAtividade : v0 === "conta" ? vConta : vAprovacoes)();
+  if (v0 === "equipe" || v0 === "equipe-atividade" || v0 === "conta" || v0 === "aprovacoes" || v0 === "tarefas") {
+    app.innerHTML = avisoVersao() + (v0 === "equipe" ? vEquipe : v0 === "equipe-atividade" ? vAtividade : v0 === "conta" ? vConta : v0 === "tarefas" ? vTarefas : vAprovacoes)();
     return;
   }
   if (!marca()) {
@@ -1869,6 +1892,118 @@ function vAprovacoes() {
   return html;
 }
 
+/* ---------- Tarefas (checklist da equipe) ---------- */
+const PRIORIDADES = ["Urgente", "Alta", "Média", "Baixa"];
+const COR_PRIO = { Urgente: "var(--danger)", Alta: "var(--pr-alta)", "Média": "var(--st-produzido)", Baixa: "var(--muted)" };
+const hojeIso = () => iso(new Date());
+const nomePessoa = id => (S.equipe.find(u => u.id === id) || {}).nome || "";
+function minhasUrgentes() {
+  // número na aba: minhas tarefas pendentes atrasadas ou para hoje
+  const h = hojeIso();
+  return S.tarefas.filter(t => t.status !== "Feita" && t.responsavelId === S.eu?.id && ((t.prazo && t.prazo <= h) || (t.data && t.data <= h))).length;
+}
+const podeMexerTarefa = t => ["admin", "diretor", "gestor"].includes(S.eu.papel) || t.responsavelId === S.eu.id || t.criadoPorId === S.eu.id;
+function grupoTarefa(t, h) {
+  if (t.status === "Feita") return "feitas";
+  if (t.prazo && t.prazo < h) return "atrasadas";
+  if ((t.data && t.data <= h) || t.prazo === h) return "hoje";
+  if (t.data || t.prazo) return "proximas";
+  return "semdata";
+}
+function tfHtml(t, h) {
+  const atrasada = t.status !== "Feita" && t.prazo && t.prazo < h;
+  const quem = t.responsavelId ? (t.responsavelId === S.eu.id ? "Você" : nomePessoa(t.responsavelId) || t.responsavel) : "Sem responsável";
+  return `<div class="tf${t.status === "Feita" ? " feita" : ""}" style="--pc:${COR_PRIO[t.prioridade] || "var(--line)"}">
+    <input type="checkbox" aria-label="Marcar como feita"${t.status === "Feita" ? " checked" : ""}${podeMexerTarefa(t) ? "" : " disabled"} onchange="concluirTarefa('${esc(t.id)}', this.checked)">
+    <div class="corpo" onclick="abrirTarefa('${esc(t.id)}')">
+      <div class="tt">${esc(t.titulo)}</div>
+      ${t.descricao ? `<div class="ds">${esc(t.descricao)}</div>` : ""}
+      <div class="meta">
+        ${t.marcaId ? `<span>${esc(nomeMarca(t.marcaId))}</span>` : ""}
+        <span>👤 ${esc(quem)}</span>
+        ${t.data ? `<span>📅 ${esc(br(t.data))} ${esc(wd(t.data).slice(0, 3).toLowerCase())}</span>` : ""}
+        ${t.prazo ? `<span class="${atrasada ? "atraso" : ""}">⏳ até ${esc(br(t.prazo))}${atrasada ? ` · atrasada ${Math.round((parse(h) - parse(t.prazo)) / 864e5)} dia(s)` : ""}</span>` : ""}
+        ${t.status === "Feita" && t.concluidoPor ? `<span>✓ ${esc(t.concluidoPor)} ${esc(quando(t.concluidoEm))}</span>` : ""}
+      </div>
+    </div>
+    <span class="prio">${esc(t.prioridade || "Média")}</span>
+  </div>`;
+}
+function vTarefas() {
+  const h = hojeIso(), f = S.tf;
+  const chefia = ["admin", "diretor", "gestor"].includes(S.eu.papel);
+  let lista = S.tarefas.filter(t =>
+    (f.quem === "todas" || (f.quem === "minhas" ? t.responsavelId === S.eu.id : t.criadoPorId === S.eu.id)) &&
+    (!f.marca || (f.marca === "-" ? !t.marcaId : t.marcaId === f.marca)));
+  const ord = (a, b) => PRIORIDADES.indexOf(a.prioridade) - PRIORIDADES.indexOf(b.prioridade) || String(a.prazo || "9999").localeCompare(String(b.prazo || "9999")) || String(a.data || "9999").localeCompare(String(b.data || "9999"));
+  const grupos = [["atrasadas", "Atrasadas"], ["hoje", "Para hoje"], ["proximas", "Próximas"], ["semdata", "Sem data"]];
+  const feitas = lista.filter(t => t.status === "Feita").sort((a, b) => b.concluidoEm - a.concluidoEm);
+  const pend = lista.filter(t => t.status !== "Feita");
+  const sel = (id, op, cur, on) => `<select id="${id}" onchange="${on}">${op.map(([v, l]) => `<option value="${esc(v)}"${v === cur ? " selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
+  return head(chefia ? "Equipe" : "Seu dia", "Tarefas", `<button class="btn primary" type="button" onclick="abrirTarefa()">+ Nova tarefa</button>`) +
+    `<div class="tf-filtros">
+      ${sel("tfQuem", [["minhas", "Minhas tarefas"], ["criei", "Que eu passei"], ["todas", chefia ? "Todas da equipe" : "Todas que vejo"]], f.quem, "S.tf.quem=this.value;render()")}
+      ${sel("tfMarca", [["", "Todas as marcas"], ["-", "Sem marca"]].concat(S.marcas.map(m => [m.id, m.nome])), f.marca, "S.tf.marca=this.value;render()")}
+      <label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox"${f.feitas ? " checked" : ""} onchange="S.tf.feitas=this.checked;render()"> Mostrar feitas</label>
+    </div>
+    ${!pend.length && !(f.feitas && feitas.length) ? `<div class="empty"><strong>Nada pendente por aqui</strong><span>Crie uma tarefa com o que precisa ser feito, quem faz, a prioridade e o prazo.</span><button class="btn primary" type="button" onclick="abrirTarefa()">+ Nova tarefa</button></div>` : ""}
+    ${grupos.map(([g, titulo]) => { const l = pend.filter(t => grupoTarefa(t, h) === g).sort(ord); return l.length ? `<section class="tf-grupo ${g}"><h2>${titulo}<span class="n">${l.length}</span></h2><div class="tf-lista">${l.map(t => tfHtml(t, h)).join("")}</div></section>` : ""; }).join("")}
+    ${f.feitas && feitas.length ? `<section class="tf-grupo"><h2>Feitas<span class="n">${feitas.length}</span></h2><div class="tf-lista">${feitas.slice(0, 50).map(t => tfHtml(t, h)).join("")}</div></section>` : ""}`;
+}
+let TF = null;
+function abrirTarefa(id) {
+  const t = id ? S.tarefas.find(x => x.id === id) : null;
+  if (id && !t) return;
+  TF = t ? { ...t } : { prioridade: "Média", responsavelId: S.eu.id, marcaId: view().startsWith("marca") || ["calendario", "pautas", "fluxo", "grade", "resumo"].includes(view()) ? S.marcaId : "", data: hojeIso() };
+  const pode = !t || podeMexerTarefa(t), ro = pode ? "" : " disabled";
+  const excluir = t && (["admin", "diretor", "gestor"].includes(S.eu.papel) || t.criadoPorId === S.eu.id);
+  const opt = (arr, cur) => arr.map(([v, l]) => `<option value="${esc(v)}"${v === cur ? " selected" : ""}>${esc(l)}</option>`).join("");
+  $("#tfForm").innerHTML = `
+    <div class="dlg-head"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600">${t ? `Criada por ${esc(t.criadoPor || "")} ${esc(quando(t.criado))}` : "Nova tarefa"}</div>
+      <h2>${t ? esc(t.titulo) : "O que precisa ser feito?"}</h2></div>
+      <button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#tfDlg').close()">×</button></div>
+    <div class="dlg-body">
+      <label class="field full"><span>O que fazer</span><input id="tTitulo" required maxlength="200" value="${esc(TF.titulo || "")}" placeholder="Ex.: Pedir as fotos do lançamento para o cliente"${ro}></label>
+      <label class="field full"><span>Detalhes (opcional)</span><textarea id="tDesc" rows="3"${ro}>${esc(TF.descricao || "")}</textarea></label>
+      <label class="field"><span>Prioridade</span><select id="tPrio"${ro}>${opt(PRIORIDADES.map(p => [p, p]), TF.prioridade)}</select></label>
+      <label class="field"><span>Responsável</span><select id="tResp"${ro}>${opt([["", "Sem responsável"]].concat(S.equipe.map(u => [u.id, u.id === S.eu.id ? `${u.nome} (você)` : u.nome])), TF.responsavelId || "")}</select></label>
+      <label class="field"><span>Data (quando fazer)</span><input id="tData" type="date" value="${esc(TF.data || "")}"${ro}></label>
+      <label class="field"><span>Prazo máximo</span><input id="tPrazo" type="date" value="${esc(TF.prazo || "")}"${ro}></label>
+      <label class="field full"><span>Marca (opcional)</span><select id="tMarca"${ro}>${opt([["", "Sem marca"]].concat(S.marcas.map(m => [m.id, m.nome])), TF.marcaId || "")}</select></label>
+      ${t && t.status === "Feita" ? `<div class="full muted" style="font-size:13px">✓ Feita por ${esc(t.concluidoPor || "")} ${esc(quando(t.concluidoEm))}</div>` : ""}
+    </div>
+    <div class="dlg-foot">
+      ${excluir ? (S.delTarefa ? `<span class="confirm">Excluir esta tarefa? <button class="btn sm danger" type="button" onclick="excluirTarefa()">Excluir</button><button class="btn sm" type="button" onclick="S.delTarefa=false;abrirTarefa('${esc(t.id)}')">Cancelar</button></span>`
+        : `<button class="btn danger" type="button" onclick="S.delTarefa=true;abrirTarefa('${esc(t.id)}')">Excluir</button>`) : ""}
+      <span class="sp"></span>
+      <button class="btn" type="button" onclick="$('#tfDlg').close()">${pode ? "Cancelar" : "Fechar"}</button>
+      ${pode ? `<button class="btn primary" type="submit" id="tSalvar">${t ? "Salvar" : "Criar tarefa"}</button>` : ""}
+    </div>`;
+  if (!$("#tfDlg").open) $("#tfDlg").showModal();
+  if (!t) $("#tTitulo").focus();
+}
+$("#tfForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const tarefa = { id: TF.id || "", titulo: $("#tTitulo").value.trim(), descricao: $("#tDesc").value.trim(), prioridade: $("#tPrio").value, responsavelId: $("#tResp").value, data: $("#tData").value, prazo: $("#tPrazo").value, marcaId: $("#tMarca").value };
+  if (!tarefa.titulo) return toast("Escreva o que precisa ser feito.");
+  if (tarefa.data && tarefa.prazo && tarefa.prazo < tarefa.data) return toast("O prazo máximo não pode ser antes da data.");
+  const b = $("#tSalvar"); b.disabled = true; b.textContent = "Salvando…";
+  try { await api("salvarTarefa", { tarefa }); $("#tfDlg").close(); await carregar(); toast(tarefa.id ? "Tarefa salva" : (tarefa.responsavelId && tarefa.responsavelId !== S.eu.id ? `Tarefa enviada para ${nomePessoa(tarefa.responsavelId)}` : "Tarefa criada")); }
+  catch (err) { b.disabled = false; b.textContent = "Salvar"; writeFail(err); }
+});
+async function concluirTarefa(id, feita) {
+  const t = S.tarefas.find(x => x.id === id); if (!t) return;
+  const antes = { status: t.status, concluidoPor: t.concluidoPor, concluidoEm: t.concluidoEm };
+  Object.assign(t, feita ? { status: "Feita", concluidoPor: S.eu.nome, concluidoEm: Date.now() } : { status: "Pendente", concluidoPor: "", concluidoEm: 0 });
+  render();
+  try { await api("concluirTarefa", { id, feita }); toast(feita ? "Tarefa feita ✓" : "Tarefa reaberta"); await carregar(); }
+  catch (e) { Object.assign(t, antes); render(); writeFail(e); }
+}
+async function excluirTarefa() {
+  try { await api("excluirTarefa", { id: TF.id }); S.delTarefa = false; $("#tfDlg").close(); await carregar(); toast("Tarefa excluída"); }
+  catch (e) { writeFail(e); }
+}
+
 /* ---------- Notificações (sino no topo) ---------- */
 // lidas por pessoa neste navegador; o que aconteceu depois da última abertura do sino conta como novo
 const TIPOS_NOTIF = [
@@ -1888,14 +2023,21 @@ function notificacoes() {
     if (!t) return;
     // social media: o que voltou ou foi liberado nas marcas dela; aprovador: o que chegou para ele; chefia: tudo
     const serve = chefia || (t[3] === "aprovar" ? podeAprovar(p.marcaId) && papel === "aprovador" : t[3] === "editar" ? podeEditar(p.marcaId) && papel === "social" : false);
-    if (serve) lista.push({ h, p, t });
+    if (serve) lista.push({ em: h.em, por: h.por, acao: h.acao, motivo: h.motivo, titulo: nm(p), marcaId: p.marcaId, ic: t[1], cls: t[2], abrir: `openEditor('${esc(p.id)}')` });
   }));
-  return lista.sort((a, b) => b.h.em - a.h.em).slice(0, 40);
+  // tarefas: o que passaram para mim e o que concluíram das que eu criei
+  S.tarefas.forEach(t => {
+    if (t.responsavelId === S.eu.id && t.criadoPorId !== S.eu.id && t.criado >= desde)
+      lista.push({ em: t.criado, por: t.criadoPor, acao: "Te passou uma tarefa" + (t.prazo ? ` (até ${br(t.prazo)})` : ""), titulo: t.titulo, marcaId: t.marcaId, ic: "☐", cls: "", abrir: `abrirTarefa('${esc(t.id)}')` });
+    if (t.criadoPorId === S.eu.id && t.status === "Feita" && t.concluidoPor && t.concluidoPor !== S.eu.nome && t.concluidoEm >= desde)
+      lista.push({ em: t.concluidoEm, por: t.concluidoPor, acao: "Concluiu a tarefa", titulo: t.titulo, marcaId: t.marcaId, ic: "✓", cls: "ok", abrir: `abrirTarefa('${esc(t.id)}')` });
+  });
+  return lista.sort((a, b) => b.em - a.em).slice(0, 40);
 }
 const chaveNotif = () => "notif." + (S.eu ? S.eu.id : "");
 const vistoEm = () => Number(store(chaveNotif())) || (Date.now() - 2 * 864e5);
 function sinoHtml() {
-  const novas = notificacoes().filter(n => n.h.em > vistoEm()).length;
+  const novas = notificacoes().filter(n => n.em > vistoEm()).length;
   document.title = (novas ? `(${novas}) ` : "") + "Planejamento de Conteúdo";
   const aberto = !$("#notifPop").hidden;
   return `<button class="sino" type="button" id="sinoBtn" aria-label="Notificações${novas ? `: ${novas} novas` : ""}" aria-expanded="${aberto}" onclick="abrirNotif(event)">
@@ -1905,13 +2047,13 @@ function sinoHtml() {
 function desenharNotif() {
   const pop = $("#notifPop"), base = S.notifBase || vistoEm(), lista = notificacoes();
   pop.innerHTML = `<div class="np-head"><b>Notificações</b><button class="icon-btn" type="button" aria-label="Fechar" onclick="fecharNotif()">×</button></div>
-    <div class="np-list">${lista.length ? lista.map(({ h, p, t }) => `<button class="np-item${h.em > base ? " novo" : ""}" type="button" onclick="fecharNotif();openEditor('${esc(p.id)}')">
-      <span class="ic ${t[2]}">${t[1]}</span>
-      <span class="tx"><b>${esc(h.por)}</b> ${esc((h.acao || "").charAt(0).toLowerCase() + (h.acao || "").slice(1))}
-        <span class="post">${esc(nm(p))}${S.marcas.length > 1 ? ` · <span class="muted" style="font-weight:400">${esc(nomeMarca(p.marcaId))}</span>` : ""}</span>
-        ${h.motivo ? `<span class="mot">"${esc(h.motivo)}"</span>` : ""}
-        <span class="qd">${esc(quando(h.em))}</span></span></button>`).join("")
-      : `<div class="np-vazio">Nenhuma novidade nos últimos 30 dias.<br>Aqui aparecem aprovações, devoluções e envios da equipe.</div>`}</div>`;
+    <div class="np-list">${lista.length ? lista.map(n => `<button class="np-item${n.em > base ? " novo" : ""}" type="button" onclick="fecharNotif();${n.abrir}">
+      <span class="ic ${n.cls}">${n.ic}</span>
+      <span class="tx"><b>${esc(n.por)}</b> ${esc((n.acao || "").charAt(0).toLowerCase() + (n.acao || "").slice(1))}
+        <span class="post">${esc(n.titulo)}${S.marcas.length > 1 && n.marcaId ? ` · <span class="muted" style="font-weight:400">${esc(nomeMarca(n.marcaId))}</span>` : ""}</span>
+        ${n.motivo ? `<span class="mot">"${esc(n.motivo)}"</span>` : ""}
+        <span class="qd">${esc(quando(n.em))}</span></span></button>`).join("")
+      : `<div class="np-vazio">Nenhuma novidade nos últimos 30 dias.<br>Aqui aparecem aprovações, devoluções, envios e tarefas.</div>`}</div>`;
 }
 function abrirNotif(e) {
   e.stopPropagation();
@@ -1966,6 +2108,7 @@ function limparTela() {
   S.acessos = {}; S.insta = {}; // senhas e chaves não passam de uma pessoa para outra no mesmo navegador
   if ($("#dlg").open) $("#dlg").close();
   if ($("#agDlg").open) $("#agDlg").close();
+  if ($("#tfDlg").open) $("#tfDlg").close();
   fecharNotif();
 }
 async function sair() {
@@ -2181,12 +2324,14 @@ $("#novaMarca").addEventListener("click", novaMarca);
 addEventListener("hashchange", () => { S.confirmDel = false; S.delArq = null; S.dirty = false; render(); window.scrollTo(0, 0); });
 document.addEventListener("input", e => { if (e.target.closest("#app form")) { S.dirty = true; const m = $("#app .save-bar .msg"); if (m) m.textContent = "Alterações não salvas"; } });
 $("#dlg").addEventListener("close", () => render());
+$("#tfDlg").addEventListener("close", () => { S.delTarefa = false; render(); });
+$("#tfDlg").addEventListener("click", e => { if (e.target === $("#tfDlg")) $("#tfDlg").close(); });
 $("#agDlg").addEventListener("click", e => { if (e.target === $("#agDlg")) $("#agDlg").close(); });
 $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg").close(); });
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-10-30.2"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-01.1"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",
@@ -2201,7 +2346,7 @@ async function carregar() {
   if (!API || !S.token) return render();
   try {
     const j = await api("listar");
-    S.eu = j.eu; S.usuarios = j.usuarios || [];
+    S.eu = j.eu; S.usuarios = j.usuarios || []; S.tarefas = j.tarefas || []; S.equipe = j.equipe || [];
     S.versao = j.versao || "antiga";
     S.marcas = (j.marcas || []).sort((a, b) => (a.criado || 0) - (b.criado || 0) || String(a.nome).localeCompare(b.nome));
     S.posts = (j.pautas || []).map(p => ({ ...p, status: normStatus(p.status) }));
@@ -2211,9 +2356,9 @@ async function carregar() {
     if (e.code === "sessao") return writeFail(e);
     if (!S.loadedP) S.failed = true; else toast("Sem conexão com a planilha agora.");
   }
-  if (!$("#dlg").open && !$("#agDlg").open && !S.dirty && !S.rej && !S.uEdit && !S.boasVindas) render();
+  if (!$("#dlg").open && !$("#agDlg").open && !$("#tfDlg").open && !S.dirty && !S.rej && !S.uEdit && !S.boasVindas) render();
 }
-setInterval(() => { if (API && S.token && document.visibilityState === "visible" && !$("#dlg").open && !$("#agDlg").open) carregar(); }, 30000);
+setInterval(() => { if (API && S.token && document.visibilityState === "visible" && !$("#dlg").open && !$("#agDlg").open && !$("#tfDlg").open) carregar(); }, 30000);
 carregar();
 render();
 </script>

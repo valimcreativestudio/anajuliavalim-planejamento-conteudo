@@ -57,6 +57,16 @@ Ao salvar uma pessoa com senha (use **Gerar senha**), aparece a mensagem de boas
 
 A aba **Resumo do mês** mostra o relatório pronto para apresentar: postagens planejadas e postadas, % aprovado de primeira, ideias validadas de primeira, tempo médio até aprovar, andamento, postagens por semana, formatos, tipos de agendamento, produtos, objetivos, desempenho por marca e por pessoa e os motivos das devoluções. Dá para ver uma marca ou **todas as marcas** e baixar em **PDF** (A4 deitado), **imagem (PNG)** ou **planilha (CSV)**.
 
+## Tarefas
+
+A aba **Tarefas** é o checklist da equipe: o que fazer, detalhes, marca (opcional), responsável, prioridade (Urgente, Alta, Média, Baixa), data para fazer e prazo máximo. A lista fica separada em **Atrasadas, Para hoje, Próximas e Sem data**, ordenada pela prioridade e pelo prazo; a caixinha marca como feita.
+
+- Filtros: **Minhas tarefas**, **Que eu passei** e **Todas** (a gestão vê todas; os demais veem as das suas marcas), por marca e mostrar feitas.
+- Quem recebe uma tarefa é avisado no **sino** e por **e-mail**; quem criou é avisado no sino quando ela é concluída.
+- O número vermelho na aba mostra as suas tarefas atrasadas ou para hoje.
+- Editam/concluem: quem criou, o responsável e a gestão. Excluem: quem criou e a gestão.
+- Ficam na aba `TAREFAS` da planilha.
+
 ## Avisos por e-mail
 
 O sistema manda e-mail (pela conta Google dona da planilha) quando:
