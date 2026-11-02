@@ -1,0 +1,15 @@
+{
+  "name": "Planejamento de Conteúdo",
+  "short_name": "Planejamento",
+  "start_url": "./#calendario",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F5F5F3",
+  "theme_color": "#26262A",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icone-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icone-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

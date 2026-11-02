@@ -19,7 +19,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-03.1';
+const VERSAO = '2026-11-03.2';
 
 const ABA_PAUTAS = 'POSTAGENS';
 const ABA_MARCAS = 'MARCAS';
@@ -40,7 +40,7 @@ const CAMPOS_PAUTA = [
   ['agTipo', 'Agendado como'], ['agQuando', 'Agendado para'], ['postLink', 'Link do post publicado'],
   ['capa', 'Imagem de prévia'], ['midias', 'Mídias da publicação'],
   ['comentarios', 'Comentários'], ['prazoArte', 'Prazo da arte'], ['prazoAprovacao', 'Prazo da aprovação'],
-  ['autoPub', 'Publicar automático'], ['pubInfo', 'Situação da publicação automática'], ['igMidia', 'ID do post no Instagram']
+  ['autoPub', 'Publicar automático'], ['pubInfo', 'Situação da publicação automática'], ['igMidia', 'ID do post no Instagram'], ['versoes', 'Versões anteriores da arte']
 ];
 const CAMPOS_STORY = [
   ['id', 'ID'], ['marcaId', 'Marca ID'], ['marca', 'Marca'], ['data', 'Data'], ['hora', 'Hora'], ['ordem', 'Ordem'],
@@ -125,6 +125,8 @@ function doPost(e) {
     if (req.action === 'instaMidias') return json_(Object.assign({ ok: true }, instaMidias_(eu, req.marcaId, req.forcar)));
     if (req.action === 'lerPasta') return json_(Object.assign({ ok: true }, lerPasta_(eu, req.link)));
     if (req.action === 'metricas') return json_(Object.assign({ ok: true }, metricas_(eu, req.marcaId, req.mes, req.forcar)));
+    if (req.action === 'melhorHorario') return json_(Object.assign({ ok: true }, melhorHorario_(eu, req.marcaId, req.forcar)));
+    if (req.action === 'enviarRelatorio') return json_(Object.assign({ ok: true }, enviarRelatorio_(eu, req.marcaId, req.mes, req.site)));
     if (req.action === 'publicarAgora') return json_(Object.assign({ ok: true }, publicarAgora_(eu, req.id, req.tipo)));
     if (req.action === 'acessosListar') return json_(Object.assign({ ok: true }, acessosListar_(eu, req.marcaId)));
     if (req.action === 'acessosSalvar') return json_(Object.assign({ ok: true }, acessosSalvar_(eu, req.marcaId, req.acessos)));
@@ -141,6 +143,7 @@ function doPost(e) {
         case 'excluirStory': excluirStory_(eu, req.id); return json_({ ok: true });
         case 'ordenarStories': ordenarStories_(eu, req.ids || []); return json_({ ok: true });
         case 'linkCliente': return json_(Object.assign({ ok: true }, linkCliente_(eu, req.usuarioId, req.site, req.enviar)));
+        case 'acaoLote': return json_(Object.assign({ ok: true }, acaoLote_(eu, req.ids || [], req.acao, req.site)));
         case 'autoPub': autoPubDefinir_(eu, req.id, req.tipo, req.ligar); return json_({ ok: true });
         case 'salvarPauta': return json_({ ok: true, id: salvarPauta_(eu, req.pauta || {}) });
         case 'excluirPauta': excluirPauta_(eu, req.id); return json_({ ok: true });
@@ -284,6 +287,7 @@ function pautaParaSite_(p) {
   p.historico = parseJSON_(p.historico, []);
   p.midias = parseJSON_(p.midias, []);
   p.comentarios = parseJSON_(p.comentarios, []);
+  p.versoes = parseJSON_(p.versoes, []);
   p.prazoArte = paraISO_(p.prazoArte);
   p.prazoAprovacao = paraISO_(p.prazoAprovacao);
   // "05/11/2026 18:30" -> agData "2026-11-05" e agHora "18:30"
@@ -335,13 +339,26 @@ function salvarPauta_(eu, p) {
   }
   // começa do que já está salvo e só troca os campos que vieram; status, agendamento e link do post
   // só mudam pelas ações do fluxo (assim editar ou arrastar não apaga o agendamento)
-  const PROTEGIDOS = ['id', 'marcaId', 'status', 'motivo', 'historico', 'agTipo', 'agQuando', 'agData', 'agHora', 'postLink', 'criado', 'atualizado', 'comentarios', 'autoPub', 'pubInfo', 'igMidia'];
-  const base = atual ? Object.assign({}, atual, { agQuando: atual.agData ? paraBR_(atual.agData) + ' ' + atual.agHora : '', comentarios: JSON.stringify(atual.comentarios || []) }) : {};
+  const PROTEGIDOS = ['id', 'marcaId', 'status', 'motivo', 'historico', 'agTipo', 'agQuando', 'agData', 'agHora', 'postLink', 'criado', 'atualizado', 'comentarios', 'autoPub', 'pubInfo', 'igMidia', 'versoes'];
+  const base = atual ? Object.assign({}, atual, { agQuando: atual.agData ? paraBR_(atual.agData) + ' ' + atual.agHora : '', comentarios: JSON.stringify(atual.comentarios || []), versoes: JSON.stringify(atual.versoes || []) }) : {};
   const novos = {};
   Object.keys(p).forEach(k => { if (PROTEGIDOS.indexOf(k) < 0) novos[k] = p[k]; });
   if (Array.isArray(novos.midias)) novos.midias = JSON.stringify(novos.midias.slice(0, 20).map(x => ({ id: String(x.id || ''), nome: String(x.nome || '').slice(0, 120), tipo: x.tipo === 'video' ? 'video' : 'imagem' })));
   if (atual && Array.isArray(base.midias)) base.midias = JSON.stringify(base.midias);
-  const dataNova = novos.data || (atual && atual.data) || '';
+  const dataNova = 'data' in novos ? novos.data : ((atual && atual.data) || '');
+  // guarda a versão anterior da arte quando ela muda depois de pronta (para comparar antes e depois do ajuste)
+  if (atual && ['Ideia', 'Em validação', 'Validação do cliente', 'Ideia reprovada'].indexOf(atual.status) < 0) {
+    const sig = (mid, capa, leg) => JSON.stringify([(mid || []).map(x => x.id), capa || '', String(leg || '').trim()]);
+    const midNovas = Array.isArray(p.midias) ? p.midias : atual.midias;
+    const antes = sig(atual.midias, atual.capa, atual.legenda);
+    const depois = sig(midNovas, 'capa' in p ? p.capa : atual.capa, 'legenda' in p ? p.legenda : atual.legenda);
+    const temArte = (atual.midias || []).length || atual.capa;
+    const mudouArte = sig(atual.midias, atual.capa, '') !== sig(midNovas, 'capa' in p ? p.capa : atual.capa, '');
+    if (antes !== depois && temArte && mudouArte) {
+      const v = (atual.versoes || []).concat([{ em: Number(atual.atualizado) || Date.now(), status: atual.status, midias: atual.midias || [], capa: atual.capa || '', legenda: String(atual.legenda || '').slice(0, 3000) }]).slice(-10);
+      base.versoes = JSON.stringify(v);
+    }
+  }
   ['prazoArte', 'prazoAprovacao'].forEach(k => { if (k in novos) novos[k] = paraBR_(novos[k]); else if (atual) base[k] = paraBR_(atual[k]); });
   const linha = Object.assign(base, novos, {
     id: id,
@@ -366,7 +383,7 @@ function excluirPauta_(eu, id) {
   excluirLinha_(ABA_PAUTAS, CAMPOS_PAUTA, id);
 }
 
-function acaoPauta_(eu, id, acao, motivo, status, dados, site) {
+function acaoPauta_(eu, id, acao, motivo, status, dados, site, coletor) {
   const p = pautaPorId_(id);
   if (!p) throw erro_('server', 'Postagem não encontrada. Atualize a página.');
   motivo = String(motivo || '').trim();
@@ -408,7 +425,7 @@ function acaoPauta_(eu, id, acao, motivo, status, dados, site) {
   if (para !== 'Agendado' && p.autoPub) { set('autoPub', ''); }
   mexeu_();
   // o e-mail nunca pode impedir a ação de ser registrada
-  try { notificar_(eu, p, acao, motivo, historico, site, para); } catch (e) { Logger.log('Falha ao enviar notificação: ' + e); }
+  try { notificar_(eu, p, acao, motivo, historico, site, para, coletor); } catch (e) { Logger.log('Falha ao enviar notificação: ' + e); }
 }
 
 /* ---------- Notificações por e-mail ---------- */
@@ -430,7 +447,7 @@ const AVISO_CLIENTE = {
   'Aprovação do cliente': { titulo: '📲 Post para você aprovar', frase: 'enviou um post pronto para a sua aprovação. Veja exatamente como vai ficar no Instagram' }
 };
 
-function notificar_(eu, p, acao, motivo, historico, site, paraStatus) {
+function notificar_(eu, p, acao, motivo, historico, site, paraStatus, coletor) {
   let av = AVISOS[acao];
   if (AVISO_CLIENTE[paraStatus]) av = Object.assign({ para: 'cliente' }, AVISO_CLIENTE[paraStatus]);
   if (!av) return;
@@ -450,10 +467,12 @@ function notificar_(eu, p, acao, motivo, historico, site, paraStatus) {
     dest = envio && envio.uid ? pessoas.filter(u => u.id === envio.uid) : [];
     if (!dest.length) dest = pessoas.filter(u => u.papel === 'social' && acesso_(u, p.marcaId));
   }
-  if (!dest.length || MailApp.getRemainingDailyQuota() < dest.length) return;
-
+  if (!dest.length) return;
   const marca = nomeDaMarca_(p.marcaId);
   const titulo = (p.produto ? p.produto + ': ' : '') + (p.postagem || 'Postagem');
+  // aprovação em lote: junta tudo num e-mail só por pessoa
+  if (coletor) { dest.forEach(u => { const c = coletor[u.login] || (coletor[u.login] = { u: u, av: av, itens: [] }); c.itens.push(titulo + ' (' + marca + ')'); }); return; }
+  if (MailApp.getRemainingDailyQuota() < dest.length) return;
   const link = /^https:\/\//.test(String(site || '')) ? String(site).split('#')[0] + '#aprovacoes' : '';
   // o cliente recebe um link que já entra, sem senha (vale 14 dias)
   const linkDe = u => link && u.papel === 'cliente' ? String(site).split('#')[0] + '#entrar=' + criarSessao_(u.id, 14, true) : link;
@@ -1542,9 +1561,152 @@ function backupSemanal() {
 
 /* ---------- Gatilhos automáticos (criados ao rodar "configurar") ---------- */
 function instalarGatilhos_() {
-  const nomes = ['resumoDiario', 'backupSemanal', 'publicarAgendados'];
+  const nomes = ['resumoDiario', 'backupSemanal', 'publicarAgendados', 'relatorioMensal'];
   ScriptApp.getProjectTriggers().forEach(t => { if (nomes.indexOf(t.getHandlerFunction()) >= 0) ScriptApp.deleteTrigger(t); });
   ScriptApp.newTrigger('resumoDiario').timeBased().everyDays(1).atHour(8).create();
   ScriptApp.newTrigger('backupSemanal').timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(3).create();
   ScriptApp.newTrigger('publicarAgendados').timeBased().everyMinutes(15).create();
+  ScriptApp.newTrigger('relatorioMensal').timeBased().onMonthDay(1).atHour(9).create();
+}
+
+/* ======================================================================
+ * Novidades 2026-11-03.2: aprovação em lote, melhor horário, relatório mensal ao cliente
+ * ====================================================================== */
+
+/* ---------- Aprovar (ou validar) várias postagens de uma vez ---------- */
+function acaoLote_(eu, ids, acao, site) {
+  const a = ACOES[acao];
+  if (!a || a.motivo || a.agenda) throw erro_('server', 'Esta etapa não pode ser feita em lote.');
+  const coletor = {}, feitas = [], falhas = [];
+  ids.slice(0, 60).forEach(id => {
+    try { acaoPauta_(eu, id, acao, '', '', {}, site, coletor); feitas.push(id); }
+    catch (e) { falhas.push(String(e.message || e)); }
+  });
+  // um e-mail por pessoa com a lista
+  const base = /^https:\/\//.test(String(site || '')) ? String(site).split('#')[0] : '';
+  Object.keys(coletor).forEach(k => {
+    const c = coletor[k];
+    if (MailApp.getRemainingDailyQuota() < 1) return;
+    const link = base ? (c.u.papel === 'cliente' ? base + '#entrar=' + criarSessao_(c.u.id, 14, true) : base + '#aprovacoes') : '';
+    MailApp.sendEmail({
+      to: c.u.login, name: 'Planejamento de Conteúdo',
+      subject: c.av.titulo + ' (' + c.itens.length + (c.itens.length === 1 ? ' post)' : ' posts)'),
+      htmlBody: '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#1d1d1f;max-width:560px">' +
+        '<h2 style="margin:0 0 14px;font-size:22px;font-weight:600">' + escH_(c.av.titulo) + '</h2>' +
+        '<p style="margin:0 0 10px"><b>' + escH_(eu.nome) + '</b> ' + escH_(c.av.frase) + ':</p>' +
+        '<ul style="margin:0 0 18px;padding-left:18px">' + c.itens.map(t => '<li style="margin:3px 0">' + escH_(t) + '</li>').join('') + '</ul>' +
+        (link ? '<p><a href="' + link + '" style="background:#1d1d1f;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none;display:inline-block">' + (c.u.papel === 'cliente' ? 'Ver e aprovar' : 'Abrir o sistema') + '</a></p>' : '') + '</div>'
+    });
+  });
+  return { feitas: feitas.length, falhas: falhas };
+}
+
+/* ---------- Melhor horário para postar ----------
+ * Usa o engajamento dos últimos posts (curtidas + comentários por dia da semana e faixa de horário)
+ * e, quando a conta permite, os horários em que os seguidores ficam online. */
+const FAIXAS_HORA = [[6, 9], [9, 12], [12, 15], [15, 18], [18, 21], [21, 24]];
+function melhorHorario_(eu, marcaId, forcar) {
+  if (!acesso_(eu, marcaId)) throw erro_('permissao', 'Sem acesso a esta marca.');
+  const d = instaDados_(marcaId);
+  if (!d) return { conectado: false };
+  const cache = CacheService.getScriptCache(), chave = 'mh_' + marcaId;
+  if (!forcar) { const c = cache.get(chave); if (c) return JSON.parse(c); }
+  const b = igBase_(d), tok = encodeURIComponent(d.token);
+  let midias = [];
+  try {
+    let url = b.host + b.conta + '/media?fields=id,like_count,comments_count,timestamp&limit=50&access_token=' + tok;
+    for (let i = 0; i < 2 && url; i++) { const j = instaGet_(url); midias = midias.concat(j.data || []); url = j.paging && j.paging.next; }
+  } catch (e) { return { conectado: true, erro: String(e.message || e) }; }
+  const grade = Array.from({ length: 7 }, () => FAIXAS_HORA.map(() => ({ soma: 0, n: 0 })));
+  midias.forEach(m => {
+    const t = new Date(m.timestamp);
+    if (isNaN(t)) return;
+    const h = t.getHours(), f = FAIXAS_HORA.findIndex(x => h >= x[0] && h < x[1]);
+    if (f < 0) return;
+    const c = grade[t.getDay()][f]; c.soma += (Number(m.like_count) || 0) + (Number(m.comments_count) || 0) * 2; c.n++;
+  });
+  const celulas = [];
+  grade.forEach((l, dia) => l.forEach((c, f) => { if (c.n) celulas.push({ dia: dia, faixa: f, media: Math.round(c.soma / c.n), n: c.n }); }));
+  celulas.sort((x, y) => y.media - x.media);
+  let online = null;
+  try {
+    const j = instaGet_(b.host + (d.tipo === 'fb' ? d.igId : 'me') + '/insights?metric=online_followers&period=lifetime&access_token=' + tok);
+    const v = j.data && j.data[0] && j.data[0].values && j.data[0].values[0] && j.data[0].values[0].value;
+    if (v && typeof v === 'object') online = Array.from({ length: 24 }, (_, h) => Number(v[h] || v[String(h)]) || 0);
+  } catch (e) { /* nem toda conta tem essa métrica */ }
+  const res = {
+    conectado: true, posts: midias.length, faixas: FAIXAS_HORA,
+    grade: grade.map(l => l.map(c => c.n ? Math.round(c.soma / c.n) : null)),
+    contagem: grade.map(l => l.map(c => c.n)),
+    top: celulas.slice(0, 3), online: online, em: Date.now()
+  };
+  try { cache.put(chave, JSON.stringify(res), 43200); } catch (e) {}
+  return res;
+}
+
+/* ---------- Relatório do mês para o cliente (e-mail com PDF) ---------- */
+function relatorioHtml_(marcaId, mes) {
+  const sistema = { id: '', nome: 'Sistema', papel: 'admin', marcas: ['*'] };
+  const m = ler_(ABA_MARCAS, CAMPOS_MARCA).filter(x => x.id === marcaId)[0];
+  if (!m) throw erro_('server', 'Marca não encontrada.');
+  const pautas = ler_(ABA_PAUTAS, CAMPOS_PAUTA).filter(p => p.marcaId === marcaId && paraISO_(p.data).indexOf(mes) === 0).map(pautaParaSite_)
+    .sort((a, b) => a.data.localeCompare(b.data));
+  const stories = ler_(ABA_STORIES, CAMPOS_STORY).filter(x => x.marcaId === marcaId && paraISO_(x.data).indexOf(mes) === 0);
+  const postados = pautas.filter(p => p.status === 'Postado');
+  let met = null;
+  try { met = metricas_(sistema, marcaId, mes, false); } catch (e) {}
+  const porId = {};
+  if (met && met.itens) met.itens.forEach(it => porId[it.pautaId] = it);
+  const soma = k => met && met.itens ? met.itens.reduce((s, it) => s + (Number(it[k]) || 0), 0) : null;
+  const n = v => v == null ? '—' : Number(v).toLocaleString('pt-BR');
+  const nomeMes = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'][Number(mes.slice(5, 7)) - 1] + ' de ' + mes.slice(0, 4);
+  const kpi = (v, l) => '<td style="padding:12px;background:#f2f2f0;border-radius:10px;text-align:center"><div style="font-size:24px;font-weight:700">' + v + '</div><div style="font-size:12px;color:#6b6b70">' + l + '</div></td>';
+  const top = met && met.itens ? met.itens.slice().sort((a, b) => (b.curtidas + b.comentarios + (b.salvos || 0) * 2) - (a.curtidas + a.comentarios + (a.salvos || 0) * 2)).slice(0, 3) : [];
+  const tituloP = p => (p.produto ? p.produto + ': ' : '') + (p.postagem || 'Postagem');
+  const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1d1d1f;max-width:640px">' +
+    '<p style="margin:0;color:#6b6b70;font-size:12px;letter-spacing:.08em;text-transform:uppercase">Relatório do mês</p>' +
+    '<h1 style="margin:4px 0 16px;font-size:26px">' + escH_(m.nome) + ' · ' + escH_(nomeMes) + '</h1>' +
+    '<table style="border-collapse:separate;border-spacing:8px;width:100%;margin:0 -8px 10px"><tr>' + kpi(pautas.length, 'posts planejados') + kpi(postados.length, 'posts publicados') + kpi(stories.filter(x => x.status === 'Postado').length, 'stories publicados') + '</tr>' +
+    (met && met.itens && met.itens.length ? '<tr>' + kpi(n(soma('curtidas')), 'curtidas') + kpi(n(soma('alcance')), 'alcance') + kpi(n(soma('salvos')), 'salvamentos') + '</tr>' : '') + '</table>' +
+    (top.length ? '<h3 style="margin:18px 0 8px">Destaques</h3><ol style="margin:0;padding-left:18px">' + top.map(it => { const p = pautas.filter(x => x.id === it.pautaId)[0]; return p ? '<li style="margin:4px 0"><a href="' + escH_(it.link) + '" style="color:#1d1d1f">' + escH_(tituloP(p)) + '</a> — ' + n(it.curtidas) + ' curtidas, ' + n(it.comentarios) + ' comentários' + (it.salvos != null ? ', ' + n(it.salvos) + ' salvamentos' : '') + '</li>' : ''; }).join('') + '</ol>' : '') +
+    '<h3 style="margin:18px 0 8px">Posts do mês</h3><table style="border-collapse:collapse;width:100%;font-size:13px"><tr style="text-align:left;color:#6b6b70"><th style="padding:6px 4px;border-bottom:1px solid #ddd">Data</th><th style="padding:6px 4px;border-bottom:1px solid #ddd">Post</th><th style="padding:6px 4px;border-bottom:1px solid #ddd">Situação</th><th style="padding:6px 4px;border-bottom:1px solid #ddd;text-align:right">Curtidas</th></tr>' +
+    pautas.map(p => '<tr><td style="padding:6px 4px;border-bottom:1px solid #eee">' + paraBR_(p.data).slice(0, 5) + '</td><td style="padding:6px 4px;border-bottom:1px solid #eee">' + (p.postLink ? '<a href="' + escH_(p.postLink) + '" style="color:#1d1d1f">' + escH_(tituloP(p)) + '</a>' : escH_(tituloP(p))) + '</td><td style="padding:6px 4px;border-bottom:1px solid #eee">' + escH_(p.status) + '</td><td style="padding:6px 4px;border-bottom:1px solid #eee;text-align:right">' + (porId[p.id] ? n(porId[p.id].curtidas) : '') + '</td></tr>').join('') + '</table>' +
+    '</div>';
+  return { html: html, nome: m.nome, nomeMes: nomeMes };
+}
+function enviarRelatorio_(eu, marcaId, mes, site) {
+  if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Só quem alimenta a marca envia o relatório.');
+  if (!/^\d{4}-\d{2}$/.test(mes || '')) throw erro_('server', 'Mês inválido.');
+  return mandarRelatorio_(marcaId, mes, eu, site);
+}
+function mandarRelatorio_(marcaId, mes, eu, site) {
+  const r = relatorioHtml_(marcaId, mes);
+  const clientes = ler_(ABA_USUARIOS, CAMPOS_USUARIO).map(publicoUsuario_)
+    .filter(u => u.ativo && u.papel === 'cliente' && u.marcas.indexOf('*') < 0 && u.marcas.indexOf(marcaId) >= 0 && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(u.login));
+  if (!clientes.length) throw erro_('server', 'Esta marca não tem aprovador do cliente com e-mail cadastrado.');
+  let pdf = null;
+  try { pdf = Utilities.newBlob(r.html, 'text/html', 'relatorio.html').getAs('application/pdf').setName('Relatório ' + r.nome + ' - ' + r.nomeMes + '.pdf'); } catch (e) {}
+  const base = String(site || PropertiesService.getScriptProperties().getProperty('site') || '').split('#')[0];
+  clientes.forEach(u => {
+    if (MailApp.getRemainingDailyQuota() < 1) return;
+    const link = /^https?:\/\//.test(base) ? base + '#entrar=' + criarSessao_(u.id, 14, true) : '';
+    const o = {
+      to: u.login, name: 'Planejamento de Conteúdo', subject: '📊 Relatório de ' + r.nomeMes + ' · ' + r.nome,
+      htmlBody: '<p style="font-family:Arial,sans-serif;font-size:15px">Olá, ' + escH_(u.nome.split(' ')[0]) + '! Aqui está o resumo de ' + escH_(r.nomeMes) + (pdf ? ' (também em PDF, em anexo)' : '') + '.</p>' + r.html +
+        (link ? '<p style="font-family:Arial,sans-serif;margin-top:18px"><a href="' + link + '" style="background:#1d1d1f;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none;display:inline-block">Ver o calendário</a></p>' : '')
+    };
+    if (eu && /@/.test(eu.login || '')) o.replyTo = eu.login;
+    if (pdf) o.attachments = [pdf];
+    MailApp.sendEmail(o);
+  });
+  return { enviados: clientes.map(u => u.nome) };
+}
+// roda sozinho no dia 1, às 9h: manda o relatório do mês anterior das marcas que pediram envio automático
+function relatorioMensal() {
+  const hoje = new Date(), ant = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+  const mes = ant.getFullYear() + '-' + ('0' + (ant.getMonth() + 1)).slice(-2);
+  ler_(ABA_MARCAS, CAMPOS_MARCA).forEach(m => {
+    if (!(parseJSON_(m.perfil, {}) || {}).relatorioAuto) return;
+    try { mandarRelatorio_(m.id, mes, null, ''); } catch (e) { Logger.log('Relatório ' + m.nome + ': ' + e.message); }
+  });
 }

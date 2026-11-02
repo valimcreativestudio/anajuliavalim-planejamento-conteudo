@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Planejamento de Conteúdo</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icone-192.png">
+<link rel="apple-touch-icon" href="icone-180.png">
+<meta name="theme-color" content="#26262A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Planejamento">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Figtree:wght@400;500;600;700&display=swap">
 <style>
@@ -641,6 +648,34 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 .met-kpis b { font-size: 22px; font-family: var(--f-display); font-weight: 400; }
 .met-kpis span { font-size: 12.5px; color: var(--muted); }
 #lkDlg { width: min(560px, calc(100vw - 24px)); }
+.pacote { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: flex-start; margin: -4px 0 14px; }
+.pacote.grande { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin: 0 0 14px; }
+.pacote .pt { width: 100%; font-size: 14px; }
+.pacote.vazio { font-size: 13px; }
+.pc-item { min-width: 170px; flex: 1; max-width: 300px; display: grid; gap: 4px; }
+.pc-l { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; } .pc-l b { font-variant-numeric: tabular-nums; }
+.pc-bar { position: relative; height: 7px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+.pc-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 99px; }
+.pc-bar .pl { background: color-mix(in srgb, var(--st-produzido) 35%, transparent); } .pc-bar .ft { background: var(--st-postado); }
+.pc-item small { font-size: 12px; color: var(--muted); } .pc-item.passou small { color: var(--pr-alta); font-weight: 600; }
+.day .comem { font-size: 11px; line-height: 1.25; color: var(--pr-alta); font-weight: 600; padding: 0 2px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.banco { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; }
+.banco summary { cursor: pointer; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; }
+.banco summary .n { font-size: 11.5px; font-weight: 700; background: var(--surface-2); border-radius: 99px; padding: 1px 8px; }
+.banco-add { display: flex; gap: 8px; margin: 10px 0; } .banco-add input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 10px; color: var(--ink); }
+.banco-lista { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.banco-lista .chip { width: auto; max-width: 260px; --fase: var(--line); }
+.bloco { display: grid; gap: 6px; border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+.bl-h { display: flex; gap: 8px; } .bl-h input { flex: 1; min-width: 0; }
+.bloco input, .bloco textarea { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 7px 9px; font: inherit; color: var(--ink); width: 100%; }
+#eBloco { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 5px 8px; color: var(--ink); }
+.versoes { border-top: 1px solid var(--line); padding-top: 8px; } .versoes summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+.vs-item { display: grid; gap: 6px; padding: 10px 0; border-bottom: 1px dashed var(--line); }
+.vs-cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; } .vs-cmp b { font-size: 12.5px; }
+table.mh { min-width: 520px; } table.mh td { text-align: center; font-size: 12px; background: color-mix(in srgb, var(--st-postado) calc(var(--a) * 100%), var(--surface)); color: var(--ink); }
+table.mh th { font-size: 11.5px; }
+td.n.atraso { color: var(--danger); font-weight: 600; }
+.apv-sec h2 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 </style>
 </head>
 <body>
@@ -734,7 +769,7 @@ const DEFAULT_FASES = [
 ];
 
 const S = {
-  canWrite: false, insta: {}, stories: [], met: {}, carimbo: "", desde: "", acessos: {}, tarefas: [], equipe: [], tf: { quem: "minhas", marca: "", feitas: false }, eu: null, usuarios: [], token: store("token") || "", rej: null, uEdit: null,
+  canWrite: false, insta: {}, stories: [], met: {}, mh: {}, carimbo: "", desde: "", acessos: {}, tarefas: [], equipe: [], tf: { quem: "minhas", marca: "", feitas: false }, eu: null, usuarios: [], token: store("token") || "", rej: null, uEdit: null,
   marcas: [], posts: [], loadedM: false, loadedP: false, failed: false,
   marcaId: store("marca"), month: null,
   f: { status: "", formato: "", produto: "", q: "" },
@@ -796,7 +831,7 @@ function pickMonth() {
   const saved = store("mes." + S.marcaId);
   if (saved) return saved;
   const today = iso(new Date()).slice(0, 7);
-  const ps = postsMarca();
+  const ps = postsMarca().filter(p => p.data);
   if (!ps.length || ps.some(p => p.data.startsWith(today))) return today;
   const next = ps.find(p => p.data.slice(0, 7) >= today);
   return (next || ps[ps.length - 1]).data.slice(0, 7);
@@ -811,7 +846,7 @@ function setMonth(ym) {
 /* ---------- Vistas ---------- */
 const view = () => {
   const h = location.hash.replace("#", "");
-  return ["calendario", "stories", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-acessos", "marca-config", "aprovacoes", "equipe", "equipe-atividade", "conta", "tarefas"].includes(h) ? h : "calendario";
+  return ["calendario", "stories", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-acessos", "marca-config", "marca-plano", "aprovacoes", "equipe", "equipe-atividade", "conta", "tarefas"].includes(h) ? h : "calendario";
 };
 
 function render() {
@@ -855,7 +890,7 @@ function render() {
   }
   if (!S.month) S.month = pickMonth();
   const v = view();
-  app.innerHTML = avisoVersao() + ({ calendario: vCal, stories: vStories, pautas: vPautas, fluxo: vFluxo, grade: vGrade, resumo: vResumo, marca: vMarcaGeral, "marca-sobre": () => vPerfil("sobre"), "marca-publico": vPublico, "marca-arquivos": vArquivos, "marca-notas": () => vPerfil("notas"), "marca-produtos": vProdutos, "marca-redes": vRedes, "marca-acessos": vAcessos, "marca-config": vMarca })[v]();
+  app.innerHTML = avisoVersao() + ({ calendario: vCal, stories: vStories, pautas: vPautas, fluxo: vFluxo, grade: vGrade, resumo: vResumo, marca: vMarcaGeral, "marca-sobre": () => vPerfil("sobre"), "marca-publico": vPublico, "marca-arquivos": vArquivos, "marca-notas": () => vPerfil("notas"), "marca-produtos": vProdutos, "marca-redes": vRedes, "marca-acessos": vAcessos, "marca-config": vMarca, "marca-plano": vPlano })[v]();
   if (v === "fluxo") wireBoard();
   if (v === "calendario") wireCalendario();
   if (v === "stories") wireStories();
@@ -911,7 +946,8 @@ function vCal() {
   const last = new Date(first.getFullYear(), first.getMonth() + 1, 0);
   const end = new Date(last); end.setDate(last.getDate() + (6 - last.getDay()));
   const byDay = {};
-  postsMarca().forEach(p => (byDay[p.data] ||= []).push(p));
+  postsMarca().forEach(p => { if (p.data) (byDay[p.data] ||= []).push(p); });
+  const verDatas = store("datas") !== "0", comem = verDatas ? datasComemorativas(m) : {};
   const today = iso(new Date());
   let cells = WD.map(d => `<div class="dow">${d}</div>`).join("");
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
@@ -921,6 +957,7 @@ function vCal() {
     cells += `<div class="day${out ? " out" : ""}${ps.length ? " has" : ""}${k === today ? " today" : ""}" data-dia="${k}">
       <div class="dhead"><span class="dnum"><b>${d.getDate()}</b><span class="wd">${WD[d.getDay()]}</span></span>
       ${S.canWrite ? `<button class="add-day" type="button" aria-label="Nova postagem em ${br(k)}" onclick="openEditor(null,'${k}')">+</button>` : ""}</div>
+      ${comem[k] && !out ? `<div class="comem" title="${esc(comem[k].join(" · "))}">🎉 ${esc(comem[k].join(" · "))}</div>` : ""}
       ${ps.map(p => `<button class="chip" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="openEditor('${esc(p.id)}')"${S.canWrite ? ` draggable="true" data-id="${esc(p.id)}"` : ""}>
         ${blobSrc(p) ? `<span class="prev"><img src="${esc(blobSrc(p))}" alt="" loading="lazy" onerror="this.parentNode.remove()"></span>` : ""}
         <span class="meta"><span class="fmt">${FMT_ICON[p.formato] || ""} ${esc(p.formato || "")}</span><span class="dot" style="background:${stColor(p.status)}" title="${esc(p.status)}"></span>${REPROVADOS.includes(p.status) ? `<span class="flag">${p.status === "Ideia reprovada" ? "Reprovada" : "Ajustes"}</span>` : ""}${COM_CLIENTE.includes(p.status) ? `<span style="color:var(--pr-alta)">Com o cliente</span>` : ""}${atrasoDe(p) ? `<span class="atr" title="${esc(atrasoDe(p).txt)}">⚠ Atrasado</span>` : ""}${(p.comentarios || []).length ? `<span title="Comentários">💬 ${p.comentarios.length}</span>` : ""}${p.status === "Agendado" && p.agHora ? `<span title="Agendado">⏰ ${esc(p.agHora)}${p.agData && p.agData !== p.data ? " " + br(p.agData) : ""}</span>` : ""}</span>
@@ -928,9 +965,9 @@ function vCal() {
     </div>`;
   }
   const n = postsMes().length;
-  return headM(m.nome, "Calendário", monthNav() + addBtn()) +
+  return headM(m.nome, "Calendário", monthNav() + addBtn()) + pacoteHtml(m, S.month) + bancoHtml() +
     `<div class="cal">${cells}</div>
-    <p class="muted" style="margin-top:12px">${n} ${n === 1 ? "publicação" : "publicações"} em ${esc(monthLabel(S.month))}. A bolinha indica o status. Clique num post para abrir o detalhamento${S.canWrite ? " ou arraste para outro dia para mudar a data" : ""}.</p>`;
+    <p class="muted" style="margin-top:12px">${n} ${n === 1 ? "publicação" : "publicações"} em ${esc(monthLabel(S.month))}. A bolinha indica o status. Clique num post para abrir o detalhamento${S.canWrite ? " ou arraste para outro dia para mudar a data" : ""}. <label style="display:inline-flex;gap:5px;align-items:center;margin-left:6px"><input type="checkbox"${verDatas ? " checked" : ""} onchange="store('datas', this.checked ? '1' : '0');render()"> Mostrar datas comemorativas</label></p>`;
 }
 
 function filtered() {
@@ -1242,7 +1279,8 @@ function vResumo() {
       <button class="btn primary" type="button" id="dlPdf" onclick="baixarRelatorio('pdf')">Baixar PDF</button>
       <button class="btn" type="button" id="dlPng" onclick="baixarRelatorio('png')">Baixar imagem</button>
       <button class="btn" type="button" onclick="baixarCsv()">Baixar planilha (CSV)</button>
-    </div>` + relatorioHtml() + metricasHtml() +
+      ${!S.resumoTodas && podeEditar(m.id) && S.equipe.some(u => u.papel === "cliente" && (u.marcas || []).includes(m.id) && u.temEmail) ? `<button class="btn" type="button" id="btRel" onclick="enviarRelatorioCliente()">Enviar ao cliente por e-mail</button>` : ""}
+    </div>` + (!S.resumoTodas ? pacoteHtml(m, S.month, true) : "") + relatorioHtml() + metricasHtml() + horarioHtml() + temposHtml(dadosResumo().ps) +
     (!S.resumoTodas && m.observacoes ? `<div class="panel" style="margin-top:16px"><h2>Observações da marca</h2><p class="obs">${esc(m.observacoes)}</p></div>` : "");
 }
 
@@ -1427,7 +1465,7 @@ const pct = x => x.total ? Math.round(x.ok / x.total * 100) : 0;
 
 function subnav() {
   const pr = progresso(marca()), v = view();
-  const it = [["marca", "Visão geral"], ["marca-sobre", "Sobre", pr.sobre], ["marca-produtos", "Produtos"], ["marca-redes", "Redes"], ["marca-publico", "Público-alvo", pr.publico], ["marca-arquivos", "Arquivos e identidade", pr.arquivos], ["marca-notas", "Observações", pr.notas], ["marca-acessos", "Acessos"], ["marca-config", "Configurações"]];
+  const it = [["marca", "Visão geral"], ["marca-sobre", "Sobre", pr.sobre], ["marca-produtos", "Produtos"], ["marca-redes", "Redes"], ["marca-publico", "Público-alvo", pr.publico], ["marca-arquivos", "Arquivos e identidade", pr.arquivos], ["marca-notas", "Observações", pr.notas], ["marca-acessos", "Acessos"], ["marca-plano", "Pacote e legendas"], ["marca-config", "Configurações"]];
   return `<nav class="subnav" aria-label="Seções da marca">${it.map(([h, l, x]) => `<a href="#${h}"${v === h ? ' aria-current="page"' : ""}>${l}${x ? `<span class="pct">${pct(x)}%</span>` : ""}</a>`).join("")}</nav>`;
 }
 
@@ -1881,7 +1919,7 @@ function drawEditor() {
     <div class="dlg-body">
       ${p.id ? `<div class="full">${fluxoHtml(p)}</div>` : ""}
       <h4>Planejamento</h4>
-      <label class="field"><span>Data</span><input id="eData" type="date" required value="${esc(p.data)}"${ro}></label>
+      <label class="field"><span>Data${p.data ? "" : " (vazia = banco de ideias)"}</span><input id="eData" type="date"${p.data || !p.id && !p.banco ? " required" : ""} value="${esc(p.data || "")}"${ro}></label>
       <label class="field"><span>Prazo da arte</span><input id="eArte" type="date" value="${esc(p.prazoArte || "")}"${ro}></label>
       <label class="field"><span>Prazo da aprovação</span><input id="eAprov" type="date" value="${esc(p.prazoAprovacao || "")}"${ro}></label>
       <label class="field"><span>Formato</span>${sel("eFormato", FORMATOS, p.formato)}</label>
@@ -1897,11 +1935,12 @@ function drawEditor() {
       ${area("eObs", "Observação", p.observacao, 2)}
       ${area("eInsp", "Inspiração", p.inspiracao, 2)}
       ${area("eLegenda", "Legenda", p.legenda, 5)}
-      <div class="full" style="margin-top:-6px"><button class="btn sm" type="button" onclick="copiarLegenda()">Copiar legenda</button></div>
+      <div class="full" style="margin-top:-6px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn sm" type="button" onclick="copiarLegenda()">Copiar legenda</button>${S.canWrite ? inserirBlocoHtml(m) : ""}</div>
       <label class="field full"><span>Link da publicação (pasta ou arquivo no Drive, ou Canva)</span><span class="prod-pick"><input id="eCriativo" value="${esc(p.criativo || "")}" placeholder="https://drive.google.com/drive/folders/…" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px"${ro}>${S.canWrite ? `<button class="btn sm" type="button" id="btPasta" onclick="puxarPasta()">Puxar da pasta</button>` : ""}</span>
         <small>Com o link de uma pasta, "Puxar da pasta" traz as artes na ordem do número no fim do nome (P2-1, P2-2, P2-3…) e a legenda do documento (sem a linha de cabeçalho "P2 · título · data").</small></label>
       <div class="field full" id="eMidiasBox"${(p.midias || []).length ? "" : " hidden"}><span>Artes da publicação (${(p.midias || []).length})</span><div class="midias" id="eMidias">${midiasHtml(p.midias)}</div>
         ${S.canWrite ? `<button class="btn sm" type="button" style="justify-self:start;margin-top:6px" onclick="EDIT.midias=[];$('#eMidiasBox').hidden=true">Limpar artes</button>` : ""}</div>
+      ${p.id ? `<div class="full">${versoesHtml(p)}</div>` : ""}
       <div class="full" id="eLegNova" hidden></div>
       <label class="field full"><span>Link da imagem de prévia (arquivo de imagem no Drive)</span><input id="eCapa" value="${esc(p.capa || "")}" placeholder="https://drive.google.com/file/d/…" oninput="atualizarPrevia()"${ro}>
         <small>Abra a imagem no Drive, clique em Compartilhar → Copiar link. Ela precisa estar como "Qualquer pessoa com o link".</small></label>
@@ -1992,12 +2031,12 @@ async function salvarEditor(fechar = true) {
   const btn = $("#eSalvar"); if (btn) { btn.disabled = true; btn.textContent = "Salvando…"; }
   try {
     const body = gather();
-    if (!body.data) throw { code: "local", message: "Escolha uma data." };
+    if (!body.data && !(EDIT.id && !EDIT.data)) throw { code: "local", message: "Escolha uma data." };
     const r = await api("salvarPauta", { pauta: { ...body, id: EDIT.id || "" } });
     EDIT.id = r.id;
     if (fechar) $("#dlg").close();
     await carregar();
-    if (body.data.slice(0, 7) !== S.month) setMonth(body.data.slice(0, 7));
+    if (body.data && body.data.slice(0, 7) !== S.month) setMonth(body.data.slice(0, 7));
     if (fechar) toast("Postagem salva");
     return r.id;
   } catch (err) {
@@ -2097,6 +2136,7 @@ function abrirAgenda(id, k) {
         <label class="field"><span>Data</span><input id="agData" type="date" required value="${esc(p.agData || p.data || "")}"></label>
         <label class="field"><span>Hora</span><input id="agHora" type="time" required value="${esc(p.agHora || "")}"></label>
       </div>
+      <div id="agSug" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${sugestaoHorarioHtml(p.marcaId)}</div>
       ${instaOk(p.marcaId) ? `<label style="display:flex;gap:8px;align-items:flex-start;font-size:14px;background:var(--surface-2);border-radius:12px;padding:10px 12px"><input id="agAuto" type="checkbox"${p.autoPub === "sim" ? " checked" : ""} style="margin-top:3px"> <span><b>Publicar sozinho pelo sistema</b> no dia e na hora acima, com as artes e a legenda desta postagem. Aí não precisa agendar no Meta.</span></label>` : ""}
       <h4 style="margin:6px 0 0">${instaOk(p.marcaId) ? "Ou agende" : "Agende"} no Meta Business Suite</h4>
       <ol class="passos">
@@ -2113,6 +2153,7 @@ function abrirAgenda(id, k) {
       <button class="btn ${postar ? "primary" : "ok"}" type="submit" id="agOk">${postar ? "Marcar como postado" : "Confirmar agendamento"}</button>
     </div>`;
   $("#agDlg").showModal();
+  if (!postar && instaOk(p.marcaId) && !S.mh[p.marcaId]) carregarHorario(p.marcaId);
 }
 $("#agForm").addEventListener("submit", async e => {
   e.preventDefault();
@@ -2239,7 +2280,7 @@ function apvCard(p, k1, k2) {
         ${/^https?:\/\//.test(p.postLink || "") ? `<a class="lnk" href="${esc(p.postLink)}" target="_blank" rel="noopener">Ver post publicado</a>` : ""}
       </div>
     </div>`}
-    <div class="bd" style="padding-top:0">${comentariosHtml(p, "apv")}</div>
+    <div class="bd" style="padding-top:0">${versoesHtml(p, true)}${comentariosHtml(p, "apv")}</div>
     <div class="acts">
       ${rej ? `<div class="rej"><textarea id="rej-${esc(p.id)}" placeholder="${/eprovar/.test(S.rej.k) ? "Por que a ideia não foi aprovada?" : "Por que não foi aprovado? O que precisa mudar?"}"></textarea>
           <div style="display:flex;gap:8px"><button class="btn danger" type="button" onclick="confirmarRej('${esc(p.id)}')">Confirmar</button><button class="btn" type="button" onclick="S.rej=null;render()">Cancelar</button></div></div>`
@@ -2257,7 +2298,7 @@ function confirmarRej(id) {
 }
 function vAprovacoes() {
   const ord = (a, b) => (a.data || "").localeCompare(b.data || "");
-  const sec = (titulo, desc, lista, k1, k2) => `<section class="apv-sec"><h2>${titulo}<span class="n">${lista.length}</span></h2>
+  const sec = (titulo, desc, lista, k1, k2) => `<section class="apv-sec"><h2>${titulo}<span class="n">${lista.length}</span>${["validar", "aprovar", "clienteValidar", "clienteAprovar"].includes(k1) ? loteBtn(lista, k1) : ""}</h2>
     ${lista.length ? `<div class="apv-list">${lista.sort(ord).map(p => apvCard(p, k1, k2)).join("")}</div>` : `<p class="muted">${desc}</p>`}</section>`;
   const aprova = !["social", "cliente"].includes(S.eu.papel);
   const edita = !["aprovador", "cliente"].includes(S.eu.papel);
@@ -2529,7 +2570,7 @@ async function sair() {
   location.hash = "#calendario"; render();
 }
 function vConta() {
-  return head(PAPEIS[S.eu.papel] || "", "Minha conta") + `<form class="panel" style="max-width:460px;display:grid;gap:12px;margin-bottom:16px" onsubmit="event.preventDefault();salvarMeuNome()">
+  return head(PAPEIS[S.eu.papel] || "", "Minha conta") + `<div style="max-width:460px;margin-bottom:16px">${avisosContaHtml()}</div>` + `<form class="panel" style="max-width:460px;display:grid;gap:12px;margin-bottom:16px" onsubmit="event.preventDefault();salvarMeuNome()">
     <h2>Seu nome</h2>
     <label class="field"><span>Como você quer ser chamado(a)</span><input id="cNome" required maxlength="60" value="${esc(S.eu.nome)}" autocomplete="name"></label>
     <span class="muted" style="font-size:13px">Aparece no "Olá" lá em cima e no histórico das postagens. Seu login continua <b>${esc(S.eu.login)}</b>.</span>
@@ -3258,6 +3299,268 @@ function clientesHtml() {
     ${pessoas.map(u => `<button class="btn sm" type="button" onclick="linkCliente('${esc(u.id)}')">${avatarHtml(u, 20)} ${esc(u.nome)}</button>`).join("")}</div>`;
 }
 
+/* ---------- Datas comemorativas ---------- */
+const NICHOS = { geral: "Geral", beleza: "Beleza e cabelo", moda: "Moda", alimentacao: "Alimentação", saude: "Saúde e bem-estar", fitness: "Fitness", pet: "Pet", casa: "Casa e decoração", infantil: "Infantil", educacao: "Educação", tecnologia: "Tecnologia" };
+// [mês, dia, nome, nichos ("" = todos)]
+const DATAS_FIXAS = [
+  [1, 1, "Ano Novo", ""], [1, 8, "Dia do Fotógrafo", "geral"], [1, 20, "Dia do Farmacêutico", "saude"], [1, 31, "Dia Mundial do Mágico", ""],
+  [2, 14, "Valentine's Day", "moda beleza"], [3, 8, "Dia Internacional da Mulher", ""], [3, 15, "Dia do Consumidor", ""], [3, 20, "Dia Internacional da Felicidade", ""],
+  [3, 31, "Dia da Saúde e Nutrição", "saude alimentacao fitness"], [4, 7, "Dia Mundial da Saúde", "saude fitness"], [4, 15, "Dia do Desenhista", ""], [4, 21, "Tiradentes (feriado)", ""],
+  [4, 22, "Dia da Terra", ""], [4, 23, "Dia do Livro", "educacao"], [5, 1, "Dia do Trabalho (feriado)", ""], [5, 13, "Dia do Zootecnista", "pet"], [5, 25, "Dia da Indústria", ""],
+  [5, 28, "Dia do Hambúrguer", "alimentacao"], [6, 5, "Dia do Meio Ambiente", ""], [6, 12, "Dia dos Namorados", ""], [6, 24, "São João", "alimentacao moda"],
+  [7, 10, "Dia da Pizza", "alimentacao"], [7, 13, "Dia do Rock", ""], [7, 20, "Dia do Amigo", ""], [7, 26, "Dia dos Avós", ""], [8, 4, "Dia do Padre", ""],
+  [8, 11, "Dia do Estudante", "educacao"], [8, 19, "Dia da Fotografia", ""], [8, 26, "Dia do Cachorro", "pet"], [9, 1, "Dia do Profissional de Educação Física", "fitness saude"],
+  [9, 7, "Independência (feriado)", ""], [9, 15, "Dia do Cliente", ""], [9, 21, "Dia da Árvore", ""], [9, 23, "Início da primavera", "moda casa"], [10, 1, "Dia do Vendedor", ""],
+  [10, 4, "Dia dos Animais", "pet"], [10, 12, "Dia das Crianças (feriado)", ""], [10, 15, "Dia do Professor", "educacao"], [10, 16, "Dia Mundial da Alimentação", "alimentacao"],
+  [10, 25, "Dia do Macarrão", "alimentacao"], [10, 31, "Halloween", ""], [11, 2, "Finados (feriado)", ""], [11, 15, "Proclamação da República (feriado)", ""],
+  [11, 20, "Consciência Negra (feriado)", ""], [12, 3, "Dia Internacional da Pessoa com Deficiência", ""], [12, 8, "Dia da Família", ""], [12, 20, "Dia do Mecânico", ""],
+  [12, 24, "Véspera de Natal", ""], [12, 25, "Natal", ""], [12, 31, "Réveillon", ""],
+  [1, 9, "Dia do Cabeleireiro", "beleza"], [9, 9, "Dia da Beleza", "beleza moda"], [3, 26, "Dia do Cacau", "alimentacao"],
+  [11, 11, "Dia do Solteiro (11.11)", "moda beleza tecnologia"], [7, 17, "Dia de Proteger os Animais", "pet"], [5, 12, "Dia da Enfermagem", "saude"], [10, 19, "Dia do Profissional de TI", "tecnologia"],
+  [5, 31, "Dia Mundial sem Tabaco", "saude"], [11, 19, "Dia da Bandeira", ""], [6, 18, "Dia do Químico", "beleza"], [3, 10, "Dia do Telefone", "tecnologia"], [10, 9, "Dia da Moda Íntima", "moda"]
+];
+function pascoa(ano) {
+  const a = ano % 19, b = Math.floor(ano / 100), c = ano % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3),
+    h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+  return new Date(ano, Math.floor((h + l - 7 * m + 114) / 31) - 1, ((h + l - 7 * m + 114) % 31) + 1);
+}
+const nDomingo = (ano, mes, n) => { const d = new Date(ano, mes - 1, 1); d.setDate(1 + ((7 - d.getDay()) % 7) + 7 * (n - 1)); return d; };
+function datasDoAno(ano) {
+  const l = DATAS_FIXAS.map(([m, d, nome, n]) => [iso(new Date(ano, m - 1, d)), nome, n]);
+  const p = pascoa(ano), mais = (base, dias) => { const x = new Date(base); x.setDate(x.getDate() + dias); return iso(x); };
+  const ultSexta = (() => { const d = new Date(ano, 11, 0); while (d.getDay() !== 5) d.setDate(d.getDate() - 1); return d; })();
+  l.push([mais(p, -47), "Carnaval", ""], [mais(p, -2), "Sexta-feira Santa (feriado)", ""], [iso(p), "Páscoa", ""], [mais(p, 60), "Corpus Christi", ""],
+    [iso(nDomingo(ano, 5, 2)), "Dia das Mães", ""], [iso(nDomingo(ano, 8, 2)), "Dia dos Pais", ""], [iso(ultSexta), "Black Friday", ""], [mais(ultSexta, 3), "Cyber Monday", "tecnologia moda beleza"]);
+  return l;
+}
+function datasComemorativas(m) {
+  const nichos = (perfilDe(m).nichos || []);
+  const ano = +S.month.slice(0, 4), mapa = {};
+  [ano - 1, ano, ano + 1].forEach(a => datasDoAno(a).forEach(([k, nome, n]) => {
+    if (n && !n.split(" ").some(x => nichos.includes(x)) && !(n === "geral" && nichos.includes("geral"))) return;
+    (mapa[k] ||= []).push(nome);
+  }));
+  return mapa;
+}
+
+/* ---------- Pacote contratado ---------- */
+const PACOTE_ITENS = [["feed", "Posts no feed", "estáticos e carrosséis"], ["reels", "Reels / vídeos", ""], ["stories", "Stories", ""]];
+function contagemPacote(mid, mes) {
+  const ps = S.posts.filter(p => p.marcaId === mid && (p.data || "").startsWith(mes)), ss = (S.stories || []).filter(x => x.marcaId === mid && (x.data || "").startsWith(mes));
+  const c = { feed: { plan: 0, feito: 0 }, reels: { plan: 0, feito: 0 }, stories: { plan: ss.length, feito: ss.filter(x => x.status === "Postado").length } };
+  ps.forEach(p => { const k = p.formato === "Vídeo" ? "reels" : "feed"; c[k].plan++; if (p.status === "Postado") c[k].feito++; });
+  return c;
+}
+function pacoteHtml(m, mes, grande) {
+  const pac = perfilDe(m).pacote || {};
+  if (!PACOTE_ITENS.some(([k]) => +pac[k] > 0)) return grande && podeEditar(m.id) ? `<div class="pacote vazio"><span class="muted">Cadastre o pacote contratado (quantos posts, reels e stories por mês) em <a class="lnk" href="#marca-plano">Marca → Pacote e legendas</a> para acompanhar aqui o que já foi entregue.</span></div>` : "";
+  const c = contagemPacote(m.id, mes);
+  return `<div class="pacote${grande ? " grande" : ""}">${grande ? `<b class="pt">Pacote do mês</b>` : ""}${PACOTE_ITENS.filter(([k]) => +pac[k] > 0).map(([k, l]) => {
+    const meta = +pac[k], x = c[k], pf = Math.min(100, x.feito / meta * 100), pp = Math.min(100, x.plan / meta * 100), passou = x.plan > meta, falta = Math.max(0, meta - x.plan);
+    return `<div class="pc-item${passou ? " passou" : ""}"><div class="pc-l"><span>${l}</span><b>${x.feito}/${meta}</b></div>
+      <div class="pc-bar" title="${x.plan} planejados, ${x.feito} publicados de ${meta} contratados"><i class="pl" style="width:${pp}%"></i><i class="ft" style="width:${pf}%"></i></div>
+      <small>${passou ? `⚠ ${x.plan - meta} além do pacote` : falta ? `${x.plan} planejados · faltam ${falta}` : `${x.plan} planejados · completo`}</small></div>`;
+  }).join("")}</div>`;
+}
+
+/* ---------- Tempo de aprovação ---------- */
+const ENVIOS_EQUIPE = /^Enviou (a ideia para validação|o conteúdo para aprovação)/;
+function temposAprovacao(posts) {
+  // espera da equipe: do envio até o aprovador decidir; espera do cliente: de chegar no cliente até ele decidir
+  const eq = {}, cli = {}, pess = {};
+  const add = (o, k, dias) => { (o[k] ||= []).push(dias); };
+  posts.forEach(p => {
+    const h = (p.historico || []).slice().sort((a, b) => a.em - b.em);
+    h.forEach((x, i) => {
+      if (ENVIOS_EQUIPE.test(x.acao || "")) {
+        const dec = h.slice(i + 1).find(y => ["Em validação", "Em aprovação"].includes(y.de));
+        if (dec) { const d = (dec.em - x.em) / 864e5; add(eq, p.marcaId, d); add(pess, dec.por || "?", d); }
+      }
+      if (COM_CLIENTE.includes(x.para)) {
+        const dec = h.slice(i + 1).find(y => COM_CLIENTE.includes(y.de));
+        if (dec) add(cli, p.marcaId, (dec.em - x.em) / 864e5);
+      }
+    });
+  });
+  return { eq, cli, pess };
+}
+function temposHtml(posts) {
+  const t = temposAprovacao(posts), med = l => l && l.length ? l.reduce((a, b) => a + b, 0) / l.length : null;
+  const fmt = d => d == null ? "—" : d < 1 ? Math.max(1, Math.round(d * 24)) + " h" : d.toFixed(1).replace(".", ",") + " dias";
+  const marcas = [...new Set(Object.keys(t.eq).concat(Object.keys(t.cli)))];
+  if (!marcas.length) return "";
+  const pess = Object.entries(t.pess).sort((a, b) => med(b[1]) - med(a[1]));
+  return `<div class="panel" style="margin-top:16px"><h2>Tempo de aprovação</h2><p class="muted" style="margin:-4px 0 10px;font-size:13px">Média entre enviar e receber a resposta, nos posts deste período.</p>
+    <div class="table-wrap"><table style="min-width:420px"><thead><tr><th>Marca</th><th class="n">Equipe (aprovador)</th><th class="n">Cliente</th><th class="n">Aprovações</th></tr></thead><tbody>
+    ${marcas.map(id => `<tr><td>${esc(nomeMarca(id))}</td><td class="n">${fmt(med(t.eq[id]))}</td><td class="n${med(t.cli[id]) > 3 ? " atraso" : ""}">${fmt(med(t.cli[id]))}</td><td class="n">${(t.eq[id] || []).length + (t.cli[id] || []).length}</td></tr>`).join("")}</tbody></table></div>
+    ${pess.length ? `<p style="font-size:13px;margin:10px 0 0">Por aprovador: ${pess.map(([n, l]) => `<b>${esc(n)}</b> ${fmt(med(l))} (${l.length})`).join(" · ")}</p>` : ""}</div>`;
+}
+
+/* ---------- Relatório do mês para o cliente ---------- */
+async function enviarRelatorioCliente() {
+  const b = $("#btRel"); if (b) { b.disabled = true; b.textContent = "Enviando…"; }
+  try { const r = await api("enviarRelatorio", { marcaId: S.marcaId, mes: S.month }); toast("Relatório enviado para " + r.enviados.join(", ")); }
+  catch (e) { writeFail(e); }
+  if (b) { b.disabled = false; b.textContent = "Enviar ao cliente por e-mail"; }
+}
+
+/* ---------- Banco de ideias ---------- */
+const ideiasMarca = () => S.posts.filter(p => p.marcaId === S.marcaId && !p.data).sort((a, b) => (b.criado || 0) - (a.criado || 0));
+function bancoHtml() {
+  const l = ideiasMarca(), pode = S.canWrite, aberto = store("banco") !== "0";
+  return `<details class="banco"${aberto ? " open" : ""} ontoggle="store('banco', this.open ? '1' : '0')"><summary><b>💡 Banco de ideias</b><span class="n">${l.length}</span><span class="muted" style="font-size:12.5px;font-weight:400">Ideias sem data${pode ? ": arraste para um dia do calendário quando decidir" : ""}</span></summary>
+    ${pode ? `<form class="banco-add" onsubmit="event.preventDefault();novaIdeia()"><input id="ideiaNova" placeholder="Nova ideia (ex.: Bastidores da produção)" autocomplete="off"><button class="btn sm primary" type="submit">Guardar ideia</button></form>` : ""}
+    <div class="banco-lista">${l.length ? l.map(p => `<button class="chip ideia" type="button" onclick="openEditor('${esc(p.id)}')"${pode ? ` draggable="true" data-id="${esc(p.id)}"` : ""}><span class="meta"><span class="fmt">${FMT_ICON[p.formato] || ""} ${esc(p.formato || "")}</span>${(p.comentarios || []).length ? `<span>💬 ${p.comentarios.length}</span>` : ""}</span><span class="t">${esc(nm(p))}</span></button>`).join("") : `<span class="muted" style="font-size:13px">Nenhuma ideia guardada.</span>`}</div></details>`;
+}
+async function novaIdeia() {
+  const t = ($("#ideiaNova").value || "").trim();
+  if (!t) return toast("Escreva a ideia.");
+  const m = marca();
+  try { await api("salvarPauta", { pauta: { marcaId: m.id, data: "", postagem: t, formato: "Estático", fase: fasesDe(m)[0]?.nome || "" } }); S.dirty = false; await carregar(); toast("Ideia guardada"); setTimeout(() => $("#ideiaNova")?.focus(), 50); }
+  catch (e) { writeFail(e); }
+}
+
+/* ---------- Hashtags e modelos de legenda ---------- */
+function blocosDe(m) { const pf = perfilDe(m); return { hashtags: Array.isArray(pf.hashtags) ? pf.hashtags : [], modelos: Array.isArray(pf.modelos) ? pf.modelos : [] }; }
+function inserirBlocoHtml(m) {
+  const b = blocosDe(m);
+  if (!b.hashtags.length && !b.modelos.length) return `<a class="lnk" href="#marca-plano" onclick="$('#dlg').close()" style="font-size:13px">Cadastrar hashtags e modelos</a>`;
+  return `<select id="eBloco" onchange="inserirBloco(this)" aria-label="Inserir na legenda"><option value="">Inserir na legenda…</option>
+    ${b.modelos.length ? `<optgroup label="Modelos">${b.modelos.map((x, i) => `<option value="m${i}">${esc(x.nome || "Modelo " + (i + 1))}</option>`).join("")}</optgroup>` : ""}
+    ${b.hashtags.length ? `<optgroup label="Hashtags">${b.hashtags.map((x, i) => `<option value="h${i}">${esc(x.nome || "Grupo " + (i + 1))}</option>`).join("")}</optgroup>` : ""}</select>`;
+}
+function inserirBloco(sel) {
+  const v = sel.value; sel.value = ""; if (!v) return;
+  const b = blocosDe(marca()), item = (v[0] === "m" ? b.modelos : b.hashtags)[+v.slice(1)]; if (!item) return;
+  const ta = $("#eLegenda"), atual = ta.value.replace(/\s+$/, "");
+  ta.value = atual ? atual + "\n\n" + item.texto : item.texto;
+  S.dirty = true; ta.focus(); toast("Inserido na legenda");
+}
+function blocoRow(tipo, x = {}) {
+  return `<div class="bloco" data-bloco="${tipo}"><div class="bl-h"><input data-b="nome" value="${esc(x.nome || "")}" placeholder="${tipo === "hashtags" ? "Nome do grupo (ex.: Lançamento)" : "Nome do modelo (ex.: Assinatura com CTA)"}">
+    ${S.canWrite ? `<button class="btn sm danger" type="button" onclick="this.closest('.bloco').remove();S.dirty=true">Remover</button>` : ""}</div>
+    <textarea data-b="texto" rows="${tipo === "hashtags" ? 2 : 4}" placeholder="${tipo === "hashtags" ? "#hashtag1 #hashtag2 #hashtag3" : "Texto que entra na legenda"}">${esc(x.texto || "")}</textarea></div>`;
+}
+function vPlano() {
+  const m = marca(), pf = perfilDe(m), pac = pf.pacote || {}, ro = S.canWrite ? "" : " disabled", b = blocosDe(m), nichos = pf.nichos || [];
+  return headM(m.nome, "Pacote e legendas") + subnav() +
+    `<form id="planoForm" class="form-grid" onsubmit="event.preventDefault();salvarPlano()">
+      <div class="panel" style="display:grid;gap:12px"><h2 style="margin:0">Pacote contratado por mês</h2>
+        <div class="pf-grid">${PACOTE_ITENS.map(([k, l, d]) => `<label class="field"><span>${l}${d ? ` <small class="muted">(${d})</small>` : ""}</span><input type="number" min="0" max="999" data-pac="${k}" value="${esc(pac[k] || "")}" placeholder="0"${ro}></label>`).join("")}</div>
+        <small class="muted">Aparece no Calendário e no Resumo: quanto já foi planejado e publicado, o que falta e o que passou do pacote.</small>
+        <label style="display:flex;gap:8px;align-items:flex-start;font-size:14px"><input type="checkbox" id="plRel"${pf.relatorioAuto ? " checked" : ""}${ro} style="margin-top:3px"> <span><b>Mandar o relatório do mês para o cliente</b> por e-mail, todo dia 1 (posts publicados, resultados do Instagram e destaques, com PDF).</span></label>
+      </div>
+      <div class="panel" style="display:grid;gap:10px"><h2 style="margin:0">Datas comemorativas</h2><span class="muted" style="font-size:13px">Além dos feriados e das datas gerais, o calendário mostra as datas destes nichos:</span>
+        <div class="chips">${Object.entries(NICHOS).filter(([k]) => k !== "geral").map(([k, l]) => `<label><input type="checkbox" data-nicho="${k}"${nichos.includes(k) ? " checked" : ""}${ro}>${esc(l)}</label>`).join("")}</div></div>
+      <div class="panel" style="display:grid;gap:10px"><h2 style="margin:0">Grupos de hashtags</h2><div id="blHash" style="display:grid;gap:10px">${b.hashtags.map(x => blocoRow("hashtags", x)).join("")}</div>
+        ${S.canWrite ? `<button class="btn sm" type="button" style="justify-self:start" onclick="$('#blHash').insertAdjacentHTML('beforeend', blocoRow('hashtags'))">+ Grupo de hashtags</button>` : ""}</div>
+      <div class="panel" style="display:grid;gap:10px"><h2 style="margin:0">Modelos de legenda</h2><span class="muted" style="font-size:13px">Assinatura, CTA padrão, aviso de frete… Entram na legenda com um clique no editor da postagem.</span><div id="blMod" style="display:grid;gap:10px">${b.modelos.map(x => blocoRow("modelos", x)).join("")}</div>
+        ${S.canWrite ? `<button class="btn sm" type="button" style="justify-self:start" onclick="$('#blMod').insertAdjacentHTML('beforeend', blocoRow('modelos'))">+ Modelo</button>` : ""}</div>
+      ${S.canWrite ? `<div style="grid-column:1/-1"><button class="btn primary" type="submit">Salvar</button></div>` : ""}
+    </form>`;
+}
+async function salvarPlano() {
+  const f = $("#planoForm"), pacote = {};
+  f.querySelectorAll("[data-pac]").forEach(i => { const n = parseInt(i.value, 10); if (n > 0) pacote[i.dataset.pac] = n; });
+  const lista = tipo => [...f.querySelectorAll(`[data-bloco="${tipo}"]`)].map(b => ({ nome: b.querySelector('[data-b=nome]').value.trim(), texto: b.querySelector('[data-b=texto]').value.trim() })).filter(x => x.texto);
+  const extra = { pacote, relatorioAuto: $("#plRel").checked, nichos: [...f.querySelectorAll("[data-nicho]:checked")].map(i => i.dataset.nicho), hashtags: lista("hashtags"), modelos: lista("modelos") };
+  const btn = f.querySelector("button[type=submit]"); btn.disabled = true; btn.textContent = "Salvando…";
+  try { await api("salvarMarca", { marca: { ...marca(), perfil: { ...perfilDe(marca()), ...extra } } }); S.dirty = false; await carregar(); toast("Salvo"); }
+  catch (e) { btn.disabled = false; btn.textContent = "Salvar"; writeFail(e); }
+}
+
+/* ---------- Versões anteriores da arte ---------- */
+function versoesHtml(p, compacto) {
+  const v = (p.versoes || []).slice().reverse();
+  if (!v.length) return "";
+  const thumbs = x => (x.midias || []).length ? midiasHtml(x.midias) : thumbDe(x.capa) ? `<span><img src="${esc(thumbDe(x.capa))}" alt="" loading="lazy" onerror="this.remove()"></span>` : `<span class="muted" style="font-size:12px">sem arte</span>`;
+  const atual = (p.midias || []).length ? midiasHtml(p.midias) : blobSrc(p) ? `<span><img src="${esc(blobSrc(p))}" alt="" loading="lazy"></span>` : "";
+  return `<details class="versoes"><summary>🕘 ${compacto ? "Comparar com a versão anterior" : `Versões anteriores da arte (${v.length})`}</summary>
+    ${compacto ? `<div class="vs-cmp"><div><b>Antes</b><div class="midias">${thumbs(v[0])}</div></div><div><b>Agora</b><div class="midias">${atual}</div></div></div>${v[0].legenda && v[0].legenda.trim() !== String(p.legenda || "").trim() ? `<div class="kv" style="margin-top:6px"><b>Legenda anterior:</b></div><div class="leg">${esc(v[0].legenda)}</div>` : ""}`
+      : v.map((x, i) => `<div class="vs-item"><div class="muted" style="font-size:12.5px">Versão ${v.length - i} · até ${new Date(x.em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })} · estava em "${esc(x.status || "")}"</div><div class="midias">${thumbs(x)}</div>${x.legenda ? `<details><summary class="muted" style="font-size:12.5px;cursor:pointer">Legenda desta versão</summary><div class="leg">${esc(x.legenda)}</div></details>` : ""}</div>`).join("")}
+  </details>`;
+}
+
+/* ---------- Aprovar tudo de uma vez ---------- */
+function loteBtn(lista, k) {
+  const ok = lista.filter(p => podeAcao(p, k));
+  if (ok.length < 2) return "";
+  if (S.lote === k) return `<span class="confirm" style="margin-left:auto;font-size:13px;font-weight:400">${esc(rotulo(k, ok[0]))}: ${ok.length} posts? <button class="btn sm ok" type="button" id="btLote" onclick="aprovarLote('${k}')">Confirmar</button><button class="btn sm" type="button" onclick="S.lote=null;render()">Cancelar</button></span>`;
+  return `<button class="btn sm ok" type="button" style="margin-left:auto" onclick="S.lote='${k}';render()">${/[Vv]alid/.test(rotulo(k, ok[0])) ? "Validar" : "Aprovar"} todos (${ok.length})</button>`;
+}
+async function aprovarLote(k) {
+  const st = ACOES[k].de, ids = S.posts.filter(p => st.includes(p.status) && podeAcao(p, k)).map(p => p.id);
+  const b = $("#btLote"); if (b) { b.disabled = true; b.textContent = "Aprovando…"; }
+  try { const r = await api("acaoLote", { ids, acao: k }); S.lote = null; await carregar(); toast(`${r.feitas} post(s): ${ACOES[k].ok.toLowerCase()}${r.falhas.length ? ` · ${r.falhas.length} não deram certo` : ""}`); }
+  catch (e) { writeFail(e); }
+}
+
+/* ---------- Melhor horário para postar ---------- */
+const FAIXAS_TXT = ["6h–9h", "9h–12h", "12h–15h", "15h–18h", "18h–21h", "21h–24h"];
+function carregarHorario(mid, forcar) {
+  S.mh[mid] = { carregando: true };
+  api("melhorHorario", { marcaId: mid, forcar: !!forcar })
+    .then(r => { S.mh[mid] = r; }).catch(e => { S.mh[mid] = { erro: e.message || "Não consegui calcular." }; })
+    .finally(() => { if (view() === "resumo") render(); if ($("#agDlg").open && $("#agSug")) $("#agSug").innerHTML = sugestaoHorarioHtml(mid); });
+}
+function horarioHtml() {
+  const m = marca();
+  if (S.resumoTodas || !m || !instaOk(m.id)) return "";
+  const r = S.mh[m.id];
+  if (!r) carregarHorario(m.id);
+  let corpo;
+  if (!r || r.carregando) corpo = `<p class="muted">Analisando os últimos posts…</p>`;
+  else if (r.erro) corpo = `<p class="muted">${esc(r.erro)}</p>`;
+  else if (!r.posts) corpo = `<p class="muted">Ainda não há posts suficientes no perfil.</p>`;
+  else {
+    const max = Math.max(1, ...r.grade.flat().filter(v => v != null));
+    corpo = `${r.top.length ? `<p style="margin:0 0 10px">Melhores momentos: ${r.top.map((t, i) => `<b>${i + 1}. ${WD[t.dia]} ${FAIXAS_TXT[t.faixa]}</b>`).join(" · ")}</p>` : ""}
+      <div class="table-wrap"><table class="mh"><thead><tr><th></th>${FAIXAS_TXT.map(f => `<th>${f}</th>`).join("")}</tr></thead><tbody>
+      ${r.grade.map((l, d) => `<tr><th>${WD[d].slice(0, 3)}</th>${l.map((v, f) => `<td style="--a:${v == null ? 0 : (0.12 + 0.88 * v / max).toFixed(2)}" title="${v == null ? "Sem posts" : `Média ${v} interações em ${r.contagem[d][f]} post(s)`}">${v == null ? "" : v}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+      ${r.online ? `<p class="muted" style="font-size:12.5px;margin:8px 0 0">Seguidores mais online: ${r.online.map((v, h) => [v, h]).sort((a, b) => b[0] - a[0]).slice(0, 3).map(x => x[1] + "h").join(", ")}.</p>` : ""}
+      <p class="muted" style="font-size:12.5px;margin:6px 0 0">Média de curtidas + comentários (peso 2) dos últimos ${r.posts} posts, por dia e horário de publicação.</p>`;
+  }
+  return `<div class="panel" style="margin-top:16px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h2 style="margin:0">Melhor horário para postar</h2>${r && !r.carregando ? `<button class="btn sm" type="button" onclick="carregarHorario(S.marcaId,true);render()">Atualizar</button>` : ""}</div>${corpo}</div>`;
+}
+function sugestaoHorarioHtml(mid) {
+  const r = S.mh[mid];
+  if (!r || r.carregando || r.erro || !r.top || !r.top.length) return "";
+  const hora = f => pad([7, 10, 12, 16, 19, 21][f]) + ":00";
+  return `<span class="muted" style="font-size:12.5px">Melhores horários desta marca:</span> ${r.top.map(t => `<button class="btn sm" type="button" onclick="$('#agHora').value='${hora(t.faixa)}';const d=$('#agData');if(d.value){const x=parse(d.value);const dif=(${t.dia}-x.getDay()+7)%7;if(dif&&confirm('Mudar para ${WD[t.dia]}?')){x.setDate(x.getDate()+dif);d.value=iso(x);}}">${WD[t.dia].slice(0, 3)} ${FAIXAS_TXT[t.faixa]}</button>`).join(" ")}`;
+}
+
+/* ---------- App no celular e avisos no aparelho ---------- */
+let SWREG = null;
+if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").then(r => { SWREG = r; }).catch(() => {});
+const avisosLigados = () => store("avisos." + (S.eu?.id || "")) === "1" && "Notification" in window && Notification.permission === "granted";
+async function ligarAvisos(ligar) {
+  if (!("Notification" in window)) return toast("Este navegador não mostra avisos.");
+  if (ligar) {
+    const p = await Notification.requestPermission();
+    if (p !== "granted") { toast("O navegador bloqueou os avisos. Libere nas configurações do site."); render(); return; }
+    store("avisosVisto." + S.eu.id, String(Date.now()));
+  }
+  store("avisos." + S.eu.id, ligar ? "1" : "0"); render(); toast(ligar ? "Avisos ligados neste aparelho" : "Avisos desligados");
+}
+function avisarNovidades() {
+  if (!S.eu || !avisosLigados()) return;
+  const k = "avisosVisto." + S.eu.id, desde = Number(store(k)) || Date.now();
+  const novas = notificacoes().filter(n => n.em > desde);
+  if (!novas.length) return;
+  store(k, String(Math.max(...novas.map(n => n.em))));
+  const n = novas[0], titulo = novas.length > 1 ? `${novas.length} novidades no planejamento` : `${n.por} ${n.acao.charAt(0).toLowerCase() + n.acao.slice(1)}`;
+  const corpo = novas.length > 1 ? novas.slice(0, 3).map(x => `${x.por}: ${x.titulo}`).join("\n") : n.titulo + (n.motivo ? ` — "${n.motivo}"` : "");
+  const op = { body: corpo, icon: "icone-192.png", badge: "icone-192.png", tag: "planejamento", data: { url: location.pathname + "#aprovacoes" } };
+  try { if (SWREG) SWREG.showNotification(titulo, op); else new Notification(titulo, op); } catch (e) {}
+}
+function avisosContaHtml() {
+  const sup = "Notification" in window, lig = avisosLigados();
+  return `<div class="panel" style="display:grid;gap:10px"><h2 style="margin:0">App no celular e avisos</h2>
+    <p class="muted" style="margin:0;font-size:13.5px"><b>Instalar como app:</b> no celular, abra o site e toque em <b>Compartilhar → Adicionar à Tela de Início</b> (iPhone) ou no menu <b>⋮ → Instalar app</b> (Android). Ele abre em tela cheia, como um aplicativo.</p>
+    ${sup ? `<label style="display:flex;gap:8px;align-items:flex-start;font-size:14px"><input type="checkbox"${lig ? " checked" : ""} onchange="ligarAvisos(this.checked)" style="margin-top:3px"> <span><b>Avisar neste aparelho</b> quando chegar algo para você (aprovação, devolução, comentário, tarefa). Funciona com o app ou o site aberto, mesmo em segundo plano.</span></label>` : `<span class="muted" style="font-size:13px">Este navegador não mostra avisos.</span>`}
+  </div>`;
+}
+
 /* ---------- Eventos ---------- */
 $("#marcaSel").addEventListener("change", e => { S.marcaId = e.target.value; store("marca", S.marcaId); S.month = null; S.f = { status: "", formato: "", produto: "", q: "" }; S.confirmDel = false; S.dirty = false; render(); });
 $("#novaMarca").addEventListener("click", novaMarca);
@@ -3273,7 +3576,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-03.1"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-03.2"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",
@@ -3298,6 +3601,7 @@ async function carregar() {
     S.posts = (j.pautas || []).map(p => ({ ...p, status: normStatus(p.status) }));
     if (!S.marcas.find(m => m.id === S.marcaId)) { S.marcaId = S.marcas[0]?.id || null; S.month = null; }
     S.loadedM = S.loadedP = true; S.failed = false;
+    avisarNovidades();
   } catch (e) {
     if (e.code === "sessao") return writeFail(e);
     if (!S.loadedP) S.failed = true; else toast("Sem conexão com a planilha agora.");

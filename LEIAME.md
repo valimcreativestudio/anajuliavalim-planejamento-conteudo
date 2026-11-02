@@ -154,7 +154,7 @@ No **Resumo do mês**, com o Instagram conectado, aparece **Resultados dos posts
 
 ## Automáticos (resumo diário, cópia de segurança e publicação)
 
-Ao rodar **configurar**, o script cria três rotinas:
+Ao rodar **configurar**, o script cria quatro rotinas (a quarta é o relatório mensal para o cliente, no dia 1):
 - **Resumo diário por e-mail** (segunda a sexta, às 8h): cada pessoa recebe só o que é dela (aprovações pendentes, devolvidos, prazos vencendo, posts e stories do dia, tarefas). O cliente recebe com o link sem senha.
 - **Cópia de segurança** toda segunda de madrugada, na pasta "Planejamento de Conteúdo - Cópias de segurança" do seu Drive (guarda as 8 últimas).
 - **Publicação automática**: confere a cada 15 minutos se há post ou story para publicar.
@@ -163,6 +163,26 @@ Ao rodar **configurar**, o script cria três rotinas:
 
 - O site baixa só os últimos 3 meses e os próximos; meses antigos carregam quando você navega até eles. A cada 30 segundos ele só confere se algo mudou, sem baixar tudo de novo.
 - Em **Marca → Acessos** fica registrado quem abriu os acessos (últimas vezes). As senhas ficam nas propriedades do script, fora da planilha: mantenha só você como editora da planilha e do script.
+
+## Pacote, datas, ideias e legendas prontas
+
+- **Pacote contratado** (Marca → Pacote e legendas): quantos posts no feed, reels e stories o cliente contratou por mês. O Calendário e o Resumo mostram o que já foi planejado e publicado, quanto falta e o que passou do pacote.
+- **Datas comemorativas**: feriados e datas gerais aparecem no Calendário (🎉). Marque os nichos da marca (beleza, moda, alimentação, pet…) para ver também as datas do nicho. Dá para esconder com "Mostrar datas comemorativas", embaixo do calendário.
+- **Banco de ideias**: em cima do Calendário. Guarde ideias sem data e arraste para o dia quando decidir.
+- **Hashtags e modelos de legenda**: cadastre os grupos de hashtags e os textos fixos (assinatura, CTA, aviso de frete). No editor da postagem, "Inserir na legenda…" coloca com um clique.
+- **Versões da arte**: quando a arte muda depois de pronta (por exemplo, num ajuste), a versão anterior fica guardada. No editor aparecem todas as versões e, nas Aprovações, "Comparar com a versão anterior" mostra o antes e o depois.
+
+## Aprovar tudo, tempo de aprovação e relatório
+
+- **Aprovar todos**: nas Aprovações, quando há 2 ou mais posts para validar ou aprovar, o botão aprova tudo de uma vez. Quem recebe o aviso ganha um e-mail só com a lista.
+- **Tempo de aprovação** (Resumo do mês): média de quanto o aprovador e o cliente demoram para responder, por marca e por aprovador.
+- **Relatório para o cliente**: no Resumo, "Enviar ao cliente por e-mail" manda o resumo do mês (posts, resultados do Instagram, destaques) com PDF anexo e o link sem senha. Marcando "Mandar o relatório do mês para o cliente" em Pacote e legendas, ele vai sozinho todo dia 1, com o mês anterior.
+- **Melhor horário para postar** (Resumo, com Instagram conectado): mapa de dia e horário com o engajamento dos últimos posts e os 3 melhores momentos. Ao agendar, os melhores horários aparecem como botões que preenchem a hora.
+
+## App no celular
+
+- **Instalar:** abra o site no celular → iPhone: Compartilhar → Adicionar à Tela de Início; Android: menu ⋮ → Instalar app.
+- **Avisos no aparelho:** em Minha conta, ligue "Avisar neste aparelho". Chega aviso de aprovação, devolução, comentário e tarefa enquanto o app ou o site estiver aberto (mesmo em segundo plano). Com tudo fechado, quem avisa é o e-mail (o Google Apps Script não consegue mandar notificação para o celular com o app fechado).
 
 ## Fluxo de aprovação (2 etapas)
 
