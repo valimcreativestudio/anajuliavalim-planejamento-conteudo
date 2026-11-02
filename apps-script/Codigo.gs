@@ -10,6 +10,7 @@
  *   admin     — vê e faz tudo, cadastra a equipe e as marcas
  *   diretor   — tudo do gestor + cadastra gestores, social medias e aprovadores, cria marcas,
  *               força status; não exclui marcas nem mexe em admins/diretores
+ *   cliente   — aprovador do cliente: vê as marcas liberadas (só leitura) e aprova ideia e conteúdo depois da equipe
  *   gestor    — vê todas as marcas, alimenta (inclusive nome, fases e configurações), valida e aprova; não mexe na equipe
  *   social    — vê e alimenta só as marcas liberadas para ele, inclusive nome, fases e configurações
  *   aprovador — vê as marcas liberadas, valida ideias e aprova conteúdos
@@ -18,7 +19,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-01.1';
+const VERSAO = '2026-11-02.1';
 
 const ABA_PAUTAS = 'POSTAGENS';
 const ABA_MARCAS = 'MARCAS';
@@ -36,7 +37,7 @@ const CAMPOS_PAUTA = [
   ['legenda', 'Legenda'], ['criativo', 'Criativo'], ['criado', 'Criado em'], ['atualizado', 'Atualizado em'],
   ['motivo', 'Motivo da reprovação'], ['historico', 'Histórico'],
   ['agTipo', 'Agendado como'], ['agQuando', 'Agendado para'], ['postLink', 'Link do post publicado'],
-  ['capa', 'Imagem de prévia']
+  ['capa', 'Imagem de prévia'], ['midias', 'Mídias da publicação']
 ];
 const CAMPOS_MARCA = [
   ['id', 'ID'], ['nome', 'Nome'], ['produtos', 'Produtos'], ['fases', 'Fases'],
@@ -53,22 +54,27 @@ const PRIORIDADES = ['Urgente', 'Alta', 'Média', 'Baixa'];
 const CAMPOS_USUARIO = [
   ['id', 'ID'], ['nome', 'Nome'], ['login', 'Login (e-mail)'], ['papel', 'Papel'],
   ['marcas', 'Marcas liberadas (IDs)'], ['ativo', 'Ativo'], ['hash', 'Senha (protegida)'],
-  ['sal', 'Sal'], ['criado', 'Criado em'], ['whatsapp', 'WhatsApp'], ['ultimoAcesso', 'Último acesso'], ['notificar', 'Notificações por e-mail']
+  ['sal', 'Sal'], ['criado', 'Criado em'], ['whatsapp', 'WhatsApp'], ['ultimoAcesso', 'Último acesso'], ['notificar', 'Notificações por e-mail'], ['visual', 'Visualização']
 ];
-const PAPEIS = ['admin', 'diretor', 'gestor', 'social', 'aprovador'];
+const PAPEIS = ['admin', 'diretor', 'gestor', 'social', 'aprovador', 'cliente'];
 const VEEM_TODAS = ['admin', 'diretor', 'gestor'];
 
-const STATUS = ['Ideia', 'Em validação', 'Ideia reprovada', 'Em produção', 'Em aprovação', 'Ajustes solicitados', 'Aprovado', 'Agendado', 'Postado'];
+const STATUS = ['Ideia', 'Em validação', 'Validação do cliente', 'Ideia reprovada', 'Em produção', 'Em aprovação', 'Aprovação do cliente', 'Ajustes solicitados', 'Aprovado', 'Agendado', 'Postado'];
 const STATUS_ANTIGOS = { 'Validado': 'Em produção', 'Produzido': 'Em aprovação' };
 
-// quem: 'editar' = admin ou social da marca; 'aprovar' = admin ou aprovador da marca
+// quem: 'editar' = admin ou social da marca; 'aprovar' = admin ou aprovador da marca; 'cliente' = aprovador do cliente (ou a gestão, pelo cliente)
+// paraCliente: se a marca tem aprovador do cliente, a postagem vai para ele em vez de seguir direto
 const ACOES = {
   enviarValidacao: { de: ['Ideia', 'Ideia reprovada'], para: 'Em validação', quem: 'editar', texto: 'Enviou a ideia para validação' },
-  validar: { de: ['Em validação'], para: 'Em produção', quem: 'aprovar', texto: 'Validou a ideia' },
+  validar: { de: ['Em validação'], para: 'Em produção', paraCliente: 'Validação do cliente', quem: 'aprovar', texto: 'Validou a ideia' },
   reprovarIdeia: { de: ['Em validação'], para: 'Ideia reprovada', quem: 'aprovar', motivo: true, texto: 'Reprovou a ideia' },
+  clienteValidar: { de: ['Validação do cliente'], para: 'Em produção', quem: 'cliente', texto: 'Validou a ideia (cliente)' },
+  clienteReprovar: { de: ['Validação do cliente'], para: 'Ideia reprovada', quem: 'cliente', motivo: true, texto: 'Reprovou a ideia (cliente)' },
   enviarAprovacao: { de: ['Em produção', 'Ajustes solicitados'], para: 'Em aprovação', quem: 'editar', texto: 'Enviou o conteúdo para aprovação' },
-  aprovar: { de: ['Em aprovação'], para: 'Aprovado', quem: 'aprovar', texto: 'Aprovou o conteúdo' },
+  aprovar: { de: ['Em aprovação'], para: 'Aprovado', paraCliente: 'Aprovação do cliente', quem: 'aprovar', texto: 'Aprovou o conteúdo' },
   pedirAjustes: { de: ['Em aprovação'], para: 'Ajustes solicitados', quem: 'aprovar', motivo: true, texto: 'Pediu ajustes no conteúdo' },
+  clienteAprovar: { de: ['Aprovação do cliente'], para: 'Aprovado', quem: 'cliente', texto: 'Aprovou o conteúdo (cliente)' },
+  clienteAjustes: { de: ['Aprovação do cliente'], para: 'Ajustes solicitados', quem: 'cliente', motivo: true, texto: 'Pediu ajustes no conteúdo (cliente)' },
   agendar: { de: ['Aprovado'], para: 'Agendado', quem: 'editar', texto: 'Agendou', agenda: true },
   reagendar: { de: ['Agendado'], para: 'Agendado', quem: 'editar', texto: 'Alterou o agendamento', agenda: true },
   postar: { de: ['Aprovado', 'Agendado'], para: 'Postado', quem: 'editar', texto: 'Marcou como postado' }
@@ -105,6 +111,7 @@ function doPost(e) {
     if (req.action === 'instaConectar') return json_(Object.assign({ ok: true }, instaConectar_(eu, req.marcaId, req.chave)));
     if (req.action === 'instaDesconectar') return json_(Object.assign({ ok: true }, instaDesconectar_(eu, req.marcaId)));
     if (req.action === 'instaMidias') return json_(Object.assign({ ok: true }, instaMidias_(eu, req.marcaId, req.forcar)));
+    if (req.action === 'lerPasta') return json_(Object.assign({ ok: true }, lerPasta_(eu, req.link)));
     if (req.action === 'acessosListar') return json_(Object.assign({ ok: true }, acessosListar_(eu, req.marcaId)));
     if (req.action === 'acessosSalvar') return json_(Object.assign({ ok: true }, acessosSalvar_(eu, req.marcaId, req.acessos)));
 
@@ -124,6 +131,7 @@ function doPost(e) {
         case 'concluirTarefa': concluirTarefa_(eu, req.id, req.feita !== false); return json_({ ok: true });
         case 'excluirTarefa': excluirTarefa_(eu, req.id); return json_({ ok: true });
         case 'meuNome': salvarMeuNome_(eu, req.nome); return json_({ ok: true });
+        case 'minhaVisualizacao': salvarPreferencia_(eu, 'visual', req.visual === 'instagram' ? 'instagram' : 'detalhada'); return json_({ ok: true });
         case 'minhasNotificacoes': salvarPreferencia_(eu, 'notificar', req.notificar === false ? 'não' : 'sim'); return json_({ ok: true });
         case 'sair': PropertiesService.getScriptProperties().deleteProperty('tok_' + req.token); return json_({ ok: true });
         default: return json_({ ok: false, error: 'Ação desconhecida: ' + req.action });
@@ -175,6 +183,7 @@ function publicoUsuario_(u) {
     id: u.id, nome: u.nome, login: u.login, papel: u.papel, ativo: u.ativo === 'sim', whatsapp: u.whatsapp || '',
     ultimoAcesso: Number(u.ultimoAcesso) || 0,
     notificar: u.notificar !== 'não',
+    visual: u.visual === 'instagram' || u.visual === 'detalhada' ? u.visual : (u.papel === 'cliente' ? 'instagram' : 'detalhada'),
     marcas: String(u.marcas || '').split(',').map(s => s.trim()).filter(String)
   };
 }
@@ -184,6 +193,13 @@ function acesso_(eu, marcaId) {
 }
 function podeEditar_(eu, marcaId) {
   return VEEM_TODAS.indexOf(eu.papel) >= 0 || (eu.papel === 'social' && acesso_(eu, marcaId));
+}
+function podeCliente_(eu, marcaId) {
+  return VEEM_TODAS.indexOf(eu.papel) >= 0 || (eu.papel === 'cliente' && acesso_(eu, marcaId));
+}
+// a marca tem aprovador do cliente ativo?
+function marcaTemCliente_(marcaId, pessoas) {
+  return (pessoas || ler_(ABA_USUARIOS, CAMPOS_USUARIO)).some(u => u.ativo === 'sim' && u.papel === 'cliente' && acesso_(publicoUsuario_(u), marcaId));
 }
 function podeAprovar_(eu, marcaId) {
   return VEEM_TODAS.indexOf(eu.papel) >= 0 || (eu.papel === 'aprovador' && acesso_(eu, marcaId));
@@ -201,6 +217,7 @@ function erro_(code, msg) {
 /* ---------- Leitura ---------- */
 
 function listar_(eu) {
+  const pessoasCache = ler_(ABA_USUARIOS, CAMPOS_USUARIO);
   const marcas = ler_(ABA_MARCAS, CAMPOS_MARCA).filter(m => acesso_(eu, m.id)).map(m => ({
     id: m.id,
     nome: m.nome,
@@ -210,7 +227,8 @@ function listar_(eu) {
     criado: Number(m.criado) || 0,
     perfil: parseJSON_(m.perfil, {}),
     arquivos: parseJSON_(m.arquivos, []),
-    insta: instaStatus_(m.id)
+    insta: instaStatus_(m.id),
+    temCliente: marcaTemCliente_(m.id, pessoasCache)
   }));
   const pautas = ler_(ABA_PAUTAS, CAMPOS_PAUTA).filter(p => acesso_(eu, p.marcaId)).map(pautaParaSite_);
   registrarAcesso_(eu);
@@ -236,6 +254,7 @@ function pautaParaSite_(p) {
   p.atualizado = Number(p.atualizado) || 0;
   p.status = normStatus_(p.status);
   p.historico = parseJSON_(p.historico, []);
+  p.midias = parseJSON_(p.midias, []);
   // "05/11/2026 18:30" -> agData "2026-11-05" e agHora "18:30"
   const q = String(p.agQuando || '').match(/^(\S+)\s+(\d{1,2}:\d{2})$/);
   p.agData = q ? paraISO_(q[1]) : '';
@@ -289,6 +308,8 @@ function salvarPauta_(eu, p) {
   const base = atual ? Object.assign({}, atual, { agQuando: atual.agData ? paraBR_(atual.agData) + ' ' + atual.agHora : '' }) : {};
   const novos = {};
   Object.keys(p).forEach(k => { if (PROTEGIDOS.indexOf(k) < 0) novos[k] = p[k]; });
+  if (Array.isArray(novos.midias)) novos.midias = JSON.stringify(novos.midias.slice(0, 20).map(x => ({ id: String(x.id || ''), nome: String(x.nome || '').slice(0, 120), tipo: x.tipo === 'video' ? 'video' : 'imagem' })));
+  if (atual && Array.isArray(base.midias)) base.midias = JSON.stringify(base.midias);
   const dataNova = novos.data || (atual && atual.data) || '';
   const linha = Object.assign(base, novos, {
     id: id,
@@ -325,11 +346,13 @@ function acaoPauta_(eu, id, acao, motivo, status, dados, site) {
   } else {
     const a = ACOES[acao];
     if (!a) throw erro_('server', 'Ação desconhecida.');
-    const pode = a.quem === 'aprovar' ? podeAprovar_(eu, p.marcaId) : podeEditar_(eu, p.marcaId);
-    if (!pode) throw erro_('permissao', a.quem === 'aprovar' ? 'Só o aprovador ou o administrador pode fazer isso.' : 'Você não pode alterar postagens desta marca.');
+    const pode = a.quem === 'aprovar' ? podeAprovar_(eu, p.marcaId) : a.quem === 'cliente' ? podeCliente_(eu, p.marcaId) : podeEditar_(eu, p.marcaId);
+    if (!pode) throw erro_('permissao', a.quem === 'aprovar' ? 'Só o aprovador ou o administrador pode fazer isso.' : a.quem === 'cliente' ? 'Só o aprovador do cliente (ou a gestão) pode fazer isso.' : 'Você não pode alterar postagens desta marca.');
     if (a.de.indexOf(p.status) < 0) throw erro_('server', 'Esta postagem está em "' + p.status + '" e não pode passar por esta etapa. Atualize a página.');
     if (a.motivo && !motivo) throw erro_('server', 'Escreva o motivo.');
     para = a.para; texto = a.texto;
+    if (a.paraCliente && marcaTemCliente_(p.marcaId)) { para = a.paraCliente; texto += ' e enviou para o cliente'; }
+    if (a.quem === 'cliente' && eu.papel !== 'cliente') texto = texto.replace('(cliente)', '(pelo cliente)');
     if (a.agenda) {
       if (TIPOS_AGENDA.indexOf(dados.agTipo) < 0) throw erro_('server', 'Escolha se é Feed, Carrossel, Reels ou Story.');
       if (!/^\d{4}-\d{2}-\d{2}$/.test(dados.agData || '') || !/^\d{1,2}:\d{2}$/.test(dados.agHora || '')) throw erro_('server', 'Preencha a data e a hora do agendamento.');
@@ -350,7 +373,7 @@ function acaoPauta_(eu, id, acao, motivo, status, dados, site) {
   }
   if (acao === 'postar' && dados.postLink) set('postLink', String(dados.postLink).trim());
   // o e-mail nunca pode impedir a ação de ser registrada
-  try { notificar_(eu, p, acao, motivo, historico, site); } catch (e) { Logger.log('Falha ao enviar notificação: ' + e); }
+  try { notificar_(eu, p, acao, motivo, historico, site, para); } catch (e) { Logger.log('Falha ao enviar notificação: ' + e); }
 }
 
 /* ---------- Notificações por e-mail ---------- */
@@ -361,16 +384,27 @@ const AVISOS = {
   validar: { para: 'autor', titulo: '✅ Ideia validada', frase: 'validou a sua ideia. Pode seguir para a produção.' },
   reprovarIdeia: { para: 'autor', titulo: '❌ Ideia reprovada', frase: 'reprovou a sua ideia' },
   aprovar: { para: 'autor', titulo: '✅ Conteúdo aprovado', frase: 'aprovou o seu conteúdo. Já pode agendar.' },
-  pedirAjustes: { para: 'autor', titulo: '✏️ Ajustes pedidos', frase: 'pediu ajustes no seu conteúdo' }
+  pedirAjustes: { para: 'autor', titulo: '✏️ Ajustes pedidos', frase: 'pediu ajustes no seu conteúdo' },
+  clienteValidar: { para: 'autor', titulo: '✅ Cliente validou a ideia', frase: 'validou a ideia pelo cliente. Pode seguir para a produção.' },
+  clienteReprovar: { para: 'autor', titulo: '❌ Cliente reprovou a ideia', frase: 'reprovou a ideia pelo cliente' },
+  clienteAprovar: { para: 'autor', titulo: '✅ Cliente aprovou o conteúdo', frase: 'aprovou o conteúdo pelo cliente. Já pode agendar.' },
+  clienteAjustes: { para: 'autor', titulo: '✏️ Cliente pediu ajustes', frase: 'pediu ajustes no conteúdo pelo cliente' }
+};
+const AVISO_CLIENTE = {
+  'Validação do cliente': { titulo: '💡 Ideia para você aprovar', frase: 'enviou uma ideia de post para a sua aprovação' },
+  'Aprovação do cliente': { titulo: '📲 Post para você aprovar', frase: 'enviou um post pronto para a sua aprovação. Veja exatamente como vai ficar no Instagram' }
 };
 
-function notificar_(eu, p, acao, motivo, historico, site) {
-  const av = AVISOS[acao];
+function notificar_(eu, p, acao, motivo, historico, site, paraStatus) {
+  let av = AVISOS[acao];
+  if (AVISO_CLIENTE[paraStatus]) av = Object.assign({ para: 'cliente' }, AVISO_CLIENTE[paraStatus]);
   if (!av) return;
   const pessoas = ler_(ABA_USUARIOS, CAMPOS_USUARIO).map(publicoUsuario_)
     .filter(u => u.ativo && u.notificar && u.id !== eu.id && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(u.login));
   let dest = [];
-  if (av.para === 'aprovador') {
+  if (av.para === 'cliente') {
+    dest = pessoas.filter(u => u.papel === 'cliente' && acesso_(u, p.marcaId));
+  } else if (av.para === 'aprovador') {
     // aprovador da marca; sem aprovador, o gestor; sem gestor, diretor e administrador
     dest = pessoas.filter(u => u.papel === 'aprovador' && acesso_(u, p.marcaId));
     if (!dest.length) dest = pessoas.filter(u => u.papel === 'gestor');
@@ -481,6 +515,44 @@ function avisarTarefa_(eu, t, u, site) {
     (link ? '<p style="margin:0 0 18px"><a href="' + link + '" style="background:#1d1d1f;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none;display:inline-block">Ver tarefas</a></p>' : '') +
     '<p style="margin:0;color:#6b6b70;font-size:12px">Para não receber mais avisos por e-mail, desligue em "Minha conta".</p></div>';
   MailApp.sendEmail({ to: u.login, subject: '📋 Nova tarefa: ' + t.titulo + (t.prazo ? ' (até ' + t.prazo + ')' : ''), htmlBody: html, name: 'Planejamento de Conteúdo' });
+}
+
+/* ---------- Puxar artes e legenda de uma pasta do Drive ----------
+ * Imagens e vídeos em ordem pelo número no nome (1, 2, 3…); o primeiro Google Docs vira a legenda.
+ * Os arquivos de mídia ficam visíveis para quem tem o link, para aparecerem na prévia e para o cliente. */
+function lerPasta_(eu, link) {
+  if (['cliente', 'aprovador'].indexOf(eu.papel) >= 0) throw erro_('permissao', 'Só quem alimenta a marca pode puxar arquivos.');
+  const m = String(link || '').match(/folders\/([\w-]{10,})/) || String(link || '').match(/[?&]id=([\w-]{10,})/);
+  if (!m) throw erro_('server', 'Cole o link de uma pasta do Drive (drive.google.com/drive/folders/…).');
+  let pasta;
+  try { pasta = DriveApp.getFolderById(m[1]); pasta.getName(); }
+  catch (e) { throw erro_('server', 'Não consegui abrir essa pasta. Confira se a conta dona da planilha tem acesso a ela.'); }
+  const midias = [], docs = [];
+  const it = pasta.getFiles();
+  while (it.hasNext()) {
+    const f = it.next(), mt = f.getMimeType(), nome = f.getName();
+    if (/^image\//.test(mt) || /^video\//.test(mt)) {
+      midias.push({ id: f.getId(), nome: nome, tipo: /^video\//.test(mt) ? 'video' : 'imagem' });
+      try { f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) { /* domínio pode bloquear */ }
+    } else if (mt === MimeType.GOOGLE_DOCS) docs.push(f);
+  }
+  // ordem pelo último número do nome: "1.png", "slide 2.jpg", "Carrossel P2 - 3.png"
+  const num = n => { const x = String(n).replace(/\.[a-z0-9]+$/i, '').match(/\d+/g); return x ? Number(x[x.length - 1]) : 9999; };
+  midias.sort((a, b) => num(a.nome) - num(b.nome) || a.nome.localeCompare(b.nome));
+  let texto = '', docNome = '';
+  if (docs.length) {
+    docNome = docs[0].getName();
+    const r = UrlFetchApp.fetch('https://www.googleapis.com/drive/v3/files/' + docs[0].getId() + '/export?mimeType=text/plain',
+      { headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() }, muteHttpExceptions: true });
+    if (r.getResponseCode() === 200) texto = r.getContentText().replace(/^\uFEFF/, '');
+  }
+  return { midias: midias.slice(0, 20), docNome: docNome, texto: texto, legenda: extrairLegenda_(texto) };
+}
+
+// pega o que vem depois de "Legenda" (ou "Legenda:"); sem esse título, usa o documento inteiro
+function extrairLegenda_(t) {
+  const m = String(t || '').match(/(?:^|\n)\s*legenda\s*:?\s*\n?([\s\S]*)/i);
+  return (m ? m[1] : String(t || '')).trim();
 }
 
 function escH_(t) {
@@ -692,7 +764,7 @@ function salvarUsuario_(eu, u) {
   if (PAPEIS.indexOf(u.papel) < 0) throw erro_('server', 'Papel inválido.');
   if (eu.papel === 'diretor') {
     // o diretor não cria nem altera administradores e diretores (nem a si mesmo por aqui)
-    if (['gestor', 'social', 'aprovador'].indexOf(u.papel) < 0) throw erro_('permissao', 'O diretor só cadastra gestores, social medias e aprovadores.');
+    if (['gestor', 'social', 'aprovador', 'cliente'].indexOf(u.papel) < 0) throw erro_('permissao', 'O diretor só cadastra gestores, social medias e aprovadores.');
     if (atual && ['admin', 'diretor'].indexOf(atual.papel) >= 0) throw erro_('permissao', 'Só o administrador altera este acesso.');
   }
   if (atual && atual.id === eu.id && (u.papel !== 'admin' || u.ativo === false)) throw erro_('server', 'Você não pode tirar o seu próprio acesso de administrador.');
@@ -711,7 +783,8 @@ function salvarUsuario_(eu, u) {
     criado: atual ? atual.criado : String(Date.now()),
     whatsapp: String(u.whatsapp || '').replace(/\D/g, ''),
     ultimoAcesso: atual ? atual.ultimoAcesso : '',
-    notificar: atual ? atual.notificar : ''
+    notificar: atual ? atual.notificar : '',
+    visual: atual ? atual.visual : ''
   });
 }
 

@@ -456,6 +456,43 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 .tf .meta .atraso { color: var(--danger); font-weight: 600; }
 .tf .prio { font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--pc); white-space: nowrap; }
 #tfDlg { width: min(620px, calc(100vw - 24px)); }
+/* Post como no Instagram */
+.ig { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; max-width: 470px; margin: 0 auto; width: 100%; }
+.ig-top { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+.ig-av { width: 34px; height: 34px; border-radius: 99px; overflow: hidden; flex: none; display: grid; place-items: center; background: var(--surface-2); font-family: var(--f-display); font-size: 16px; box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px #d62976; }
+.ig-av img { width: 100%; height: 100%; object-fit: cover; }
+.ig-top b { font-size: 14px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.ig-media { position: relative; aspect-ratio: 4 / 5; background: #000; max-width: 100%; }
+.ig-track { display: flex; height: 100%; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.ig-track::-webkit-scrollbar { display: none; }
+.ig-slide { flex: 0 0 100%; height: 100%; scroll-snap-align: center; position: relative; display: grid; place-items: center; }
+.ig-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ig-slide iframe { width: 100%; height: 100%; border: 0; }
+.ig-slide .vazio { color: #bbb; font-size: 13px; padding: 20px; text-align: center; }
+.ig-play { position: absolute; inset: 0; display: grid; place-items: center; background: transparent; border: 0; cursor: pointer; }
+.ig-play span { width: 64px; height: 64px; border-radius: 99px; background: rgba(0,0,0,.55); color: #fff; font-size: 26px; display: grid; place-items: center; padding-left: 5px; }
+.ig-cnt { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,.6); color: #fff; font-size: 12px; font-weight: 600; border-radius: 99px; padding: 3px 9px; }
+.ig-seta { position: absolute; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border-radius: 99px; border: 0; background: rgba(255,255,255,.85); color: #111; font-size: 15px; display: grid; place-items: center; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+.ig-seta.e { left: 8px; } .ig-seta.d { right: 8px; }
+.ig-acts { display: flex; align-items: center; gap: 14px; padding: 10px 12px 4px; }
+.ig-acts svg { width: 24px; height: 24px; }
+.ig-acts .sp { flex: 1; }
+.ig-dots { display: flex; gap: 4px; justify-content: center; position: absolute; left: 0; right: 0; }
+.ig-dots i { width: 6px; height: 6px; border-radius: 99px; background: var(--line); }
+.ig-dots i.on { background: #0095f6; }
+.ig-cap { padding: 4px 12px 2px; font-size: 14px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ig-cap.curta { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ig-mais { background: none; border: 0; color: var(--muted); padding: 0 12px 4px; font-size: 14px; }
+.ig-data { padding: 2px 12px 12px; font-size: 11px; letter-spacing: .02em; color: var(--muted); text-transform: uppercase; }
+.apv-ig .acts { padding-top: 10px; }
+@media (max-width: 560px) { .dlg-head { flex-wrap: wrap; } .dlg-head .modo-sel { order: 3; margin-left: 0; flex-basis: auto; } }
+.modo-sel { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; margin-left: auto; }
+.modo-sel button { border: 0; background: var(--surface); padding: 6px 12px; font-size: 13px; }
+.modo-sel button[aria-pressed="true"] { background: var(--primary); color: var(--primary-ink); }
+.midias { display: flex; gap: 6px; flex-wrap: wrap; }
+.midias span { position: relative; width: 58px; aspect-ratio: 4 / 5; border-radius: 6px; overflow: hidden; background: var(--surface-2); display: grid; place-items: center; font-size: 11px; color: var(--muted); }
+.midias img { width: 100%; height: 100%; object-fit: cover; }
+.midias b { position: absolute; left: 3px; top: 3px; background: rgba(0,0,0,.6); color: #fff; font-size: 10px; border-radius: 4px; padding: 0 4px; }
 .empty { border: 1px dashed var(--line); border-radius: 14px; padding: 36px 20px; text-align: center; color: var(--muted); display: grid; gap: 12px; justify-items: center; }
 .empty strong { font-family: var(--f-display); font-weight: 400; font-size: 26px; color: var(--ink); }
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 999px; font-weight: 500; z-index: 50; box-shadow: var(--shadow); }
@@ -497,25 +534,32 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 
 <script src="config.js"></script>
 <script>
-const STATUS = ["Ideia", "Em validação", "Ideia reprovada", "Em produção", "Em aprovação", "Ajustes solicitados", "Aprovado", "Agendado", "Postado"];
-const ST_VAR = { "Ideia": "--st-ideia", "Em validação": "--st-validado", "Ideia reprovada": "--danger", "Em produção": "--st-produzido", "Em aprovação": "--st-aprovado", "Ajustes solicitados": "--danger", "Aprovado": "--st-postado", "Agendado": "--st-agendado", "Postado": "--ink" };
+const STATUS = ["Ideia", "Em validação", "Validação do cliente", "Ideia reprovada", "Em produção", "Em aprovação", "Aprovação do cliente", "Ajustes solicitados", "Aprovado", "Agendado", "Postado"];
+const COM_CLIENTE = ["Validação do cliente", "Aprovação do cliente"];
+const ST_VAR = { "Validação do cliente": "--pr-alta", "Aprovação do cliente": "--pr-alta", "Ideia": "--st-ideia", "Em validação": "--st-validado", "Ideia reprovada": "--danger", "Em produção": "--st-produzido", "Em aprovação": "--st-aprovado", "Ajustes solicitados": "--danger", "Aprovado": "--st-postado", "Agendado": "--st-agendado", "Postado": "--ink" };
 const STATUS_ANTIGOS = { Validado: "Em produção", Produzido: "Em aprovação" };
 const REPROVADOS = ["Ideia reprovada", "Ajustes solicitados"];
 // colunas do quadro: status reprovado fica junto da etapa em que precisa ser refeito
-const COLUNAS = [["Ideia", ["Ideia", "Ideia reprovada"]], ["Em validação", ["Em validação"]], ["Em produção", ["Em produção", "Ajustes solicitados"]], ["Em aprovação", ["Em aprovação"]], ["Aprovado", ["Aprovado"]], ["Agendado", ["Agendado"]], ["Postado", ["Postado"]]];
+const COLUNAS = [["Ideia", ["Ideia", "Ideia reprovada"]], ["Em validação", ["Em validação", "Validação do cliente"]], ["Em produção", ["Em produção", "Ajustes solicitados"]], ["Em aprovação", ["Em aprovação", "Aprovação do cliente"]], ["Aprovado", ["Aprovado"]], ["Agendado", ["Agendado"]], ["Postado", ["Postado"]]];
 // mesmas regras do Codigo.gs; quem: editar = admin ou social da marca, aprovar = admin ou aprovador da marca
 const ACOES = {
   enviarValidacao: { de: ["Ideia", "Ideia reprovada"], quem: "editar", label: "Enviar ideia para validação", ok: "Ideia enviada para validação" },
-  validar: { de: ["Em validação"], quem: "aprovar", label: "Validar ideia", ok: "Ideia validada", tipo: "ok" },
+  validar: { de: ["Em validação"], quem: "aprovar", label: p => temClienteM(p.marcaId) ? "Validar e enviar ao cliente" : "Validar ideia", ok: "Ideia validada", tipo: "ok" },
   reprovarIdeia: { de: ["Em validação"], quem: "aprovar", label: "Reprovar ideia", ok: "Ideia reprovada", motivo: true },
+  clienteValidar: { de: ["Validação do cliente"], quem: "cliente", label: p => ehCliente() ? "Aprovar ideia" : "Validar pelo cliente", ok: "Ideia aprovada", tipo: "ok" },
+  clienteReprovar: { de: ["Validação do cliente"], quem: "cliente", label: p => ehCliente() ? "Não aprovar ideia" : "Reprovar pelo cliente", ok: "Ideia reprovada", motivo: true },
   enviarAprovacao: { de: ["Em produção", "Ajustes solicitados"], quem: "editar", label: "Enviar conteúdo para aprovação", ok: "Conteúdo enviado para aprovação" },
-  aprovar: { de: ["Em aprovação"], quem: "aprovar", label: "Aprovar conteúdo", ok: "Conteúdo aprovado. Pode agendar.", tipo: "ok" },
+  aprovar: { de: ["Em aprovação"], quem: "aprovar", label: p => temClienteM(p.marcaId) ? "Aprovar e enviar ao cliente" : "Aprovar conteúdo", ok: "Conteúdo aprovado", tipo: "ok" },
   pedirAjustes: { de: ["Em aprovação"], quem: "aprovar", label: "Não aprovar (pedir ajustes)", ok: "Ajustes pedidos", motivo: true },
+  clienteAprovar: { de: ["Aprovação do cliente"], quem: "cliente", label: p => ehCliente() ? "Aprovar post" : "Aprovar pelo cliente", ok: "Post aprovado", tipo: "ok" },
+  clienteAjustes: { de: ["Aprovação do cliente"], quem: "cliente", label: p => ehCliente() ? "Não aprovar (pedir ajustes)" : "Ajustes pelo cliente", ok: "Ajustes pedidos", motivo: true },
   agendar: { de: ["Aprovado"], quem: "editar", label: "Agendar", ok: "Agendamento registrado", tipo: "ok", painel: true },
   reagendar: { de: ["Agendado"], quem: "editar", label: "Alterar agendamento", ok: "Agendamento alterado", painel: true },
   postar: { de: ["Aprovado", "Agendado"], quem: "editar", label: "Marcar como postado", ok: "Marcado como postado", painel: true }
 };
-const PAPEIS = { admin: "Administrador", diretor: "Diretor", gestor: "Gestor", social: "Social media", aprovador: "Aprovador" };
+const PAPEIS = { admin: "Administrador", diretor: "Diretor", gestor: "Gestor", social: "Social media", aprovador: "Aprovador (gestor)", cliente: "Aprovador (cliente)" };
+const rotulo = (k, p) => { const l = ACOES[k].label; return typeof l === "function" ? l(p) : l; };
+const temClienteM = mid => !!(S.marcas.find(m => m.id === mid) || {}).temCliente;
 const TODAS = ["admin", "diretor", "gestor"]; // papéis que veem todas as marcas
 const normStatus = s => STATUS_ANTIGOS[s] || (STATUS.includes(s) ? s : "Ideia");
 const FORMATOS = ["Estático", "Carrossel", "Vídeo"];
@@ -582,8 +626,10 @@ const podeGerir = () => ehAdmin() || ehDiretor();
 // gestor: vê tudo, alimenta e aprova, mas não mexe na estrutura (equipe, marcas, configurações)
 const temAcesso = mid => TODAS.includes(S.eu?.papel) || (S.eu?.marcas || []).includes("*") || (S.eu?.marcas || []).includes(mid);
 const podeEditar = mid => TODAS.includes(S.eu?.papel) || (S.eu?.papel === "social" && temAcesso(mid));
+const ehCliente = () => S.eu?.papel === "cliente";
+const podeCliente = mid => TODAS.includes(S.eu?.papel) || (ehCliente() && temAcesso(mid));
 const podeAprovar = mid => TODAS.includes(S.eu?.papel) || (S.eu?.papel === "aprovador" && temAcesso(mid));
-const podeAcao = (p, k) => { const a = ACOES[k]; return a.de.includes(p.status) && (a.quem === "aprovar" ? podeAprovar(p.marcaId) : podeEditar(p.marcaId)); };
+const podeAcao = (p, k) => { const a = ACOES[k]; return a.de.includes(p.status) && (a.quem === "aprovar" ? podeAprovar(p.marcaId) : a.quem === "cliente" ? podeCliente(p.marcaId) : podeEditar(p.marcaId)); };
 const nomeMarca = id => (S.marcas.find(m => m.id === id) || {}).nome || "";
 const marca = () => S.marcas.find(m => m.id === S.marcaId) || null;
 const fasesDe = m => (m && Array.isArray(m.fases) && m.fases.length) ? m.fases : DEFAULT_FASES;
@@ -624,6 +670,9 @@ function render() {
   $("#me").hidden = !S.eu;
   if (S.eu) $("#me").innerHTML = sinoHtml() + `<span class="who">Olá, <b>${esc(S.eu.nome)}</b></span><span class="papel">${esc(PAPEIS[S.eu.papel] || "")}</span><a href="#conta">Minha conta</a><button class="ghost-light" type="button" onclick="sair()">Sair</button>`;
   if (S.eu && !$("#notifPop").hidden) desenharNotif();
+  const LIBERADAS_CLIENTE = ["#calendario", "#grade", "#aprovacoes"];
+  document.querySelectorAll("#tabs a").forEach(a => { if (a.id !== "tabEquipe") a.hidden = ehCliente() && !LIBERADAS_CLIENTE.includes(a.getAttribute("href")); });
+  if (ehCliente() && !["calendario", "grade", "aprovacoes", "conta"].includes(view())) { location.replace("#aprovacoes"); return; }
   const pend = pendencias().length, bd = $("#apvBadge");
   bd.hidden = !pend; bd.textContent = pend;
   const urg = minhasUrgentes(), tb = $("#tfBadge");
@@ -718,7 +767,7 @@ function vCal() {
       ${S.canWrite ? `<button class="add-day" type="button" aria-label="Nova postagem em ${br(k)}" onclick="openEditor(null,'${k}')">+</button>` : ""}</div>
       ${ps.map(p => `<button class="chip" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="openEditor('${esc(p.id)}')"${S.canWrite ? ` draggable="true" data-id="${esc(p.id)}"` : ""}>
         ${blobSrc(p) ? `<span class="prev"><img src="${esc(blobSrc(p))}" alt="" loading="lazy" onerror="this.parentNode.remove()"></span>` : ""}
-        <span class="meta"><span class="fmt">${FMT_ICON[p.formato] || ""} ${esc(p.formato || "")}</span><span class="dot" style="background:${stColor(p.status)}" title="${esc(p.status)}"></span>${REPROVADOS.includes(p.status) ? `<span class="flag">${p.status === "Ideia reprovada" ? "Reprovada" : "Ajustes"}</span>` : ""}${p.status === "Agendado" && p.agHora ? `<span title="Agendado">⏰ ${esc(p.agHora)}${p.agData && p.agData !== p.data ? " " + br(p.agData) : ""}</span>` : ""}</span>
+        <span class="meta"><span class="fmt">${FMT_ICON[p.formato] || ""} ${esc(p.formato || "")}</span><span class="dot" style="background:${stColor(p.status)}" title="${esc(p.status)}"></span>${REPROVADOS.includes(p.status) ? `<span class="flag">${p.status === "Ideia reprovada" ? "Reprovada" : "Ajustes"}</span>` : ""}${COM_CLIENTE.includes(p.status) ? `<span style="color:var(--pr-alta)">Com o cliente</span>` : ""}${p.status === "Agendado" && p.agHora ? `<span title="Agendado">⏰ ${esc(p.agHora)}${p.agData && p.agData !== p.data ? " " + br(p.agData) : ""}</span>` : ""}</span>
         <span class="t" title="${esc(prodsDe(p.produto).join(", "))}"><b>${esc(prodCurto(p))}${prodCurto(p) ? ":" : ""}</b> ${esc(p.postagem || "sem título")}</span></button>`).join("")}
     </div>`;
   }
@@ -925,7 +974,7 @@ function rbars(map, total, naOrdem) {
   return `<div class="rbars">${ent.map(([k, v]) => `<div class="rbar" title="${esc(k)}: ${v} (${Math.round(v / total * 100)}%)">
     <span class="lb">${esc(k)}</span><span class="tr"><span class="fl" style="width:${(v / max * 100).toFixed(1)}%"></span></span><span class="v">${v} <small>${Math.round(v / total * 100)}%</small></span></div>`).join("")}</div>`;
 }
-const ETAPAS_REL = [["Ideia", ["Ideia", "Ideia reprovada"]], ["Em validação", ["Em validação"]], ["Em produção", ["Em produção", "Ajustes solicitados"]], ["Em aprovação", ["Em aprovação"]], ["Aprovado", ["Aprovado"]], ["Agendado", ["Agendado"]], ["Postado", ["Postado"]]];
+const ETAPAS_REL = [["Ideia", ["Ideia", "Ideia reprovada"]], ["Em validação", ["Em validação"]], ["Com o cliente (ideia)", ["Validação do cliente"]], ["Em produção", ["Em produção", "Ajustes solicitados"]], ["Em aprovação", ["Em aprovação"]], ["Com o cliente (post)", ["Aprovação do cliente"]], ["Aprovado", ["Aprovado"]], ["Agendado", ["Agendado"]], ["Postado", ["Postado"]]];
 function calcResumo(ps) {
   const n = ps.length, conta = f => ps.filter(f).length;
   const postadas = conta(p => p.status === "Postado");
@@ -1147,6 +1196,7 @@ const SECOES = {
       ["cores", "Cores da marca (códigos HEX)", "text", "#1D1D1F, #F5F5F3, #B4763A"],
       ["fontes", "Fontes", "text", "Títulos: … / Textos: …"],
       ["estiloFoto", "Estilo de foto e vídeo", "area", "Luz natural, fundo neutro, close de textura, pessoas reais…"],
+      ["fotoPerfil", "Foto de perfil do Instagram (link da imagem no Drive)", "text", "https://drive.google.com/file/d/…"],
       ["naoFazer", "O que não fazer no visual", "area", "Ex.: não usar fundo preto, não distorcer o logo, não usar fotos de banco de imagem."]
     ]
   },
@@ -1630,10 +1680,14 @@ function drawEditor() {
   const txt = (id, label, val, full, ph = "") => `<label class="field${full ? " full" : ""}"><span>${label}</span><input id="${id}" value="${esc(val)}" placeholder="${esc(ph)}"${ro}></label>`;
   const area = (id, label, val, rows = 3) => `<label class="field full"><span>${label}</span><textarea id="${id}" rows="${rows}"${ro}>${esc(val)}</textarea></label>`;
   const src = blobSrc(p);
+  const insta = p.id && modoVisual() === "instagram";
   $("#dlgForm").innerHTML = `
     <div class="dlg-head"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600">${esc(m.nome)} · ${p.id ? `${brFull(p.data)} · ${wd(p.data)}` : "Nova postagem"}</div>
       <h2>${esc(p.id ? nm(p) : "Nova postagem")}</h2></div>
+      ${p.id ? `<div class="modo-sel" role="group" aria-label="Visualização"><button type="button" aria-pressed="${!insta}" onclick="trocarModoEditor('detalhada')">Detalhada</button><button type="button" aria-pressed="${!!insta}" onclick="trocarModoEditor('instagram')">Instagram</button></div>` : ""}
       <button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#dlg').close()">×</button></div>
+    ${insta ? `<div class="dlg-body" style="grid-template-columns:1fr"><div>${fluxoHtml(p)}</div><div>${igPost(p)}</div></div>
+    <div class="dlg-foot"><span class="sp"></span><button class="btn" type="button" onclick="$('#dlg').close()">Fechar</button></div>` : `
     <div class="dlg-body">
       ${p.id ? `<div class="full">${fluxoHtml(p)}</div>` : ""}
       <h4>Planejamento</h4>
@@ -1652,7 +1706,11 @@ function drawEditor() {
       ${area("eInsp", "Inspiração", p.inspiracao, 2)}
       ${area("eLegenda", "Legenda", p.legenda, 5)}
       <div class="full" style="margin-top:-6px"><button class="btn sm" type="button" onclick="copiarLegenda()">Copiar legenda</button></div>
-      ${txt("eCriativo", "Link da publicação (pasta ou arquivo no Drive, ou Canva)", p.criativo, true, "https://drive.google.com/drive/folders/…")}
+      <label class="field full"><span>Link da publicação (pasta ou arquivo no Drive, ou Canva)</span><span class="prod-pick"><input id="eCriativo" value="${esc(p.criativo || "")}" placeholder="https://drive.google.com/drive/folders/…" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px"${ro}>${S.canWrite ? `<button class="btn sm" type="button" id="btPasta" onclick="puxarPasta()">Puxar da pasta</button>` : ""}</span>
+        <small>Com o link de uma pasta, "Puxar da pasta" traz as artes na ordem dos números (1, 2, 3…) e a legenda do documento.</small></label>
+      <div class="field full" id="eMidiasBox"${(p.midias || []).length ? "" : " hidden"}><span>Artes da publicação (${(p.midias || []).length})</span><div class="midias" id="eMidias">${midiasHtml(p.midias)}</div>
+        ${S.canWrite ? `<button class="btn sm" type="button" style="justify-self:start;margin-top:6px" onclick="EDIT.midias=[];$('#eMidiasBox').hidden=true">Limpar artes</button>` : ""}</div>
+      <div class="full" id="eLegNova" hidden></div>
       <label class="field full"><span>Link da imagem de prévia (arquivo de imagem no Drive)</span><input id="eCapa" value="${esc(p.capa || "")}" placeholder="https://drive.google.com/file/d/…" oninput="atualizarPrevia()"${ro}>
         <small>Abra a imagem no Drive, clique em Compartilhar → Copiar link. Ela precisa estar como "Qualquer pessoa com o link".</small></label>
       <div class="field full"><span>Prévia</span>
@@ -1667,7 +1725,7 @@ function drawEditor() {
       <span class="sp"></span>
       <button class="btn" type="button" onclick="$('#dlg').close()">${S.canWrite ? "Cancelar" : "Fechar"}</button>
       ${S.canWrite ? `<button class="btn primary" type="submit" id="eSalvar">Salvar postagem</button>` : ""}
-    </div>`;
+    </div>`}`;
 }
 function previaHtml(src) {
   return src ? `<img src="${esc(src)}" alt="Prévia da publicação" onerror="this.outerHTML='<span class=&quot;muted&quot;>Não consegui abrir a imagem. Confira se o link é de um arquivo e se está compartilhado como Qualquer pessoa com o link.</span>'">`
@@ -1690,13 +1748,47 @@ async function addRede() {
   }
   mselAdiciona("eRedes", nome);
 }
+function midiasHtml(l) {
+  return (l || []).map((x, i) => `<span title="${esc(x.nome || "")}"><img src="https://drive.google.com/thumbnail?id=${esc(x.id)}&sz=w200" alt="" loading="lazy" onerror="this.remove()"><b>${i + 1}${x.tipo === "video" ? " ▶" : ""}</b></span>`).join("");
+}
+function trocarModoEditor(v) {
+  // guarda o que foi digitado antes de trocar de tela
+  if (S.canWrite && $("#eData")) Object.assign(EDIT, gather());
+  S.modoTela = v; drawEditor();
+  if (S.eu && S.eu.visual !== v) { S.eu.visual = v; api("minhaVisualizacao", { visual: v }).catch(() => {}); }
+}
+async function puxarPasta() {
+  const link = $("#eCriativo").value.trim();
+  if (!/folders\//.test(link)) return toast("Cole o link de uma pasta do Drive (drive.google.com/drive/folders/…).");
+  const b = $("#btPasta"); b.disabled = true; b.textContent = "Lendo a pasta…";
+  try {
+    const r = await api("lerPasta", { link });
+    EDIT.midias = r.midias || [];
+    $("#eMidias").innerHTML = midiasHtml(EDIT.midias);
+    $("#eMidiasBox").hidden = !EDIT.midias.length;
+    $("#eMidiasBox > span").textContent = `Artes da publicação (${EDIT.midias.length})`;
+    const primeira = EDIT.midias.find(x => x.tipo === "imagem") || EDIT.midias[0];
+    if (primeira && !$("#eCapa").value.trim()) { $("#eCapa").value = `https://drive.google.com/file/d/${primeira.id}/view`; atualizarPrevia(); }
+    if (r.legenda) {
+      if (!$("#eLegenda").value.trim()) $("#eLegenda").value = r.legenda;
+      else if ($("#eLegenda").value.trim() !== r.legenda.trim()) {
+        S.legPasta = r.legenda;
+        $("#eLegNova").hidden = false;
+        $("#eLegNova").innerHTML = `<div class="motivo" style="border-left-color:var(--st-produzido);background:var(--surface-2)"><b style="color:var(--ink)">Legenda do documento "${esc(r.docNome)}"</b>A legenda da postagem é diferente da do documento. <button class="btn sm" type="button" onclick="$('#eLegenda').value=S.legPasta;$('#eLegNova').hidden=true">Usar a do documento</button></div>`;
+      }
+    }
+    S.dirty = true;
+    toast(`${EDIT.midias.length} arte(s)${r.docNome ? " e a legenda" : ""} puxadas da pasta. Salve a postagem.`);
+  } catch (e) { writeFail(e); }
+  b.disabled = false; b.textContent = "Puxar da pasta";
+}
 function gather() {
   const v = id => ($("#" + id)?.value ?? "").trim();
   return {
     marcaId: S.marcaId, data: v("eData"), formato: v("eFormato"), fase: v("eFase"),
     produto: [...document.querySelectorAll("#eProdutos .msel-op input:checked")].map(i => i.value).join(" + "), postagem: v("ePostagem"), pauta: v("ePauta"), objetivo: v("eObjetivo"), cta: v("eCta"),
     rede: [...document.querySelectorAll("#eRedes .msel-op input:checked")].map(i => i.value).join(" + "), gravacao: v("eGravacao"), observacao: $("#eObs").value, inspiracao: $("#eInsp").value,
-    legenda: $("#eLegenda").value, criativo: v("eCriativo"), capa: v("eCapa"), atualizado: Date.now()
+    legenda: $("#eLegenda").value, criativo: v("eCriativo"), capa: v("eCapa"), midias: EDIT.midias || [], atualizado: Date.now()
   };
 }
 async function salvarEditor(fechar = true) {
@@ -1722,32 +1814,34 @@ $("#dlgForm").addEventListener("submit", e => { e.preventDefault(); if (S.canWri
 
 /* ---------- Fluxo de aprovação ---------- */
 const ETAPAS = ["Ideia", "Em validação", "Em produção", "Em aprovação", "Aprovado", "Agendado", "Postado"];
+const etapasDe = p => temClienteM(p.marcaId) ? ["Ideia", "Em validação", "Validação do cliente", "Em produção", "Em aprovação", "Aprovação do cliente", "Aprovado", "Agendado", "Postado"] : ETAPAS;
 function etapaDe(st) { return st === "Ideia reprovada" ? "Ideia" : st === "Ajustes solicitados" ? "Em produção" : st; }
 function fluxoHtml(p) {
-  const at = ETAPAS.indexOf(etapaDe(p.status));
+  const ETP = etapasDe(p), at = ETP.indexOf(etapaDe(p.status));
   const acoes = Object.keys(ACOES).filter(k => podeAcao(p, k));
   const rej = S.rejDlg;
   const hist = (p.historico || []).slice().reverse();
   return `<div class="fluxo">
     <div class="row"><span class="pill" style="--c:${stColor(p.status)}"><span class="dot"></span>${esc(p.status)}</span>
-      <div class="steps">${ETAPAS.map((e, i) => `<span class="${i === at ? "on" : i < at ? "done" : ""}">${i < at ? "✓ " : ""}${e}</span>`).join("")}</div></div>
+      <div class="steps">${ETP.map((e, i) => `<span class="${i === at ? "on" : i < at ? "done" : ""}">${i < at ? "✓ " : ""}${e}</span>`).join("")}</div></div>
     ${p.motivo ? `<div class="motivo"><b>${p.status === "Ideia reprovada" ? "Ideia reprovada" : "Ajustes pedidos"}</b>${esc(p.motivo)}</div>` : ""}
     ${p.agTipo && ["Agendado", "Postado"].includes(p.status) ? `<div class="kv" style="font-size:13.5px">⏰ <b>${esc(p.agTipo)}</b> agendado para ${esc(brFull(p.agData))} às ${esc(p.agHora)}${p.postLink ? ` · <a class="lnk" href="${esc(p.postLink)}" target="_blank" rel="noopener">Ver post publicado</a>` : ""}</div>` : ""}
-    ${rej ? `<div class="rej"><label class="field"><span>${rej === "reprovarIdeia" ? "Por que a ideia não foi validada?" : "Por que o conteúdo não foi aprovado? O que precisa mudar?"}</span><textarea id="rejMotivo" placeholder="Escreva o motivo para a social media ajustar"></textarea></label>
+    ${rej ? `<div class="rej"><label class="field"><span>${/eprovar/.test(rej) ? "Por que a ideia não foi aprovada?" : "Por que o conteúdo não foi aprovado? O que precisa mudar?"}</span><textarea id="rejMotivo" placeholder="Escreva o motivo para a social media ajustar"></textarea></label>
         <div class="row"><button class="btn danger" type="button" onclick="acaoEditor('${rej}')">Confirmar</button><button class="btn" type="button" onclick="S.rejDlg=null;drawEditor()">Cancelar</button></div></div>`
       : acoes.length ? `<div class="row">${acoes.map(k => {
           const a = ACOES[k];
-          return a.motivo ? `<button class="btn danger" type="button" onclick="S.rejDlg='${k}';drawEditor();$('#rejMotivo').focus()">${a.label}</button>`
-            : `<button class="btn ${a.tipo === "ok" ? "ok" : "primary"}" type="button" onclick="acaoEditor('${k}')">${a.label}</button>`;
-        }).join("")}</div>` : `<span class="muted" style="font-size:13px">${p.status === "Em validação" || p.status === "Em aprovação" ? "Aguardando o aprovador." : p.status === "Postado" ? "Conteúdo publicado." : "Nenhuma ação sua nesta etapa."}</span>`}
+          return a.motivo ? `<button class="btn danger" type="button" onclick="S.rejDlg='${k}';drawEditor();$('#rejMotivo').focus()">${esc(rotulo(k, p))}</button>`
+            : `<button class="btn ${a.tipo === "ok" ? "ok" : "primary"}" type="button" onclick="acaoEditor('${k}')">${esc(rotulo(k, p))}</button>`;
+        }).join("")}</div>` : `<span class="muted" style="font-size:13px">${COM_CLIENTE.includes(p.status) ? "Aguardando a aprovação do cliente." : p.status === "Em validação" || p.status === "Em aprovação" ? "Aguardando o aprovador." : p.status === "Postado" ? "Conteúdo publicado." : "Nenhuma ação sua nesta etapa."}</span>`}
     ${hist.length ? `<details><summary class="muted" style="cursor:pointer;font-size:13px">Histórico (${hist.length})</summary><ul class="hist">${hist.map(h => `<li>${new Date(h.em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })} · <b>${esc(h.por)}</b> ${esc((h.acao || "").toLowerCase())}${h.motivo ? `: "${esc(h.motivo)}"` : ""}</li>`).join("")}</ul></details>` : ""}
   </div>`;
 }
 function editorMudou() {
   if (!EDIT.id) return true;
+  if (!$("#eData")) return false; // tela "Instagram": nada foi editado
   const g = gather();
   // redes e produtos são listas: a ordem não importa
-  const norm = (k, v) => k === "rede" ? redesDe(v).sort().join("|") : k === "produto" ? prodsDe(v).sort().join("|") : String(v ?? "").trim();
+  const norm = (k, v) => k === "rede" ? redesDe(v).sort().join("|") : k === "produto" ? prodsDe(v).sort().join("|") : k === "midias" ? JSON.stringify((v || []).map(x => x.id)) : String(v ?? "").trim();
   return Object.keys(g).some(k => !["atualizado", "marcaId"].includes(k) && norm(k, g[k]) !== norm(k, EDIT[k]));
 }
 async function acaoEditor(k) {
@@ -1837,15 +1931,69 @@ $("#agDlg").addEventListener("close", () => { AG = null; render(); });
 function pendencias() {
   if (!S.eu) return [];
   return S.posts.filter(p =>
-    (["Em validação", "Em aprovação"].includes(p.status) && podeAprovar(p.marcaId)) ||
+    (["Em validação", "Em aprovação"].includes(p.status) && podeAprovar(p.marcaId) && !ehCliente()) ||
+    (COM_CLIENTE.includes(p.status) && ehCliente() && temAcesso(p.marcaId)) ||
     (REPROVADOS.includes(p.status) && podeEditar(p.marcaId) && S.eu.papel === "social"));
 }
 
+/* ---------- Post como no Instagram ---------- */
+const modoVisual = () => S.modoTela || (S.eu && S.eu.visual) || "detalhada";
+async function definirVisual(v) {
+  S.modoTela = v; render();
+  if (S.eu && S.eu.visual !== v) { S.eu.visual = v; try { await api("minhaVisualizacao", { visual: v }); } catch (e) {} }
+}
+function midiasDe(p) {
+  // mídias puxadas da pasta; se não tiver, a imagem de prévia ou o arquivo do criativo
+  if (Array.isArray(p.midias) && p.midias.length) return p.midias;
+  const id = driveId(p.capa) || driveId(p.criativo);
+  return id ? [{ id, tipo: p.formato === "Vídeo" && !driveId(p.capa) ? "video" : "imagem" }] : [];
+}
+function igPost(p) {
+  const m = S.marcas.find(x => x.id === p.marcaId) || {}, perfil = perfilDe(m);
+  const usuario = String(perfil.instagram || m.nome || "marca").replace(/^.*instagram\.com\//i, "").replace(/[@\/\s]/g, "") || "marca";
+  const foto = thumbDe(perfil.fotoPerfil);
+  const ms = midiasDe(p), uid = "ig" + String(p.id || "novo").replace(/\W/g, "");
+  const slide = (x, i) => x.tipo === "video"
+    ? `<div class="ig-slide"><img src="https://drive.google.com/thumbnail?id=${esc(x.id)}&sz=w1080" alt="" loading="lazy" onerror="this.remove()"><button class="ig-play" type="button" aria-label="Tocar vídeo" onclick="this.parentNode.innerHTML='<iframe src=&quot;https://drive.google.com/file/d/${esc(x.id)}/preview&quot; allow=&quot;autoplay&quot; allowfullscreen></iframe>'"><span>▶</span></button></div>`
+    : `<div class="ig-slide"><img src="https://drive.google.com/thumbnail?id=${esc(x.id)}&sz=w1080" alt="Imagem ${i + 1}" loading="lazy" onerror="this.outerHTML='<span class=&quot;vazio&quot;>Não consegui abrir esta imagem. Confira se o arquivo está compartilhado.</span>'"></div>`;
+  const varios = ms.length > 1;
+  return `<div class="ig" id="${uid}">
+    <div class="ig-top"><span class="ig-av">${foto ? `<img src="${esc(foto)}" alt="" onerror="this.remove()">` : esc(usuario.charAt(0).toUpperCase())}</span><b>${esc(usuario)}</b><span aria-hidden="true">⋯</span></div>
+    <div class="ig-media">
+      <div class="ig-track" onscroll="igScroll(this)">${ms.length ? ms.map(slide).join("") : `<div class="ig-slide"><span class="vazio">Sem arte ainda. Use "Puxar da pasta" ou a imagem de prévia na postagem.</span></div>`}</div>
+      ${varios ? `<span class="ig-cnt">1/${ms.length}</span><button class="ig-seta e" type="button" aria-label="Anterior" onclick="igPassar(this,-1)" hidden>‹</button><button class="ig-seta d" type="button" aria-label="Próxima" onclick="igPassar(this,1)">›</button>` : ""}
+    </div>
+    <div class="ig-acts" style="position:relative">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7.5-4.6-9.5-9.2C1.2 8.6 3.3 5 6.8 5c2 0 3.4 1.1 5.2 3 1.8-1.9 3.2-3 5.2-3 3.5 0 5.6 3.6 4.3 6.8C19.5 16.4 12 21 12 21z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.5 12a8.5 8.5 0 1 1-3.1-6.6L21 4l-1 3.9A8.4 8.4 0 0 1 20.5 12z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 3 9.2 10.1M22 3l-7 18-3.8-8.1L3 9z"/></svg>
+      ${varios ? `<span class="ig-dots">${ms.map((x, i) => `<i class="${i ? "" : "on"}"></i>`).join("")}</span>` : ""}
+      <span class="sp"></span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>
+    </div>
+    ${cheio(p.legenda) ? `<div class="ig-cap curta"><b>${esc(usuario)}</b> ${esc(p.legenda)}</div><button class="ig-mais" type="button" onclick="const c=this.previousElementSibling;c.classList.toggle('curta');this.textContent=c.classList.contains('curta')?'mais':'menos'">mais</button>` : `<div class="ig-cap muted">Sem legenda ainda.</div>`}
+    <div class="ig-data">${esc(p.data ? new Date(parse(p.data)).toLocaleDateString("pt-BR", { day: "numeric", month: "long" }) : "")}</div>
+  </div>`;
+}
+function igScroll(track) {
+  const box = track.closest(".ig"), n = track.children.length, i = Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
+  const cnt = box.querySelector(".ig-cnt"); if (cnt) cnt.textContent = `${i + 1}/${n}`;
+  box.querySelectorAll(".ig-dots i").forEach((d, k) => d.classList.toggle("on", k === i));
+  const e = box.querySelector(".ig-seta.e"), d = box.querySelector(".ig-seta.d");
+  if (e) e.hidden = i === 0; if (d) d.hidden = i >= n - 1;
+}
+function igPassar(btn, dir) {
+  const t = btn.closest(".ig").querySelector(".ig-track");
+  t.scrollBy({ left: dir * t.clientWidth, behavior: "smooth" });
+}
+
 function apvCard(p, k1, k2) {
-  const src = blobSrc(p), conteudo = p.status === "Em aprovação";
+  const src = blobSrc(p), conteudo = ["Em aprovação", "Aprovação do cliente", "Aprovado"].includes(p.status);
+  const insta = modoVisual() === "instagram";
   const rej = S.rej && S.rej.id === p.id;
   const linha = (k, v) => cheio(v) ? `<div class="kv"><b>${k}:</b> ${esc(v)}</div>` : "";
-  return `<article class="apv">
+  return `<article class="apv${insta ? " apv-ig" : ""}">
+    ${insta ? `<div class="bd" style="padding-bottom:0"><div class="meta">${esc(nomeMarca(p.marcaId))} · ${br(p.data)} ${wd(p.data).slice(0, 3)} · ${esc(p.status)}</div>${p.motivo ? `<div class="motivo"><b>${esc(p.status)}</b>${esc(p.motivo)}</div>` : ""}</div><div style="padding:10px 14px 4px">${igPost(p)}</div>` : `
     ${conteudo && src ? `<div class="img"><img src="${esc(src)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>` : ""}
     <div class="bd">
       <div class="meta">${esc(nomeMarca(p.marcaId))} · ${br(p.data)} ${wd(p.data).slice(0, 3)} · ${FMT_ICON[p.formato] || ""} ${esc(p.formato)}</div>
@@ -1854,12 +2002,12 @@ function apvCard(p, k1, k2) {
       ${linha("Nome", p.pauta)}${linha("Objetivo", p.objetivo)}${linha("CTA", p.cta)}${linha("Fase", p.fase)}${conteudo ? "" : linha("Inspiração", p.inspiracao)}
       ${conteudo && cheio(p.legenda) ? `<div class="leg">${esc(p.legenda)}</div>` : ""}
       ${/^https?:\/\//.test(p.criativo || "") ? `<a class="lnk" href="${esc(p.criativo)}" target="_blank" rel="noopener">Abrir criativo</a>` : ""}
-    </div>
+    </div>`}
     <div class="acts">
-      ${rej ? `<div class="rej"><textarea id="rej-${esc(p.id)}" placeholder="${S.rej.k === "reprovarIdeia" ? "Por que a ideia não foi validada?" : "Por que não foi aprovado? O que precisa mudar?"}"></textarea>
+      ${rej ? `<div class="rej"><textarea id="rej-${esc(p.id)}" placeholder="${/eprovar/.test(S.rej.k) ? "Por que a ideia não foi aprovada?" : "Por que não foi aprovado? O que precisa mudar?"}"></textarea>
           <div style="display:flex;gap:8px"><button class="btn danger" type="button" onclick="confirmarRej('${esc(p.id)}')">Confirmar</button><button class="btn" type="button" onclick="S.rej=null;render()">Cancelar</button></div></div>`
-        : `${k1 && podeAcao(p, k1) ? `<button class="btn ok" type="button" onclick="${ACOES[k1].painel ? `abrirAgenda('${esc(p.id)}','${k1}')` : `acao('${esc(p.id)}','${k1}')`}">${ACOES[k1].label}</button>` : ""}
-           ${k2 && podeAcao(p, k2) ? `<button class="btn danger" type="button" onclick="S.rej={id:'${esc(p.id)}',k:'${k2}'};render();$('#rej-${esc(p.id)}').focus()">${k2 === "pedirAjustes" ? "Não aprovar" : "Reprovar"}</button>` : ""}
+        : `${k1 && podeAcao(p, k1) ? `<button class="btn ok" type="button" onclick="${ACOES[k1].painel ? `abrirAgenda('${esc(p.id)}','${k1}')` : `acao('${esc(p.id)}','${k1}')`}">${esc(rotulo(k1, p))}</button>` : ""}
+           ${k2 && podeAcao(p, k2) ? `<button class="btn danger" type="button" onclick="S.rej={id:'${esc(p.id)}',k:'${k2}'};render();$('#rej-${esc(p.id)}').focus()">${k2 === "pedirAjustes" || k2 === "clienteAjustes" ? "Não aprovar" : "Reprovar"}</button>` : ""}
            <button class="btn" type="button" onclick="openEditor('${esc(p.id)}')">Abrir postagem</button>`}
     </div>
   </article>`;
@@ -1873,19 +2021,30 @@ function vAprovacoes() {
   const ord = (a, b) => (a.data || "").localeCompare(b.data || "");
   const sec = (titulo, desc, lista, k1, k2) => `<section class="apv-sec"><h2>${titulo}<span class="n">${lista.length}</span></h2>
     ${lista.length ? `<div class="apv-list">${lista.sort(ord).map(p => apvCard(p, k1, k2)).join("")}</div>` : `<p class="muted">${desc}</p>`}</section>`;
-  const aprova = S.eu.papel !== "social";
-  const edita = S.eu.papel !== "aprovador";
+  const aprova = !["social", "cliente"].includes(S.eu.papel);
+  const edita = !["aprovador", "cliente"].includes(S.eu.papel);
   const meus = p => temAcesso(p.marcaId);
-  let html = head("Todas as suas marcas", "Aprovações");
+  const trocaVisual = `<div class="escopo" role="group" aria-label="Visualização"><button type="button" aria-pressed="${modoVisual() !== "instagram"}" onclick="definirVisual('detalhada')">Detalhada</button><button type="button" aria-pressed="${modoVisual() === "instagram"}" onclick="definirVisual('instagram')">Como Instagram</button></div>`;
+  let html = head("Todas as suas marcas", "Aprovações", trocaVisual);
+  if (ehCliente()) {
+    html += sec("Ideias para você aprovar", "Nenhuma ideia esperando a sua aprovação.", S.posts.filter(p => p.status === "Validação do cliente" && temAcesso(p.marcaId)), "clienteValidar", "clienteReprovar");
+    html += sec("Posts para você aprovar", "Nenhum post esperando a sua aprovação.", S.posts.filter(p => p.status === "Aprovação do cliente" && temAcesso(p.marcaId)), "clienteAprovar", "clienteAjustes");
+    html += sec("Aprovados", "Nada aprovado ainda neste período.", S.posts.filter(p => ["Aprovado", "Agendado"].includes(p.status) && temAcesso(p.marcaId)).slice(-12), null, null);
+    return html;
+  }
   if (aprova) {
     html += sec("1. Ideias para validar", "Nenhuma ideia esperando validação.", S.posts.filter(p => p.status === "Em validação" && podeAprovar(p.marcaId)), "validar", "reprovarIdeia");
     html += sec("2. Conteúdos para aprovar", "Nenhum conteúdo esperando aprovação.", S.posts.filter(p => p.status === "Em aprovação" && podeAprovar(p.marcaId)), "aprovar", "pedirAjustes");
+    if (TODAS.includes(S.eu.papel)) {
+      const cli = S.posts.filter(p => COM_CLIENTE.includes(p.status) && temAcesso(p.marcaId));
+      if (cli.length) html += `<section class="apv-sec"><h2>Com o cliente<span class="n">${cli.length}</span></h2><p class="muted" style="margin:-6px 0 12px">Esperando o aprovador do cliente. Se ele aprovar por outro canal, use os botões "pelo cliente".</p><div class="apv-list">${cli.map(p => apvCard(p, p.status === "Validação do cliente" ? "clienteValidar" : "clienteAprovar", p.status === "Validação do cliente" ? "clienteReprovar" : "clienteAjustes")).join("")}</div></section>`;
+    }
   }
   if (edita) {
     html += sec("Devolvidos para ajuste", "Nada foi devolvido. Tudo certo por aqui.", S.posts.filter(p => REPROVADOS.includes(p.status) && podeEditar(p.marcaId)), null, null);
     if (!aprova) {
-      html += sec("Aguardando validação", "Nenhuma ideia em validação.", S.posts.filter(p => p.status === "Em validação" && meus(p)), null, null);
-      html += sec("Aguardando aprovação", "Nenhum conteúdo em aprovação.", S.posts.filter(p => p.status === "Em aprovação" && meus(p)), null, null);
+      html += sec("Aguardando validação", "Nenhuma ideia em validação.", S.posts.filter(p => ["Em validação", "Validação do cliente"].includes(p.status) && meus(p)), null, null);
+      html += sec("Aguardando aprovação", "Nenhum conteúdo em aprovação.", S.posts.filter(p => ["Em aprovação", "Aprovação do cliente"].includes(p.status) && meus(p)), null, null);
     }
     html += sec("Aprovados, prontos para agendar", "Nenhum conteúdo aprovado esperando agendamento.", S.posts.filter(p => p.status === "Aprovado" && podeEditar(p.marcaId)), "agendar", null);
   }
@@ -2022,7 +2181,8 @@ function notificacoes() {
     const t = TIPOS_NOTIF.find(x => (h.acao || "").startsWith(x[0]));
     if (!t) return;
     // social media: o que voltou ou foi liberado nas marcas dela; aprovador: o que chegou para ele; chefia: tudo
-    const serve = chefia || (t[3] === "aprovar" ? podeAprovar(p.marcaId) && papel === "aprovador" : t[3] === "editar" ? podeEditar(p.marcaId) && papel === "social" : false);
+    const serve = chefia || (papel === "cliente" ? COM_CLIENTE.includes(h.para) && temAcesso(p.marcaId)
+      : t[3] === "aprovar" ? podeAprovar(p.marcaId) && papel === "aprovador" : t[3] === "editar" ? podeEditar(p.marcaId) && papel === "social" : false);
     if (serve) lista.push({ em: h.em, por: h.por, acao: h.acao, motivo: h.motivo, titulo: nm(p), marcaId: p.marcaId, ic: t[1], cls: t[2], abrir: `openEditor('${esc(p.id)}')` });
   }));
   // tarefas: o que passaram para mim e o que concluíram das que eu criei
@@ -2125,11 +2285,18 @@ function vConta() {
     <button class="btn primary" type="submit" style="justify-self:start">Salvar nome</button>
   </form>
   <div class="panel" style="max-width:460px;display:grid;gap:10px;margin-bottom:16px">
+    <h2>Visualização das publicações</h2>
+    <label style="display:flex;gap:8px;align-items:flex-start"><input type="radio" name="cVis" value="detalhada"${modoVisual() !== "instagram" ? " checked" : ""} onchange="definirVisual('detalhada')"> <span><b>Detalhada</b><br><span class="muted" style="font-size:13px">Todas as informações: legenda, CTA, textos, estratégia e detalhes.</span></span></label>
+    <label style="display:flex;gap:8px;align-items:flex-start"><input type="radio" name="cVis" value="instagram"${modoVisual() === "instagram" ? " checked" : ""} onchange="definirVisual('instagram')"> <span><b>Como Instagram</b><br><span class="muted" style="font-size:13px">O post igual ao feed: foto de perfil, carrossel para passar, vídeo com play e legenda.</span></span></label>
+    <span class="muted" style="font-size:12.5px">Dá para trocar a qualquer momento nas Aprovações e dentro de cada postagem.</span>
+  </div>
+  <div class="panel" style="max-width:460px;display:grid;gap:10px;margin-bottom:16px">
     <h2>Notificações por e-mail</h2>
     <label style="display:flex;gap:8px;align-items:center"><input id="cNotif" type="checkbox"${S.eu.notificar !== false ? " checked" : ""} onchange="salvarNotif(this.checked)"> Receber avisos em <b>${esc(S.eu.login)}</b></label>
     <span class="muted" style="font-size:13px">${{
       social: "Você recebe um e-mail quando as suas ideias forem validadas ou reprovadas e quando os seus conteúdos forem aprovados ou voltarem com pedido de ajuste.",
-      aprovador: "Você recebe um e-mail quando chegar uma ideia para validar ou um conteúdo para aprovar nas suas marcas."
+      aprovador: "Você recebe um e-mail quando chegar uma ideia para validar ou um conteúdo para aprovar nas suas marcas.",
+      cliente: "Você recebe um e-mail quando chegar uma ideia ou um post para você aprovar."
     }[S.eu.papel] || "Você recebe um e-mail quando chegar algo para validar ou aprovar e a marca não tiver aprovador, e quando algo que você enviou for validado, aprovado ou devolvido."}</span>
   </div>
   <form class="panel" style="max-width:460px;display:grid;gap:12px" onsubmit="event.preventDefault();trocarSenha()">
@@ -2165,7 +2332,7 @@ function vEquipe() {
   if (!podeGerir()) return `<div class="empty"><strong>Só o administrador e o diretor gerenciam a equipe</strong></div>`;
   // o diretor não mexe em administradores nem em outros diretores
   const editavel = x => ehAdmin() || !["admin", "diretor"].includes(x.papel);
-  const papeisPermitidos = ehAdmin() ? Object.keys(PAPEIS) : ["gestor", "social", "aprovador"];
+  const papeisPermitidos = ehAdmin() ? Object.keys(PAPEIS) : ["gestor", "social", "aprovador", "cliente"];
   const u = S.uEdit;
   const marcasTxt = x => TODAS.includes(x.papel) || x.marcas.includes("*") ? "Todas" : x.marcas.map(nomeMarca).filter(Boolean).join(", ") || "—";
   const linhas = S.usuarios.slice().sort((a, b) => a.nome.localeCompare(b.nome)).map(x => `<tr${editavel(x) ? ` onclick="S.uEdit=S.usuarios.find(y=>y.id==='${esc(x.id)}');render()"` : ' style="cursor:default" title="Só o administrador altera este acesso"'}>
@@ -2179,7 +2346,7 @@ function vEquipe() {
         <label class="field"><span>Papel</span><select id="uPapel" onchange="lerFormU();render()">${Object.entries(PAPEIS).filter(([k]) => papeisPermitidos.includes(k)).map(([k, l]) => `<option value="${k}"${u.papel === k ? " selected" : ""}>${l}</option>`).join("")}</select></label>
         <label class="field"><span>${u.id ? "Nova senha (deixe em branco para manter)" : "Senha provisória"}</span><span class="prod-pick"><input id="uSenha" type="text" autocomplete="off" ${u.id ? "" : "required"} minlength="6" value="${esc(u.senhaTemp || "")}" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px"><button class="btn sm" type="button" onclick="$('#uSenha').value=gerarSenha();S.dirty=true">Gerar senha</button></span></label>
         ${TODAS.includes(u.papel) ? `<div class="field full"><span>Marcas</span><span class="muted">${{ admin: "O administrador", diretor: "O diretor", gestor: "O gestor" }[u.papel]} vê todas as marcas.</span></div>`
-          : `<div class="field full"><span>Marcas que ${u.papel === "aprovador" ? "aprova" : "alimenta"}</span><div class="chk-list" id="uMarcas">
+          : `<div class="field full"><span>Marcas que ${u.papel === "aprovador" || u.papel === "cliente" ? "aprova" : "alimenta"}</span><div class="chk-list" id="uMarcas">
             <label><input type="checkbox" value="*"${(u.marcas || []).includes("*") ? " checked" : ""}> <b>Todas as marcas</b></label>
             ${S.marcas.map(m => `<label><input type="checkbox" value="${esc(m.id)}"${(u.marcas || []).includes(m.id) ? " checked" : ""}> ${esc(m.nome)}</label>`).join("")}</div></div>`}
         <label class="field full" style="display:flex;gap:8px;align-items:center"><input id="uAtivo" type="checkbox"${u.ativo !== false ? " checked" : ""}> Acesso ativo</label>
@@ -2187,7 +2354,7 @@ function vEquipe() {
       <div style="display:flex;gap:8px"><button class="btn primary" type="submit">Salvar</button><button class="btn" type="button" onclick="S.uEdit=null;S.dirty=false;render()">Cancelar</button></div>
     </form>` : "";
   return head(ehAdmin() ? "Administração" : "Direção", "Equipe", `<button class="btn primary" type="button" onclick="S.uEdit={papel:'social',marcas:[],ativo:true};render()">+ Pessoa</button>`) + equipeNav() +
-    `<p class="sec-intro"><b>Social media</b> vê e alimenta só as marcas liberadas para ele (inclusive nome, fases e configurações) e envia ideias e conteúdos para aprovação. <b>Aprovador</b> valida ideias e aprova conteúdos das marcas liberadas. <b>Gestor</b> vê todas as marcas, acompanha a atividade da equipe, alimenta (inclusive as configurações das marcas), valida e aprova, mas não mexe na equipe. <b>Diretor</b> faz tudo o que o gestor faz e também cadastra gestores, social medias e aprovadores, cria marcas e ajusta as configurações; não exclui marcas nem mexe em administradores e diretores. <b>Administrador</b> vê e faz tudo. Não há limite de pessoas nem de marcas por pessoa.</p>
+    `<p class="sec-intro"><b>Social media</b> vê e alimenta só as marcas liberadas para ele (inclusive nome, fases e configurações) e envia ideias e conteúdos para aprovação. <b>Aprovador (gestor)</b> valida ideias e aprova conteúdos das marcas liberadas. <b>Aprovador (cliente)</b> aprova ideias e posts depois da equipe, vendo como vão ficar no Instagram, e só enxerga as aprovações, o calendário e a grade das marcas dele. <b>Gestor</b> vê todas as marcas, acompanha a atividade da equipe, alimenta (inclusive as configurações das marcas), valida e aprova, mas não mexe na equipe. <b>Diretor</b> faz tudo o que o gestor faz e também cadastra gestores, social medias e aprovadores, cria marcas e ajusta as configurações; não exclui marcas nem mexe em administradores e diretores. <b>Administrador</b> vê e faz tudo. Não há limite de pessoas nem de marcas por pessoa.</p>
     ${boasVindasHtml()}
     <div class="table-wrap"><table style="min-width:620px"><thead><tr><th>Pessoa</th><th>Papel</th><th>Marcas</th><th>Acesso</th></tr></thead><tbody>${linhas}</tbody></table></div>` + form;
 }
@@ -2231,6 +2398,7 @@ function msgBoasVindas(u) {
     social: `Você vai atuar como social media e está responsável ${listaMarcas(u, "pela")}: vai planejar as ideias, montar os conteúdos e enviar para validação e aprovação.`,
     aprovador: `Você vai atuar como aprovador(a): vai validar as ideias e aprovar os conteúdos ${listaMarcas(u, "da")} antes de serem agendados.`,
     diretor: "Você vai atuar como diretor(a): vai acompanhar a equipe e todas as marcas da agência, validar as ideias, aprovar os conteúdos, cadastrar pessoas e ajustar as configurações das marcas.",
+    cliente: `Você vai aprovar as ideias e os posts ${listaMarcas(u, "da")} antes de irem ao ar, vendo cada post exatamente como vai ficar no Instagram.`,
     gestor: "Você vai atuar como gestor(a) da equipe: vai acompanhar o trabalho das social medias, validar as ideias e aprovar os conteúdos de todas as marcas da agência.",
     admin: "Você tem acesso de administrador(a), com acesso completo a todas as marcas, à equipe e às configurações do sistema."
   }[u.papel] || "";
@@ -2331,7 +2499,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-01.1"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-02.1"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",

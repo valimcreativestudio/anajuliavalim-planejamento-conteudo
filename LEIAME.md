@@ -110,6 +110,14 @@ Também funciona com a chave do **login do Instagram** (começa com "IG"), se es
 
 Em **Equipe → Atividade** (o administrador, o diretor e o gestor veem): último acesso de cada pessoa, quantas postagens criou, editou e enviou, quantas validou/aprovou ou devolveu, pendências e a lista das últimas ações. Quem fica 3 dias sem sinal aparece em vermelho.
 
+## Aprovação do cliente e visualização como Instagram
+
+- **Aprovador (cliente):** cadastre em **Equipe → + Pessoa** com o papel "Aprovador (cliente)" e marque as marcas dele. Ele vê só **Aprovações, Calendário e Grade do Insta** dessas marcas, sem editar.
+- Nas marcas com aprovador do cliente, o fluxo ganha duas etapas: depois que a equipe valida a ideia ela vai para **Validação do cliente**; depois que a equipe aprova o conteúdo ele vai para **Aprovação do cliente**. Reprovar ou pedir ajustes exige o motivo, como na equipe. Marcas sem cliente cadastrado seguem o fluxo de sempre.
+- A gestão (administrador, diretor e gestor) pode aprovar **pelo cliente** quando ele aprova por outro canal (seção "Com o cliente" nas Aprovações).
+- **Visualização:** cada pessoa escolhe em **Minha conta** entre **Detalhada** e **Como Instagram** (o cliente começa em Instagram). Dá para trocar nas Aprovações e dentro da postagem. O modo Instagram mostra foto de perfil e @ (de Marca → Sobre e Arquivos e identidade → Foto de perfil), carrossel com setas e bolinhas, vídeo com play e legenda com "mais".
+- **Puxar da pasta:** na postagem, cole o link da pasta do Drive em "Link da publicação" e clique em **Puxar da pasta**. O sistema traz as imagens e vídeos na ordem do número no nome (1, 2, 3…) e a legenda do Google Docs da pasta (o que vem depois de "Legenda"; sem esse título, o documento inteiro). Os arquivos de mídia ficam visíveis para quem tem o link, para aparecerem na prévia e para o cliente.
+
 ## Fluxo de aprovação (2 etapas)
 
 1. **Ideia** → a social media cria a postagem e clica em **Enviar ideia para validação**.
