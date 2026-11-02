@@ -19,7 +19,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-02.2';
+const VERSAO = '2026-11-02.3';
 
 const ABA_PAUTAS = 'POSTAGENS';
 const ABA_MARCAS = 'MARCAS';
@@ -54,7 +54,7 @@ const PRIORIDADES = ['Urgente', 'Alta', 'Média', 'Baixa'];
 const CAMPOS_USUARIO = [
   ['id', 'ID'], ['nome', 'Nome'], ['login', 'Login (e-mail)'], ['papel', 'Papel'],
   ['marcas', 'Marcas liberadas (IDs)'], ['ativo', 'Ativo'], ['hash', 'Senha (protegida)'],
-  ['sal', 'Sal'], ['criado', 'Criado em'], ['whatsapp', 'WhatsApp'], ['ultimoAcesso', 'Último acesso'], ['notificar', 'Notificações por e-mail'], ['visual', 'Visualização']
+  ['sal', 'Sal'], ['criado', 'Criado em'], ['whatsapp', 'WhatsApp'], ['ultimoAcesso', 'Último acesso'], ['notificar', 'Notificações por e-mail'], ['visual', 'Visualização'], ['foto', 'Foto de perfil (arquivo no Drive)']
 ];
 const PAPEIS = ['admin', 'diretor', 'gestor', 'social', 'aprovador', 'cliente'];
 const VEEM_TODAS = ['admin', 'diretor', 'gestor'];
@@ -131,6 +131,7 @@ function doPost(e) {
         case 'concluirTarefa': concluirTarefa_(eu, req.id, req.feita !== false); return json_({ ok: true });
         case 'excluirTarefa': excluirTarefa_(eu, req.id); return json_({ ok: true });
         case 'meuNome': salvarMeuNome_(eu, req.nome); return json_({ ok: true });
+        case 'minhaFoto': return json_(Object.assign({ ok: true }, salvarMinhaFoto_(eu, req.base64, req.remover)));
         case 'minhaVisualizacao': salvarPreferencia_(eu, 'visual', req.visual === 'instagram' ? 'instagram' : 'detalhada'); return json_({ ok: true });
         case 'minhasNotificacoes': salvarPreferencia_(eu, 'notificar', req.notificar === false ? 'não' : 'sim'); return json_({ ok: true });
         case 'sair': PropertiesService.getScriptProperties().deleteProperty('tok_' + req.token); return json_({ ok: true });
@@ -183,6 +184,7 @@ function publicoUsuario_(u) {
     id: u.id, nome: u.nome, login: u.login, papel: u.papel, ativo: u.ativo === 'sim', whatsapp: u.whatsapp || '',
     ultimoAcesso: Number(u.ultimoAcesso) || 0,
     notificar: u.notificar !== 'não',
+    foto: u.foto || '',
     visual: u.visual === 'instagram' || u.visual === 'detalhada' ? u.visual : (u.papel === 'cliente' ? 'instagram' : 'detalhada'),
     marcas: String(u.marcas || '').split(',').map(s => s.trim()).filter(String)
   };
@@ -235,7 +237,7 @@ function listar_(eu) {
   const r = { ok: true, versao: VERSAO, eu: eu, marcas: marcas, pautas: pautas };
   r.tarefas = ler_(ABA_TAREFAS, CAMPOS_TAREFA).filter(t => veTarefa_(eu, t)).map(tarefaParaSite_);
   // nomes da equipe (sem dados sensíveis) para escolher o responsável de uma tarefa
-  r.equipe = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(u => u.ativo === 'sim').map(u => ({ id: u.id, nome: u.nome, papel: u.papel }));
+  r.equipe = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(u => u.ativo === 'sim').map(u => ({ id: u.id, nome: u.nome, papel: u.papel, foto: u.foto || '' }));
   if (VEEM_TODAS.indexOf(eu.papel) >= 0) r.usuarios = ler_(ABA_USUARIOS, CAMPOS_USUARIO).map(publicoUsuario_);
   return r;
 }
@@ -813,8 +815,23 @@ function salvarUsuario_(eu, u) {
     whatsapp: String(u.whatsapp || '').replace(/\D/g, ''),
     ultimoAcesso: atual ? atual.ultimoAcesso : '',
     notificar: atual ? atual.notificar : '',
-    visual: atual ? atual.visual : ''
+    visual: atual ? atual.visual : '',
+    foto: atual ? atual.foto : ''
   });
+}
+
+// foto de perfil: fica numa pasta "Equipe" no Drive, visível para quem tem o link
+function salvarMinhaFoto_(eu, base64, remover) {
+  const u = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(x => x.id === eu.id)[0];
+  if (u.foto) { try { DriveApp.getFileById(u.foto).setTrashed(true); } catch (e) { /* já não existe */ } }
+  if (remover) { u.foto = ''; gravar_(ABA_USUARIOS, CAMPOS_USUARIO, u); return { foto: '' }; }
+  if (!base64 || base64.length > 3000000) throw erro_('server', 'Escolha uma imagem de até 2 MB.');
+  const pasta = pasta_(pasta_(DriveApp.getRootFolder(), PASTA_ARQUIVOS), 'Equipe');
+  const arq = pasta.createFile(Utilities.newBlob(Utilities.base64Decode(base64), 'image/jpeg', 'foto-' + eu.id + '.jpg'));
+  try { arq.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
+  u.foto = arq.getId();
+  gravar_(ABA_USUARIOS, CAMPOS_USUARIO, u);
+  return { foto: u.foto };
 }
 
 function salvarPreferencia_(eu, campo, valor) {

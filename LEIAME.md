@@ -51,6 +51,7 @@ Entre no site como administrador e abra a aba **Equipe** → **+ Pessoa**:
 | **Aprovador** | As marcas marcadas para ele (ou "Todas") | Valida ideias e aprova conteúdos, sempre escrevendo o motivo quando não aprova |
 
 Não há limite de pessoas nem de marcas por pessoa. Para tirar o acesso de alguém, desmarque **Acesso ativo**.
+Para **mudar o papel** de alguém (por exemplo, de Gestor para Diretor), escolha o novo papel na coluna **Papel** da lista, confira as marcas e clique em **Salvar**. Cada pessoa pode colocar a **foto de perfil** em **Minha conta**.
 Ao salvar uma pessoa com senha (use **Gerar senha**), aparece a mensagem de boas-vindas pronta, adaptada ao papel dela, com as marcas, o login, a senha provisória e o link do site, e o botão **Enviar pelo WhatsApp** (preencha o WhatsApp da pessoa com DDD). Ela troca a senha e o nome em **Minha conta**.
 
 ## Resumo do mês (dashboard)
