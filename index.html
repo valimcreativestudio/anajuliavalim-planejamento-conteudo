@@ -196,6 +196,10 @@ a.lnk:hover { text-decoration: underline; }
 .ig-box { display: grid; gap: 10px; }
 .ig-box .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .ig-box input { flex: 1 1 260px; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 10px; font-family: ui-monospace, monospace; font-size: 12.5px; }
+.tile.destaque { outline: 3px solid var(--pr-alta); outline-offset: -3px; z-index: 1; }
+.tile.aguarda { outline: 2px dashed color-mix(in srgb, var(--pr-alta) 70%, transparent); outline-offset: -2px; }
+.tile .tag-dest { position: absolute; left: 6px; bottom: 6px; z-index: 2; background: var(--pr-alta); color: #111; font-size: 10.5px; font-weight: 700; border-radius: 4px; padding: 1px 6px; }
+#grDlg { width: min(600px, calc(100vw - 24px)); }
 .grade-note { max-width: 520px; margin: 12px auto 0; font-size: 12.5px; color: var(--muted); text-align: center; }
 
 /* Resumo */
@@ -470,6 +474,12 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 .ig-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .ig-slide iframe { width: 100%; height: 100%; border: 0; }
 .ig-slide .vazio { color: #bbb; font-size: 13px; padding: 20px; text-align: center; }
+.ig-video video { width: 100%; height: 100%; object-fit: cover; display: block; background: #000; cursor: pointer; }
+.ig-video.tocando .ig-play { display: none; }
+.ig-som { position: absolute; right: 10px; bottom: 14px; width: 30px; height: 30px; border-radius: 99px; border: 0; background: rgba(0,0,0,.6); color: #fff; font-size: 14px; display: grid; place-items: center; z-index: 2; }
+.ig-barra { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(255,255,255,.25); }
+.ig-barra i { display: block; height: 100%; width: 0; background: #fff; }
+.ig-reels .ig-media { aspect-ratio: 9 / 16; width: min(100%, calc(72vh * 9 / 16)); margin: 0 auto; }
 .ig-play { position: absolute; inset: 0; display: grid; place-items: center; background: transparent; border: 0; cursor: pointer; }
 .ig-play span { width: 64px; height: 64px; border-radius: 99px; background: rgba(0,0,0,.55); color: #fff; font-size: 26px; display: grid; place-items: center; padding-left: 5px; }
 .ig-cnt { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,.6); color: #fff; font-size: 12px; font-weight: 600; border-radius: 99px; padding: 3px 9px; }
@@ -540,6 +550,7 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 <dialog id="dlg"><form id="dlgForm" method="dialog"></form></dialog>
 <dialog id="agDlg"><form id="agForm" method="dialog"></form></dialog>
 <dialog id="tfDlg"><form id="tfForm" method="dialog"></form></dialog>
+<dialog id="grDlg"><form id="grForm" method="dialog"></form></dialog>
 <div class="toast" id="toast" hidden></div>
 
 <script src="config.js"></script>
@@ -922,22 +933,25 @@ function carregarInsta(mid, forcar) {
   api("instaMidias", { marcaId: mid, forcar: !!forcar })
     .then(r => { S.insta[mid] = { em: Date.now(), dados: r }; })
     .catch(e => { S.insta[mid] = { em: Date.now(), dados: { conectado: true, erro: e.message || "Não consegui ler o Instagram agora." } }; })
-    .finally(() => { if (view() === "grade" && S.marcaId === mid && !$("#dlg").open && !S.dirty) render(); });
+    .finally(() => { if ($("#grDlg").open) desenharGradeDlg(); else if (view() === "grade" && S.marcaId === mid && !$("#dlg").open && !S.dirty) render(); });
 }
-function vGrade() {
-  const m = marca(), ig = m.insta && m.insta.conectado;
+// grade de uma marca num mês; destaque = postagem que está sendo aprovada
+function gradeBox(m, mes, destaque) {
+  const ig = m.insta && m.insta.conectado;
   if (ig) carregarInsta(m.id);
   const cache = S.insta[m.id] || {}, d = cache.dados || {};
   const midias = ig && d.midias ? d.midias : [];
   const codigos = new Set(midias.map(x => codigoIg(x.link)).filter(Boolean));
   // fica fora da grade só o que não vai para o feed (por exemplo, só Stories ou só TikTok)
-  const ps = postsMes().filter(p => { const r = redesDe(p.rede); return !r.length || r.some(x => !NAO_FEED.includes(x)); })
+  const ps = S.posts.filter(p => p.marcaId === m.id && (p.data || "").startsWith(mes))
+    .filter(p => { const r = redesDe(p.rede); return !r.length || r.some(x => !NAO_FEED.includes(x)); })
     // um post já marcado como postado, com o link igual a um post do perfil, aparece uma vez só (com a imagem real)
     .filter(p => !(p.status === "Postado" && codigos.has(codigoIg(p.postLink))));
   const itens = ps.map(p => ({ t: "plan", em: (p.agData || p.data || "") + "T" + (p.agHora || "12:00"), p }))
     .concat(midias.map(x => ({ t: "ig", em: x.em || "", x })))
     .sort((a, b) => String(b.em).localeCompare(String(a.em)));
   const ponto = `<span class="ok" title="Já postado"></span>`;
+  const AGUARDA = ["Em validação", "Validação do cliente", "Em aprovação", "Aprovação do cliente"];
   const tiles = itens.map(it => {
     if (it.t === "ig") {
       const x = it.x;
@@ -946,28 +960,47 @@ function vGrade() {
         ${x.tipo === "VIDEO" ? `<span class="fic">▶</span>` : x.tipo === "CAROUSEL_ALBUM" ? `<span class="fic">▤</span>` : ""}${ponto}</a>`;
     }
     const p = it.p, src = blobSrc(p);
-    return `<button class="tile${src ? " has-img" : ""}" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="openEditor('${esc(p.id)}')" title="${esc(nm(p))} · ${esc(p.status)}">
+    const cls = p.id === destaque ? " destaque" : (destaque && AGUARDA.includes(p.status) ? " aguarda" : "");
+    return `<button class="tile${src ? " has-img" : ""}${cls}" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="${destaque ? "$('#grDlg').close();" : ""}openEditor('${esc(p.id)}')" title="${esc(nm(p))} · ${esc(p.status)}">
       ${src ? `<img src="${esc(src)}" alt="${esc(nm(p))}" loading="lazy" onerror="this.parentNode.classList.remove('has-img');this.remove()">` : ""}
       <span class="fic">${FMT_ICON[p.formato] || ""}</span>
       <span class="tt">${esc(nm(p))}</span>
       <span class="tm">${br(p.data)} · ${esc(p.formato)}</span>
-      ${p.status === "Postado" ? ponto : ""}
+      ${p.status === "Postado" ? ponto : ""}${p.id === destaque ? `<span class="tag-dest">Este post</span>` : ""}
     </button>`;
   }).join("");
   const ini = (m.nome || "?").trim().charAt(0).toUpperCase();
   const usuario = (d.usuario || (m.insta && m.insta.usuario) || "");
-  const sub = ig ? `${midias.length ? `${midias.length} posts do perfil` : "Perfil conectado"} + ${ps.length} planejados em ${esc(monthLabel(S.month))}` : `${ps.length} posts planejados em ${esc(monthLabel(S.month))}`;
-  const aviso = !ig ? `<p class="grade-note">Para ver aqui também os posts que já estão no perfil, conecte o Instagram da marca em <a class="lnk" href="#marca-config">Marca → Configurações</a>.</p>`
-    : d.erro ? `<p class="grade-note" style="color:var(--danger)">${esc(d.erro)}</p>`
+  const foto = thumbDe(perfilDe(m).fotoPerfil);
+  const sub = ig ? `${midias.length ? `${midias.length} posts do perfil` : "Perfil conectado"} + ${ps.length} planejados em ${esc(monthLabel(mes))}` : `${ps.length} posts planejados em ${esc(monthLabel(mes))}`;
+  const aviso = !ig ? "" : d.erro ? `<p class="grade-note" style="color:var(--danger)">${esc(d.erro)}</p>`
     : cache.carregando && !d.midias ? `<p class="grade-note">Buscando os posts do Instagram…</p>` : "";
-  return headM(m.nome, "Grade do Instagram", monthNav() + (ig ? `<button class="btn sm" type="button" onclick="carregarInsta(S.marcaId, true);render()">Atualizar do Instagram</button>` : "")) +
-    `<div class="grade-box">
-      <div class="profile"><div class="avatar">${esc(ini)}</div><div><b>${usuario ? "@" + esc(usuario) : esc(m.nome)}</b><div class="muted">${sub}</div></div></div>
+  return { ig, aviso, html: `<div class="grade-box">
+      <div class="profile"><div class="avatar" style="overflow:hidden">${foto ? `<img src="${esc(foto)}" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.remove()">` : esc(ini)}</div><div><b>${usuario ? "@" + esc(usuario) : esc(m.nome)}</b><div class="muted">${sub}</div></div></div>
       ${itens.length ? `<div class="grade">${tiles}</div>` : `<div class="empty" style="margin:0 16px 16px">Nenhum post de feed neste mês.</div>`}
     </div>
-    <div class="grade-legenda"><span><i></i>Já postado</span><span>Sem bolinha: ainda não postado</span></div>
-    ${aviso}
-    <p class="grade-note">Do mais recente (canto superior esquerdo) ao mais antigo. Os planejados mostram a arte quando a postagem tem a imagem de prévia; os posts do perfil abrem no Instagram.</p>`;
+    <div class="grade-legenda"><span><i></i>Já postado</span><span>Sem bolinha: ainda não postado</span>${destaque ? `<span><b style="color:var(--pr-alta)">▢</b> Este post</span><span style="opacity:.8">┄ Outros esperando aprovação</span>` : ""}</div>` };
+}
+function vGrade() {
+  const m = marca(), g = gradeBox(m, S.month);
+  return headM(m.nome, "Grade do Instagram", monthNav() + (g.ig ? `<button class="btn sm" type="button" onclick="carregarInsta(S.marcaId, true);render()">Atualizar do Instagram</button>` : "")) +
+    g.html + (!g.ig && !ehCliente() ? `<p class="grade-note">Para ver aqui também os posts que já estão no perfil, conecte o Instagram da marca em <a class="lnk" href="#marca-config">Marca → Configurações</a>.</p>` : g.aviso) +
+    `<p class="grade-note">Do mais recente (canto superior esquerdo) ao mais antigo. Os planejados mostram a arte quando a postagem tem a imagem de prévia; os posts do perfil abrem no Instagram.</p>`;
+}
+// grade aberta a partir de uma aprovação, com o post em destaque
+function verNaGrade(id) {
+  const p = S.posts.find(x => x.id === id); if (!p) return;
+  const m = S.marcas.find(x => x.id === p.marcaId) || marca(), mes = (p.data || S.month).slice(0, 7);
+  S.gradeDlg = { id, mes };
+  desenharGradeDlg();
+  if (!$("#grDlg").open) $("#grDlg").showModal();
+}
+function desenharGradeDlg() {
+  const { id, mes } = S.gradeDlg || {}; const p = S.posts.find(x => x.id === id); if (!p) return;
+  const m = S.marcas.find(x => x.id === p.marcaId), g = gradeBox(m, mes, id);
+  $("#grForm").innerHTML = `<div class="dlg-head"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600">${esc(m.nome)} · ${esc(monthLabel(mes))}</div><h2>Como fica na grade</h2></div>
+      <button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#grDlg').close()">×</button></div>
+    <div class="dlg-body" style="grid-template-columns:1fr">${g.html}${g.aviso}</div>`;
 }
 
 /* ---------- Resumo do mês: dashboard para apresentar ---------- */
@@ -1848,6 +1881,7 @@ function fluxoHtml(p) {
           return a.motivo ? `<button class="btn danger" type="button" onclick="S.rejDlg='${k}';drawEditor();$('#rejMotivo').focus()">${esc(rotulo(k, p))}</button>`
             : `<button class="btn ${a.tipo === "ok" ? "ok" : "primary"}" type="button" onclick="acaoEditor('${k}')">${esc(rotulo(k, p))}</button>`;
         }).join("")}</div>` : `<span class="muted" style="font-size:13px">${COM_CLIENTE.includes(p.status) ? "Aguardando a aprovação do cliente." : p.status === "Em validação" || p.status === "Em aprovação" ? "Aguardando o aprovador." : p.status === "Postado" ? "Conteúdo publicado." : "Nenhuma ação sua nesta etapa."}</span>`}
+    ${p.id ? `<div class="row"><button class="btn sm" type="button" onclick="verNaGrade('${esc(p.id)}')">Ver na grade</button></div>` : ""}
     ${hist.length ? `<details><summary class="muted" style="cursor:pointer;font-size:13px">Histórico (${hist.length})</summary><ul class="hist">${hist.map(h => `<li>${new Date(h.em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })} · <b>${esc(h.por)}</b> ${esc((h.acao || "").toLowerCase())}${h.motivo ? `: "${esc(h.motivo)}"` : ""}</li>`).join("")}</ul></details>` : ""}
   </div>`;
 }
@@ -1969,10 +2003,14 @@ function igPost(p) {
   const foto = thumbDe(perfil.fotoPerfil);
   const ms = midiasDe(p), uid = "ig" + String(p.id || "novo").replace(/\W/g, "");
   const slide = (x, i) => x.tipo === "video"
-    ? `<div class="ig-slide"><img src="https://drive.google.com/thumbnail?id=${esc(x.id)}&sz=w1080" alt="" loading="lazy" onerror="this.remove()"><button class="ig-play" type="button" aria-label="Tocar vídeo" onclick="this.parentNode.innerHTML='<iframe src=&quot;https://drive.google.com/file/d/${esc(x.id)}/preview&quot; allow=&quot;autoplay&quot; allowfullscreen></iframe>'"><span>▶</span></button></div>`
+    ? `<div class="ig-slide ig-video" data-id="${esc(x.id)}">
+        <video src="https://drive.google.com/uc?export=download&id=${esc(x.id)}" poster="https://drive.google.com/thumbnail?id=${esc(x.id)}&sz=w1080" playsinline loop preload="none" onclick="igVideo(this)" ontimeupdate="igProgresso(this)" onerror="igVideoErro(this)"></video>
+        <button class="ig-play" type="button" aria-label="Tocar vídeo" onclick="igVideo(this.parentNode.querySelector('video'))"><span>▶</span></button>
+        <button class="ig-som" type="button" aria-label="Ligar o som" onclick="igSom(this)">🔇</button>
+        <span class="ig-barra"><i></i></span></div>`
     : `<div class="ig-slide"><img src="https://drive.google.com/thumbnail?id=${esc(x.id)}&sz=w1080" alt="Imagem ${i + 1}" loading="lazy" onerror="this.outerHTML='<span class=&quot;vazio&quot;>Não consegui abrir esta imagem. Confira se o arquivo está compartilhado.</span>'"></div>`;
-  const varios = ms.length > 1;
-  return `<div class="ig" id="${uid}">
+  const varios = ms.length > 1, reels = ms.length === 1 && ms[0].tipo === "video";
+  return `<div class="ig${reels ? " ig-reels" : ""}" id="${uid}">
     <div class="ig-top"><span class="ig-av">${foto ? `<img src="${esc(foto)}" alt="" onerror="this.remove()">` : esc(usuario.charAt(0).toUpperCase())}</span><b>${esc(usuario)}</b><span aria-hidden="true">⋯</span></div>
     <div class="ig-media">
       <div class="ig-track" onscroll="igScroll(this)">${ms.length ? ms.map(slide).join("") : `<div class="ig-slide"><span class="vazio">Sem arte ainda. Use "Puxar da pasta" ou a imagem de prévia na postagem.</span></div>`}</div>
@@ -1989,6 +2027,31 @@ function igPost(p) {
     ${cheio(p.legenda) ? `<div class="ig-cap curta"><b>${esc(usuario)}</b> ${esc(p.legenda)}</div><button class="ig-mais" type="button" onclick="const c=this.previousElementSibling;c.classList.toggle('curta');this.textContent=c.classList.contains('curta')?'mais':'menos'">mais</button>` : `<div class="ig-cap muted">Sem legenda ainda.</div>`}
     <div class="ig-data">${esc(p.data ? new Date(parse(p.data)).toLocaleDateString("pt-BR", { day: "numeric", month: "long" }) : "")}</div>
   </div>`;
+}
+/* vídeo: toque para tocar/pausar, botão de som e barrinha de progresso, como no Instagram */
+function igVideo(v) {
+  const box = v && v.closest(".ig-video"); if (!box) return;
+  // pausa os outros vídeos que estiverem tocando
+  document.querySelectorAll(".ig-video video").forEach(o => { if (o !== v && !o.paused) { o.pause(); o.closest(".ig-video")?.classList.remove("tocando"); } });
+  if (v.paused) { v.muted = box.dataset.som !== "1"; v.play().then(() => box.classList.add("tocando")).catch(() => igVideoErro(v)); }
+  else { v.pause(); box.classList.remove("tocando"); }
+}
+function igSom(b) {
+  const box = b.closest(".ig-video"), v = box.querySelector("video");
+  const ligado = box.dataset.som !== "1"; box.dataset.som = ligado ? "1" : "0";
+  if (v) v.muted = !ligado;
+  b.textContent = ligado ? "🔊" : "🔇"; b.setAttribute("aria-label", ligado ? "Desligar o som" : "Ligar o som");
+}
+function igProgresso(v) {
+  const box = v.closest(".ig-video"); if (!box) return;
+  const i = box.querySelector(".ig-barra i");
+  if (i && v.duration) i.style.width = (v.currentTime / v.duration * 100) + "%";
+}
+// se o Drive não entregar o vídeo direto (arquivo grande ou sem compartilhamento), usa o player do Drive
+function igVideoErro(v) {
+  const box = v.closest(".ig-video"); if (!box || box.dataset.iframe) return;
+  box.dataset.iframe = "1";
+  box.innerHTML = `<iframe src="https://drive.google.com/file/d/${esc(box.dataset.id)}/preview" allow="autoplay" allowfullscreen></iframe>`;
 }
 function igScroll(track) {
   const box = track.closest(".ig"), n = track.children.length, i = Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
@@ -2029,6 +2092,7 @@ function apvCard(p, k1, k2) {
           <div style="display:flex;gap:8px"><button class="btn danger" type="button" onclick="confirmarRej('${esc(p.id)}')">Confirmar</button><button class="btn" type="button" onclick="S.rej=null;render()">Cancelar</button></div></div>`
         : `${k1 && podeAcao(p, k1) ? `<button class="btn ok" type="button" onclick="${ACOES[k1].painel ? `abrirAgenda('${esc(p.id)}','${k1}')` : `acao('${esc(p.id)}','${k1}')`}">${esc(rotulo(k1, p))}</button>` : ""}
            ${k2 && podeAcao(p, k2) ? `<button class="btn danger" type="button" onclick="S.rej={id:'${esc(p.id)}',k:'${k2}'};render();$('#rej-${esc(p.id)}').focus()">${k2 === "pedirAjustes" || k2 === "clienteAjustes" ? "Não aprovar" : "Reprovar"}</button>` : ""}
+           <button class="btn" type="button" onclick="verNaGrade('${esc(p.id)}')">Ver na grade</button>
            <button class="btn" type="button" onclick="openEditor('${esc(p.id)}')">Abrir postagem</button>`}
     </div>
   </article>`;
@@ -2566,6 +2630,8 @@ addEventListener("hashchange", () => { S.confirmDel = false; S.delArq = null; S.
 document.addEventListener("input", e => { if (e.target.closest("#app form")) { S.dirty = true; const m = $("#app .save-bar .msg"); if (m) m.textContent = "Alterações não salvas"; } });
 $("#dlg").addEventListener("close", () => render());
 $("#tfDlg").addEventListener("close", () => { S.delTarefa = false; render(); });
+$("#grDlg").addEventListener("click", e => { if (e.target === $("#grDlg")) $("#grDlg").close(); });
+$("#grDlg").addEventListener("close", () => { S.gradeDlg = null; });
 $("#tfDlg").addEventListener("click", e => { if (e.target === $("#tfDlg")) $("#tfDlg").close(); });
 $("#agDlg").addEventListener("click", e => { if (e.target === $("#agDlg")) $("#agDlg").close(); });
 $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg").close(); });
