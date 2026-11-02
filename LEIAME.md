@@ -119,6 +119,51 @@ Em **Equipe → Atividade** (o administrador, o diretor e o gestor veem): últim
 - **Visualização:** cada pessoa escolhe em **Minha conta** entre **Detalhada** e **Como Instagram** (o cliente começa em Instagram). Dá para trocar nas Aprovações e dentro da postagem. O modo Instagram mostra foto de perfil e @ (de Marca → Sobre e Arquivos e identidade → Foto de perfil), carrossel com setas e bolinhas, vídeo com play e legenda com "mais".
 - **Puxar da pasta:** na postagem, cole o link da pasta do Drive em "Link da publicação" e clique em **Puxar da pasta**. O sistema traz as imagens e vídeos na ordem do número no nome (1, 2, 3…) e a legenda do Google Docs da pasta (o que vem depois de "Legenda"; sem esse título, o documento inteiro). Os arquivos de mídia ficam visíveis para quem tem o link, para aparecerem na prévia e para o cliente.
 
+## Stories
+
+Aba **Stories**: calendário do mês só de stories.
+- No topo, as bolinhas de hoje e dos próximos 6 dias, como no Instagram (colorida = tem story para postar; cinza = tudo postado).
+- Clique na bolinha (ou num story do dia) para ver a sequência **como no Instagram**: passa sozinho a cada 5 segundos, com as barrinhas no topo, e dá para pausar, voltar e avançar. Ao lado aparece a lista do dia; as setas ▲▼ mudam a ordem.
+- **+ Novo story** (ou o + do dia): tipo, texto na tela, figurinha (enquete, caixinha, quiz, link, contagem, música, menção…), cor de fundo ou arquivo do Drive, roteiro, link e status (Planejado → Produzido → Aprovado → Postado). A prévia do celular muda enquanto você escreve.
+- Arraste um story para outro dia para mudar a data.
+- O aprovador do cliente vê os stories, mas não edita.
+
+## Comentários, prazos e repetição
+
+- **Comentários:** cada postagem tem uma conversa (no editor e nas Aprovações). Dá para dizer sobre qual arte do carrossel é o comentário. O cliente também comenta. Os comentários aparecem no sino.
+- **Prazos:** cada postagem tem **prazo da arte** e **prazo da aprovação** (uma postagem nova já vem com 5 e 2 dias antes do post). O que passou do prazo aparece com ⚠ no calendário e numa lista **Postagens atrasadas** em Tarefas.
+- **Repetir:** no editor, **Repetir** cria cópias da postagem toda semana, a cada 2 semanas ou todo mês (até 12), já como Ideia.
+
+## Link de aprovação sem senha (cliente)
+
+- Em **Equipe**, ao lado do aprovador do cliente, **🔗 Link sem senha** gera um link que entra direto na conta dele (vale 14 dias). Dá para copiar, mandar no WhatsApp ou enviar por e-mail.
+- Nas **Aprovações**, quando há posts esperando o cliente, aparece o botão para mandar o link.
+- Os e-mails de "post para aprovar" que vão para o cliente já levam esse link.
+
+## Publicação automática no Instagram
+
+Com o Instagram da marca conectado, ao **Agendar** aparece **Publicar sozinho pelo sistema**: no dia e hora marcados o sistema publica as artes e a legenda (foto, carrossel, Reels ou Story) e a postagem vira **Postado** com o link. Também há **Publicar agora no Instagram** na postagem aprovada e no story.
+- A chave precisa da permissão **instagram_content_publish** (Página do Facebook) ou **instagram_business_content_publish** (login do Instagram). Se a chave atual não tiver, gere outra marcando essa permissão.
+- As artes precisam estar no Drive (o sistema deixa o arquivo como "qualquer pessoa com o link" para o Instagram baixar).
+- Figurinhas de story, música e marcação de produto não vão pela publicação automática: para esses, poste pelo app.
+- Se der erro, o motivo aparece na postagem e ela continua Agendada.
+
+## Resultados dos posts
+
+No **Resumo do mês**, com o Instagram conectado, aparece **Resultados dos posts**: curtidas, comentários, alcance, salvamentos, compartilhamentos e engajamento de cada post publicado, os totais e o melhor post do mês. Entram os posts publicados pelo sistema e os marcados como postados com o link do Instagram.
+
+## Automáticos (resumo diário, cópia de segurança e publicação)
+
+Ao rodar **configurar**, o script cria três rotinas:
+- **Resumo diário por e-mail** (segunda a sexta, às 8h): cada pessoa recebe só o que é dela (aprovações pendentes, devolvidos, prazos vencendo, posts e stories do dia, tarefas). O cliente recebe com o link sem senha.
+- **Cópia de segurança** toda segunda de madrugada, na pasta "Planejamento de Conteúdo - Cópias de segurança" do seu Drive (guarda as 8 últimas).
+- **Publicação automática**: confere a cada 15 minutos se há post ou story para publicar.
+
+## Desempenho e segurança
+
+- O site baixa só os últimos 3 meses e os próximos; meses antigos carregam quando você navega até eles. A cada 30 segundos ele só confere se algo mudou, sem baixar tudo de novo.
+- Em **Marca → Acessos** fica registrado quem abriu os acessos (últimas vezes). As senhas ficam nas propriedades do script, fora da planilha: mantenha só você como editora da planilha e do script.
+
 ## Fluxo de aprovação (2 etapas)
 
 1. **Ideia** → a social media cria a postagem e clica em **Enviar ideia para validação**.

@@ -519,6 +519,128 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 .empty strong { font-family: var(--f-display); font-weight: 400; font-size: 26px; color: var(--ink); }
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 999px; font-weight: 500; z-index: 50; box-shadow: var(--shadow); }
 @media (prefers-reduced-motion: no-preference) { .chip, .card, .tile, .btn { transition: background .15s, border-color .15s, filter .15s; } }
+/* ---------- Stories ---------- */
+.st-top { display: flex; gap: 14px; overflow-x: auto; padding: 4px 2px 14px; margin-bottom: 6px; scrollbar-width: thin; }
+.st-bolha { flex: none; display: grid; justify-items: center; gap: 6px; background: none; border: 0; padding: 0; cursor: pointer; color: var(--ink); width: 74px; }
+.st-anel { --anel: conic-gradient(from 210deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #feda75); width: 66px; height: 66px; border-radius: 50%; padding: 3px; background: var(--anel); display: grid; place-items: center; }
+.st-anel.visto { --anel: var(--line); }
+.st-anel.vazio { --anel: repeating-conic-gradient(var(--line) 0 10deg, transparent 10deg 20deg); }
+.st-anel > span { width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--bg); background: var(--surface-2) center/cover no-repeat; display: grid; place-items: center; font-weight: 700; font-size: 18px; overflow: hidden; }
+.st-anel > span img { width: 100%; height: 100%; object-fit: cover; }
+.st-bolha small { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.st-bolha b { font-size: 12.5px; font-weight: 600; }
+.st-bolha.hoje small { color: var(--ink); font-weight: 600; }
+.st-cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+.st-cal .dow { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; color: var(--muted); padding: 0 4px; }
+.sday { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; min-height: 128px; padding: 8px; display: flex; flex-direction: column; gap: 8px; position: relative; transition: border-color .15s, box-shadow .15s; }
+.sday.out { opacity: .45; }
+.sday.today { border-color: var(--ink); }
+.sday.drop { border-color: #d62976; box-shadow: 0 0 0 3px color-mix(in srgb, #d62976 25%, transparent); }
+.sday .sh { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.sday .sh b { font-size: 15px; }
+.sday .sh .add-day { opacity: 0; }
+.sday:hover .sh .add-day, .sday:focus-within .sh .add-day { opacity: 1; }
+.sday .minis { display: flex; flex-wrap: wrap; gap: 5px; }
+.smini { width: 30px; aspect-ratio: 9/16; border-radius: 6px; border: 0; padding: 0; cursor: pointer; position: relative; overflow: hidden; background: var(--c, #3a3a40) center/cover no-repeat; box-shadow: 0 1px 3px rgba(0,0,0,.18); }
+.smini img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.smini .ic { position: absolute; inset: 0; display: grid; place-items: center; font-size: 12px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
+.smini .sd { position: absolute; right: 3px; bottom: 3px; width: 7px; height: 7px; border-radius: 50%; background: var(--sc); border: 1.5px solid #fff; }
+.smini.mais { background: var(--surface-2); color: var(--muted); font-size: 11px; font-weight: 700; display: grid; place-items: center; box-shadow: none; }
+.sday .sring { align-self: flex-start; background: none; border: 0; padding: 0; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.sday .sring .st-anel { width: 30px; height: 30px; padding: 2px; }
+.sday .sring .st-anel > span { border-width: 2px; font-size: 11px; }
+.st-leg { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--muted); margin-top: 12px; }
+.st-leg i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; background: var(--sc); }
+@media (max-width: 760px) {
+  .st-cal { gap: 4px; }
+  .st-cal .dow { font-size: 9px; letter-spacing: 0; padding: 0; text-align: center; }
+  .sday { min-height: 64px; padding: 5px; border-radius: 10px; gap: 4px; align-items: center; }
+  .sday .sh { justify-content: center; } .sday .sh .add-day { display: none; }
+  .sday .minis { display: none; }
+  .sday .sring span.t { display: none; }
+}
+/* aparelho */
+.phone { position: relative; width: min(100%, calc(76vh * 9 / 16)); aspect-ratio: 9/16; border-radius: 22px; overflow: hidden; background: var(--c, #222) center/cover no-repeat; color: #fff; margin: 0 auto; box-shadow: 0 18px 50px rgba(0,0,0,.28); user-select: none; container-type: inline-size; }
+.phone::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,.35), transparent 18%, transparent 78%, rgba(0,0,0,.35)); pointer-events: none; }
+.phone > img, .phone > video, .phone > iframe { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border: 0; }
+.phone .bars { position: absolute; z-index: 3; top: 10px; left: 10px; right: 10px; display: flex; gap: 4px; }
+.phone .bars span { flex: 1; height: 2.5px; border-radius: 2px; background: rgba(255,255,255,.35); overflow: hidden; }
+.phone .bars span i { display: block; height: 100%; width: 0; background: #fff; }
+.phone .bars span.done i { width: 100%; }
+.phone .top { position: absolute; z-index: 3; top: 22px; left: 12px; right: 12px; display: flex; align-items: center; gap: 8px; font-size: 13px; text-shadow: 0 1px 2px rgba(0,0,0,.4); }
+.phone .top .av { --av: 30px; border: 1.5px solid rgba(255,255,255,.8); }
+.phone .top b { font-weight: 600; }
+.phone .top .h { opacity: .8; }
+.phone .top .stp { margin-left: auto; font-size: 11px; background: rgba(0,0,0,.35); border-radius: 99px; padding: 2px 8px; }
+.phone .txt { position: absolute; z-index: 2; left: 8%; right: 8%; top: 50%; transform: translateY(-50%); text-align: center; font: 600 clamp(15px, 7.5cqw, 28px)/1.25 var(--f-body); white-space: pre-wrap; text-shadow: 0 1px 3px rgba(0,0,0,.25); overflow-wrap: anywhere; }
+.phone.com-midia .txt { top: auto; bottom: 26%; transform: none; font-size: clamp(13px, 6cqw, 22px); }
+.phone .txt span { background: rgba(0,0,0,.0); }
+.phone.com-midia .txt span { background: rgba(0,0,0,.55); box-decoration-break: clone; -webkit-box-decoration-break: clone; padding: 2px 8px; border-radius: 6px; }
+.stk { position: absolute; z-index: 2; left: 50%; transform: translateX(-50%) rotate(-2deg); top: 64%; width: 70%; color: #111; font-family: var(--f-body); text-align: center; }
+.phone.com-midia .stk { top: 52%; }
+.stk .card { background: #fff; border-radius: 14px; box-shadow: 0 6px 18px rgba(0,0,0,.25); overflow: hidden; }
+.stk .q { padding: 10px 12px; font-weight: 700; font-size: clamp(11px, 4.6cqw, 16px); }
+.stk .ops { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid #eee; }
+.stk .ops span { padding: 9px 6px; font-weight: 700; font-size: clamp(10px, 4.2cqw, 15px); background: linear-gradient(90deg, #d62976, #962fbf); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.stk .ops span + span { border-left: 1px solid #eee; }
+.stk .cx { background: linear-gradient(135deg, #d62976, #962fbf); color: #fff; padding: 9px 12px 6px; font-weight: 700; font-size: clamp(11px, 4.6cqw, 16px); }
+.stk .cx + div { padding: 12px; color: #999; font-size: clamp(10px, 4cqw, 14px); }
+.stk .pill { display: inline-flex; align-items: center; gap: 6px; background: #fff; border-radius: 10px; padding: 7px 12px; font-weight: 700; font-size: clamp(11px, 4.4cqw, 15px); box-shadow: 0 4px 14px rgba(0,0,0,.25); color: #3b6fe0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stk .pill.mus { color: #111; } .stk .pill.men { color: #d62976; } .stk .pill.loc { color: #7a3ff0; }
+.stk .cd { background: linear-gradient(135deg, #4f5bd5, #962fbf); color: #fff; border-radius: 14px; padding: 10px; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+.stk .cd b { display: block; font-size: clamp(11px, 4.4cqw, 15px); } .stk .cd span { font: 700 clamp(16px, 8cqw, 28px)/1.2 var(--f-body); letter-spacing: .05em; }
+.stk .sl { padding: 10px 14px 14px; } .stk .sl div { height: 6px; border-radius: 3px; background: linear-gradient(90deg, #feda75, #d62976); margin-top: 8px; position: relative; } .stk .sl div::after { content: "😍"; position: absolute; left: 60%; top: 50%; transform: translate(-50%, -50%); font-size: 20px; }
+.phone .foot { position: absolute; z-index: 3; left: 12px; right: 12px; bottom: 12px; display: flex; align-items: center; gap: 10px; font-size: 18px; }
+.phone .foot span.msg { flex: 1; border: 1px solid rgba(255,255,255,.7); border-radius: 99px; padding: 7px 14px; font-size: 13px; opacity: .9; }
+.phone .tap { position: absolute; z-index: 4; top: 60px; bottom: 60px; width: 35%; background: none; border: 0; cursor: pointer; }
+.phone .tap.l { left: 0; } .phone .tap.r { right: 0; }
+.phone .pausa { position: absolute; z-index: 4; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; opacity: 0; transition: opacity .2s; pointer-events: none; text-shadow: 0 2px 8px rgba(0,0,0,.5); }
+.phone.pausado .pausa { opacity: .9; }
+.phone .vazio-arte { position: absolute; z-index: 2; left: 10%; right: 10%; top: 50%; transform: translateY(-50%); text-align: center; font-size: 13px; opacity: .8; }
+/* visualizador */
+#stDlg, #seDlg { width: min(980px, calc(100vw - 24px)); }
+.sv { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 22px; padding: 18px 20px 20px; align-items: start; }
+.sv-lista { display: grid; gap: 8px; }
+.sv-item { display: grid; grid-template-columns: 36px 1fr auto; gap: 10px; align-items: center; padding: 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); cursor: pointer; text-align: left; }
+.sv-item.on { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+.sv-item .smini { width: 36px; }
+.sv-item .tt { font-weight: 600; font-size: 14px; } .sv-item .mt { font-size: 12px; color: var(--muted); }
+.sv-item .ord { display: flex; flex-direction: column; gap: 2px; } .sv-item .ord button { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; width: 26px; height: 22px; font-size: 11px; line-height: 1; cursor: pointer; color: var(--ink); }
+.sv-det { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 12px; display: grid; gap: 8px; font-size: 14px; }
+.sv-det .rot { white-space: pre-wrap; background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
+.cores { display: flex; flex-wrap: wrap; gap: 6px; }
+.cores label { width: 28px; height: 28px; border-radius: 50%; background: var(--c); cursor: pointer; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line); position: relative; }
+.cores input { position: absolute; opacity: 0; }
+.cores label:has(input:checked) { box-shadow: 0 0 0 2px var(--ink); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips label { border: 1px solid var(--line); border-radius: 99px; padding: 5px 11px; font-size: 13px; cursor: pointer; background: var(--surface); }
+.chips input { position: absolute; opacity: 0; pointer-events: none; }
+.chips label:has(input:checked) { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.chips label:has(input:focus-visible) { outline: 2px solid var(--caramelo); }
+@media (max-width: 760px) { .sv { grid-template-columns: 1fr; padding: 14px; } .phone { width: min(100%, calc(62vh * 9 / 16)); } }
+/* comentários */
+.coms { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 4px; }
+.coms summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+.com-lista { display: grid; gap: 10px; margin: 10px 0; max-height: 320px; overflow-y: auto; }
+.com { display: grid; grid-template-columns: 26px 1fr; gap: 8px; align-items: start; }
+.com-h { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 12.5px; color: var(--muted); }
+.com-h b { color: var(--ink); font-size: 13.5px; }
+.com-t { font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--surface-2); border-radius: 4px 12px 12px 12px; padding: 7px 10px; margin-top: 3px; }
+.com.meu .com-t { background: color-mix(in srgb, var(--st-produzido) 16%, var(--surface)); }
+.tag-cli, .tag-arte { font-size: 11px; font-weight: 600; border-radius: 99px; padding: 1px 7px; background: color-mix(in srgb, var(--pr-alta) 18%, transparent); color: var(--pr-alta); }
+.tag-arte { background: var(--surface-2); color: var(--ink); }
+.com-x { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 16px; line-height: 1; margin-left: auto; }
+.com-novo { display: grid; gap: 6px; }
+.com-novo textarea { width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 10px; font: inherit; resize: vertical; color: var(--ink); }
+.com-acts { display: flex; gap: 8px; justify-content: flex-end; align-items: center; flex-wrap: wrap; }
+.com-acts select { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 5px 8px; color: var(--ink); }
+/* atraso */
+.chip .atr { color: var(--danger); font-weight: 700; }
+.met-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 12px; }
+.met-kpis div { background: var(--surface-2); border-radius: 12px; padding: 12px; display: grid; gap: 2px; }
+.met-kpis b { font-size: 22px; font-family: var(--f-display); font-weight: 400; }
+.met-kpis span { font-size: 12.5px; color: var(--muted); }
+#lkDlg { width: min(560px, calc(100vw - 24px)); }
 </style>
 </head>
 <body>
@@ -534,6 +656,7 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
     <div class="notif-pop" id="notifPop" hidden role="dialog" aria-label="Notificações"></div>
     <nav class="tabs" id="tabs">
       <a href="#calendario">Calendário</a>
+      <a href="#stories">Stories</a>
       <a href="#pautas">Postagens</a>
       <a href="#fluxo">Fluxo de produção</a>
       <a href="#grade">Grade do Insta</a>
@@ -553,6 +676,9 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 <dialog id="agDlg"><form id="agForm" method="dialog"></form></dialog>
 <dialog id="tfDlg"><form id="tfForm" method="dialog"></form></dialog>
 <dialog id="grDlg"><form id="grForm" method="dialog"></form></dialog>
+<dialog id="stDlg"><form id="stForm" method="dialog"></form></dialog>
+<dialog id="seDlg"><form id="seForm" method="dialog"></form></dialog>
+<dialog id="lkDlg"><form id="lkForm" method="dialog"></form></dialog>
 <div class="toast" id="toast" hidden></div>
 
 <script src="config.js"></script>
@@ -608,7 +734,7 @@ const DEFAULT_FASES = [
 ];
 
 const S = {
-  canWrite: false, insta: {}, acessos: {}, tarefas: [], equipe: [], tf: { quem: "minhas", marca: "", feitas: false }, eu: null, usuarios: [], token: store("token") || "", rej: null, uEdit: null,
+  canWrite: false, insta: {}, stories: [], met: {}, carimbo: "", desde: "", acessos: {}, tarefas: [], equipe: [], tf: { quem: "minhas", marca: "", feitas: false }, eu: null, usuarios: [], token: store("token") || "", rej: null, uEdit: null,
   marcas: [], posts: [], loadedM: false, loadedP: false, failed: false,
   marcaId: store("marca"), month: null,
   f: { status: "", formato: "", produto: "", q: "" },
@@ -675,12 +801,17 @@ function pickMonth() {
   const next = ps.find(p => p.data.slice(0, 7) >= today);
   return (next || ps[ps.length - 1]).data.slice(0, 7);
 }
-function setMonth(ym) { S.month = ym; store("mes." + S.marcaId, ym); render(); }
+function setMonth(ym) {
+  S.month = ym; store("mes." + S.marcaId, ym);
+  // meses antigos só são baixados quando alguém navega até eles
+  if (S.desde && ym < S.desde) { S.desde = ym; S.carimbo = ""; carregar(); }
+  render();
+}
 
 /* ---------- Vistas ---------- */
 const view = () => {
   const h = location.hash.replace("#", "");
-  return ["calendario", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-acessos", "marca-config", "aprovacoes", "equipe", "equipe-atividade", "conta", "tarefas"].includes(h) ? h : "calendario";
+  return ["calendario", "stories", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-acessos", "marca-config", "aprovacoes", "equipe", "equipe-atividade", "conta", "tarefas"].includes(h) ? h : "calendario";
 };
 
 function render() {
@@ -694,9 +825,9 @@ function render() {
   $("#me").hidden = !S.eu;
   if (S.eu) $("#me").innerHTML = sinoHtml() + avatarHtml(S.eu, 30) + `<span class="who">Olá, <b>${esc(S.eu.nome)}</b></span><span class="papel">${esc(PAPEIS[S.eu.papel] || "")}</span><a href="#conta">Minha conta</a><button class="ghost-light" type="button" onclick="sair()">Sair</button>`;
   if (S.eu && !$("#notifPop").hidden) desenharNotif();
-  const LIBERADAS_CLIENTE = ["#calendario", "#grade", "#aprovacoes"];
+  const LIBERADAS_CLIENTE = ["#calendario", "#stories", "#grade", "#aprovacoes"];
   document.querySelectorAll("#tabs a").forEach(a => { if (a.id !== "tabEquipe") a.hidden = ehCliente() && !LIBERADAS_CLIENTE.includes(a.getAttribute("href")); });
-  if (ehCliente() && !["calendario", "grade", "aprovacoes", "conta"].includes(view())) { location.replace("#aprovacoes"); return; }
+  if (ehCliente() && !["calendario", "stories", "grade", "aprovacoes", "conta"].includes(view())) { location.replace("#aprovacoes"); return; }
   const pend = pendencias().length, bd = $("#apvBadge");
   bd.hidden = !pend; bd.textContent = pend;
   const urg = minhasUrgentes(), tb = $("#tfBadge");
@@ -724,9 +855,10 @@ function render() {
   }
   if (!S.month) S.month = pickMonth();
   const v = view();
-  app.innerHTML = avisoVersao() + ({ calendario: vCal, pautas: vPautas, fluxo: vFluxo, grade: vGrade, resumo: vResumo, marca: vMarcaGeral, "marca-sobre": () => vPerfil("sobre"), "marca-publico": vPublico, "marca-arquivos": vArquivos, "marca-notas": () => vPerfil("notas"), "marca-produtos": vProdutos, "marca-redes": vRedes, "marca-acessos": vAcessos, "marca-config": vMarca })[v]();
+  app.innerHTML = avisoVersao() + ({ calendario: vCal, stories: vStories, pautas: vPautas, fluxo: vFluxo, grade: vGrade, resumo: vResumo, marca: vMarcaGeral, "marca-sobre": () => vPerfil("sobre"), "marca-publico": vPublico, "marca-arquivos": vArquivos, "marca-notas": () => vPerfil("notas"), "marca-produtos": vProdutos, "marca-redes": vRedes, "marca-acessos": vAcessos, "marca-config": vMarca })[v]();
   if (v === "fluxo") wireBoard();
   if (v === "calendario") wireCalendario();
+  if (v === "stories") wireStories();
   if (v === "pautas") { const q = $("#fq"); if (q && S.f.q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); } }
 }
 
@@ -791,7 +923,7 @@ function vCal() {
       ${S.canWrite ? `<button class="add-day" type="button" aria-label="Nova postagem em ${br(k)}" onclick="openEditor(null,'${k}')">+</button>` : ""}</div>
       ${ps.map(p => `<button class="chip" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="openEditor('${esc(p.id)}')"${S.canWrite ? ` draggable="true" data-id="${esc(p.id)}"` : ""}>
         ${blobSrc(p) ? `<span class="prev"><img src="${esc(blobSrc(p))}" alt="" loading="lazy" onerror="this.parentNode.remove()"></span>` : ""}
-        <span class="meta"><span class="fmt">${FMT_ICON[p.formato] || ""} ${esc(p.formato || "")}</span><span class="dot" style="background:${stColor(p.status)}" title="${esc(p.status)}"></span>${REPROVADOS.includes(p.status) ? `<span class="flag">${p.status === "Ideia reprovada" ? "Reprovada" : "Ajustes"}</span>` : ""}${COM_CLIENTE.includes(p.status) ? `<span style="color:var(--pr-alta)">Com o cliente</span>` : ""}${p.status === "Agendado" && p.agHora ? `<span title="Agendado">⏰ ${esc(p.agHora)}${p.agData && p.agData !== p.data ? " " + br(p.agData) : ""}</span>` : ""}</span>
+        <span class="meta"><span class="fmt">${FMT_ICON[p.formato] || ""} ${esc(p.formato || "")}</span><span class="dot" style="background:${stColor(p.status)}" title="${esc(p.status)}"></span>${REPROVADOS.includes(p.status) ? `<span class="flag">${p.status === "Ideia reprovada" ? "Reprovada" : "Ajustes"}</span>` : ""}${COM_CLIENTE.includes(p.status) ? `<span style="color:var(--pr-alta)">Com o cliente</span>` : ""}${atrasoDe(p) ? `<span class="atr" title="${esc(atrasoDe(p).txt)}">⚠ Atrasado</span>` : ""}${(p.comentarios || []).length ? `<span title="Comentários">💬 ${p.comentarios.length}</span>` : ""}${p.status === "Agendado" && p.agHora ? `<span title="Agendado">⏰ ${esc(p.agHora)}${p.agData && p.agData !== p.data ? " " + br(p.agData) : ""}</span>` : ""}</span>
         <span class="t" title="${esc(prodsDe(p.produto).join(", "))}"><b>${esc(prodCurto(p))}${prodCurto(p) ? ":" : ""}</b> ${esc(p.postagem || "sem título")}</span></button>`).join("")}
     </div>`;
   }
@@ -1110,7 +1242,7 @@ function vResumo() {
       <button class="btn primary" type="button" id="dlPdf" onclick="baixarRelatorio('pdf')">Baixar PDF</button>
       <button class="btn" type="button" id="dlPng" onclick="baixarRelatorio('png')">Baixar imagem</button>
       <button class="btn" type="button" onclick="baixarCsv()">Baixar planilha (CSV)</button>
-    </div>` + relatorioHtml() +
+    </div>` + relatorioHtml() + metricasHtml() +
     (!S.resumoTodas && m.observacoes ? `<div class="panel" style="margin-top:16px"><h2>Observações da marca</h2><p class="obs">${esc(m.observacoes)}</p></div>` : "");
 }
 
@@ -1599,6 +1731,7 @@ function vAcessos() {
         <datalist id="plataformas">${PLATAFORMAS.map(p => `<option value="${esc(p)}">`).join("")}</datalist>
         <button class="btn sm" type="button" style="margin-top:12px" onclick="addAcesso()">+ Conta</button>
         ${c.em ? `<p class="muted" style="font-size:12.5px;margin:10px 0 0">Última alteração por ${esc(c.por)} em ${new Date(c.em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}.</p>` : ""}
+        ${(c.vistos || []).length ? `<details style="margin-top:8px"><summary class="muted" style="cursor:pointer;font-size:12.5px">Quem abriu os acessos (últimas ${c.vistos.length} vezes)</summary><ul class="hist">${c.vistos.map(v => `<li>${new Date(v.em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })} · <b>${esc(v.por)}</b></li>`).join("")}</ul></details>` : ""}
         ${saveBar("Salvar acessos")}
       </form>`;
   return headM(m.nome, "Acessos") + subnav() +
@@ -1722,7 +1855,9 @@ function openEditor(id, date) {
   m = marca();
   S.rejDlg = null;
   EDIT = p ? { ...p } : { status: "Ideia", data: date || (S.month + "-01"), formato: "Vídeo", fase: fasesDe(m)[0]?.nome || "", produto: "", rede: "Reels + TikTok" };
-  S.delPost = false;
+  // postagem nova já vem com prazos sugeridos: arte 5 dias antes e aprovação 2 dias antes do post
+  if (!p) { EDIT.prazoArte = prazoPadrao(EDIT.data, 5); EDIT.prazoAprovacao = prazoPadrao(EDIT.data, 2); }
+  S.delPost = false; S.repetir = false;
   drawEditor();
   $("#dlg").showModal();
 }
@@ -1747,6 +1882,8 @@ function drawEditor() {
       ${p.id ? `<div class="full">${fluxoHtml(p)}</div>` : ""}
       <h4>Planejamento</h4>
       <label class="field"><span>Data</span><input id="eData" type="date" required value="${esc(p.data)}"${ro}></label>
+      <label class="field"><span>Prazo da arte</span><input id="eArte" type="date" value="${esc(p.prazoArte || "")}"${ro}></label>
+      <label class="field"><span>Prazo da aprovação</span><input id="eAprov" type="date" value="${esc(p.prazoAprovacao || "")}"${ro}></label>
       <label class="field"><span>Formato</span>${sel("eFormato", FORMATOS, p.formato)}</label>
       <label class="field"><span>Fase</span>${sel("eFase", fasesDe(m).map(f => f.nome), p.fase, true)}</label>
       <div class="field"><span>Produtos</span>${msel("eProdutos", (() => { const ops = [...(m.produtos || [])]; prodsDe(p.produto).forEach(x => { if (!ops.includes(x)) ops.push(x); }); return ops; })(), prodsDe(p.produto), "Selecione os produtos", "Novo produto", "addProdutoEditor()")}</div>
@@ -1776,7 +1913,7 @@ function drawEditor() {
     <div class="dlg-foot">
       ${S.canWrite && p.id ? (S.delPost
         ? `<span class="confirm">Excluir esta postagem? <button class="btn sm danger" type="button" onclick="excluirPost()">Excluir</button><button class="btn sm" type="button" onclick="S.delPost=false;drawEditor()">Cancelar</button></span>`
-        : `<button class="btn danger" type="button" onclick="S.delPost=true;drawEditor()">Excluir</button><button class="btn" type="button" onclick="duplicar()">Duplicar</button>`) : ""}
+        : S.repetir ? repetirHtml() : `<button class="btn danger" type="button" onclick="S.delPost=true;drawEditor()">Excluir</button><button class="btn" type="button" onclick="duplicar()">Duplicar</button><button class="btn" type="button" onclick="Object.assign(EDIT, gather());S.repetir=true;drawEditor()">Repetir</button>`) : ""}
       <span class="sp"></span>
       <button class="btn" type="button" onclick="$('#dlg').close()">${S.canWrite ? "Cancelar" : "Fechar"}</button>
       ${S.canWrite ? `<button class="btn primary" type="submit" id="eSalvar">Salvar postagem</button>` : ""}
@@ -1848,7 +1985,7 @@ function gather() {
     marcaId: S.marcaId, data: v("eData"), formato: v("eFormato"), fase: v("eFase"),
     produto: [...document.querySelectorAll("#eProdutos .msel-op input:checked")].map(i => i.value).join(" + "), postagem: v("ePostagem"), pauta: v("ePauta"), objetivo: v("eObjetivo"), cta: v("eCta"),
     rede: [...document.querySelectorAll("#eRedes .msel-op input:checked")].map(i => i.value).join(" + "), gravacao: v("eGravacao"), observacao: $("#eObs").value, inspiracao: $("#eInsp").value,
-    legenda: $("#eLegenda").value, criativo: v("eCriativo"), capa: v("eCapa"), midias: EDIT.midias || [], atualizado: Date.now()
+    legenda: $("#eLegenda").value, prazoArte: v("eArte"), prazoAprovacao: v("eAprov"), criativo: v("eCriativo"), capa: v("eCapa"), midias: EDIT.midias || [], atualizado: Date.now()
   };
 }
 async function salvarEditor(fechar = true) {
@@ -1893,8 +2030,10 @@ function fluxoHtml(p) {
           return a.motivo ? `<button class="btn danger" type="button" onclick="S.rejDlg='${k}';drawEditor();$('#rejMotivo').focus()">${esc(rotulo(k, p))}</button>`
             : `<button class="btn ${a.tipo === "ok" ? "ok" : "primary"}" type="button" onclick="acaoEditor('${k}')">${esc(rotulo(k, p))}</button>`;
         }).join("")}</div>` : `<span class="muted" style="font-size:13px">${COM_CLIENTE.includes(p.status) ? "Aguardando a aprovação do cliente." : p.status === "Em validação" || p.status === "Em aprovação" ? "Aguardando o aprovador." : p.status === "Postado" ? "Conteúdo publicado." : "Nenhuma ação sua nesta etapa."}</span>`}
+    ${pubHtml(p)}
     ${p.id ? `<div class="row"><button class="btn sm" type="button" onclick="verNaGrade('${esc(p.id)}')">Ver na grade</button></div>` : ""}
     ${hist.length ? `<details><summary class="muted" style="cursor:pointer;font-size:13px">Histórico (${hist.length})</summary><ul class="hist">${hist.map(h => `<li>${new Date(h.em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })} · <b>${esc(h.por)}</b> ${esc((h.acao || "").toLowerCase())}${h.motivo ? `: "${esc(h.motivo)}"` : ""}</li>`).join("")}</ul></details>` : ""}
+    ${p.id ? comentariosHtml(p, "editor") : ""}
   </div>`;
 }
 function editorMudou() {
@@ -1958,7 +2097,8 @@ function abrirAgenda(id, k) {
         <label class="field"><span>Data</span><input id="agData" type="date" required value="${esc(p.agData || p.data || "")}"></label>
         <label class="field"><span>Hora</span><input id="agHora" type="time" required value="${esc(p.agHora || "")}"></label>
       </div>
-      <h4 style="margin:6px 0 0">Agende no Meta Business Suite</h4>
+      ${instaOk(p.marcaId) ? `<label style="display:flex;gap:8px;align-items:flex-start;font-size:14px;background:var(--surface-2);border-radius:12px;padding:10px 12px"><input id="agAuto" type="checkbox"${p.autoPub === "sim" ? " checked" : ""} style="margin-top:3px"> <span><b>Publicar sozinho pelo sistema</b> no dia e na hora acima, com as artes e a legenda desta postagem. Aí não precisa agendar no Meta.</span></label>` : ""}
+      <h4 style="margin:6px 0 0">${instaOk(p.marcaId) ? "Ou agende" : "Agende"} no Meta Business Suite</h4>
       <ol class="passos">
         <li><div><b>Pegue o criativo</b>${did ? `<div class="acts"><a class="btn sm" href="https://drive.google.com/uc?export=download&id=${esc(did)}" target="_blank" rel="noopener">Baixar arquivo</a><a class="btn sm" href="${esc(p.criativo)}" target="_blank" rel="noopener">Abrir no Drive</a></div>`
           : /^https?:\/\//.test(p.criativo || "") ? `<div class="acts"><a class="btn sm" href="${esc(p.criativo)}" target="_blank" rel="noopener">Abrir criativo</a></div>` : `<div class="muted" style="font-size:13px">Esta postagem ainda não tem link do criativo.</div>`}</div></li>
@@ -1980,7 +2120,7 @@ $("#agForm").addEventListener("submit", async e => {
   let dados = {};
   if (k === "postar") dados = { postLink: ($("#agLink").value || "").trim() };
   else {
-    dados = { agTipo: ($("#agForm input[name=agTipo]:checked") || {}).value, agData: $("#agData").value, agHora: $("#agHora").value };
+    dados = { agTipo: ($("#agForm input[name=agTipo]:checked") || {}).value, agData: $("#agData").value, agHora: $("#agHora").value, autoPub: !!$("#agAuto")?.checked };
     if (!dados.agTipo || !dados.agData || !dados.agHora) return toast("Escolha o tipo, a data e a hora.");
   }
   const b = $("#agOk"); b.disabled = true;
@@ -2086,7 +2226,7 @@ function apvCard(p, k1, k2) {
     ${insta ? `<div class="bd" style="padding-bottom:0"><div class="meta">${esc(nomeMarca(p.marcaId))} · ${br(p.data)} ${wd(p.data).slice(0, 3)} · ${esc(p.status)}</div>${p.motivo ? `<div class="motivo"><b>${esc(p.status)}</b>${esc(p.motivo)}</div>` : ""}</div><div style="padding:10px 14px 4px">${igPost(p)}</div>` : `
     ${(p.midias || []).length ? `<div class="bd" style="padding-bottom:0"><div class="midias">${midiasHtml(p.midias)}</div></div>` : src ? `<div class="img"><img src="${esc(src)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>` : ""}
     <div class="bd">
-      <div class="meta">${esc(nomeMarca(p.marcaId))} · ${br(p.data)} ${wd(p.data).slice(0, 3)} · ${FMT_ICON[p.formato] || ""} ${esc(p.formato)} · ${esc(p.status)}</div>
+      <div class="meta">${esc(nomeMarca(p.marcaId))} · ${br(p.data)} ${wd(p.data).slice(0, 3)} · ${FMT_ICON[p.formato] || ""} ${esc(p.formato)} · ${esc(p.status)}${p.prazoAprovacao && !JA_APROVADO.includes(p.status) ? ` · aprovar até ${br(p.prazoAprovacao)}` : ""}${atrasoDe(p) ? ` · <span style="color:var(--danger);font-weight:600">${esc(atrasoDe(p).txt)}</span>` : ""}</div>
       <div class="t">${esc(nm(p))}</div>
       ${p.motivo ? `<div class="motivo"><b>${esc(p.status)}</b>${esc(p.motivo)}</div>` : ""}
       <dl class="det">
@@ -2099,6 +2239,7 @@ function apvCard(p, k1, k2) {
         ${/^https?:\/\//.test(p.postLink || "") ? `<a class="lnk" href="${esc(p.postLink)}" target="_blank" rel="noopener">Ver post publicado</a>` : ""}
       </div>
     </div>`}
+    <div class="bd" style="padding-top:0">${comentariosHtml(p, "apv")}</div>
     <div class="acts">
       ${rej ? `<div class="rej"><textarea id="rej-${esc(p.id)}" placeholder="${/eprovar/.test(S.rej.k) ? "Por que a ideia não foi aprovada?" : "Por que não foi aprovado? O que precisa mudar?"}"></textarea>
           <div style="display:flex;gap:8px"><button class="btn danger" type="button" onclick="confirmarRej('${esc(p.id)}')">Confirmar</button><button class="btn" type="button" onclick="S.rej=null;render()">Cancelar</button></div></div>`
@@ -2122,7 +2263,7 @@ function vAprovacoes() {
   const edita = !["aprovador", "cliente"].includes(S.eu.papel);
   const meus = p => temAcesso(p.marcaId);
   const trocaVisual = `<div class="escopo" role="group" aria-label="Visualização"><button type="button" aria-pressed="${modoVisual() !== "instagram"}" onclick="definirVisual('detalhada')">Detalhada</button><button type="button" aria-pressed="${modoVisual() === "instagram"}" onclick="definirVisual('instagram')">Como Instagram</button></div>`;
-  let html = head("Todas as suas marcas", "Aprovações", trocaVisual);
+  let html = head("Todas as suas marcas", "Aprovações", trocaVisual) + clientesHtml();
   if (ehCliente()) {
     html += sec("Ideias para você aprovar", "Nenhuma ideia esperando a sua aprovação.", S.posts.filter(p => p.status === "Validação do cliente" && temAcesso(p.marcaId)), "clienteValidar", "clienteReprovar");
     html += sec("Posts para você aprovar", "Nenhum post esperando a sua aprovação.", S.posts.filter(p => p.status === "Aprovação do cliente" && temAcesso(p.marcaId)), "clienteAprovar", "clienteAjustes");
@@ -2202,6 +2343,7 @@ function vTarefas() {
       ${sel("tfMarca", [["", "Todas as marcas"], ["-", "Sem marca"]].concat(S.marcas.map(m => [m.id, m.nome])), f.marca, "S.tf.marca=this.value;render()")}
       <label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox"${f.feitas ? " checked" : ""} onchange="S.tf.feitas=this.checked;render()"> Mostrar feitas</label>
     </div>
+    ${atrasadosHtml()}
     ${!pend.length && !(f.feitas && feitas.length) ? `<div class="empty"><strong>Nada pendente por aqui</strong><span>Crie uma tarefa com o que precisa ser feito, quem faz, a prioridade e o prazo.</span><button class="btn primary" type="button" onclick="abrirTarefa()">+ Nova tarefa</button></div>` : ""}
     ${grupos.map(([g, titulo]) => { const l = pend.filter(t => grupoTarefa(t, h) === g).sort(ord); return l.length ? `<section class="tf-grupo ${g}"><h2>${titulo}<span class="n">${l.length}</span></h2><div class="tf-lista">${l.map(t => tfHtml(t, h)).join("")}</div></section>` : ""; }).join("")}
     ${f.feitas && feitas.length ? `<section class="tf-grupo"><h2>Feitas<span class="n">${feitas.length}</span></h2><div class="tf-lista">${feitas.slice(0, 50).map(t => tfHtml(t, h)).join("")}</div></section>` : ""}`;
@@ -2281,6 +2423,11 @@ function notificacoes() {
     const serve = chefia || (papel === "cliente" ? COM_CLIENTE.includes(h.para) && temAcesso(p.marcaId)
       : t[3] === "aprovar" ? podeAprovar(p.marcaId) && papel === "aprovador" : t[3] === "editar" ? podeEditar(p.marcaId) && papel === "social" : false);
     if (serve) lista.push({ em: h.em, por: h.por, acao: h.acao, motivo: h.motivo, titulo: nm(p), marcaId: p.marcaId, ic: t[1], cls: t[2], abrir: `openEditor('${esc(p.id)}')` });
+  }));
+  // comentários de outras pessoas nas postagens que eu vejo
+  S.posts.forEach(p => (p.comentarios || []).forEach(c => {
+    if (c.em < desde || c.uid === S.eu.id || !temAcesso(p.marcaId)) return;
+    lista.push({ em: c.em, por: c.por, acao: "Comentou" + (c.arte ? ` na arte ${c.arte}` : ""), motivo: c.texto, titulo: nm(p), marcaId: p.marcaId, ic: "💬", cls: "", abrir: `openEditor('${esc(p.id)}')` });
   }));
   // tarefas: o que passaram para mim e o que concluíram das que eu criei
   S.tarefas.forEach(t => {
@@ -2368,6 +2515,8 @@ async function entrar() {
 function limparTela() {
   S.dirty = false; S.rej = null; S.uEdit = null; S.boasVindas = null; S.confirmDel = false; S.delArq = null;
   S.acessos = {}; S.insta = {}; // senhas e chaves não passam de uma pessoa para outra no mesmo navegador
+  S.carimbo = ""; S.met = {}; S.stories = [];
+  ["stDlg", "seDlg", "lkDlg"].forEach(d => { if ($("#" + d).open) $("#" + d).close(); });
   if ($("#dlg").open) $("#dlg").close();
   if ($("#agDlg").open) $("#agDlg").close();
   if ($("#tfDlg").open) $("#tfDlg").close();
@@ -2477,7 +2626,7 @@ function vEquipe() {
   const marcasCel = x => TODAS_MARCAS.includes(x.papel) ? `<span class="muted">Todas (sempre)</span>` : editavel(x) && x.id !== S.eu.id ? marcasSel(x) : esc(marcasTxt(x));
   const linhas = S.usuarios.slice().sort((a, b) => a.nome.localeCompare(b.nome)).map(x => `<tr${editavel(x) ? ` onclick="S.uEdit=S.usuarios.find(y=>y.id==='${esc(x.id)}');render()"` : ' style="cursor:default" title="Só o administrador altera este acesso"'}>
     <td><div class="pessoa">${avatarHtml(x, 34)}<div><b>${esc(x.nome)}</b><div class="muted">${esc(x.login)}${x.whatsapp ? " · " + esc(fmtTel(x.whatsapp)) : ""}</div></div></div></td>
-    <td onclick="event.stopPropagation()">${editavel(x) && x.id !== S.eu.id ? `<select class="papel-sel" aria-label="Papel de ${esc(x.nome)}" onchange="trocarPapel('${esc(x.id)}', this.value)">${Object.entries(PAPEIS).filter(([k]) => papeisPermitidos.includes(k) || k === x.papel).map(([k, l]) => `<option value="${k}"${k === x.papel ? " selected" : ""}>${l}</option>`).join("")}</select>` : esc(PAPEIS[x.papel] || x.papel)}</td><td onclick="event.stopPropagation()">${marcasCel(x)}</td><td>${x.ativo ? "Ativo" : `<span class="muted">Desativado</span>`}</td></tr>`).join("");
+    <td onclick="event.stopPropagation()">${editavel(x) && x.id !== S.eu.id ? `<select class="papel-sel" aria-label="Papel de ${esc(x.nome)}" onchange="trocarPapel('${esc(x.id)}', this.value)">${Object.entries(PAPEIS).filter(([k]) => papeisPermitidos.includes(k) || k === x.papel).map(([k, l]) => `<option value="${k}"${k === x.papel ? " selected" : ""}>${l}</option>`).join("")}</select>` : esc(PAPEIS[x.papel] || x.papel)}</td><td onclick="event.stopPropagation()">${marcasCel(x)}</td><td onclick="event.stopPropagation()">${x.ativo ? "Ativo" : `<span class="muted">Desativado</span>`}${x.papel === "cliente" && x.ativo ? `<br><button class="btn sm" type="button" style="margin-top:4px" onclick="linkCliente('${esc(x.id)}')">🔗 Link sem senha</button>` : ""}</td></tr>`).join("");
   const form = u ? `<form class="panel" style="display:grid;gap:12px;margin-top:16px" onsubmit="event.preventDefault();salvarUsuario()">
       <h2>${u.id ? "Editar " + esc(u.nome) : "Nova pessoa"}</h2>
       <div class="pf-grid">
@@ -2668,6 +2817,447 @@ function writeFail(e) {
   toast(msg);
 }
 
+/* ---------- Stories: calendário, visualizador como no Instagram e editor ---------- */
+const STATUS_STORY = ["Planejado", "Produzido", "Aprovado", "Postado"];
+const ST_STORY_VAR = { Planejado: "--st-ideia", Produzido: "--st-produzido", Aprovado: "--st-aprovado", Postado: "--st-postado" };
+const TIPOS_STORY = ["Foto", "Vídeo", "Texto", "Bastidores", "Produto", "Depoimento", "Tutorial", "Repost"];
+const ICON_STORY = { Foto: "📷", "Vídeo": "▶", Texto: "Aa", Bastidores: "🎬", Produto: "🛍", Depoimento: "💬", Tutorial: "📌", Repost: "↻" };
+const STICKERS = ["", "Enquete", "Caixinha de perguntas", "Quiz", "Link", "Contagem regressiva", "Música", "Menção", "Localização", "Slider de emoji"];
+const STICKER_PH = { Enquete: "Pergunta / Opção 1 / Opção 2", "Caixinha de perguntas": "Ex.: Me pergunte sobre o produto", Quiz: "Pergunta / Resposta certa / Errada", Link: "Texto do link (ex.: Compre aqui)", "Contagem regressiva": "Nome da contagem / data (ex.: Lançamento / 20/11)", "Música": "Nome da música", "Menção": "@perfil", "Localização": "Nome do lugar", "Slider de emoji": "Pergunta (ex.: Quanto você ama?)" };
+const CORES_STORY = ["#1d1d1f", "#f2f0eb", "#d62976", "#962fbf", "#4f5bd5", "#fa7e1e", "#feda75", "#2f8f6a", "#c9b7a3", "#ff5a5f"];
+const stColorS = st => `var(${ST_STORY_VAR[st] || "--st-ideia"})`;
+const storiesMarca = () => (S.stories || []).filter(x => x.marcaId === S.marcaId);
+const storiesDia = k => storiesMarca().filter(x => x.data === k).sort((a, b) => (a.ordem || 0) - (b.ordem || 0) || String(a.hora || "99").localeCompare(String(b.hora || "99")));
+const corTexto = hex => { const n = parseInt(String(hex || "#222").slice(1), 16); const l = ((n >> 16) * 299 + ((n >> 8) & 255) * 587 + (n & 255) * 114) / 1000; return l > 160 ? "#111" : "#fff"; };
+const storyMidiaId = x => driveId(x.midia) || (/^[\w-]{25,}$/.test(x.midia || "") ? x.midia : "");
+const storyVideo = x => /v[ií]deo/i.test(x.tipo || "");
+function miniStory(x, extra = "", attrs = "") {
+  const id = storyMidiaId(x);
+  return `<button type="button" class="smini" style="--c:${esc(x.cor || "#3a3a40")};--sc:${stColorS(x.status)}" ${attrs} title="${esc((x.hora ? x.hora + " · " : "") + (x.titulo || x.tipo || "Story") + " · " + x.status)}">
+    ${id ? `<img src="https://drive.google.com/thumbnail?id=${esc(id)}&sz=w120" alt="" loading="lazy" onerror="this.remove()">` : ""}
+    <span class="ic">${id && !storyVideo(x) ? "" : esc(ICON_STORY[x.tipo] || "Aa")}</span><span class="sd"></span>${extra}</button>`;
+}
+function anelHtml(lista, conteudo) {
+  const cls = !lista.length ? "vazio" : lista.every(x => x.status === "Postado") ? "visto" : "";
+  return `<span class="st-anel ${cls}"><span>${conteudo}</span></span>`;
+}
+function vStories() {
+  const m = marca(), perfil = perfilDe(m);
+  const first = parse(S.month + "-01");
+  const start = new Date(first); start.setDate(1 - first.getDay());
+  const last = new Date(first.getFullYear(), first.getMonth() + 1, 0);
+  const end = new Date(last); end.setDate(last.getDate() + (6 - last.getDay()));
+  const hoje = iso(new Date()), pode = S.canWrite;
+  // faixa de bolinhas: hoje e os próximos 6 dias, como o topo do Instagram
+  let topo = "";
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(); d.setDate(d.getDate() + i);
+    const k = iso(d), l = storiesDia(k);
+    const capa = l.find(x => storyMidiaId(x));
+    const dentro = capa ? `<img src="https://drive.google.com/thumbnail?id=${esc(storyMidiaId(capa))}&sz=w160" alt="" onerror="this.remove()">` : l.length ? l.length : (pode ? "+" : "·");
+    topo += `<button type="button" class="st-bolha${i === 0 ? " hoje" : ""}" onclick="${l.length ? `abrirStories('${k}',0)` : pode ? `novoStory('${k}')` : ""}" aria-label="${l.length} stories em ${br(k)}">
+      ${anelHtml(l, dentro)}<small>${i === 0 ? "Hoje" : i === 1 ? "Amanhã" : WD[d.getDay()].slice(0, 3) + " " + d.getDate()}</small><b>${l.length ? l.length + (l.length === 1 ? " story" : " stories") : "—"}</b></button>`;
+  }
+  let cells = WD.map(d => `<div class="dow">${d.slice(0, 3)}</div>`).join("");
+  let total = 0, dias = 0, postados = 0;
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const k = iso(d), l = storiesDia(k), out = d.getMonth() !== first.getMonth();
+    if (!out) { total += l.length; if (l.length) dias++; postados += l.filter(x => x.status === "Postado").length; }
+    cells += `<div class="sday${out ? " out" : ""}${k === hoje ? " today" : ""}" data-sdia="${k}">
+      <div class="sh"><b>${d.getDate()}</b>${pode ? `<button class="add-day" type="button" aria-label="Novo story em ${br(k)}" onclick="novoStory('${k}')">+</button>` : ""}</div>
+      ${l.length ? `<button type="button" class="sring" onclick="abrirStories('${k}',0)">${anelHtml(l, l.length)}<span class="t">${l.length === 1 ? "1 story" : l.length + " stories"}</span></button>
+      <div class="minis">${l.slice(0, 6).map((x, i) => miniStory(x, "", `onclick="abrirStories('${k}',${i})"${pode ? ` draggable="true" data-sid="${esc(x.id)}"` : ""}`)).join("")}${l.length > 6 ? `<span class="smini mais">+${l.length - 6}</span>` : ""}</div>` : ""}
+    </div>`;
+  }
+  return headM(m.nome, "Stories", monthNav() + (pode ? `<button class="btn primary" type="button" onclick="novoStory()">+ Novo story</button>` : "")) +
+    `<div class="st-top" aria-label="Próximos dias">${topo}</div>
+    <div class="st-cal">${cells}</div>
+    <div class="st-leg"><span>${total} ${total === 1 ? "story" : "stories"} em ${esc(monthLabel(S.month))} · ${dias} ${dias === 1 ? "dia" : "dias"} com story · ${postados} postado${postados === 1 ? "" : "s"}</span>
+      ${STATUS_STORY.map(s => `<span><i style="--sc:${stColorS(s)}"></i>${s}</span>`).join("")}</div>
+    <p class="muted" style="font-size:13px;margin-top:6px">Clique na bolinha do dia para ver a sequência como no Instagram${pode ? ". Arraste um story para outro dia para mudar a data" : ""}.${perfil.instagram ? " Conta: " + esc(perfil.instagram) + "." : ""}</p>`;
+}
+function wireStories() {
+  let arrastando = null;
+  document.querySelectorAll(".smini[data-sid]").forEach(el => {
+    el.addEventListener("dragstart", e => { arrastando = el.dataset.sid; e.dataTransfer.setData("text/plain", arrastando); e.dataTransfer.effectAllowed = "move"; });
+  });
+  document.querySelectorAll(".sday[data-sdia]").forEach(dia => {
+    dia.addEventListener("dragover", e => { if (!arrastando) return; e.preventDefault(); dia.classList.add("drop"); });
+    dia.addEventListener("dragleave", () => dia.classList.remove("drop"));
+    dia.addEventListener("drop", async e => {
+      e.preventDefault(); dia.classList.remove("drop");
+      const id = arrastando; arrastando = null;
+      const x = (S.stories || []).find(s => s.id === id), k = dia.dataset.sdia;
+      if (!x || x.data === k) return;
+      const fila = storiesDia(k).map(s => ({ id: s.id })).concat([{ id, data: k }]);
+      x.data = k; x.ordem = fila.length; render();
+      try { await api("ordenarStories", { ids: fila }); await carregar(); toast("Story movido para " + br(k)); } catch (err) { writeFail(err); carregar(); }
+    });
+  });
+}
+/* aparelho: o story desenhado como no Instagram */
+function stickerHtml(x) {
+  const t = String(x.stickerTexto || "").trim(), partes = t.split(/\s+\/\s*|\s*\/\s+/).map(s => s.trim()).filter(Boolean);
+  switch (x.sticker) {
+    case "Enquete": case "Quiz": return `<div class="stk"><div class="card"><div class="q">${esc(partes[0] || "Sua pergunta")}</div><div class="ops"><span>${esc(partes[1] || "SIM")}</span><span>${esc(partes[2] || "NÃO")}</span></div></div></div>`;
+    case "Caixinha de perguntas": return `<div class="stk"><div class="card"><div class="cx">${esc(t || "Faça uma pergunta")}</div><div>Digite algo…</div></div></div>`;
+    case "Link": return `<div class="stk"><span class="pill">🔗 ${esc(t || (x.link || "").replace(/^https?:\/\//, "").slice(0, 28) || "Link")}</span></div>`;
+    case "Contagem regressiva": return `<div class="stk"><div class="cd"><b>${esc(partes[0] || "Contagem")}</b><span>${esc(partes[1] || "00 : 00 : 00")}</span></div></div>`;
+    case "Música": return `<div class="stk"><span class="pill mus">♪ ${esc(t || "Música")}</span></div>`;
+    case "Menção": return `<div class="stk"><span class="pill men">${esc(t.startsWith("@") ? t : "@" + (t || "perfil"))}</span></div>`;
+    case "Localização": return `<div class="stk"><span class="pill loc">📍 ${esc(t || "Localização")}</span></div>`;
+    case "Slider de emoji": return `<div class="stk"><div class="card sl"><div class="q" style="padding:0">${esc(t || "Quanto você ama?")}</div><div></div></div></div>`;
+    default: return "";
+  }
+}
+function phoneHtml(x, opts = {}) {
+  const m = S.marcas.find(y => y.id === x.marcaId) || marca() || {}, perfil = perfilDe(m);
+  const id = storyMidiaId(x), cor = x.cor || "#2a2a2e";
+  const arroba = String(perfil.instagram || m.nome || "").replace(/^.*instagram\.com\//i, "").replace(/[\/\s]/g, "").replace(/^@?/, "");
+  const fotoPerf = driveId(perfil.fotoPerfil);
+  const midia = id ? (storyVideo(x)
+      ? `<video src="https://drive.google.com/uc?export=download&id=${esc(id)}" poster="https://drive.google.com/thumbnail?id=${esc(id)}&sz=w1080" playsinline muted loop ${opts.auto ? "autoplay" : ""} onerror="this.outerHTML='<iframe src=&quot;https://drive.google.com/file/d/${esc(id)}/preview&quot; allow=&quot;autoplay&quot;></iframe>'"></video>`
+      : `<img src="https://drive.google.com/thumbnail?id=${esc(id)}&sz=w1080" alt="" onerror="this.remove()">`) : "";
+  const n = opts.total || 0;
+  return `<div class="phone${id ? " com-midia" : ""}${opts.pausado ? " pausado" : ""}" style="--c:${esc(cor)};color:${id ? "#fff" : corTexto(cor)}" ${opts.id ? `id="${opts.id}"` : ""}>
+    ${midia}
+    ${n ? `<div class="bars">${Array.from({ length: n }, (_, i) => `<span class="${i < opts.i ? "done" : ""}"><i${i === opts.i ? ' id="svBar"' : ""}></i></span>`).join("")}</div>` : `<div class="bars"><span class="done"><i></i></span></div>`}
+    <div class="top" style="color:#fff">${fotoPerf ? `<span class="av"><img src="https://drive.google.com/thumbnail?id=${esc(fotoPerf)}&sz=w100" alt=""></span>` : `<span class="av" style="background:#555">${esc((m.nome || "?").charAt(0))}</span>`}<b>${esc(arroba || "marca")}</b><span class="h">${esc(x.hora || br(x.data))}</span><span class="stp">${esc(x.status || "Planejado")}</span></div>
+    ${cheio(x.texto) ? `<div class="txt"><span>${esc(x.texto)}</span></div>` : !id && !x.sticker ? `<div class="vazio-arte">${esc(x.titulo || "Story sem texto")}<br><small>${esc(x.tipo || "")}</small></div>` : ""}
+    ${stickerHtml(x)}
+    <div class="foot" style="color:#fff"><span class="msg">Enviar mensagem</span><span>♡</span><span>➤</span></div>
+    ${opts.nav ? `<button type="button" class="tap l" aria-label="Story anterior" onclick="svIr(-1)"></button><button type="button" class="tap r" aria-label="Próximo story" onclick="svIr(1)"></button><span class="pausa">❚❚</span>` : ""}
+  </div>`;
+}
+/* visualizador */
+let SV = null;
+function abrirStories(dia, i = 0) {
+  if (!storiesDia(dia).length) return;
+  SV = { dia, i, t: 0, pausado: false };
+  desenharSV();
+  if (!$("#stDlg").open) $("#stDlg").showModal();
+  svTimer();
+}
+function desenharSV() {
+  const l = storiesDia(SV.dia);
+  if (!l.length) { $("#stDlg").close(); return; }
+  SV.i = Math.max(0, Math.min(SV.i, l.length - 1));
+  const x = l[SV.i], pode = podeEditar(x.marcaId), m = S.marcas.find(y => y.id === x.marcaId) || {};
+  const conectado = S.insta[x.marcaId]?.conectado || m.insta?.conectado;
+  const d = parse(SV.dia);
+  $("#stForm").innerHTML = `
+    <div class="dlg-head"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600">${esc(m.nome || "")} · Stories</div>
+      <h2>${esc(WD[d.getDay()])}, ${d.getDate()} de ${esc(d.toLocaleDateString("pt-BR", { month: "long" }))}</h2></div>
+      <button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#stDlg').close()">×</button></div>
+    <div class="sv">
+      <div>${phoneHtml(x, { total: l.length, i: SV.i, nav: true, auto: true, pausado: SV.pausado, id: "svPhone" })}
+        <div style="display:flex;justify-content:center;gap:8px;margin-top:10px">
+          <button class="btn sm" type="button" onclick="svIr(-1)" ${SV.i === 0 ? "disabled" : ""}>‹ Anterior</button>
+          <button class="btn sm" type="button" onclick="svPausar()">${SV.pausado ? "▶ Continuar" : "❚❚ Pausar"}</button>
+          <button class="btn sm" type="button" onclick="svIr(1)" ${SV.i === l.length - 1 ? "disabled" : ""}>Próximo ›</button></div></div>
+      <div>
+        <div class="sv-lista">${l.map((s, j) => `<div class="sv-item${j === SV.i ? " on" : ""}" onclick="SV.i=${j};SV.t=0;desenharSV()">
+            ${miniStory(s, "", 'tabindex="-1"')}
+            <div><div class="tt">${j + 1}. ${esc(s.titulo || s.tipo || "Story")}</div><div class="mt">${esc([s.hora, s.tipo, s.sticker, s.status].filter(Boolean).join(" · "))}</div></div>
+            ${pode ? `<div class="ord" onclick="event.stopPropagation()"><button type="button" aria-label="Subir" onclick="moverStory('${esc(s.id)}',-1)" ${j === 0 ? "disabled" : ""}>▲</button><button type="button" aria-label="Descer" onclick="moverStory('${esc(s.id)}',1)" ${j === l.length - 1 ? "disabled" : ""}>▼</button></div>` : "<span></span>"}
+          </div>`).join("")}</div>
+        <div class="sv-det">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="pill" style="--c:${stColorS(x.status)}"><span class="dot"></span>${esc(x.status)}</span>${x.hora ? `<span class="muted">⏰ ${esc(x.hora)}</span>` : ""}${x.criadoPor ? `<span class="muted" style="font-size:12.5px">por ${esc(x.criadoPor)}</span>` : ""}</div>
+          ${cheio(x.roteiro) ? `<div><b>Roteiro / o que falar</b><div class="rot">${esc(x.roteiro)}</div></div>` : ""}
+          ${cheio(x.link) ? `<div><b>Link:</b> <a class="lnk" href="${esc(x.link)}" target="_blank" rel="noopener">${esc(x.link)}</a></div>` : ""}
+          ${cheio(x.obs) ? `<div><b>Observação:</b> ${esc(x.obs)}</div>` : ""}
+          ${x.pubInfo ? `<div class="muted" style="font-size:13px">📲 ${esc(x.pubInfo)}</div>` : ""}
+          ${x.midia ? `<div><a class="lnk" href="${esc(/^https?:/.test(x.midia) ? x.midia : "https://drive.google.com/file/d/" + x.midia + "/view")}" target="_blank" rel="noopener">Abrir o arquivo no Drive</a></div>` : ""}
+          ${pode ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+            <button class="btn primary" type="button" onclick="editarStory('${esc(x.id)}')">Editar</button>
+            ${x.status !== "Postado" ? `<button class="btn ok" type="button" onclick="statusStory('${esc(x.id)}','Postado')">Marcar como postado</button>` : ""}
+            ${conectado && storyMidiaId(x) && x.status !== "Postado" ? `<button class="btn" type="button" id="svPub" onclick="publicarStory('${esc(x.id)}')">Publicar agora no Instagram</button>` : ""}
+            <button class="btn" type="button" onclick="novoStory('${esc(SV.dia)}')">+ Story neste dia</button></div>` : ""}
+        </div>
+      </div>
+    </div>`;
+}
+function svTimer() {
+  clearInterval(SV?.h);
+  if (!SV) return;
+  SV.h = setInterval(() => {
+    if (!SV || !$("#stDlg").open) return clearInterval(SV?.h);
+    if (SV.pausado) return;
+    SV.t += 50;
+    const bar = $("#svBar"); if (bar) bar.style.width = Math.min(100, SV.t / 50) + "%";
+    if (SV.t >= 5000) {
+      const l = storiesDia(SV.dia);
+      if (SV.i < l.length - 1) { SV.i++; SV.t = 0; desenharSV(); }
+      else { SV.t = 5000; SV.pausado = true; desenharSV(); }
+    }
+  }, 50);
+}
+function svIr(d) { const l = storiesDia(SV.dia); const n = SV.i + d; if (n < 0 || n >= l.length) return; SV.i = n; SV.t = 0; SV.pausado = false; desenharSV(); }
+function svPausar() { SV.pausado = !SV.pausado; if (!SV.pausado && SV.t >= 5000) SV.t = 0; desenharSV(); const b = $("#svBar"); if (b) b.style.width = Math.min(100, SV.t / 50) + "%"; }
+async function moverStory(id, d) {
+  const l = storiesDia(SV.dia), i = l.findIndex(x => x.id === id), j = i + d;
+  if (i < 0 || j < 0 || j >= l.length) return;
+  [l[i], l[j]] = [l[j], l[i]];
+  l.forEach((x, k) => x.ordem = k + 1);
+  SV.i = j; desenharSV();
+  try { await api("ordenarStories", { ids: l.map(x => ({ id: x.id })) }); carregar(); } catch (e) { writeFail(e); }
+}
+async function statusStory(id, status) {
+  const x = S.stories.find(s => s.id === id); if (!x) return;
+  try { await api("salvarStory", { story: { id, status } }); x.status = status; await carregar(); if (SV) desenharSV(); toast("Story " + status.toLowerCase()); } catch (e) { writeFail(e); }
+}
+async function publicarStory(id) {
+  const b = $("#svPub"); if (b) { b.disabled = true; b.textContent = "Publicando…"; }
+  try { await api("publicarAgora", { id, tipo: "story" }); toast("Story publicado no Instagram"); } catch (e) { writeFail(e); }
+  await carregar(); if (SV && $("#stDlg").open) desenharSV();
+}
+/* editor de story */
+let SE = null;
+function novoStory(dia) {
+  if (!S.canWrite) return;
+  if ($("#stDlg").open) $("#stDlg").close();
+  SE = { marcaId: S.marcaId, data: dia || (S.month + "-" + pad(Math.min(new Date().getDate(), 28))), hora: "", tipo: "Foto", titulo: "", texto: "", roteiro: "", sticker: "", stickerTexto: "", link: "", midia: "", cor: CORES_STORY[0], status: "Planejado", obs: "", autoPub: "" };
+  desenharSE(); $("#seDlg").showModal();
+}
+function editarStory(id) {
+  const x = S.stories.find(s => s.id === id); if (!x) return;
+  if ($("#stDlg").open) $("#stDlg").close();
+  SE = { ...x }; S.delStory = false;
+  desenharSE(); $("#seDlg").showModal();
+}
+function lerSE() {
+  const v = id => ($("#" + id)?.value ?? "");
+  Object.assign(SE, { data: v("seData"), hora: v("seHora"), titulo: v("seTitulo"), texto: v("seTexto"), roteiro: v("seRoteiro"), sticker: v("seSticker"), stickerTexto: v("seStkTxt"), link: v("seLink").trim(), midia: v("seMidia").trim(), obs: v("seObs"),
+    tipo: ($("#seForm input[name=seTipo]:checked") || {}).value || SE.tipo, cor: ($("#seForm input[name=seCor]:checked") || {}).value || SE.cor, status: ($("#seForm input[name=seStatus]:checked") || {}).value || SE.status,
+    autoPub: $("#seAuto")?.checked ? "sim" : "" });
+}
+function desenharSE() {
+  const x = SE, m = S.marcas.find(y => y.id === x.marcaId) || marca();
+  const conectado = S.insta[x.marcaId]?.conectado || m.insta?.conectado;
+  const radios = (nome, lista, cur, rot = v => v) => lista.map(v => `<label><input type="radio" name="${nome}" value="${esc(v)}"${v === cur ? " checked" : ""}>${esc(rot(v))}</label>`).join("");
+  $("#seForm").innerHTML = `
+    <div class="dlg-head"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600">${esc(m.nome)} · Stories</div>
+      <h2>${x.id ? "Editar story" : "Novo story"}</h2></div>
+      <button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#seDlg').close()">×</button></div>
+    <div class="sv">
+      <div id="sePrev">${phoneHtml(x)}</div>
+      <div style="display:grid;gap:12px">
+        <div class="pf-grid">
+          <label class="field"><span>Dia</span><input id="seData" type="date" required value="${esc(x.data)}"></label>
+          <label class="field"><span>Hora (opcional)</span><input id="seHora" type="time" value="${esc(x.hora || "")}"></label>
+        </div>
+        <div class="field"><span>Tipo</span><div class="chips">${radios("seTipo", TIPOS_STORY, x.tipo, v => (ICON_STORY[v] || "") + " " + v)}</div></div>
+        <label class="field"><span>Título (para a equipe)</span><input id="seTitulo" value="${esc(x.titulo)}" placeholder="Ex.: Bom dia com o produto"></label>
+        <label class="field"><span>Texto na tela</span><textarea id="seTexto" rows="2" placeholder="O que aparece escrito no story">${esc(x.texto)}</textarea></label>
+        <div class="pf-grid">
+          <label class="field"><span>Figurinha</span><select id="seSticker">${STICKERS.map(s => `<option value="${esc(s)}"${s === x.sticker ? " selected" : ""}>${s || "Nenhuma"}</option>`).join("")}</select></label>
+          <label class="field"><span>Texto da figurinha</span><input id="seStkTxt" value="${esc(x.stickerTexto)}" placeholder="${esc(STICKER_PH[x.sticker] || "—")}"${x.sticker ? "" : " disabled"}></label>
+        </div>
+        <label class="field"><span>Arquivo no Drive (foto ou vídeo, opcional)</span><input id="seMidia" value="${esc(x.midia)}" placeholder="https://drive.google.com/file/d/…"><small>Compartilhado como "Qualquer pessoa com o link". Sem arquivo, o story aparece com a cor de fundo.</small></label>
+        <div class="field"><span>Cor de fundo</span><div class="cores">${CORES_STORY.map(c => `<label style="--c:${c}" title="${c}"><input type="radio" name="seCor" value="${c}"${c === x.cor ? " checked" : ""} aria-label="Cor ${c}"></label>`).join("")}</div></div>
+        <label class="field"><span>Roteiro / o que falar</span><textarea id="seRoteiro" rows="3" placeholder="Fala, cena, enquadramento…">${esc(x.roteiro)}</textarea></label>
+        <label class="field"><span>Link (se tiver)</span><input id="seLink" type="url" value="${esc(x.link)}" placeholder="https://…"></label>
+        <div class="field"><span>Status</span><div class="chips">${radios("seStatus", STATUS_STORY, x.status)}</div></div>
+        <label class="field"><span>Observação</span><input id="seObs" value="${esc(x.obs)}"></label>
+        ${conectado ? `<label style="display:flex;gap:8px;align-items:flex-start;font-size:14px"><input id="seAuto" type="checkbox"${x.autoPub === "sim" ? " checked" : ""} style="margin-top:3px"> <span><b>Publicar sozinho no Instagram</b> no dia e na hora marcados (precisa do arquivo no Drive; figurinhas não vão pela publicação automática).${x.pubInfo ? `<br><span class="muted">${esc(x.pubInfo)}</span>` : ""}</span></label>` : ""}
+      </div>
+    </div>
+    <div class="dlg-foot">
+      ${x.id ? (S.delStory ? `<span class="confirm">Excluir este story? <button class="btn sm danger" type="button" onclick="excluirStory()">Excluir</button><button class="btn sm" type="button" onclick="S.delStory=false;lerSE();desenharSE()">Cancelar</button></span>`
+        : `<button class="btn danger" type="button" onclick="S.delStory=true;lerSE();desenharSE()">Excluir</button><button class="btn" type="button" onclick="lerSE();SE={...SE,id:'',status:'Planejado',autoPub:'',pubInfo:''};desenharSE();toast('Cópia aberta. Ajuste e salve.')">Duplicar</button>`) : ""}
+      <span class="sp"></span>
+      <button class="btn" type="button" onclick="$('#seDlg').close()">Cancelar</button>
+      <button class="btn primary" type="submit" id="seSalvar">Salvar story</button>
+    </div>`;
+}
+$("#seForm").addEventListener("input", e => {
+  if (!SE) return;
+  lerSE();
+  if (e.target.id === "seSticker") { const i = $("#seStkTxt"); i.disabled = !SE.sticker; i.placeholder = STICKER_PH[SE.sticker] || "—"; }
+  $("#sePrev").innerHTML = phoneHtml(SE);
+});
+$("#seForm").addEventListener("change", e => { if (SE && e.target.name) { lerSE(); $("#sePrev").innerHTML = phoneHtml(SE); } });
+$("#seForm").addEventListener("submit", async e => {
+  e.preventDefault(); lerSE();
+  if (!SE.data) return toast("Escolha o dia.");
+  if (SE.autoPub && !storyMidiaId(SE)) return toast("Para publicar sozinho, cole o arquivo do Drive.");
+  const b = $("#seSalvar"); b.disabled = true; b.textContent = "Salvando…";
+  try {
+    const r = await api("salvarStory", { story: { ...SE, autoPub: !!SE.autoPub } });
+    const dia = SE.data; $("#seDlg").close(); await carregar();
+    if (dia.slice(0, 7) !== S.month) setMonth(dia.slice(0, 7));
+    toast("Story salvo");
+  } catch (err) { b.disabled = false; b.textContent = "Salvar story"; writeFail(err); }
+});
+async function excluirStory() {
+  try { await api("excluirStory", { id: SE.id }); $("#seDlg").close(); await carregar(); toast("Story excluído"); } catch (e) { writeFail(e); }
+}
+$("#stDlg").addEventListener("close", () => { if (SV) clearInterval(SV.h); SV = null; });
+$("#stDlg").addEventListener("click", e => { if (e.target === $("#stDlg")) $("#stDlg").close(); });
+$("#seDlg").addEventListener("click", e => { if (e.target === $("#seDlg")) $("#seDlg").close(); });
+$("#seDlg").addEventListener("close", () => { SE = null; S.delStory = false; render(); });
+
+/* ---------- Comentários na postagem ---------- */
+function comentariosHtml(p, ctx) {
+  const l = p.comentarios || [], n = (p.midias || []).length, pode = temAcesso(p.marcaId);
+  const fmt = em => new Date(em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+  const quem = c => S.equipe.find(u => u.id === c.uid) || { nome: c.por };
+  return `<details class="coms"${ctx === "editor" || l.length ? " open" : ""}><summary>💬 Comentários${l.length ? ` (${l.length})` : ""}</summary>
+    <div class="com-lista">${l.length ? l.map(c => `<div class="com${c.uid === S.eu.id ? " meu" : ""}">${avatarHtml(quem(c), 26)}<div><div class="com-h"><b>${esc(c.por)}</b>${c.papel === "cliente" ? ` <span class="tag-cli">cliente</span>` : ""}<span>${fmt(c.em)}</span>${c.arte ? `<span class="tag-arte">arte ${c.arte}</span>` : ""}
+        ${c.uid === S.eu.id || TODAS_MARCAS.includes(S.eu.papel) ? `<button type="button" class="com-x" aria-label="Apagar comentário" onclick="apagarComentario('${esc(p.id)}','${esc(c.id)}','${ctx}')">×</button>` : ""}</div><div class="com-t">${esc(c.texto)}</div></div></div>`).join("") : `<p class="muted" style="font-size:13px;margin:4px 0">Nenhum comentário ainda. Use para combinar ajustes sem perder no WhatsApp.</p>`}</div>
+    ${pode ? `<div class="com-novo"><textarea id="com-${ctx}-${esc(p.id)}" rows="2" placeholder="Escreva um comentário…" onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();comentar('${esc(p.id)}','${ctx}')}"></textarea>
+      <div class="com-acts">${n > 1 ? `<select id="coma-${ctx}-${esc(p.id)}" aria-label="Sobre qual arte"><option value="">Sobre o post todo</option>${Array.from({ length: n }, (_, i) => `<option value="${i + 1}">Sobre a arte ${i + 1}</option>`).join("")}</select>` : ""}
+      <button class="btn sm primary" type="button" onclick="comentar('${esc(p.id)}','${ctx}')">Comentar</button></div></div>` : ""}
+  </details>`;
+}
+function redesenharComentarios(id, ctx) {
+  if (ctx === "editor" && $("#dlg").open && EDIT && EDIT.id === id) {
+    const p = S.posts.find(x => x.id === id); if (p) EDIT.comentarios = p.comentarios;
+    const box = $("#dlgForm .coms"); if (box && p) { box.outerHTML = comentariosHtml(p, "editor"); return; }
+  }
+  render();
+}
+async function comentar(id, ctx) {
+  const ta = $(`#com-${ctx}-${id}`), texto = (ta?.value || "").trim();
+  if (!texto) return toast("Escreva o comentário.");
+  const arte = $(`#coma-${ctx}-${id}`)?.value || "";
+  ta.disabled = true;
+  try {
+    const r = await api("comentar", { id, texto, arte });
+    const p = S.posts.find(x => x.id === id); if (p) p.comentarios = (p.comentarios || []).concat([r.comentario]);
+    S.dirty = false; redesenharComentarios(id, ctx); toast("Comentário enviado");
+  } catch (e) { ta.disabled = false; writeFail(e); }
+}
+async function apagarComentario(id, cid, ctx) {
+  try {
+    await api("apagarComentario", { id, cid });
+    const p = S.posts.find(x => x.id === id); if (p) p.comentarios = (p.comentarios || []).filter(c => c.id !== cid);
+    redesenharComentarios(id, ctx);
+  } catch (e) { writeFail(e); }
+}
+
+/* ---------- Prazos de produção ---------- */
+const ANTES_ARTE = ["Ideia", "Em validação", "Validação do cliente", "Ideia reprovada", "Em produção", "Ajustes solicitados"];
+const JA_APROVADO = ["Aprovado", "Agendado", "Postado"];
+function atrasoDe(p, h = hojeIso()) {
+  if (p.status === "Postado") return null;
+  if (p.data && p.data < h) return { tipo: "post", txt: "Data do post passou", dias: Math.round((parse(h) - parse(p.data)) / 864e5) };
+  if (p.prazoArte && p.prazoArte < h && ANTES_ARTE.includes(p.status)) return { tipo: "arte", txt: "Arte atrasada", dias: Math.round((parse(h) - parse(p.prazoArte)) / 864e5) };
+  if (p.prazoAprovacao && p.prazoAprovacao < h && !JA_APROVADO.includes(p.status)) return { tipo: "aprov", txt: "Aprovação atrasada", dias: Math.round((parse(h) - parse(p.prazoAprovacao)) / 864e5) };
+  return null;
+}
+const prazoPadrao = (data, dias) => { if (!data) return ""; const d = parse(data); d.setDate(d.getDate() - dias); return iso(d); };
+function atrasadosHtml() {
+  const h = hojeIso();
+  const l = S.posts.filter(p => podeEditar(p.marcaId) && atrasoDe(p, h) && p.data >= prazoPadrao(h, 30)).sort((a, b) => (a.data || "").localeCompare(b.data || ""));
+  if (!l.length) return "";
+  return `<section class="tf-grupo atrasadas"><h2>Postagens atrasadas<span class="n">${l.length}</span></h2><div class="tf-lista">${l.slice(0, 30).map(p => { const a = atrasoDe(p, h); return `<div class="tf" style="--pc:var(--danger)"><span></span><div class="corpo" onclick="openEditor('${esc(p.id)}')"><div class="tt">${esc(nm(p))}</div>
+      <div class="meta"><span>${esc(nomeMarca(p.marcaId))}</span><span>📅 post ${esc(br(p.data))}</span><span class="atraso">${esc(a.txt)} · ${a.dias} dia(s)</span><span>${esc(p.status)}</span></div></div><span class="prio">${esc(a.tipo === "arte" ? "Arte" : a.tipo === "aprov" ? "Aprovação" : "Post")}</span></div>`; }).join("")}</div></section>`;
+}
+
+/* ---------- Repetir postagem ---------- */
+function repetirHtml() {
+  return `<span class="confirm" style="flex-wrap:wrap">Repetir
+    <select id="rpInt"><option value="semana">toda semana</option><option value="2semanas">a cada 2 semanas</option><option value="mes">todo mês</option></select>
+    <select id="rpVezes">${[1, 2, 3, 4, 5, 6, 8, 10, 12].map(n => `<option value="${n}"${n === 4 ? " selected" : ""}>${n}x</option>`).join("")}</select>
+    <button class="btn sm primary" type="button" onclick="repetirPost()">Criar cópias</button><button class="btn sm" type="button" onclick="S.repetir=false;drawEditor()">Cancelar</button></span>`;
+}
+async function repetirPost() {
+  const intervalo = $("#rpInt").value, vezes = +$("#rpVezes").value;
+  try {
+    if (editorMudou()) { const id = await salvarEditor(false); if (!id) return; }
+    const r = await api("repetirPauta", { id: EDIT.id, intervalo, vezes });
+    S.repetir = false; $("#dlg").close(); await carregar();
+    toast(`${r.ids.length} cópia(s) criadas como Ideia`);
+  } catch (e) { writeFail(e); }
+}
+
+/* ---------- Publicação automática ---------- */
+const instaOk = mid => !!((S.marcas.find(m => m.id === mid) || {}).insta || {}).conectado;
+function pubHtml(p) {
+  if (!["Aprovado", "Agendado", "Postado"].includes(p.status)) return "";
+  const pode = podeEditar(p.marcaId), ok = instaOk(p.marcaId);
+  const info = p.pubInfo ? `<div class="kv" style="font-size:13px">📲 ${esc(p.pubInfo)}${p.autoPub === "sim" ? " · publica sozinho no horário" : ""}</div>` : "";
+  if (p.status === "Postado" || !pode || !ok) return info;
+  return `${info}<div class="row">
+    ${p.status === "Agendado" ? `<label style="display:flex;gap:6px;align-items:center;font-size:13.5px"><input type="checkbox"${p.autoPub === "sim" ? " checked" : ""} onchange="autoPub('${esc(p.id)}',this.checked)"> Publicar sozinho no horário agendado</label>` : ""}
+    <button class="btn sm" type="button" id="pubAgora" onclick="publicarAgora('${esc(p.id)}')">Publicar agora no Instagram</button></div>`;
+}
+async function autoPub(id, ligar) {
+  try { await api("autoPub", { id, tipo: "post", ligar }); await carregar(); const p = S.posts.find(x => x.id === id); if (p && $("#dlg").open && EDIT.id === id) { EDIT = { ...p }; drawEditor(); } toast(ligar ? "Vai publicar sozinho no horário" : "Publicação automática desligada"); }
+  catch (e) { writeFail(e); }
+}
+async function publicarAgora(id) {
+  const b = $("#pubAgora"); if (b) { b.disabled = true; b.textContent = "Publicando… (pode levar 1 min)"; }
+  try { await api("publicarAgora", { id, tipo: "post" }); toast("Publicado no Instagram"); } catch (e) { writeFail(e); }
+  await carregar();
+  const p = S.posts.find(x => x.id === id); if (p && $("#dlg").open && EDIT.id === id) { EDIT = { ...p }; drawEditor(); }
+}
+
+/* ---------- Resultados dos posts (Instagram) ---------- */
+function carregarMetricas(mid, mes, forcar) {
+  const k = mid + "|" + mes;
+  S.met[k] = { carregando: true };
+  api("metricas", { marcaId: mid, mes, forcar: !!forcar })
+    .then(r => { S.met[k] = r; })
+    .catch(e => { S.met[k] = { erro: e.message || "Não consegui buscar os resultados." }; })
+    .finally(() => { if (view() === "resumo") render(); });
+}
+function metricasHtml() {
+  const m = marca();
+  if (S.resumoTodas || !m) return "";
+  if (!instaOk(m.id)) return `<div class="panel" style="margin-top:16px"><h2>Resultados dos posts</h2><p class="muted">Conecte o Instagram da marca em Marca → Configurações para ver curtidas, comentários, alcance e salvamentos de cada post aqui.</p></div>`;
+  const k = m.id + "|" + S.month, r = S.met[k];
+  if (!r) carregarMetricas(m.id, S.month);
+  const fmt = v => v == null ? "—" : Number(v).toLocaleString("pt-BR");
+  let corpo;
+  if (!r || r.carregando) corpo = `<p class="muted">Buscando os resultados no Instagram…</p>`;
+  else if (r.erro) corpo = `<p class="muted">${esc(r.erro)}</p>`;
+  else if (!r.itens.length) corpo = `<p class="muted">Nenhum post deste mês com resultado ainda. Os resultados aparecem para os posts marcados como postados com o link do Instagram (ou publicados pelo sistema).</p>`;
+  else {
+    const linhas = r.itens.map(it => ({ ...it, p: S.posts.find(x => x.id === it.pautaId) })).filter(x => x.p).sort((a, b) => (a.p.data || "").localeCompare(b.p.data || ""));
+    const soma = c => linhas.reduce((s, x) => s + (Number(x[c]) || 0), 0);
+    const eng = x => x.alcance ? ((x.curtidas + x.comentarios + (x.salvos || 0) + (x.compart || 0)) / x.alcance * 100).toFixed(1).replace(".", ",") + "%" : "—";
+    const melhor = linhas.slice().sort((a, b) => (b.curtidas + b.comentarios + (b.salvos || 0) * 2) - (a.curtidas + a.comentarios + (a.salvos || 0) * 2))[0];
+    corpo = `<div class="met-kpis">${[["Curtidas", soma("curtidas")], ["Comentários", soma("comentarios")], ["Alcance", soma("alcance")], ["Salvamentos", soma("salvos")], ["Compartilhamentos", soma("compart")]].map(([l, v]) => `<div><b>${fmt(v)}</b><span>${l}</span></div>`).join("")}</div>
+      ${melhor ? `<p style="margin:10px 0">⭐ Melhor post do mês: <b>${esc(nm(melhor.p))}</b> (${fmt(melhor.curtidas)} curtidas, ${fmt(melhor.salvos)} salvamentos)</p>` : ""}
+      <div class="table-wrap"><table style="min-width:640px"><thead><tr><th>Post</th><th class="n">Curtidas</th><th class="n">Coment.</th><th class="n">Alcance</th><th class="n">Salvos</th><th class="n">Compart.</th><th class="n">Engaj.</th></tr></thead><tbody>
+      ${linhas.map(x => `<tr><td><a class="lnk" href="${esc(x.link)}" target="_blank" rel="noopener">${esc(br(x.p.data))} · ${esc(nm(x.p))}</a></td><td class="n">${fmt(x.curtidas)}</td><td class="n">${fmt(x.comentarios)}</td><td class="n">${fmt(x.alcance)}</td><td class="n">${fmt(x.salvos)}</td><td class="n">${fmt(x.compart)}</td><td class="n">${eng(x)}</td></tr>`).join("")}</tbody></table></div>`;
+  }
+  return `<div class="panel" style="margin-top:16px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">Resultados dos posts</h2>${r && !r.carregando ? `<button class="btn sm" type="button" onclick="carregarMetricas(S.marcaId,S.month,true);render()">Atualizar</button>` : ""}</div>
+    ${corpo}${r && r.semLink ? `<p class="muted" style="font-size:12.5px;margin-top:8px">${r.semLink} post(s) postado(s) sem o link do Instagram: abra a postagem e cole o link em "Marcar como postado" para entrar aqui.</p>` : ""}</div>`;
+}
+
+/* ---------- Link de aprovação sem senha (aprovador do cliente) ---------- */
+async function linkCliente(uid, enviar) {
+  try {
+    const r = await api("linkCliente", { usuarioId: uid, enviar: !!enviar });
+    const msg = `Olá, ${r.nome.split(" ")[0]}! Aqui está o seu acesso para ver e aprovar os posts, sem senha: ${r.url}\n\nO link vale por 14 dias.`;
+    $("#lkForm").innerHTML = `<div class="dlg-head"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600">Aprovação sem senha</div><h2>Link de ${esc(r.nome)}</h2></div>
+      <button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#lkDlg').close()">×</button></div>
+      <div class="dlg-body" style="grid-template-columns:1fr">
+        ${r.enviado ? `<div class="motivo" style="border-left-color:var(--st-postado);background:var(--surface-2)"><b style="color:var(--ink)">E-mail enviado</b>O link foi para o e-mail de ${esc(r.nome)}.</div>` : ""}
+        <label class="field"><span>Link (vale 14 dias e entra direto na conta, sem senha)</span><input readonly value="${esc(r.url)}" onclick="this.select()"></label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn primary" type="button" onclick="copiarTexto(${esc(JSON.stringify(r.url))},'Link copiado')">Copiar link</button>
+          <a class="btn" href="https://wa.me/${esc(r.whatsapp ? telWa(r.whatsapp) : "")}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Mandar no WhatsApp</a>
+          ${r.enviado ? "" : `<button class="btn" type="button" onclick="linkCliente('${esc(uid)}',true)">Enviar por e-mail</button>`}</div>
+        <p class="muted" style="font-size:12.5px;margin:0">Quem tiver o link entra como ${esc(r.nome)}: só vê as aprovações, o calendário, os stories e a grade das marcas dele. Não encaminhe para outras pessoas. Os e-mails de "post para aprovar" já vão com esse link.</p>
+      </div>`;
+    if (!$("#lkDlg").open) $("#lkDlg").showModal();
+  } catch (e) { writeFail(e); }
+}
+function clientesHtml() {
+  // quem alimenta vê os aprovadores do cliente das marcas com posts esperando o cliente
+  const cli = S.posts.filter(p => COM_CLIENTE.includes(p.status) && (podeEditar(p.marcaId) || podeAprovar(p.marcaId)));
+  if (!cli.length || ehCliente()) return "";
+  const mids = [...new Set(cli.map(p => p.marcaId))];
+  const pessoas = S.equipe.filter(u => u.papel === "cliente" && (u.marcas || []).some(m => mids.includes(m)));
+  if (!pessoas.length) return "";
+  return `<div class="panel" style="margin-bottom:14px;display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap"><b style="font-size:14px">Mandar o link de aprovação (sem senha):</b>
+    ${pessoas.map(u => `<button class="btn sm" type="button" onclick="linkCliente('${esc(u.id)}')">${avatarHtml(u, 20)} ${esc(u.nome)}</button>`).join("")}</div>`;
+}
+
 /* ---------- Eventos ---------- */
 $("#marcaSel").addEventListener("change", e => { S.marcaId = e.target.value; store("marca", S.marcaId); S.month = null; S.f = { status: "", formato: "", produto: "", q: "" }; S.confirmDel = false; S.dirty = false; render(); });
 $("#novaMarca").addEventListener("click", novaMarca);
@@ -2683,7 +3273,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-02.4"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-03.1"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",
@@ -2697,7 +3287,11 @@ async function api(action, payload = {}) {
 async function carregar() {
   if (!API || !S.token) return render();
   try {
-    const j = await api("listar");
+    if (!S.desde) S.desde = shiftMonth(iso(new Date()).slice(0, 7), -3);
+    const j = await api("listar", { desde: S.desde, se: S.carimbo });
+    if (j.igual) { S.versao = j.versao || S.versao; return; }
+    S.carimbo = j.carimbo || "";
+    S.stories = j.stories || [];
     S.eu = j.eu; S.usuarios = j.usuarios || []; S.tarefas = j.tarefas || []; S.equipe = j.equipe || [];
     S.versao = j.versao || "antiga";
     S.marcas = (j.marcas || []).sort((a, b) => (a.criado || 0) - (b.criado || 0) || String(a.nome).localeCompare(b.nome));
@@ -2709,6 +3303,12 @@ async function carregar() {
     if (!S.loadedP) S.failed = true; else toast("Sem conexão com a planilha agora.");
   }
   if (!$("#dlg").open && !$("#agDlg").open && !$("#tfDlg").open && !S.dirty && !S.rej && !S.uEdit && !S.boasVindas && !document.querySelector(".msel-pop:not([hidden])")) render();
+}
+// link do cliente: #entrar=<chave> já entra na conta, sem senha
+if (location.hash.startsWith("#entrar=")) {
+  const t = location.hash.slice(8).replace(/[^\w]/g, "");
+  if (t) { S.token = t; store("token", t); }
+  history.replaceState(null, "", location.pathname + location.search + "#aprovacoes");
 }
 setInterval(() => { if (API && S.token && document.visibilityState === "visible" && !$("#dlg").open && !$("#agDlg").open && !$("#tfDlg").open) carregar(); }, 30000);
 carregar();
