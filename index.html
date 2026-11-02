@@ -512,6 +512,8 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 .av img { width: 100%; height: 100%; object-fit: cover; }
 .pessoa { display: flex; align-items: center; gap: 10px; }
 .pessoa .av { background: var(--surface-2); color: var(--ink); }
+.um-sel { min-width: 170px; }
+.um-sel .msel-btn { padding: 5px 8px; min-height: 32px; font-size: 13px; border-radius: 8px; }
 .papel-sel { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 5px 8px; font-size: 13px; }
 .empty { border: 1px dashed var(--line); border-radius: 14px; padding: 36px 20px; text-align: center; color: var(--muted); display: grid; gap: 12px; justify-items: center; }
 .empty strong { font-family: var(--f-display); font-weight: 400; font-size: 26px; color: var(--ink); }
@@ -581,7 +583,8 @@ const ACOES = {
 const PAPEIS = { admin: "Administrador", diretor: "Diretor", gestor: "Gestor", social: "Social media", aprovador: "Aprovador (gestor)", cliente: "Aprovador (cliente)" };
 const rotulo = (k, p) => { const l = ACOES[k].label; return typeof l === "function" ? l(p) : l; };
 const temClienteM = mid => !!(S.marcas.find(m => m.id === mid) || {}).temCliente;
-const TODAS = ["admin", "diretor", "gestor"]; // papéis que veem todas as marcas
+const TODAS = ["admin", "diretor", "gestor"]; // chefia: veem a equipe e acompanham tudo das marcas que enxergam
+const TODAS_MARCAS = ["admin", "diretor"]; // veem todas as marcas sempre; o gestor vê as liberadas para ele
 const normStatus = s => STATUS_ANTIGOS[s] || (STATUS.includes(s) ? s : "Ideia");
 const FORMATOS = ["Estático", "Carrossel", "Vídeo"];
 const FMT_ICON = { "Estático": "▢", "Carrossel": "▤", "Vídeo": "▶" };
@@ -645,11 +648,11 @@ const ehDiretor = () => S.eu?.papel === "diretor";
 // diretor: tudo do gestor + equipe (exceto administradores e diretores), criar marcas, configurações e forçar status
 const podeGerir = () => ehAdmin() || ehDiretor();
 // gestor: vê tudo, alimenta e aprova, mas não mexe na estrutura (equipe, marcas, configurações)
-const temAcesso = mid => TODAS.includes(S.eu?.papel) || (S.eu?.marcas || []).includes("*") || (S.eu?.marcas || []).includes(mid);
-const podeEditar = mid => TODAS.includes(S.eu?.papel) || (S.eu?.papel === "social" && temAcesso(mid));
+const temAcesso = mid => TODAS_MARCAS.includes(S.eu?.papel) || (S.eu?.marcas || []).includes("*") || (S.eu?.marcas || []).includes(mid);
+const podeEditar = mid => TODAS_MARCAS.includes(S.eu?.papel) || (["social", "gestor"].includes(S.eu?.papel) && temAcesso(mid));
 const ehCliente = () => S.eu?.papel === "cliente";
-const podeCliente = mid => TODAS.includes(S.eu?.papel) || (ehCliente() && temAcesso(mid));
-const podeAprovar = mid => TODAS.includes(S.eu?.papel) || (S.eu?.papel === "aprovador" && temAcesso(mid));
+const podeCliente = mid => TODAS_MARCAS.includes(S.eu?.papel) || ((ehCliente() || ehGestor()) && temAcesso(mid));
+const podeAprovar = mid => TODAS_MARCAS.includes(S.eu?.papel) || (["aprovador", "gestor"].includes(S.eu?.papel) && temAcesso(mid));
 const podeAcao = (p, k) => { const a = ACOES[k]; return a.de.includes(p.status) && (a.quem === "aprovar" ? podeAprovar(p.marcaId) : a.quem === "cliente" ? podeCliente(p.marcaId) : podeEditar(p.marcaId)); };
 const nomeMarca = id => (S.marcas.find(m => m.id === id) || {}).nome || "";
 const marca = () => S.marcas.find(m => m.id === S.marcaId) || null;
@@ -1523,7 +1526,16 @@ function abrirMsel(id) {
   const pop = $("#" + id + " .msel-pop"), abrir = pop.hidden;
   document.querySelectorAll(".msel-pop").forEach(p => p.hidden = true);
   pop.hidden = !abrir;
+  // dentro de tabela (que rola de lado) a lista fica solta na tela para não ser cortada
+  if (abrir && pop.closest(".table-wrap")) {
+    const r = $("#" + id + " .msel-btn").getBoundingClientRect(), w = Math.max(r.width, 220);
+    const alto = Math.min(280, pop.scrollHeight + 2), cabeBaixo = innerHeight - r.bottom > alto + 8;
+    Object.assign(pop.style, { position: "fixed", width: w + "px", right: "auto", left: Math.max(8, Math.min(r.left, innerWidth - w - 8)) + "px",
+      top: (cabeBaixo ? r.bottom + 4 : Math.max(8, r.top - alto - 4)) + "px" });
+  }
 }
+// rolou a página: fecha as listas soltas
+addEventListener("scroll", () => document.querySelectorAll(".table-wrap .msel-pop:not([hidden])").forEach(p => p.hidden = true), true);
 function mselAdiciona(id, nome) {
   const box = $("#" + id), ja = [...box.querySelectorAll(".msel-op input")].find(i => i.value.toLowerCase() === nome.toLowerCase());
   box.querySelector(".msel-vazio")?.remove();
@@ -2461,10 +2473,11 @@ function vEquipe() {
   const editavel = x => ehAdmin() || !["admin", "diretor"].includes(x.papel);
   const papeisPermitidos = ehAdmin() ? Object.keys(PAPEIS) : ["gestor", "social", "aprovador", "cliente"];
   const u = S.uEdit;
-  const marcasTxt = x => TODAS.includes(x.papel) || x.marcas.includes("*") ? "Todas" : x.marcas.map(nomeMarca).filter(Boolean).join(", ") || "—";
+  const marcasTxt = x => TODAS_MARCAS.includes(x.papel) || x.marcas.includes("*") ? "Todas" : x.marcas.map(nomeMarca).filter(Boolean).join(", ") || "Nenhuma";
+  const marcasCel = x => TODAS_MARCAS.includes(x.papel) ? `<span class="muted">Todas (sempre)</span>` : editavel(x) && x.id !== S.eu.id ? marcasSel(x) : esc(marcasTxt(x));
   const linhas = S.usuarios.slice().sort((a, b) => a.nome.localeCompare(b.nome)).map(x => `<tr${editavel(x) ? ` onclick="S.uEdit=S.usuarios.find(y=>y.id==='${esc(x.id)}');render()"` : ' style="cursor:default" title="Só o administrador altera este acesso"'}>
     <td><div class="pessoa">${avatarHtml(x, 34)}<div><b>${esc(x.nome)}</b><div class="muted">${esc(x.login)}${x.whatsapp ? " · " + esc(fmtTel(x.whatsapp)) : ""}</div></div></div></td>
-    <td onclick="event.stopPropagation()">${editavel(x) && x.id !== S.eu.id ? `<select class="papel-sel" aria-label="Papel de ${esc(x.nome)}" onchange="trocarPapel('${esc(x.id)}', this.value)">${Object.entries(PAPEIS).filter(([k]) => papeisPermitidos.includes(k) || k === x.papel).map(([k, l]) => `<option value="${k}"${k === x.papel ? " selected" : ""}>${l}</option>`).join("")}</select>` : esc(PAPEIS[x.papel] || x.papel)}</td><td>${esc(marcasTxt(x))}</td><td>${x.ativo ? "Ativo" : `<span class="muted">Desativado</span>`}</td></tr>`).join("");
+    <td onclick="event.stopPropagation()">${editavel(x) && x.id !== S.eu.id ? `<select class="papel-sel" aria-label="Papel de ${esc(x.nome)}" onchange="trocarPapel('${esc(x.id)}', this.value)">${Object.entries(PAPEIS).filter(([k]) => papeisPermitidos.includes(k) || k === x.papel).map(([k, l]) => `<option value="${k}"${k === x.papel ? " selected" : ""}>${l}</option>`).join("")}</select>` : esc(PAPEIS[x.papel] || x.papel)}</td><td onclick="event.stopPropagation()">${marcasCel(x)}</td><td>${x.ativo ? "Ativo" : `<span class="muted">Desativado</span>`}</td></tr>`).join("");
   const form = u ? `<form class="panel" style="display:grid;gap:12px;margin-top:16px" onsubmit="event.preventDefault();salvarUsuario()">
       <h2>${u.id ? "Editar " + esc(u.nome) : "Nova pessoa"}</h2>
       <div class="pf-grid">
@@ -2473,8 +2486,8 @@ function vEquipe() {
         <label class="field"><span>WhatsApp (com DDD)</span><input id="uTel" type="tel" inputmode="tel" placeholder="(11) 98765-4321" value="${esc(u.whatsapp ? fmtTel(u.whatsapp) : "")}"></label>
         <label class="field"><span>Papel</span><select id="uPapel" onchange="lerFormU();render()">${Object.entries(PAPEIS).filter(([k]) => papeisPermitidos.includes(k)).map(([k, l]) => `<option value="${k}"${u.papel === k ? " selected" : ""}>${l}</option>`).join("")}</select></label>
         <label class="field"><span>${u.id ? "Nova senha (deixe em branco para manter)" : "Senha provisória"}</span><span class="prod-pick"><input id="uSenha" type="text" autocomplete="off" ${u.id ? "" : "required"} minlength="6" value="${esc(u.senhaTemp || "")}" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px"><button class="btn sm" type="button" onclick="$('#uSenha').value=gerarSenha();S.dirty=true">Gerar senha</button></span></label>
-        ${TODAS.includes(u.papel) ? `<div class="field full"><span>Marcas</span><span class="muted">${{ admin: "O administrador", diretor: "O diretor", gestor: "O gestor" }[u.papel]} vê todas as marcas.</span></div>`
-          : `<div class="field full"><span>Marcas que ${u.papel === "aprovador" || u.papel === "cliente" ? "aprova" : "alimenta"}</span><div class="chk-list" id="uMarcas">
+        ${TODAS_MARCAS.includes(u.papel) ? `<div class="field full"><span>Marcas</span><span class="muted">${{ admin: "O administrador", diretor: "O diretor" }[u.papel]} vê todas as marcas.</span></div>`
+          : `<div class="field full"><span>Marcas que ${u.papel === "gestor" ? "gerencia" : u.papel === "aprovador" || u.papel === "cliente" ? "aprova" : "alimenta"}</span><div class="chk-list" id="uMarcas">
             <label><input type="checkbox" value="*"${(u.marcas || []).includes("*") ? " checked" : ""}> <b>Todas as marcas</b></label>
             ${S.marcas.map(m => `<label><input type="checkbox" value="${esc(m.id)}"${(u.marcas || []).includes(m.id) ? " checked" : ""}> ${esc(m.nome)}</label>`).join("")}</div></div>`}
         <label class="field full" style="display:flex;gap:8px;align-items:center"><input id="uAtivo" type="checkbox"${u.ativo !== false ? " checked" : ""}> Acesso ativo</label>
@@ -2482,25 +2495,57 @@ function vEquipe() {
       <div style="display:flex;gap:8px"><button class="btn primary" type="submit">Salvar</button><button class="btn" type="button" onclick="S.uEdit=null;S.dirty=false;render()">Cancelar</button></div>
     </form>` : "";
   return head(ehAdmin() ? "Administração" : "Direção", "Equipe", `<button class="btn primary" type="button" onclick="S.uEdit={papel:'social',marcas:[],ativo:true};render()">+ Pessoa</button>`) + equipeNav() +
-    `<p class="sec-intro"><b>Social media</b> vê e alimenta só as marcas liberadas para ele (inclusive nome, fases e configurações) e envia ideias e conteúdos para aprovação. <b>Aprovador (gestor)</b> valida ideias e aprova conteúdos das marcas liberadas. <b>Aprovador (cliente)</b> aprova ideias e posts depois da equipe, vendo como vão ficar no Instagram, e só enxerga as aprovações, o calendário e a grade das marcas dele. <b>Gestor</b> vê todas as marcas, acompanha a atividade da equipe, alimenta (inclusive as configurações das marcas), valida e aprova, mas não mexe na equipe. <b>Diretor</b> faz tudo o que o gestor faz e também cadastra gestores, social medias e aprovadores, cria marcas e ajusta as configurações; não exclui marcas nem mexe em administradores e diretores. <b>Administrador</b> vê e faz tudo. Não há limite de pessoas nem de marcas por pessoa.</p>
+    `<p class="sec-intro"><b>Social media</b> vê e alimenta só as marcas liberadas para ele (inclusive nome, fases e configurações) e envia ideias e conteúdos para aprovação. <b>Aprovador (gestor)</b> valida ideias e aprova conteúdos das marcas liberadas. <b>Aprovador (cliente)</b> aprova ideias e posts depois da equipe, vendo como vão ficar no Instagram, e só enxerga as aprovações, o calendário e a grade das marcas dele. <b>Gestor</b> vê as marcas liberadas para ele, acompanha a atividade da equipe, alimenta (inclusive as configurações das marcas), valida e aprova, mas não mexe na equipe. <b>Diretor</b> faz tudo o que o gestor faz e também cadastra gestores, social medias e aprovadores, cria marcas e ajusta as configurações; não exclui marcas nem mexe em administradores e diretores. <b>Administrador</b> vê e faz tudo. Não há limite de pessoas nem de marcas por pessoa.</p>
     ${boasVindasHtml()}
-    <p class="muted" style="font-size:13px;margin:0 0 8px">Para mudar o papel de alguém, escolha o novo na coluna Papel. Clique na pessoa para editar o resto.</p>
+    <p class="muted" style="font-size:13px;margin:0 0 8px">Para mudar o papel de alguém, escolha o novo na coluna Papel. Para escolher quais marcas a pessoa vê, abra a caixa na coluna Marcas e marque quantas quiser (salva sozinho). Clique na pessoa para editar o resto.</p>
     <div class="table-wrap"><table style="min-width:620px"><thead><tr><th>Pessoa</th><th>Papel</th><th>Marcas</th><th>Acesso</th></tr></thead><tbody>${linhas}</tbody></table></div>` + form;
 }
 // troca o papel pela lista: abre o formulário com o papel novo para conferir as marcas e salvar
 function trocarPapel(id, papel) {
   const x = S.usuarios.find(y => y.id === id); if (!x) return;
-  S.uEdit = { ...x, papel, marcas: TODAS.includes(papel) ? ["*"] : (TODAS.includes(x.papel) ? [] : x.marcas) };
+  S.uEdit = { ...x, papel, marcas: TODAS_MARCAS.includes(papel) ? ["*"] : (TODAS_MARCAS.includes(x.papel) ? [] : x.marcas) };
   render();
   setTimeout(() => { $("#app form.panel")?.scrollIntoView({ behavior: "smooth", block: "start" }); }, 50);
   toast(`Confira as marcas de ${x.nome} e clique em Salvar para virar ${PAPEIS[papel]}.`);
+}
+// caixa de marcas na lista da equipe: marca/desmarca e salva sozinho
+function marcasSel(x) {
+  const todas = x.marcas.includes("*"), id = "um_" + x.id;
+  const op = (v, nome, on) => `<label class="msel-op"><input type="checkbox" value="${esc(v)}"${on ? " checked" : ""} onchange="marcaU('${esc(x.id)}', this)"><span class="ck"></span><span class="nm">${v === "*" ? "<b>Todas as marcas</b>" : esc(nome)}</span></label>`;
+  return `<div class="msel um-sel" id="${id}" data-vazio="Nenhuma marca">
+    <button type="button" class="msel-btn" onclick="abrirMsel('${id}')" aria-haspopup="listbox" aria-label="Marcas de ${esc(x.nome)}">${mselTexto(todas ? ["Todas as marcas"] : x.marcas.map(nomeMarca).filter(Boolean), "Nenhuma marca")}</button>
+    <div class="msel-pop" hidden role="listbox" aria-multiselectable="true">
+      ${op("*", "", todas)}
+      ${S.marcas.map(m => op(m.id, m.nome, !todas && x.marcas.includes(m.id))).join("") || `<div class="msel-vazio">Nenhuma marca cadastrada.</div>`}
+    </div></div>`;
+}
+const _marcaUTimer = {};
+function marcaU(uid, el) {
+  const box = el.closest(".msel"), ins = [...box.querySelectorAll(".msel-op input")];
+  // "Todas" e marcas soltas não ficam marcadas juntas
+  if (el.value === "*" && el.checked) ins.forEach(i => { if (i !== el) i.checked = false; });
+  else if (el.checked) ins.find(i => i.value === "*").checked = false;
+  const lista = ins.filter(i => i.checked).map(i => i.value);
+  box.querySelector(".msel-btn").innerHTML = mselTexto(lista.includes("*") ? ["Todas as marcas"] : lista.map(nomeMarca).filter(Boolean), "Nenhuma marca");
+  clearTimeout(_marcaUTimer[uid]);
+  _marcaUTimer[uid] = setTimeout(() => salvarMarcasU(uid, lista), 700);
+}
+async function salvarMarcasU(uid, lista) {
+  const x = S.usuarios.find(y => y.id === uid); if (!x) return;
+  const u = { id: x.id, nome: x.nome, login: x.login, whatsapp: x.whatsapp, papel: x.papel, senha: "", ativo: x.ativo, marcas: lista };
+  try {
+    await api("salvarUsuario", { usuario: u });
+    x.marcas = lista;
+    toast(`Marcas de ${x.nome} salvas`);
+    await carregar(); // não redesenha enquanto a caixa estiver aberta
+  } catch (e) { writeFail(e); }
 }
 function lerFormU() {
   Object.assign(S.uEdit, { nome: $("#uNome").value, login: $("#uLogin").value, whatsapp: soDigitos($("#uTel").value), senhaTemp: $("#uSenha").value, papel: $("#uPapel").value, ativo: $("#uAtivo").checked, marcas: lerMarcasU() });
 }
 function lerMarcasU() { return [...document.querySelectorAll("#uMarcas input:checked")].map(i => i.value); }
 async function salvarUsuario() {
-  const u = { id: S.uEdit.id || "", nome: $("#uNome").value.trim(), login: $("#uLogin").value.trim(), whatsapp: soDigitos($("#uTel").value), papel: $("#uPapel").value, senha: $("#uSenha").value.trim(), ativo: $("#uAtivo").checked, marcas: TODAS.includes($("#uPapel").value) ? ["*"] : lerMarcasU() };
+  const u = { id: S.uEdit.id || "", nome: $("#uNome").value.trim(), login: $("#uLogin").value.trim(), whatsapp: soDigitos($("#uTel").value), papel: $("#uPapel").value, senha: $("#uSenha").value.trim(), ativo: $("#uAtivo").checked, marcas: TODAS_MARCAS.includes($("#uPapel").value) ? ["*"] : lerMarcasU() };
   try {
     await api("salvarUsuario", { usuario: u });
     S.uEdit = null; S.dirty = false;
@@ -2523,7 +2568,7 @@ function gerarSenha() {
 }
 function listaMarcas(u, artigo) {
   // artigo: "pela" (responsável pela marca X) ou "da" (conteúdos da marca X)
-  if (TODAS.includes(u.papel) || (u.marcas || []).includes("*")) return (artigo === "pela" ? "por" : "de") + " todas as marcas da agência";
+  if (TODAS_MARCAS.includes(u.papel) || (u.marcas || []).includes("*")) return (artigo === "pela" ? "por" : "de") + " todas as marcas da agência";
   const n = (u.marcas || []).map(nomeMarca).filter(Boolean);
   if (!n.length) return (artigo === "pela" ? "pelas" : "das") + " marcas que vamos liberar para você em breve";
   const nomes = n.length === 1 ? n[0] : n.slice(0, -1).join(", ") + " e " + n[n.length - 1];
@@ -2563,7 +2608,7 @@ function vAtividade() {
   const conta = (ev, txt) => ev.filter(e => e.em >= desde && txt.some(t => (e.acao || "").startsWith(t))).length;
   const linhas = pessoas.sort((a, b) => a.nome.localeCompare(b.nome)).map(u => {
     const ev = dele(u), ult = Math.max(Number(u.ultimoAcesso) || 0, ev[0]?.em || 0);
-    const marcasU = TODAS.includes(u.papel) || u.marcas.includes("*") ? null : u.marcas;
+    const marcasU = TODAS_MARCAS.includes(u.papel) || u.marcas.includes("*") ? null : u.marcas;
     const daMarca = p => !marcasU || marcasU.includes(p.marcaId);
     const pend = u.papel === "social" ? S.posts.filter(p => daMarca(p) && REPROVADOS.includes(p.status)).length
       : u.papel === "aprovador" ? S.posts.filter(p => daMarca(p) && ["Em validação", "Em aprovação"].includes(p.status)).length : 0;
@@ -2638,7 +2683,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-02.3"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-02.4"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",
@@ -2663,7 +2708,7 @@ async function carregar() {
     if (e.code === "sessao") return writeFail(e);
     if (!S.loadedP) S.failed = true; else toast("Sem conexão com a planilha agora.");
   }
-  if (!$("#dlg").open && !$("#agDlg").open && !$("#tfDlg").open && !S.dirty && !S.rej && !S.uEdit && !S.boasVindas) render();
+  if (!$("#dlg").open && !$("#agDlg").open && !$("#tfDlg").open && !S.dirty && !S.rej && !S.uEdit && !S.boasVindas && !document.querySelector(".msel-pop:not([hidden])")) render();
 }
 setInterval(() => { if (API && S.token && document.visibilityState === "visible" && !$("#dlg").open && !$("#agDlg").open && !$("#tfDlg").open) carregar(); }, 30000);
 carregar();

@@ -11,7 +11,7 @@
  *   diretor   — tudo do gestor + cadastra gestores, social medias e aprovadores, cria marcas,
  *               força status; não exclui marcas nem mexe em admins/diretores
  *   cliente   — aprovador do cliente: vê as marcas liberadas (só leitura) e aprova ideia e conteúdo depois da equipe
- *   gestor    — vê todas as marcas, alimenta (inclusive nome, fases e configurações), valida e aprova; não mexe na equipe
+ *   gestor    — vê as marcas liberadas para ele (ou todas), alimenta (inclusive nome, fases e configurações), valida e aprova; não mexe na equipe
  *   social    — vê e alimenta só as marcas liberadas para ele, inclusive nome, fases e configurações
  *   aprovador — vê as marcas liberadas, valida ideias e aprova conteúdos
  *
@@ -19,7 +19,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-02.3';
+const VERSAO = '2026-11-02.4';
 
 const ABA_PAUTAS = 'POSTAGENS';
 const ABA_MARCAS = 'MARCAS';
@@ -57,7 +57,8 @@ const CAMPOS_USUARIO = [
   ['sal', 'Sal'], ['criado', 'Criado em'], ['whatsapp', 'WhatsApp'], ['ultimoAcesso', 'Último acesso'], ['notificar', 'Notificações por e-mail'], ['visual', 'Visualização'], ['foto', 'Foto de perfil (arquivo no Drive)']
 ];
 const PAPEIS = ['admin', 'diretor', 'gestor', 'social', 'aprovador', 'cliente'];
-const VEEM_TODAS = ['admin', 'diretor', 'gestor'];
+const VEEM_TODAS = ['admin', 'diretor', 'gestor']; // chefia: veem a equipe e as tarefas
+const TODAS_MARCAS = ['admin', 'diretor'];         // veem todas as marcas sempre; o gestor vê as liberadas
 
 const STATUS = ['Ideia', 'Em validação', 'Validação do cliente', 'Ideia reprovada', 'Em produção', 'Em aprovação', 'Aprovação do cliente', 'Ajustes solicitados', 'Aprovado', 'Agendado', 'Postado'];
 const STATUS_ANTIGOS = { 'Validado': 'Em produção', 'Produzido': 'Em aprovação' };
@@ -191,20 +192,20 @@ function publicoUsuario_(u) {
 }
 
 function acesso_(eu, marcaId) {
-  return VEEM_TODAS.indexOf(eu.papel) >= 0 || eu.marcas.indexOf('*') >= 0 || eu.marcas.indexOf(marcaId) >= 0;
+  return TODAS_MARCAS.indexOf(eu.papel) >= 0 || eu.marcas.indexOf('*') >= 0 || eu.marcas.indexOf(marcaId) >= 0;
 }
 function podeEditar_(eu, marcaId) {
-  return VEEM_TODAS.indexOf(eu.papel) >= 0 || (eu.papel === 'social' && acesso_(eu, marcaId));
+  return TODAS_MARCAS.indexOf(eu.papel) >= 0 || ((eu.papel === 'social' || eu.papel === 'gestor') && acesso_(eu, marcaId));
 }
 function podeCliente_(eu, marcaId) {
-  return VEEM_TODAS.indexOf(eu.papel) >= 0 || (eu.papel === 'cliente' && acesso_(eu, marcaId));
+  return TODAS_MARCAS.indexOf(eu.papel) >= 0 || ((eu.papel === 'cliente' || eu.papel === 'gestor') && acesso_(eu, marcaId));
 }
 // a marca tem aprovador do cliente ativo?
 function marcaTemCliente_(marcaId, pessoas) {
   return (pessoas || ler_(ABA_USUARIOS, CAMPOS_USUARIO)).some(u => u.ativo === 'sim' && u.papel === 'cliente' && acesso_(publicoUsuario_(u), marcaId));
 }
 function podeAprovar_(eu, marcaId) {
-  return VEEM_TODAS.indexOf(eu.papel) >= 0 || (eu.papel === 'aprovador' && acesso_(eu, marcaId));
+  return TODAS_MARCAS.indexOf(eu.papel) >= 0 || ((eu.papel === 'aprovador' || eu.papel === 'gestor') && acesso_(eu, marcaId));
 }
 function gerencia_(eu) {
   if (eu.papel !== 'admin' && eu.papel !== 'diretor') throw erro_('permissao', 'Só o administrador ou o diretor pode fazer isso.');
@@ -409,7 +410,7 @@ function notificar_(eu, p, acao, motivo, historico, site, paraStatus) {
   } else if (av.para === 'aprovador') {
     // aprovador da marca; sem aprovador, o gestor; sem gestor, diretor e administrador
     dest = pessoas.filter(u => u.papel === 'aprovador' && acesso_(u, p.marcaId));
-    if (!dest.length) dest = pessoas.filter(u => u.papel === 'gestor');
+    if (!dest.length) dest = pessoas.filter(u => u.papel === 'gestor' && acesso_(u, p.marcaId));
     if (!dest.length) dest = pessoas.filter(u => u.papel === 'diretor' || u.papel === 'admin');
   } else {
     // quem enviou para esta etapa; se não der para saber, as social medias da marca
@@ -444,12 +445,13 @@ function tarefaParaSite_(t) {
   delete t.marca;
   return t;
 }
-const chefia_ = eu => VEEM_TODAS.indexOf(eu.papel) >= 0;
+// o gestor só chefia as tarefas sem marca ou das marcas dele
+const chefia_ = (eu, t) => TODAS_MARCAS.indexOf(eu.papel) >= 0 || (eu.papel === 'gestor' && (!t || !t.marcaId || acesso_(eu, t.marcaId)));
 function veTarefa_(eu, t) {
-  return chefia_(eu) || t.responsavelId === eu.id || t.criadoPorId === eu.id || (t.marcaId && acesso_(eu, t.marcaId));
+  return chefia_(eu, t) || t.responsavelId === eu.id || t.criadoPorId === eu.id || (t.marcaId && acesso_(eu, t.marcaId));
 }
 function podeMexerTarefa_(eu, t) {
-  return chefia_(eu) || t.responsavelId === eu.id || t.criadoPorId === eu.id;
+  return chefia_(eu, t) || t.responsavelId === eu.id || t.criadoPorId === eu.id;
 }
 function tarefaPorId_(id) {
   return ler_(ABA_TAREFAS, CAMPOS_TAREFA).filter(x => x.id === String(id))[0] || null;
@@ -499,7 +501,7 @@ function concluirTarefa_(eu, id, feita) {
 function excluirTarefa_(eu, id) {
   const t = tarefaPorId_(id);
   if (!t) return;
-  if (!(chefia_(eu) || t.criadoPorId === eu.id)) throw erro_('permissao', 'Só quem criou a tarefa ou a gestão pode excluir.');
+  if (!(chefia_(eu, t) || t.criadoPorId === eu.id)) throw erro_('permissao', 'Só quem criou a tarefa ou a gestão pode excluir.');
   excluirLinha_(ABA_TAREFAS, CAMPOS_TAREFA, id);
 }
 
@@ -807,7 +809,7 @@ function salvarUsuario_(eu, u) {
     nome: String(u.nome || '').trim() || login,
     login: login,
     papel: u.papel,
-    marcas: VEEM_TODAS.indexOf(u.papel) >= 0 ? '*' : (u.marcas || []).join(','),
+    marcas: TODAS_MARCAS.indexOf(u.papel) >= 0 ? '*' : (u.marcas || []).join(','),
     ativo: u.ativo === false ? 'não' : 'sim',
     hash: u.senha ? hash_(u.senha, sal) : atual.hash,
     sal: sal,

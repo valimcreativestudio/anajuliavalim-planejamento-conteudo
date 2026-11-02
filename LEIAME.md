@@ -46,12 +46,12 @@ Entre no site como administrador e abra a aba **Equipe** → **+ Pessoa**:
 |---|---|---|
 | **Administrador** | Todas as marcas | Tudo: cadastra pessoas e marcas, aprova, muda qualquer status |
 | **Diretor** | Todas as marcas | Tudo o que o gestor faz + cadastra gestores, social medias e aprovadores, cria marcas, muda configurações e pode forçar status. Não exclui marcas e não mexe em administradores nem em outros diretores |
-| **Gestor** | Todas as marcas | Gerente da equipe: acompanha a **Atividade da equipe**, cria e edita postagens, preenche as marcas, valida e aprova. Não cadastra pessoas e não cria/exclui marcas |
+| **Gestor** | As liberadas para ele (ou todas) | Gerente da equipe: acompanha a **Atividade da equipe**, cria e edita postagens, preenche as marcas, valida e aprova. Não cadastra pessoas e não cria/exclui marcas |
 | **Social media** | Só as marcas marcadas para ele | Cria e edita postagens, preenche a marca (inclusive nome, fases e configurações), envia para validação e aprovação, marca como agendado/postado |
 | **Aprovador** | As marcas marcadas para ele (ou "Todas") | Valida ideias e aprova conteúdos, sempre escrevendo o motivo quando não aprova |
 
 Não há limite de pessoas nem de marcas por pessoa. Para tirar o acesso de alguém, desmarque **Acesso ativo**.
-Para **mudar o papel** de alguém (por exemplo, de Gestor para Diretor), escolha o novo papel na coluna **Papel** da lista, confira as marcas e clique em **Salvar**. Cada pessoa pode colocar a **foto de perfil** em **Minha conta**.
+Para **mudar o papel** de alguém (por exemplo, de Gestor para Diretor), escolha o novo papel na coluna **Papel** da lista, confira as marcas e clique em **Salvar**. Para escolher **quais marcas cada pessoa vê** (gestor, social media, aprovadores e cliente), abra a caixa da coluna **Marcas** e marque quantas quiser; salva sozinho. Administrador e diretor sempre veem todas. Cada pessoa pode colocar a **foto de perfil** em **Minha conta**.
 Ao salvar uma pessoa com senha (use **Gerar senha**), aparece a mensagem de boas-vindas pronta, adaptada ao papel dela, com as marcas, o login, a senha provisória e o link do site, e o botão **Enviar pelo WhatsApp** (preencha o WhatsApp da pessoa com DDD). Ela troca a senha e o nome em **Minha conta**.
 
 ## Resumo do mês (dashboard)
@@ -72,7 +72,7 @@ A aba **Tarefas** é o checklist da equipe: o que fazer, detalhes, marca (opcion
 
 O sistema manda e-mail (pela conta Google dona da planilha) quando:
 
-- **uma ideia ou conteúdo é enviado** → para o **aprovador** da marca (sem aprovador: gestor; sem gestor: diretor e administrador);
+- **uma ideia ou conteúdo é enviado** → para o **aprovador** da marca (sem aprovador: o gestor da marca; sem gestor: diretor e administrador);
 - **uma ideia é validada ou reprovada** e **um conteúdo é aprovado ou volta com ajustes** → para **quem enviou**, com o motivo.
 
 Cada pessoa liga ou desliga os avisos em **Minha conta**. O Gmail comum permite cerca de **100 e-mails por dia**; acima disso os avisos param até o dia seguinte, mas o sistema continua funcionando.
