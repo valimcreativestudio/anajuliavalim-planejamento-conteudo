@@ -1707,7 +1707,7 @@ function drawEditor() {
       ${area("eLegenda", "Legenda", p.legenda, 5)}
       <div class="full" style="margin-top:-6px"><button class="btn sm" type="button" onclick="copiarLegenda()">Copiar legenda</button></div>
       <label class="field full"><span>Link da publicação (pasta ou arquivo no Drive, ou Canva)</span><span class="prod-pick"><input id="eCriativo" value="${esc(p.criativo || "")}" placeholder="https://drive.google.com/drive/folders/…" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px"${ro}>${S.canWrite ? `<button class="btn sm" type="button" id="btPasta" onclick="puxarPasta()">Puxar da pasta</button>` : ""}</span>
-        <small>Com o link de uma pasta, "Puxar da pasta" traz as artes na ordem dos números (1, 2, 3…) e a legenda do documento.</small></label>
+        <small>Com o link de uma pasta, "Puxar da pasta" traz as artes na ordem do número no fim do nome (P2-1, P2-2, P2-3…) e a legenda do documento (sem a linha de cabeçalho "P2 · título · data").</small></label>
       <div class="field full" id="eMidiasBox"${(p.midias || []).length ? "" : " hidden"}><span>Artes da publicação (${(p.midias || []).length})</span><div class="midias" id="eMidias">${midiasHtml(p.midias)}</div>
         ${S.canWrite ? `<button class="btn sm" type="button" style="justify-self:start;margin-top:6px" onclick="EDIT.midias=[];$('#eMidiasBox').hidden=true">Limpar artes</button>` : ""}</div>
       <div class="full" id="eLegNova" hidden></div>
@@ -1769,6 +1769,11 @@ async function puxarPasta() {
     $("#eMidiasBox > span").textContent = `Artes da publicação (${EDIT.midias.length})`;
     const primeira = EDIT.midias.find(x => x.tipo === "imagem") || EDIT.midias[0];
     if (primeira && !$("#eCapa").value.trim()) { $("#eCapa").value = `https://drive.google.com/file/d/${primeira.id}/view`; atualizarPrevia(); }
+    // cabeçalho do documento (ex.: "P2 · Título (carrossel) · 01/11"): preenche o título e o formato se estiverem vazios
+    if (r.cabecalho) {
+      if (r.cabecalho.titulo && !$("#ePostagem").value.trim()) $("#ePostagem").value = r.cabecalho.titulo;
+      if (r.cabecalho.formato && FORMATOS.includes(r.cabecalho.formato) && !EDIT.id) $("#eFormato").value = r.cabecalho.formato;
+    }
     if (r.legenda) {
       if (!$("#eLegenda").value.trim()) $("#eLegenda").value = r.legenda;
       else if ($("#eLegenda").value.trim() !== r.legenda.trim()) {
@@ -2499,7 +2504,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-02.1"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-02.2"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",

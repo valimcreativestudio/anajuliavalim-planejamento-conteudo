@@ -19,7 +19,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-02.1';
+const VERSAO = '2026-11-02.2';
 
 const ABA_PAUTAS = 'POSTAGENS';
 const ABA_MARCAS = 'MARCAS';
@@ -546,13 +546,42 @@ function lerPasta_(eu, link) {
       { headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() }, muteHttpExceptions: true });
     if (r.getResponseCode() === 200) texto = r.getContentText().replace(/^\uFEFF/, '');
   }
-  return { midias: midias.slice(0, 20), docNome: docNome, texto: texto, legenda: extrairLegenda_(texto) };
+  return Object.assign({ midias: midias.slice(0, 20), docNome: docNome, texto: texto }, lerDocumentoLegenda_(texto));
 }
 
-// pega o que vem depois de "Legenda" (ou "Legenda:"); sem esse título, usa o documento inteiro
-function extrairLegenda_(t) {
-  const m = String(t || '').match(/(?:^|\n)\s*legenda\s*:?\s*\n?([\s\S]*)/i);
-  return (m ? m[1] : String(t || '')).trim();
+/* Documento da legenda, no formato da agência:
+ *   P2 · O que a Xpert Liss entrega na prática? (carrossel) · 01/11 (dom)   ← cabeçalho (opcional)
+ *   (linha em branco)
+ *   Texto da legenda… #hashtags
+ * Se tiver um título "Legenda" ou "Legenda:", vale o que vem depois dele. */
+function lerDocumentoLegenda_(t) {
+  let linhas = String(t || '').replace(/\r/g, '').split('\n').map(l => l.replace(/[\u00A0\s]+$/g, '').replace(/^\s+/, ''));
+  const iLeg = linhas.findIndex(l => /^legenda\s*:?\s*$/i.test(l) || /^legenda\s*:/i.test(l));
+  let cab = null;
+  if (iLeg >= 0) {
+    const resto = linhas[iLeg].replace(/^legenda\s*:?\s*/i, '');
+    linhas = (resto ? [resto] : []).concat(linhas.slice(iLeg + 1));
+  } else {
+    const i0 = linhas.findIndex(l => l);
+    const c = i0 >= 0 ? linhas[i0] : '';
+    // cabeçalho: começa com o código do post (P2, Post 2…) ou tem a data dd/mm
+    if (/^p(ost)?\s*\d+\b/i.test(c) || (/\b\d{1,2}\/\d{1,2}\b/.test(c) && c.indexOf('·') >= 0)) {
+      cab = c; linhas = linhas.slice(i0 + 1);
+    }
+  }
+  // tira linhas em branco repetidas e as das pontas
+  const limpo = [];
+  linhas.forEach(l => { if (l || (limpo.length && limpo[limpo.length - 1])) limpo.push(l); });
+  while (limpo.length && !limpo[limpo.length - 1]) limpo.pop();
+  const legenda = limpo.join('\n').replace(/\\#/g, '#').trim();
+  const r = { legenda: legenda };
+  if (cab) {
+    const partes = cab.split(/\s*·\s*/);
+    const titulo = (partes[1] || '').replace(/\s*\((carrossel|est[aá]tico|v[ií]deo|reels?)\)\s*$/i, '').trim();
+    const fmt = (cab.match(/\((carrossel|est[aá]tico|v[ií]deo|reels?)\)/i) || [])[1] || '';
+    r.cabecalho = { codigo: (partes[0] || '').trim(), titulo: titulo, formato: /carrossel/i.test(fmt) ? 'Carrossel' : /est/i.test(fmt) ? 'Estático' : fmt ? 'Vídeo' : '' };
+  }
+  return r;
 }
 
 function escH_(t) {
