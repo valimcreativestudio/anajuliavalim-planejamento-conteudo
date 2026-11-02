@@ -168,7 +168,7 @@ Ao rodar **configurar**, o script cria quatro rotinas (a quarta é o relatório 
 
 - **Pacote contratado** (Marca → Pacote e legendas): quantos posts no feed, reels e stories o cliente contratou por mês. O Calendário e o Resumo mostram o que já foi planejado e publicado, quanto falta e o que passou do pacote.
 - **Datas comemorativas**: feriados e datas gerais aparecem no Calendário (🎉). Marque os nichos da marca (beleza, moda, alimentação, pet…) para ver também as datas do nicho. Dá para esconder com "Mostrar datas comemorativas", embaixo do calendário.
-- **Banco de ideias**: em cima do Calendário. Guarde ideias sem data e arraste para o dia quando decidir.
+- **Banco de ideias**: aba **Ideias**. Guarde ideias sem data; quando decidir, escolha o dia e clique em "Colocar no calendário".
 - **Hashtags e modelos de legenda**: cadastre os grupos de hashtags e os textos fixos (assinatura, CTA, aviso de frete). No editor da postagem, "Inserir na legenda…" coloca com um clique.
 - **Versões da arte**: quando a arte muda depois de pronta (por exemplo, num ajuste), a versão anterior fica guardada. No editor aparecem todas as versões e, nas Aprovações, "Comparar com a versão anterior" mostra o antes e o depois.
 

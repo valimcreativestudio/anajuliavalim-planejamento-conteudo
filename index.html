@@ -659,12 +659,13 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 .pc-bar .pl { background: color-mix(in srgb, var(--st-produzido) 35%, transparent); } .pc-bar .ft { background: var(--st-postado); }
 .pc-item small { font-size: 12px; color: var(--muted); } .pc-item.passou small { color: var(--pr-alta); font-weight: 600; }
 .day .comem { font-size: 11px; line-height: 1.25; color: var(--pr-alta); font-weight: 600; padding: 0 2px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.banco { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; }
-.banco summary { cursor: pointer; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; }
-.banco summary .n { font-size: 11.5px; font-weight: 700; background: var(--surface-2); border-radius: 99px; padding: 1px 8px; }
-.banco-add { display: flex; gap: 8px; margin: 10px 0; } .banco-add input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 10px; color: var(--ink); }
-.banco-lista { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-.banco-lista .chip { width: auto; max-width: 260px; --fase: var(--line); }
+.banco-add { display: flex; gap: 8px; margin: 0 0 16px; max-width: 720px; } .banco-add input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 10px; color: var(--ink); }
+.ideias { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.ideia-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; display: grid; overflow: hidden; }
+.ic-corpo { display: grid; gap: 4px; text-align: left; background: none; border: 0; padding: 14px; cursor: pointer; color: var(--ink); font: inherit; }
+.ic-corpo b { font-size: 15.5px; }
+.ic-acts { display: flex; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--line); background: var(--surface-2); flex-wrap: wrap; }
+.ic-acts input { flex: 1; min-width: 130px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 5px 8px; color: var(--ink); }
 .bloco { display: grid; gap: 6px; border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
 .bl-h { display: flex; gap: 8px; } .bl-h input { flex: 1; min-width: 0; }
 .bloco input, .bloco textarea { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 7px 9px; font: inherit; color: var(--ink); width: 100%; }
@@ -692,6 +693,7 @@ td.n.atraso { color: var(--danger); font-weight: 600; }
     <nav class="tabs" id="tabs">
       <a href="#calendario">Calendário</a>
       <a href="#stories">Stories</a>
+      <a href="#ideias">Ideias<span class="badge" id="ideiaBadge" hidden></span></a>
       <a href="#pautas">Postagens</a>
       <a href="#fluxo">Fluxo de produção</a>
       <a href="#grade">Grade do Insta</a>
@@ -846,7 +848,7 @@ function setMonth(ym) {
 /* ---------- Vistas ---------- */
 const view = () => {
   const h = location.hash.replace("#", "");
-  return ["calendario", "stories", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-acessos", "marca-config", "marca-plano", "aprovacoes", "equipe", "equipe-atividade", "conta", "tarefas"].includes(h) ? h : "calendario";
+  return ["calendario", "stories", "ideias", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-acessos", "marca-config", "marca-plano", "aprovacoes", "equipe", "equipe-atividade", "conta", "tarefas"].includes(h) ? h : "calendario";
 };
 
 function render() {
@@ -865,6 +867,8 @@ function render() {
   if (ehCliente() && !["calendario", "stories", "grade", "aprovacoes", "conta"].includes(view())) { location.replace("#aprovacoes"); return; }
   const pend = pendencias().length, bd = $("#apvBadge");
   bd.hidden = !pend; bd.textContent = pend;
+  const ni = S.marcaId ? ideiasMarca().length : 0, ib = $("#ideiaBadge");
+  ib.hidden = !ni; ib.textContent = ni; ib.style.background = "var(--surface-2)"; ib.style.color = "var(--ink)";
   const urg = minhasUrgentes(), tb = $("#tfBadge");
   tb.hidden = !urg; tb.textContent = urg;
   if (!API) {
@@ -890,7 +894,7 @@ function render() {
   }
   if (!S.month) S.month = pickMonth();
   const v = view();
-  app.innerHTML = avisoVersao() + ({ calendario: vCal, stories: vStories, pautas: vPautas, fluxo: vFluxo, grade: vGrade, resumo: vResumo, marca: vMarcaGeral, "marca-sobre": () => vPerfil("sobre"), "marca-publico": vPublico, "marca-arquivos": vArquivos, "marca-notas": () => vPerfil("notas"), "marca-produtos": vProdutos, "marca-redes": vRedes, "marca-acessos": vAcessos, "marca-config": vMarca, "marca-plano": vPlano })[v]();
+  app.innerHTML = avisoVersao() + ({ calendario: vCal, stories: vStories, ideias: vIdeias, pautas: vPautas, fluxo: vFluxo, grade: vGrade, resumo: vResumo, marca: vMarcaGeral, "marca-sobre": () => vPerfil("sobre"), "marca-publico": vPublico, "marca-arquivos": vArquivos, "marca-notas": () => vPerfil("notas"), "marca-produtos": vProdutos, "marca-redes": vRedes, "marca-acessos": vAcessos, "marca-config": vMarca, "marca-plano": vPlano })[v]();
   if (v === "fluxo") wireBoard();
   if (v === "calendario") wireCalendario();
   if (v === "stories") wireStories();
@@ -965,9 +969,9 @@ function vCal() {
     </div>`;
   }
   const n = postsMes().length;
-  return headM(m.nome, "Calendário", monthNav() + addBtn()) + pacoteHtml(m, S.month) + bancoHtml() +
+  return headM(m.nome, "Calendário", monthNav() + addBtn()) + pacoteHtml(m, S.month) +
     `<div class="cal">${cells}</div>
-    <p class="muted" style="margin-top:12px">${n} ${n === 1 ? "publicação" : "publicações"} em ${esc(monthLabel(S.month))}. A bolinha indica o status. Clique num post para abrir o detalhamento${S.canWrite ? " ou arraste para outro dia para mudar a data" : ""}. <label style="display:inline-flex;gap:5px;align-items:center;margin-left:6px"><input type="checkbox"${verDatas ? " checked" : ""} onchange="store('datas', this.checked ? '1' : '0');render()"> Mostrar datas comemorativas</label></p>`;
+    <p class="muted" style="margin-top:12px">${n} ${n === 1 ? "publicação" : "publicações"} em ${esc(monthLabel(S.month))}. A bolinha indica o status. Clique num post para abrir o detalhamento${S.canWrite ? " ou arraste para outro dia para mudar a data" : ""}. Ideias sem data ficam na aba Ideias. <label style="display:inline-flex;gap:5px;align-items:center;margin-left:6px"><input type="checkbox"${verDatas ? " checked" : ""} onchange="store('datas', this.checked ? '1' : '0');render()"> Mostrar datas comemorativas</label></p>`;
 }
 
 function filtered() {
@@ -3406,11 +3410,24 @@ async function enviarRelatorioCliente() {
 
 /* ---------- Banco de ideias ---------- */
 const ideiasMarca = () => S.posts.filter(p => p.marcaId === S.marcaId && !p.data).sort((a, b) => (b.criado || 0) - (a.criado || 0));
-function bancoHtml() {
-  const l = ideiasMarca(), pode = S.canWrite, aberto = store("banco") !== "0";
-  return `<details class="banco"${aberto ? " open" : ""} ontoggle="store('banco', this.open ? '1' : '0')"><summary><b>💡 Banco de ideias</b><span class="n">${l.length}</span><span class="muted" style="font-size:12.5px;font-weight:400">Ideias sem data${pode ? ": arraste para um dia do calendário quando decidir" : ""}</span></summary>
-    ${pode ? `<form class="banco-add" onsubmit="event.preventDefault();novaIdeia()"><input id="ideiaNova" placeholder="Nova ideia (ex.: Bastidores da produção)" autocomplete="off"><button class="btn sm primary" type="submit">Guardar ideia</button></form>` : ""}
-    <div class="banco-lista">${l.length ? l.map(p => `<button class="chip ideia" type="button" onclick="openEditor('${esc(p.id)}')"${pode ? ` draggable="true" data-id="${esc(p.id)}"` : ""}><span class="meta"><span class="fmt">${FMT_ICON[p.formato] || ""} ${esc(p.formato || "")}</span>${(p.comentarios || []).length ? `<span>💬 ${p.comentarios.length}</span>` : ""}</span><span class="t">${esc(nm(p))}</span></button>`).join("") : `<span class="muted" style="font-size:13px">Nenhuma ideia guardada.</span>`}</div></details>`;
+function vIdeias() {
+  const m = marca(), l = ideiasMarca(), pode = S.canWrite;
+  return headM(m.nome, "Banco de ideias") +
+    `<p class="sec-intro">Guarde aqui as ideias que ainda não têm dia. Quando decidir, escolha a data e ela vai para o calendário${pode ? "" : "."}.</p>
+    ${pode ? `<form class="banco-add" onsubmit="event.preventDefault();novaIdeia()"><input id="ideiaNova" placeholder="Nova ideia (ex.: Bastidores da produção)" autocomplete="off"><button class="btn primary" type="submit">Guardar ideia</button></form>` : ""}
+    ${l.length ? `<div class="ideias">${l.map(p => `<article class="ideia-card">
+        <button type="button" class="ic-corpo" onclick="openEditor('${esc(p.id)}')">
+          <span class="muted" style="font-size:12px">${FMT_ICON[p.formato] || ""} ${esc(p.formato || "")}${p.criado ? " · guardada " + esc(quando(p.criado)) : ""}${(p.comentarios || []).length ? " · 💬 " + p.comentarios.length : ""}</span>
+          <b>${esc(nm(p))}</b>${cheio(p.observacao) ? `<span class="muted" style="font-size:13px">${esc(p.observacao.slice(0, 140))}</span>` : ""}</button>
+        ${pode ? `<div class="ic-acts"><input type="date" aria-label="Dia para ${esc(nm(p))}" id="dia-${esc(p.id)}"><button class="btn sm primary" type="button" onclick="agendarIdeia('${esc(p.id)}')">Colocar no calendário</button></div>` : ""}
+      </article>`).join("")}</div>`
+      : `<div class="empty"><strong>Nenhuma ideia guardada</strong><span>Escreva acima e clique em Guardar ideia.</span></div>`}`;
+}
+async function agendarIdeia(id) {
+  const dia = $("#dia-" + id).value;
+  if (!dia) return toast("Escolha o dia.");
+  try { await api("salvarPauta", { pauta: { id, data: dia } }); await carregar(); toast(`Ideia colocada em ${brFull(dia)}`); }
+  catch (e) { writeFail(e); }
 }
 async function novaIdeia() {
   const t = ($("#ideiaNova").value || "").trim();
