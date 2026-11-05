@@ -741,6 +741,39 @@ td.n.atraso { color: var(--danger); font-weight: 600; }
 .ev-lista { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 6px; } .ev-lista li { display: flex; align-items: center; gap: 8px; font-size: 14px; } .ev-lista li span { flex: 1; }
 #evDlg { width: min(680px, calc(100vw - 24px)); }
 .atraso { color: var(--danger); }
+.ani-row { display: grid; grid-template-columns: 1fr 90px auto; gap: 8px; }
+.ani-row input { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 7px 9px; color: var(--ink); min-width: 0; }
+.day .ani { font-size: 11px; line-height: 1.25; color: var(--s-cliente); font-weight: 600; padding: 0 2px; }
+.ata { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
+.ata textarea, .ata-tf input, .ata-tf select { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 7px 9px; color: var(--ink); font: inherit; width: 100%; min-width: 0; }
+.ata-tf { display: grid; grid-template-columns: 1fr 150px 140px; gap: 6px; }
+@media (max-width: 560px) { .ata-tf { grid-template-columns: 1fr 1fr; } .ata-tf input[data-t=titulo] { grid-column: 1 / -1; } }
+.reu-it { display: grid; gap: 2px; text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 12px; cursor: pointer; color: var(--ink); font: inherit; font-size: 14px; }
+.reu-it small { font-size: 12.5px; color: var(--muted); }
+#evLivres { display: grid; gap: 4px; }
+.lv-l, .lv-esc { display: grid; grid-template-columns: 90px 1fr; gap: 8px; align-items: center; font-size: 12.5px; }
+.lv-l span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lv-b { position: relative; height: 14px; border-radius: 4px; background: color-mix(in srgb, var(--st-postado) 22%, var(--surface)); }
+.lv-b i { position: absolute; top: 0; bottom: 0; background: var(--muted); border-radius: 3px; opacity: .7; }
+.lv-b em { position: absolute; top: -2px; bottom: -2px; border: 2px solid var(--ink); border-radius: 4px; }
+.lv-esc div { position: relative; height: 14px; } .lv-esc small { position: absolute; transform: translateX(-50%); font-size: 10.5px; color: var(--muted); }
+.horas-top { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.cron { display: grid; gap: 8px; align-content: start; }
+.cron select, .cron input, #hrMarca, #hrDesc { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 10px; color: var(--ink); }
+.cron.rodando { border-color: var(--st-postado); box-shadow: 0 0 0 1px var(--st-postado); }
+.cron-t { font: 400 40px/1 var(--f-display); }
+.hr-lista { display: grid; gap: 4px; }
+.hr-it { display: grid; grid-template-columns: 56px 1fr auto 24px; gap: 10px; align-items: center; padding: 7px 4px; border-bottom: 1px solid var(--line); font-size: 14px; }
+#tabHoras.cron-on::after { content: " ⏱"; }
+.mural { display: grid; gap: 12px; max-width: 760px; }
+.aviso { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: grid; gap: 8px; }
+.aviso.imp { border-left: 4px solid var(--s-cliente); }
+.aviso.novo { box-shadow: 0 0 0 2px color-mix(in srgb, var(--s-cliente) 35%, transparent); }
+.av-h { display: flex; gap: 8px; align-items: center; font-size: 16px; }
+.av-t { white-space: pre-wrap; font-size: 14.5px; }
+.av-f { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); }
+.av-f > span:first-of-type { flex: 1; }
+.faixa-aviso { display: block; background: color-mix(in srgb, var(--s-cliente) 16%, var(--surface)); border: 1px solid color-mix(in srgb, var(--s-cliente) 40%, var(--line)); color: var(--ink); text-decoration: none; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; font-size: 14px; }
 </style>
 </head>
 <body>
@@ -767,6 +800,8 @@ td.n.atraso { color: var(--danger); font-weight: 600; }
       <a href="#aprovacoes">Aprovações<span class="badge" id="apvBadge" hidden></span></a>
       <a href="#tarefas">Tarefas<span class="badge" id="tfBadge" hidden></span></a>
       <a href="#agenda" id="tabAgenda">Agenda<span class="badge" id="agBadge" hidden></span></a>
+      <a href="#horas" id="tabHoras">Horas</a>
+      <a href="#mural" id="tabMural">Mural<span class="badge" id="muBadge" hidden></span></a>
       <a href="#equipe" id="tabEquipe" hidden>Equipe</a>
     </nav>
   </div>
@@ -838,7 +873,7 @@ const DEFAULT_FASES = [
 ];
 
 const S = {
-  canWrite: false, insta: {}, agenda: [], calSt: "", stories: [], met: {}, mh: {}, carimbo: "", desde: "", acessos: {}, tarefas: [], equipe: [], tf: { quem: "minhas", marca: "", feitas: false }, eu: null, usuarios: [], token: store("token") || "", rej: null, uEdit: null,
+  canWrite: false, insta: {}, agenda: [], horas: [], mural: [], calSt: "", stories: [], met: {}, mh: {}, carimbo: "", desde: "", acessos: {}, tarefas: [], equipe: [], tf: { quem: "minhas", marca: "", feitas: false }, eu: null, usuarios: [], token: store("token") || "", rej: null, uEdit: null,
   marcas: [], posts: [], loadedM: false, loadedP: false, failed: false,
   marcaId: store("marca"), month: null,
   f: { status: "", formato: "", produto: "", q: "" },
@@ -915,7 +950,7 @@ function setMonth(ym) {
 /* ---------- Vistas ---------- */
 const view = () => {
   const h = location.hash.replace("#", "");
-  return ["calendario", "stories", "ideias", "agenda", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-acessos", "marca-config", "marca-plano", "aprovacoes", "equipe", "equipe-atividade", "conta", "tarefas"].includes(h) ? h : "calendario";
+  return ["calendario", "stories", "ideias", "agenda", "horas", "mural", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-acessos", "marca-config", "marca-plano", "aprovacoes", "equipe", "equipe-atividade", "conta", "tarefas"].includes(h) ? h : "calendario";
 };
 
 function render() {
@@ -939,6 +974,8 @@ function render() {
   desenharTemaBtn();
   const nag = S.eu ? pedidosParaMim().length + convitesSemResposta().length : 0, ab = $("#agBadge");
   ab.hidden = !nag; ab.textContent = nag;
+  const nmu = S.eu ? avisosNaoLidos().length : 0, mb = $("#muBadge"); mb.hidden = !nmu || view() === "mural"; mb.textContent = nmu;
+  $("#tabHoras").classList.toggle("cron-on", !!(S.eu && cronAtual()));
   const urg = minhasUrgentes(), tb = $("#tfBadge");
   tb.hidden = !urg; tb.textContent = urg;
   if (!API) {
@@ -952,19 +989,19 @@ function render() {
   if (!S.token) { app.innerHTML = vLogin(); $("#lgLogin")?.focus(); return; }
   if (!S.loadedM || !S.loadedP) return;
   const v0 = view();
-  if (v0 === "equipe" || v0 === "equipe-atividade" || v0 === "conta" || v0 === "aprovacoes" || v0 === "tarefas" || v0 === "agenda") {
-    app.innerHTML = avisoVersao() + (v0 === "equipe" ? vEquipe : v0 === "equipe-atividade" ? vAtividade : v0 === "conta" ? vConta : v0 === "tarefas" ? vTarefas : v0 === "agenda" ? vAgenda : vAprovacoes)();
+  if (v0 === "equipe" || v0 === "equipe-atividade" || v0 === "conta" || v0 === "aprovacoes" || v0 === "tarefas" || v0 === "agenda" || v0 === "horas" || v0 === "mural") {
+    app.innerHTML = avisoVersao() + faixaAvisos() + (v0 === "equipe" ? vEquipe : v0 === "equipe-atividade" ? vAtividade : v0 === "conta" ? vConta : v0 === "tarefas" ? vTarefas : v0 === "agenda" ? vAgenda : v0 === "horas" ? vHoras : v0 === "mural" ? vMural : vAprovacoes)();
     return;
   }
   if (!marca()) {
-    app.innerHTML = avisoVersao() + (podeGerir()
+    app.innerHTML = avisoVersao() + faixaAvisos() + (podeGerir()
       ? `<div class="empty"><strong>Nenhuma marca ainda</strong><span>Crie a primeira marca para começar a planejar o mês.</span><button class="btn primary" type="button" onclick="novaMarca()">Criar marca</button></div>`
       : `<div class="empty"><strong>Nenhuma marca liberada para você</strong><span>Peça ao administrador para liberar as suas marcas na aba Equipe.</span></div>`);
     return;
   }
   if (!S.month) S.month = pickMonth();
   const v = view();
-  app.innerHTML = avisoVersao() + ({ calendario: vCal, stories: vStories, ideias: vIdeias, pautas: vPautas, fluxo: vFluxo, grade: vGrade, resumo: vResumo, marca: vMarcaGeral, "marca-sobre": () => vPerfil("sobre"), "marca-publico": vPublico, "marca-arquivos": vArquivos, "marca-notas": () => vPerfil("notas"), "marca-produtos": vProdutos, "marca-redes": vRedes, "marca-acessos": vAcessos, "marca-config": vMarca, "marca-plano": vPlano })[v]();
+  app.innerHTML = avisoVersao() + faixaAvisos() + ({ calendario: vCal, stories: vStories, ideias: vIdeias, pautas: vPautas, fluxo: vFluxo, grade: vGrade, resumo: vResumo, marca: vMarcaGeral, "marca-sobre": () => vPerfil("sobre"), "marca-publico": vPublico, "marca-arquivos": vArquivos, "marca-notas": () => vPerfil("notas"), "marca-produtos": vProdutos, "marca-redes": vRedes, "marca-acessos": vAcessos, "marca-config": vMarca, "marca-plano": vPlano })[v]();
   if (v === "fluxo") wireBoard();
   if (v === "calendario") wireCalendario();
   if (v === "stories") wireStories();
@@ -1031,6 +1068,7 @@ function vCal() {
     cells += `<div class="day${out ? " out" : ""}${ps.length ? " has" : ""}${k === today ? " today" : ""}" data-dia="${k}">
       <div class="dhead"><span class="dnum"><b>${d.getDate()}</b><span class="wd">${WD[d.getDay()]}</span></span>
       ${S.canWrite ? `<button class="add-day" type="button" aria-label="Nova postagem em ${br(k)}" onclick="openEditor(null,'${k}')">+</button>` : ""}</div>
+      ${!out && aniversariosDia(k, m.id).length ? `<div class="ani">🎂 ${esc(aniTxt(aniversariosDia(k, m.id)))}</div>` : ""}
       ${comem[k] && !out ? `<div class="comem" title="${esc(comem[k].join(" · "))}">🎉 ${esc(comem[k].join(" · "))}</div>` : ""}
       ${ps.map(p => `<button class="chip${S.calSt && grupoSt(p.status)[0] !== S.calSt ? " apagado" : ""}" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="openEditor('${esc(p.id)}')"${S.canWrite ? ` draggable="true" data-id="${esc(p.id)}"` : ""}>
         <span class="st-bola" style="background:${stColor(p.status)}" title="${esc(grupoSt(p.status)[0])}"></span>
@@ -1560,7 +1598,7 @@ function vMarcaGeral() {
       ${card("marca-publico", "Público-alvo", pr.publico, `${(p.personas || []).length} persona(s) cadastrada(s).`)}
       ${card("marca-arquivos", "Arquivos e identidade", pr.arquivos, `${arquivosDe(m).length} arquivo(s): direcionamento, manual, logotipo e vetores.`)}
       ${card("marca-notas", "Observações", pr.notas, "Tom de voz, pilares, datas, aprovação e aprendizados.")}
-    </div>`;
+    </div>` + reunioesMarcaHtml(m);
 }
 
 function campoHtml([k, label, tipo, ph], val, extra = "") {
@@ -2540,6 +2578,12 @@ function notificacoes() {
       : t[3] === "aprovar" ? podeAprovar(p.marcaId) && papel === "aprovador" : t[3] === "editar" ? podeEditar(p.marcaId) && papel === "social" : false);
     if (serve) lista.push({ em: h.em, por: h.por, acao: h.acao, motivo: h.motivo, titulo: nm(p), marcaId: p.marcaId, ic: t[1], cls: t[2], abrir: `openEditor('${esc(p.id)}')` });
   }));
+  // aniversários de hoje e mural
+  if (!ehCliente()) {
+    const hj = hojeIso(), ini = parse(hj).getTime();
+    aniversariosDia(hj).filter(a => a.nome !== S.eu.nome).forEach(a => lista.push({ em: ini, por: "🎂", acao: "Aniversário hoje", titulo: a.nome + (a.marca ? " · " + a.marca : ""), ic: "🎂", cls: "", abrir: "location.hash='#calendario'" }));
+    (S.mural || []).forEach(a => { if (a.criado >= desde && a.uid !== S.eu.id) lista.push({ em: a.criado, por: a.por, acao: "Publicou no mural", titulo: a.titulo, ic: "📌", cls: "", abrir: "location.hash='#mural'" }); });
+  }
   // agenda: reunião marcada comigo, pedido para eu responder, resposta ao meu pedido
   (S.agenda || []).forEach(x => {
     if (x.tipo !== "reuniao" || x.atualizado < desde) return;
@@ -2660,6 +2704,9 @@ function vConta() {
     <span class="muted" style="font-size:13px">Aparece no "Olá" lá em cima e no histórico das postagens. Seu login continua <b>${esc(S.eu.login)}</b>.</span>
     <button class="btn primary" type="submit" style="justify-self:start">Salvar nome</button>
   </form>
+  <div class="panel" style="max-width:460px;display:grid;gap:12px;margin-bottom:16px"><h2>Seu aniversário</h2>
+    <div style="display:flex;gap:8px"><input id="cAni" value="${esc(S.eu.aniversario || "")}" placeholder="dd/mm" maxlength="5" inputmode="numeric" style="width:110px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px;color:var(--ink)" oninput="this.value=this.value.replace(/[^\\d/]/g,'').replace(/^(\\d{2})(\\d)/,'$1/$2').slice(0,5)"><button class="btn" type="button" onclick="salvarMeuAniversario()">Salvar</button></div>
+    <span class="muted" style="font-size:13px">A equipe vê no calendário e recebe lembrete no dia. Só dia e mês.</span></div>
   <div class="panel" style="max-width:460px;display:grid;gap:12px;margin-bottom:16px">
     <h2>Foto de perfil</h2>
     <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">${avatarHtml(S.eu, 72)}
@@ -2757,6 +2804,7 @@ function vEquipe() {
       <div class="pf-grid">
         <label class="field"><span>Nome</span><input id="uNome" required value="${esc(u.nome || "")}"></label>
         <label class="field"><span>Login (e-mail)</span><input id="uLogin" required value="${esc(u.login || "")}" autocomplete="off"></label>
+        <label class="field"><span>Aniversário (dd/mm)</span><input id="uAni" value="${esc(u.aniversario || "")}" placeholder="dd/mm" maxlength="5"></label>
         <label class="field"><span>WhatsApp (com DDD)</span><input id="uTel" type="tel" inputmode="tel" placeholder="(11) 98765-4321" value="${esc(u.whatsapp ? fmtTel(u.whatsapp) : "")}"></label>
         <label class="field"><span>Papel</span><select id="uPapel" onchange="lerFormU();render()">${Object.entries(PAPEIS).filter(([k]) => papeisPermitidos.includes(k)).map(([k, l]) => `<option value="${k}"${u.papel === k ? " selected" : ""}>${l}</option>`).join("")}</select></label>
         <label class="field"><span>${u.id ? "Nova senha (deixe em branco para manter)" : "Senha provisória"}</span><span class="prod-pick"><input id="uSenha" type="text" autocomplete="off" ${u.id ? "" : "required"} minlength="6" value="${esc(u.senhaTemp || "")}" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px"><button class="btn sm" type="button" onclick="$('#uSenha').value=gerarSenha();S.dirty=true">Gerar senha</button></span></label>
@@ -2815,11 +2863,11 @@ async function salvarMarcasU(uid, lista) {
   } catch (e) { writeFail(e); }
 }
 function lerFormU() {
-  Object.assign(S.uEdit, { nome: $("#uNome").value, login: $("#uLogin").value, whatsapp: soDigitos($("#uTel").value), senhaTemp: $("#uSenha").value, papel: $("#uPapel").value, ativo: $("#uAtivo").checked, marcas: lerMarcasU() });
+  Object.assign(S.uEdit, { nome: $("#uNome").value, login: $("#uLogin").value, whatsapp: soDigitos($("#uTel").value), aniversario: $("#uAni").value.trim(), senhaTemp: $("#uSenha").value, papel: $("#uPapel").value, ativo: $("#uAtivo").checked, marcas: lerMarcasU() });
 }
 function lerMarcasU() { return [...document.querySelectorAll("#uMarcas input:checked")].map(i => i.value); }
 async function salvarUsuario() {
-  const u = { id: S.uEdit.id || "", nome: $("#uNome").value.trim(), login: $("#uLogin").value.trim(), whatsapp: soDigitos($("#uTel").value), papel: $("#uPapel").value, senha: $("#uSenha").value.trim(), ativo: $("#uAtivo").checked, marcas: TODAS_MARCAS.includes($("#uPapel").value) ? ["*"] : lerMarcasU() };
+  const u = { id: S.uEdit.id || "", nome: $("#uNome").value.trim(), login: $("#uLogin").value.trim(), whatsapp: soDigitos($("#uTel").value), aniversario: $("#uAni").value.trim(), papel: $("#uPapel").value, senha: $("#uSenha").value.trim(), ativo: $("#uAtivo").checked, marcas: TODAS_MARCAS.includes($("#uPapel").value) ? ["*"] : lerMarcasU() };
   try {
     await api("salvarUsuario", { usuario: u });
     S.uEdit = null; S.dirty = false;
@@ -3547,6 +3595,11 @@ function vPlano() {
         <small class="muted">Aparece no Calendário e no Resumo: quanto já foi planejado e publicado, o que falta e o que passou do pacote.</small>
         <label style="display:flex;gap:8px;align-items:flex-start;font-size:14px"><input type="checkbox" id="plRel"${pf.relatorioAuto ? " checked" : ""}${ro} style="margin-top:3px"> <span><b>Mandar o relatório do mês para o cliente</b> por e-mail, todo dia 1 (posts publicados, resultados do Instagram e destaques, com PDF).</span></label>
       </div>
+      <div class="panel" style="display:grid;gap:10px"><h2 style="margin:0">Contrato e aniversários</h2>
+        <label class="field"><span>Valor mensal do contrato (R$)</span><input type="number" min="0" step="0.01" id="plValor" value="${esc(pf.valorMensal || "")}" placeholder="Ex.: 2500"${ro}><small>Só a gestão vê, em Horas: mostra quanto o cliente paga por hora trabalhada.</small></label>
+        <div class="field"><span>Aniversários (cliente, sócios, da marca)</span></div>
+        <div id="aniBox" style="display:grid;gap:6px">${(pf.aniversarios || []).map(aniRow).join("")}</div>
+        ${S.canWrite ? `<button class="btn sm" type="button" style="justify-self:start" onclick="$('#aniBox').insertAdjacentHTML('beforeend', aniRow())">+ Aniversário</button>` : ""}</div>
       <div class="panel" style="display:grid;gap:10px"><h2 style="margin:0">Datas comemorativas</h2><span class="muted" style="font-size:13px">Além dos feriados e das datas gerais, o calendário mostra as datas destes nichos:</span>
         <div class="chips">${Object.entries(NICHOS).filter(([k]) => k !== "geral").map(([k, l]) => `<label><input type="checkbox" data-nicho="${k}"${nichos.includes(k) ? " checked" : ""}${ro}>${esc(l)}</label>`).join("")}</div></div>
       <div class="panel" style="display:grid;gap:10px"><h2 style="margin:0">Grupos de hashtags</h2><div id="blHash" style="display:grid;gap:10px">${b.hashtags.map(x => blocoRow("hashtags", x)).join("")}</div>
@@ -3560,7 +3613,7 @@ async function salvarPlano() {
   const f = $("#planoForm"), pacote = {};
   f.querySelectorAll("[data-pac]").forEach(i => { const n = parseInt(i.value, 10); if (n > 0) pacote[i.dataset.pac] = n; });
   const lista = tipo => [...f.querySelectorAll(`[data-bloco="${tipo}"]`)].map(b => ({ nome: b.querySelector('[data-b=nome]').value.trim(), texto: b.querySelector('[data-b=texto]').value.trim() })).filter(x => x.texto);
-  const extra = { pacote, relatorioAuto: $("#plRel").checked, nichos: [...f.querySelectorAll("[data-nicho]:checked")].map(i => i.dataset.nicho), hashtags: lista("hashtags"), modelos: lista("modelos") };
+  const extra = { valorMensal: +$("#plValor").value || 0, aniversarios: [...f.querySelectorAll("[data-ani]")].map(r => ({ nome: r.querySelector("[data-a=nome]").value.trim(), data: r.querySelector("[data-a=data]").value.trim() })).filter(a => a.nome && /^\d{2}\/\d{2}$/.test(a.data)), pacote, relatorioAuto: $("#plRel").checked, nichos: [...f.querySelectorAll("[data-nicho]:checked")].map(i => i.dataset.nicho), hashtags: lista("hashtags"), modelos: lista("modelos") };
   const btn = f.querySelector("button[type=submit]"); btn.disabled = true; btn.textContent = "Salvando…";
   try { await api("salvarMarca", { marca: { ...marca(), perfil: { ...perfilDe(marca()), ...extra } } }); S.dirty = false; await carregar(); toast("Salvo"); }
   catch (e) { btn.disabled = false; btn.textContent = "Salvar"; writeFail(e); }
@@ -3806,7 +3859,7 @@ function agSemanaHtml(dias) {
   };
   return `<div class="wk-wrap"><div class="agw" style="--h:${60 * PX}px">
     <div class="wk-h"></div>${dias.map(k => `<div class="wk-h${k === hoje ? " hoje" : ""}"><span>${WD[parse(k).getDay()].slice(0, 3)}</span><b>${parse(k).getDate()}</b></div>`).join("")}
-    <div class="wk-h tf"></div>${dias.map(k => `<div class="wk-dia">${tarefasDia(k).map(t => `<button type="button" class="ev-tf" onclick="abrirTarefa('${esc(t.id)}')">☐ ${esc(t.titulo)}</button>`).join("")}</div>`).join("")}
+    <div class="wk-h tf"></div>${dias.map(k => `<div class="wk-dia">${aniChips(k)}${tarefasDia(k).map(t => `<button type="button" class="ev-tf" onclick="abrirTarefa('${esc(t.id)}')">☐ ${esc(t.titulo)}</button>`).join("")}</div>`).join("")}
     <div class="wk-horas" style="height:${h}px">${horas.map(m => `<span style="top:${(m - ini) * PX}px">${pad(m / 60)}h</span>`).join("")}</div>
     ${dias.map(col).join("")}
   </div></div><p class="muted" style="font-size:12.5px;margin-top:8px">Clique num horário vazio para criar uma atividade ali.</p>`;
@@ -3823,14 +3876,14 @@ function agMesHtml() {
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
     const k = iso(d), l = eventosDia(k), t = tarefasDia(k);
     cells += `<div class="day${d.getMonth() !== first.getMonth() ? " out" : ""}${k === hoje ? " today" : ""}" onclick="if(!event.target.closest('button'))novoEvento('atividade','${k}')"><div class="dhead"><span class="dnum"><b>${d.getDate()}</b></span></div>
-      ${l.map(x => blocoEvento(x)).join("")}${t.map(x => `<button type="button" class="ev-tf" onclick="abrirTarefa('${esc(x.id)}')">☐ ${esc(x.titulo)}</button>`).join("")}</div>`;
+      ${aniChips(k)}${l.map(x => blocoEvento(x)).join("")}${t.map(x => `<button type="button" class="ev-tf" onclick="abrirTarefa('${esc(x.id)}')">☐ ${esc(x.titulo)}</button>`).join("")}</div>`;
   }
   return `<div class="cal ag-mes">${cells}</div>`;
 }
 function agListaHtml(dias) {
   const hoje = hojeIso();
   return `<div class="ag-lista">${dias.map(k => { const l = eventosDia(k), t = tarefasDia(k); return `<section class="ag-dia${k === hoje ? " hoje" : ""}"><h3>${esc(WD[parse(k).getDay()])}, ${br(k)}${k === hoje ? " · hoje" : ""}<button class="btn sm" type="button" onclick="novoEvento('atividade','${k}')">+</button></h3>
-    ${l.length || t.length ? l.map(x => blocoEvento(x)).join("") + t.map(x => `<button type="button" class="ev-tf" onclick="abrirTarefa('${esc(x.id)}')">☐ ${esc(x.titulo)}</button>`).join("") : `<span class="muted" style="font-size:13px">Livre</span>`}</section>`; }).join("")}</div>`;
+    ${aniChips(k)}${l.length || t.length || aniversariosDia(k).length ? l.map(x => blocoEvento(x)).join("") + t.map(x => `<button type="button" class="ev-tf" onclick="abrirTarefa('${esc(x.id)}')">☐ ${esc(x.titulo)}</button>`).join("") : `<span class="muted" style="font-size:13px">Livre</span>`}</section>`; }).join("")}</div>`;
 }
 function rsvpBtns(x) {
   const r = (x.respostas || {})[S.eu.id];
@@ -3863,7 +3916,7 @@ function novoEvento(tipo, dia, hora) {
 }
 function abrirEvento(id) {
   const x = S.agenda.find(e => e.id === id); if (!x) return;
-  EV = JSON.parse(JSON.stringify(x));
+  EV = JSON.parse(JSON.stringify(x)); S.ataEdit = false;
   const pode = x.criadoPorId === S.eu.id || (x.tipo === "reuniao" && ehChefe());
   desenharEvento(EV, false, pode);
   $("#evDlg").showModal();
@@ -3893,6 +3946,8 @@ function desenharEvento(x, editar, podeEditarEv) {
       ${reun ? `<div class="field full"><span id="evPartN">Participantes (${(x.participantes || []).length})</span>
         <input id="evBusca" placeholder="Buscar pessoa…" oninput="document.querySelectorAll('#evPessoas label').forEach(l=>l.hidden=!l.textContent.toLowerCase().includes(this.value.toLowerCase()))" style="border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 10px;color:var(--ink)">
         <div class="ev-pessoas" id="evPessoas">${pessoas.map(u => `<label><input type="checkbox" value="${esc(u.id)}"${(x.participantes || []).includes(u.id) ? " checked" : ""} onchange="lerEvento();$('#evPartN').textContent='Participantes ('+EV.participantes.length+')'">${avatarHtml(u, 24)}<span>${esc(u.nome)}<small>${esc(PAPEIS[u.papel] || "")}</small></span></label>`).join("")}</div></div>
+        <div class="field full"><button class="btn sm" type="button" style="justify-self:start" onclick="verLivres()">🔎 Ver horários livres de todos neste dia</button><div id="evLivres"></div></div>
+        <label class="field full"><span>Marca (opcional)</span><select id="evMarca"><option value="">Sem marca</option>${S.marcas.map(m => `<option value="${esc(m.id)}"${x.marcaId === m.id ? " selected" : ""}>${esc(m.nome)}</option>`).join("")}</select></label>
         <label class="field full"><span>Local ou link (Meet, Zoom…)</span><input id="evLocal" value="${esc(x.local)}" placeholder="https://meet.google.com/…"></label>` : ""}
       <label class="field full"><span>${reun ? "Pauta / o que vai ser falado" : "Detalhes"}</span><textarea id="evDesc" rows="3">${esc(x.descricao)}</textarea></label>
       <div class="field full"><span>Cor</span><div class="cores">${["", "#1e88e5", "#43a047", "#f2b705", "#ff7a00", "#e53935", "#d81b60", "#8e24aa", "#546e7a"].map(c => `<label style="--c:${c || (reun ? "var(--s-reuniao)" : "var(--s-atividade)")}" title="${c ? c : "Padrão"}"><input type="radio" name="evCor" value="${c}"${(x.cor || "") === c ? " checked" : ""} aria-label="${c || "Cor padrão"}"></label>`).join("")}</div></div>
@@ -3915,6 +3970,8 @@ function desenharEvento(x, editar, podeEditarEv) {
       ${reun ? `<div><b style="font-size:14px">Participantes</b><ul class="ev-lista">${partes.map(p => { const u = S.equipe.find(e => e.id === p.id) || p; return `<li>${avatarHtml(u, 26)}<span>${esc(p.nome)}${p.org ? ` <small class="muted">· marcou</small>` : ""}</span><small class="${resp[p.id] === "nao" ? "atraso" : "muted"}">${p.org ? "" : esc(ROT[resp[p.id]] || "sem resposta")}</small></li>`; }).join("")}</ul></div>` : ""}
       ${reun && x.status === "confirmada" && (x.participantes || []).includes(S.eu.id) && x.criadoPorId !== S.eu.id ? `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><b style="font-size:14px">Você vai?</b>${rsvpBtns(x)}</div>` : ""}
       ${reun && x.status === "solicitada" && ehChefe() && x.criadoPorId !== S.eu.id ? `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ok" type="button" onclick="responderEvento('${esc(x.id)}','aceitar')">Aceitar pedido</button><button class="btn" type="button" onclick="$('#evDlg').close();location.hash='#agenda'">Responder na agenda</button></div>` : ""}
+      ${x.marcaId && nomeMarca(x.marcaId) ? `<div style="font-size:13.5px">🏷️ ${esc(nomeMarca(x.marcaId))}</div>` : ""}
+      ${ataHtml(x)}
       ${x.status === "confirmada" ? `<a class="lnk" href="${esc(linkGoogleAgenda(x))}" target="_blank" rel="noopener" style="font-size:13.5px">Adicionar ao meu Google Agenda</a>` : ""}
     </div>
     <div class="dlg-foot"><span class="muted" style="font-size:12.5px">${reun ? `Marcada por ${esc(x.criadoPor)}${x.decididoPor && x.decididoPor !== x.criadoPor && x.status === "confirmada" ? ` · aceita por ${esc(x.decididoPor)}` : ""}` : ""}</span><span class="sp"></span>
@@ -3924,7 +3981,7 @@ function desenharEvento(x, editar, podeEditarEv) {
 function lerEvento() {
   const v = id => ($("#" + id)?.value ?? "");
   Object.assign(EV, { titulo: v("evTitulo").trim(), data: v("evData"), hora: v("evHora"), local: v("evLocal").trim(), descricao: v("evDesc"),
-    duracao: +(($("#evForm input[name=evDur]:checked") || {}).value || EV.duracao), cor: ($("#evForm input[name=evCor]:checked") || {}).value ?? EV.cor });
+    duracao: +(($("#evForm input[name=evDur]:checked") || {}).value || EV.duracao), marcaId: $("#evMarca") ? $("#evMarca").value : (EV.marcaId || ""), cor: ($("#evForm input[name=evCor]:checked") || {}).value ?? EV.cor });
   if ($("#evPessoas")) EV.participantes = [...document.querySelectorAll("#evPessoas input:checked")].map(i => i.value);
 }
 $("#evForm").addEventListener("submit", async e => {
@@ -3947,6 +4004,161 @@ async function excluirEvento() {
 $("#evDlg").addEventListener("click", e => { if (e.target === $("#evDlg")) $("#evDlg").close(); });
 $("#evDlg").addEventListener("close", () => { EV = null; render(); });
 
+/* ---------- Aniversários ---------- */
+const ddmmDe = k => k.slice(8, 10) + "/" + k.slice(5, 7);
+function aniversariosDia(k, marcaId) {
+  const d = ddmmDe(k), l = [];
+  if (!ehCliente()) S.equipe.forEach(u => { if (u.aniversario === d && u.papel !== "cliente") l.push({ nome: u.nome, tipo: "equipe" }); });
+  S.marcas.forEach(m => { if (marcaId && m.id !== marcaId) return; (perfilDe(m).aniversarios || []).forEach(a => { if (a && a.data === d) l.push({ nome: a.nome, tipo: "marca", marca: m.nome }); }); });
+  return l;
+}
+const aniTxt = l => l.map(a => a.nome + (a.marca && S.marcas.length > 1 ? ` (${a.marca})` : "")).join(", ");
+function aniRow(a = {}) {
+  return `<div class="ani-row" data-ani><input data-a="nome" value="${esc(a.nome || "")}" placeholder="Quem (ex.: Carla, dona da marca; ou Aniversário da loja)"><input data-a="data" value="${esc(a.data || "")}" placeholder="dd/mm" maxlength="5" inputmode="numeric" oninput="this.value=this.value.replace(/[^\\d/]/g,'').replace(/^(\\d{2})(\\d)/,'$1/$2').slice(0,5)">${S.canWrite ? `<button class="btn sm danger" type="button" onclick="this.closest('[data-ani]').remove();S.dirty=true">Remover</button>` : ""}</div>`;
+}
+async function salvarMeuAniversario() {
+  const v = ($("#cAni").value || "").trim();
+  if (v && !/^\d{2}\/\d{2}$/.test(v)) return toast("Use dia/mês, ex.: 24/12");
+  try { await api("meuAniversario", { aniversario: v }); S.eu.aniversario = v; await carregar(); toast("Aniversário salvo"); } catch (e) { writeFail(e); }
+}
+
+/* ---------- Ata da reunião ---------- */
+function ataHtml(x) {
+  if (x.tipo !== "reuniao" || x.status !== "confirmada") return "";
+  const pode = participo(x) || TODAS_MARCAS.includes(S.eu.papel);
+  if (!S.ataEdit) return `<div class="ata"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:14px">📝 Ata da reunião</b>${pode ? `<button class="btn sm" type="button" onclick="S.ataEdit=true;desenharEvento(EV,false,${!!(x.criadoPorId === S.eu.id || ehChefe())})">${x.ata ? "Editar ata" : "Escrever ata"}</button>` : ""}</div>
+    ${x.ata ? `<div class="rot" style="white-space:pre-wrap;background:var(--surface-2);border-radius:10px;padding:10px 12px;margin-top:6px">${esc(x.ata)}</div><small class="muted">por ${esc(x.ataPor || "")}</small>` : `<span class="muted" style="font-size:13px">Depois da reunião, anote o que foi decidido e transforme em tarefas.</span>`}</div>`;
+  const pessoas = S.equipe.filter(u => u.papel !== "cliente").sort((a, b) => a.nome.localeCompare(b.nome));
+  const opc = pessoas.map(u => `<option value="${esc(u.id)}">${esc(u.nome)}</option>`).join("");
+  return `<div class="ata"><b style="font-size:14px">📝 Ata da reunião</b>
+    <textarea id="ataTxt" rows="5" placeholder="O que foi falado e decidido…">${esc(x.ata || "")}</textarea>
+    <b style="font-size:13px">Virou tarefa? (opcional)</b>
+    <div id="ataTfs" style="display:grid;gap:6px">${[0].map(() => ataTfRow(opc)).join("")}</div>
+    <button class="btn sm" type="button" style="justify-self:start" onclick="$('#ataTfs').insertAdjacentHTML('beforeend', ataTfRow(${esc(JSON.stringify(opc))}))">+ Tarefa</button>
+    <label style="display:flex;gap:6px;align-items:center;font-size:13.5px"><input type="checkbox" id="ataEnviar" checked> Mandar a ata por e-mail para os participantes</label>
+    <div style="display:flex;gap:8px"><button class="btn primary" type="button" id="ataBtn" onclick="salvarAta('${esc(x.id)}')">Salvar ata</button><button class="btn" type="button" onclick="S.ataEdit=false;desenharEvento(EV,false,true)">Cancelar</button></div></div>`;
+}
+const ataTfRow = opc => `<div class="ata-tf" data-atf><input data-t="titulo" placeholder="O que fazer"><select data-t="resp"><option value="">Responsável</option>${opc}</select><input data-t="prazo" type="date" aria-label="Prazo"></div>`;
+async function salvarAta(id) {
+  const tarefas = [...document.querySelectorAll("[data-atf]")].map(r => ({ titulo: r.querySelector("[data-t=titulo]").value.trim(), responsavelId: r.querySelector("[data-t=resp]").value, prazo: r.querySelector("[data-t=prazo]").value })).filter(t => t.titulo);
+  const b = $("#ataBtn"); b.disabled = true; b.textContent = "Salvando…";
+  try {
+    await api("salvarAta", { id, ata: $("#ataTxt").value, tarefas, enviar: $("#ataEnviar").checked });
+    S.ataEdit = false; await carregar();
+    const x = S.agenda.find(e => e.id === id); if (x && $("#evDlg").open) { EV = JSON.parse(JSON.stringify(x)); desenharEvento(EV, false, true); }
+    toast("Ata salva" + (tarefas.length ? ` e ${tarefas.length} tarefa(s) criada(s)` : ""));
+  } catch (e) { b.disabled = false; b.textContent = "Salvar ata"; writeFail(e); }
+}
+function reunioesMarcaHtml(m) {
+  const l = (S.agenda || []).filter(x => x.tipo === "reuniao" && x.marcaId === m.id && x.status !== "recusada").sort((a, b) => (b.data + b.hora).localeCompare(a.data + a.hora));
+  return `<div class="panel" style="margin-top:16px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="margin:0">Reuniões da marca</h2>${ehCliente() ? "" : `<button class="btn sm" type="button" onclick="novoEvento('reuniao');EV.marcaId='${esc(m.id)}';desenharEvento(EV,true)">${ehChefe() ? "+ Reunião" : "Pedir reunião"}</button>`}</div>
+    ${l.length ? `<div class="ag-lista" style="margin-top:10px">${l.slice(0, 20).map(x => `<button type="button" class="reu-it" onclick="abrirEvento('${esc(x.id)}')"><b>${brFull(x.data)} · ${esc(x.hora)}</b><span>${esc(x.titulo)}${x.status === "solicitada" ? " · pedido" : ""}</span>${x.ata ? `<small>📝 ${esc(x.ata.slice(0, 140))}${x.ata.length > 140 ? "…" : ""}</small>` : x.data < hojeIso() ? `<small class="muted">Sem ata</small>` : ""}</button>`).join("")}</div>` : `<p class="muted" style="margin:8px 0 0">Nenhuma reunião ligada a esta marca ainda. Ao marcar uma reunião, escolha a marca.</p>`}</div>`;
+}
+
+/* ---------- Horários livres ---------- */
+async function verLivres() {
+  lerEvento();
+  if (!EV.data) return toast("Escolha o dia.");
+  const box = $("#evLivres"); box.innerHTML = `<span class="muted">Conferindo as agendas…</span>`;
+  try {
+    const r = await api("horariosLivres", { ids: EV.participantes, data: EV.data });
+    const pessoas = [S.eu.id].concat(EV.participantes), INI = 8 * 60, FIM = 20 * 60, dur = +EV.duracao || 60;
+    const livre = t => pessoas.every(id => !(r.ocupado[id] || []).some(([a, b]) => a < t + dur && b > t));
+    const sug = []; for (let t = INI; t + dur <= FIM; t += 30) if (livre(t)) sug.push(t);
+    const barra = id => `<div class="lv-l"><span>${esc(id === S.eu.id ? "Você" : nomePessoa(id))}</span><div class="lv-b">${(r.ocupado[id] || []).map(([a, b]) => `<i style="left:${Math.max(0, (a - INI) / (FIM - INI) * 100)}%;width:${Math.max(1, (Math.min(b, FIM) - Math.max(a, INI)) / (FIM - INI) * 100)}%"></i>`).join("")}<em style="left:${(minDe(EV.hora) - INI) / (FIM - INI) * 100}%;width:${dur / (FIM - INI) * 100}%"></em></div></div>`;
+    box.innerHTML = `<div class="lv-esc"><span></span><div>${[8, 10, 12, 14, 16, 18, 20].map(h => `<small style="left:${(h * 60 - INI) / (FIM - INI) * 100}%">${h}h</small>`).join("")}</div></div>${pessoas.map(barra).join("")}
+      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">${sug.length ? `<span class="muted" style="font-size:12.5px">Todos livres às:</span>${sug.slice(0, 12).map(t => `<button class="btn sm" type="button" onclick="lerEvento();EV.hora='${horaDe(t)}';desenharEvento(EV,true);verLivres()">${horaDe(t)}</button>`).join("")}` : `<span class="atraso" style="font-size:13px">Não há horário com todos livres neste dia entre 8h e 20h.</span>`}</div>
+      <small class="muted">Cinza: ocupado. Contorno: o horário escolhido. Ninguém vê o que é o compromisso dos outros.</small>`;
+  } catch (e) { box.innerHTML = ""; writeFail(e); }
+}
+
+/* ---------- Banco de horas ---------- */
+const cronKey = () => "cron." + (S.eu?.id || "");
+const cronAtual = () => { try { return JSON.parse(store(cronKey()) || "null"); } catch (e) { return null; } };
+const hm = min => { min = Math.round(min); const h = Math.floor(min / 60), m = min % 60; return h ? `${h}h${m ? pad(m) : ""}` : `${m} min`; };
+function vHoras() {
+  if (ehCliente()) return `<div class="empty"><strong>Área da equipe</strong></div>`;
+  if (!S.hMes) S.hMes = hojeIso().slice(0, 7);
+  const c = cronAtual(), minhasMarcas = S.marcas;
+  const doMes = (S.horas || []).filter(h => (h.data || "").startsWith(S.hMes));
+  const minhas = doMes.filter(h => h.uid === S.eu.id).sort((a, b) => b.data.localeCompare(a.data) || b.criado - a.criado);
+  const total = l => l.reduce((s, h) => s + h.minutos, 0);
+  const opM = (sel = "") => `<option value="">Sem marca (interno)</option>` + minhasMarcas.map(m => `<option value="${esc(m.id)}"${m.id === sel ? " selected" : ""}>${esc(m.nome)}</option>`).join("");
+  const nav = `<div class="month-nav"><button class="icon-btn" type="button" aria-label="Mês anterior" onclick="S.hMes=shiftMonth(S.hMes,-1);if(S.desde&&S.hMes<S.desde){S.desde=S.hMes;S.carimbo='';carregar()}render()">‹</button><div class="lbl">${esc(monthLabel(S.hMes))}</div><button class="icon-btn" type="button" aria-label="Próximo mês" onclick="S.hMes=shiftMonth(S.hMes,1);render()">›</button></div>`;
+  let gestao = "";
+  if (ehChefe()) {
+    const porMarca = {}; doMes.forEach(h => { const k = h.marcaId || "-"; (porMarca[k] ||= { min: 0, pessoas: {} }).min += h.minutos; porMarca[k].pessoas[h.nome] = (porMarca[k].pessoas[h.nome] || 0) + h.minutos; });
+    const linhas = Object.entries(porMarca).sort((a, b) => b[1].min - a[1].min);
+    const porPessoa = {}; doMes.forEach(h => porPessoa[h.nome] = (porPessoa[h.nome] || 0) + h.minutos);
+    const brl = v => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    gestao = `<div class="panel" style="margin-top:16px"><h2>Horas da equipe por marca</h2>
+      ${linhas.length ? `<div class="table-wrap"><table style="min-width:560px"><thead><tr><th>Marca</th><th class="n">Horas</th><th>Quem</th><th class="n">Contrato</th><th class="n">Valor por hora</th></tr></thead><tbody>
+      ${linhas.map(([k, o]) => { const m = S.marcas.find(x => x.id === k), val = m ? +perfilDe(m).valorMensal || 0 : 0, ph = val && o.min ? val / (o.min / 60) : 0;
+        return `<tr><td>${esc(m ? m.nome : "Interno / sem marca")}</td><td class="n">${hm(o.min)}</td><td style="font-size:12.5px">${Object.entries(o.pessoas).map(([n, v]) => `${esc(n)} ${hm(v)}`).join(" · ")}</td><td class="n">${val ? brl(val) : `<a class="lnk" href="#marca-plano" onclick="${m ? `S.marcaId='${esc(m.id)}';store('marca','${esc(m.id)}')` : ""}" style="font-size:12px">${m ? "cadastrar" : ""}</a>`}</td><td class="n${ph && ph < 50 ? " atraso" : ""}"><b>${ph ? brl(ph) : "—"}</b></td></tr>`; }).join("")}</tbody></table></div>
+      <p class="muted" style="font-size:12.5px;margin:8px 0 0">Valor por hora = valor mensal do contrato ÷ horas trabalhadas no mês. Quanto menor, menos o cliente está pagando por cada hora da equipe (em vermelho abaixo de R$ 50). O valor do contrato fica em Marca → Pacote e legendas.</p>
+      <p style="font-size:13px;margin:8px 0 0">Por pessoa: ${Object.entries(porPessoa).sort((a, b) => b[1] - a[1]).map(([n, v]) => `<b>${esc(n)}</b> ${hm(v)}`).join(" · ")}</p>` : `<p class="muted">Ninguém lançou horas neste mês ainda.</p>`}</div>`;
+  }
+  return head("Banco de horas", "Horas", nav) +
+    `<div class="horas-top">
+      <div class="panel cron${c ? " rodando" : ""}"><h2 style="margin:0">⏱ Cronômetro</h2>
+        ${c ? `<div class="cron-t" id="cronT">${hm((Date.now() - c.inicio) / 60000)}</div><div class="muted" style="font-size:13px">${esc(c.marcaId ? nomeMarca(c.marcaId) : "Sem marca")}${c.descricao ? " · " + esc(c.descricao) : ""} · desde ${new Date(c.inicio).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</div>
+          <div style="display:flex;gap:8px"><button class="btn primary" type="button" onclick="pararCron()">Parar e salvar</button><button class="btn" type="button" onclick="store(cronKey(),'');render()">Descartar</button></div>`
+        : `<select id="crMarca">${opM(S.marcaId)}</select><input id="crDesc" placeholder="O que vai fazer (ex.: Edição dos reels)"><button class="btn primary" type="button" onclick="iniciarCron()">▶ Começar</button>`}</div>
+      <form class="panel" style="display:grid;gap:8px" onsubmit="event.preventDefault();lancarHora()"><h2 style="margin:0">Lançar horas</h2>
+        <div class="pf-grid"><label class="field"><span>Dia</span><input id="hrData" type="date" value="${hojeIso()}" required></label><label class="field"><span>Tempo (ex.: 1:30)</span><input id="hrTempo" placeholder="1:30" required></label></div>
+        <select id="hrMarca">${opM(S.marcaId)}</select><input id="hrDesc" placeholder="O que fez"><button class="btn" type="submit">Salvar</button></form>
+    </div>
+    <div class="panel" style="margin-top:16px"><h2>Suas horas em ${esc(monthLabel(S.hMes))}: ${hm(total(minhas))}</h2>
+      ${minhas.length ? `<div class="hr-lista">${minhas.map(h => `<div class="hr-it"><b>${br(h.data)}</b><span>${esc(h.marcaId ? nomeMarca(h.marcaId) || h.marca : "Sem marca")}${h.descricao ? " · " + esc(h.descricao) : ""}</span><b>${hm(h.minutos)}</b><button type="button" class="com-x" aria-label="Apagar" onclick="apagarHora('${esc(h.id)}')">×</button></div>`).join("")}</div>` : `<p class="muted">Nada lançado neste mês.</p>`}</div>` + gestao;
+}
+function iniciarCron() { store(cronKey(), JSON.stringify({ inicio: Date.now(), marcaId: $("#crMarca").value, descricao: $("#crDesc").value.trim() })); render(); toast("Cronômetro começou"); }
+async function pararCron() {
+  const c = cronAtual(); if (!c) return;
+  const min = Math.max(1, Math.round((Date.now() - c.inicio) / 60000));
+  try { await api("salvarHora", { hora: { marcaId: c.marcaId, data: iso(new Date(c.inicio)), minutos: min, descricao: c.descricao } }); store(cronKey(), ""); await carregar(); toast(hm(min) + " salvas"); } catch (e) { writeFail(e); }
+}
+function tempoMin(t) { t = String(t || "").trim().replace(",", "."); let m = t.match(/^(\d{1,2})[:h](\d{1,2})?$/i); if (m) return +m[1] * 60 + (+m[2] || 0); m = t.match(/^(\d+(?:\.\d+)?)$/); return m ? Math.round(+m[1] * 60) : 0; }
+async function lancarHora() {
+  const min = tempoMin($("#hrTempo").value);
+  if (!min) return toast("Escreva o tempo, ex.: 1:30 ou 2");
+  try { await api("salvarHora", { hora: { data: $("#hrData").value, minutos: min, marcaId: $("#hrMarca").value, descricao: $("#hrDesc").value.trim() } }); S.dirty = false; await carregar(); toast(hm(min) + " lançadas"); } catch (e) { writeFail(e); }
+}
+async function apagarHora(id) { try { await api("excluirHora", { id }); await carregar(); } catch (e) { writeFail(e); } }
+setInterval(() => { const t = $("#cronT"), c = cronAtual(); if (t && c) t.textContent = hm((Date.now() - c.inicio) / 60000); const tab = $("#tabHoras"); if (tab) tab.classList.toggle("cron-on", !!c); }, 15000);
+
+/* ---------- Mural de avisos ---------- */
+const avisosNaoLidos = () => (S.mural || []).filter(a => !(a.lidos || []).includes(S.eu?.id));
+function vMural() {
+  if (ehCliente()) return `<div class="empty"><strong>Área da equipe</strong></div>`;
+  const l = (S.mural || []).slice().sort((a, b) => (b.fixado - a.fixado) || b.criado - a.criado), nl = avisosNaoLidos().map(a => a.id);
+  if (nl.length) setTimeout(() => api("lerAviso", { ids: nl }).then(() => { (S.mural || []).forEach(a => { if (nl.includes(a.id)) a.lidos = (a.lidos || []).concat([S.eu.id]); }); const b = $("#muBadge"); if (b) b.hidden = true; }).catch(() => {}), 1500);
+  const f = S.avEdit;
+  return head("Equipe", "Mural de avisos", ehChefe() && !f ? `<button class="btn primary" type="button" onclick="S.avEdit={};render()">+ Aviso</button>` : "") +
+    (f ? `<form class="panel" style="display:grid;gap:10px;margin-bottom:16px;max-width:720px" onsubmit="event.preventDefault();salvarAviso()"><h2 style="margin:0">${f.id ? "Editar aviso" : "Novo aviso"}</h2>
+      <label class="field"><span>Título</span><input id="avTit" required value="${esc(f.titulo || "")}" placeholder="Ex.: Feriado na sexta"></label>
+      <label class="field"><span>Recado</span><textarea id="avTxt" rows="4">${esc(f.texto || "")}</textarea></label>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:14px"><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="avImp"${f.importante ? " checked" : ""}> Importante (manda e-mail para todos)</label><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="avFix"${f.fixado ? " checked" : ""}> Fixar no topo</label><label style="display:flex;gap:6px;align-items:center">Mostrar até <input type="date" id="avAte" value="${esc(f.ate || "")}"></label></div>
+      <div style="display:flex;gap:8px"><button class="btn primary" type="submit">Publicar</button><button class="btn" type="button" onclick="S.avEdit=null;render()">Cancelar</button></div></form>` : "") +
+    (l.length ? `<div class="mural">${l.map(a => `<article class="aviso${a.importante ? " imp" : ""}${nl.includes(a.id) ? " novo" : ""}">
+      <div class="av-h">${a.fixado ? "📌 " : ""}<b>${esc(a.titulo)}</b>${nl.includes(a.id) ? `<span class="tag-cli">novo</span>` : ""}</div>
+      ${a.texto ? `<div class="av-t">${esc(a.texto)}</div>` : ""}
+      <div class="av-f">${avatarHtml(S.equipe.find(u => u.id === a.uid) || { nome: a.por }, 22)}<span>${esc(a.por)} · ${esc(quando(a.criado))}${a.ate ? ` · até ${br(a.ate)}` : ""}</span>
+        ${ehChefe() ? `<span class="muted" title="${esc(S.equipe.filter(u => (a.lidos || []).includes(u.id)).map(u => u.nome).join(", "))}">👁 ${(a.lidos || []).length}/${S.equipe.filter(u => u.papel !== "cliente").length}</span>` : ""}
+        ${a.uid === S.eu.id || TODAS_MARCAS.includes(S.eu.papel) ? `<button class="btn sm" type="button" onclick="S.avEdit=S.mural.find(x=>x.id==='${esc(a.id)}');render()">Editar</button><button class="btn sm danger" type="button" onclick="apagarAviso('${esc(a.id)}')">Apagar</button>` : ""}</div></article>`).join("")}</div>`
+      : `<div class="empty"><strong>Nenhum aviso</strong><span>${ehChefe() ? "Publique recados para a equipe toda: feriados, cliente novo, mudanças no processo." : "Os recados da gestão aparecem aqui."}</span></div>`);
+}
+async function salvarAviso() {
+  const a = { id: S.avEdit.id || "", titulo: $("#avTit").value.trim(), texto: $("#avTxt").value, importante: $("#avImp").checked, fixado: $("#avFix").checked, ate: $("#avAte").value };
+  try { await api("salvarAviso", { aviso: a }); S.avEdit = null; S.dirty = false; await carregar(); toast("Aviso publicado"); } catch (e) { writeFail(e); }
+}
+async function apagarAviso(id) { if (!confirm("Apagar este aviso?")) return; try { await api("excluirAviso", { id }); await carregar(); } catch (e) { writeFail(e); } }
+function faixaAvisos() {
+  if (!S.eu || ehCliente() || view() === "mural") return "";
+  const imp = avisosNaoLidos().filter(a => a.importante);
+  return imp.length ? `<a class="faixa-aviso" href="#mural">📌 <b>${esc(imp[0].titulo)}</b>${imp.length > 1 ? ` e mais ${imp.length - 1} aviso(s)` : ""} · ler no mural</a>` : "";
+}
+
+const aniChips = k => aniversariosDia(k).map(a => `<span class="ev-tf" style="border-style:solid">🎂 ${esc(a.nome)}</span>`).join("");
 /* ---------- Eventos ---------- */
 $("#marcaSel").addEventListener("change", e => { S.marcaId = e.target.value; store("marca", S.marcaId); S.month = null; S.f = { status: "", formato: "", produto: "", q: "" }; S.confirmDel = false; S.dirty = false; render(); });
 $("#novaMarca").addEventListener("click", novaMarca);
@@ -3962,7 +4174,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-05.1"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-05.2"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",
@@ -3980,7 +4192,7 @@ async function carregar() {
     const j = await api("listar", { desde: S.desde, se: S.carimbo });
     if (j.igual) { S.versao = j.versao || S.versao; return; }
     S.carimbo = j.carimbo || "";
-    S.stories = j.stories || []; S.agenda = j.agenda || [];
+    S.stories = j.stories || []; S.agenda = j.agenda || []; S.horas = j.horas || []; S.mural = j.mural || [];
     S.eu = j.eu; S.usuarios = j.usuarios || []; S.tarefas = j.tarefas || []; S.equipe = j.equipe || [];
     S.versao = j.versao || "antiga";
     S.marcas = (j.marcas || []).sort((a, b) => (a.criado || 0) - (b.criado || 0) || String(a.nome).localeCompare(b.nome));

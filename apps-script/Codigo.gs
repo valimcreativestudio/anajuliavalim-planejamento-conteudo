@@ -19,7 +19,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-05.1';
+const VERSAO = '2026-11-05.2';
 
 const ABA_PAUTAS = 'POSTAGENS';
 const ABA_MARCAS = 'MARCAS';
@@ -30,8 +30,12 @@ const ABA_AGENDA = 'AGENDA';
 const CAMPOS_AGENDA = [
   ['id', 'ID'], ['tipo', 'Tipo'], ['status', 'Status'], ['titulo', 'Assunto'], ['data', 'Dia'], ['hora', 'Horário'], ['duracao', 'Duração (min)'],
   ['participantes', 'Participantes (IDs)'], ['local', 'Local ou link'], ['descricao', 'Pauta / detalhes'], ['respostas', 'Respostas'], ['motivo', 'Motivo'],
-  ['cor', 'Cor'], ['marcaId', 'Marca ID'], ['criadoPorId', 'Criado por ID'], ['criadoPor', 'Criado por'], ['criado', 'Criado em'], ['atualizado', 'Atualizado em'], ['decididoPor', 'Decidido por']
+  ['cor', 'Cor'], ['marcaId', 'Marca ID'], ['criadoPorId', 'Criado por ID'], ['criadoPor', 'Criado por'], ['criado', 'Criado em'], ['atualizado', 'Atualizado em'], ['decididoPor', 'Decidido por'], ['ata', 'Ata da reunião'], ['ataPor', 'Ata escrita por']
 ];
+const ABA_HORAS = 'HORAS';
+const CAMPOS_HORA = [['id', 'ID'], ['uid', 'Pessoa ID'], ['nome', 'Pessoa'], ['marcaId', 'Marca ID'], ['marca', 'Marca'], ['data', 'Dia'], ['minutos', 'Minutos'], ['descricao', 'O que fez'], ['criado', 'Criado em']];
+const ABA_MURAL = 'MURAL';
+const CAMPOS_AVISO = [['id', 'ID'], ['titulo', 'Título'], ['texto', 'Recado'], ['importante', 'Importante'], ['fixado', 'Fixado'], ['ate', 'Mostrar até'], ['por', 'Por'], ['uid', 'Por ID'], ['criado', 'Criado em'], ['lidos', 'Quem leu']];
 const PASTA_ARQUIVOS = 'Planejamento de Conteúdo - Arquivos';
 const DIAS_DE_SESSAO = 30;
 
@@ -71,7 +75,7 @@ const PRIORIDADES = ['Urgente', 'Alta', 'Média', 'Baixa'];
 const CAMPOS_USUARIO = [
   ['id', 'ID'], ['nome', 'Nome'], ['login', 'Login (e-mail)'], ['papel', 'Papel'],
   ['marcas', 'Marcas liberadas (IDs)'], ['ativo', 'Ativo'], ['hash', 'Senha (protegida)'],
-  ['sal', 'Sal'], ['criado', 'Criado em'], ['whatsapp', 'WhatsApp'], ['ultimoAcesso', 'Último acesso'], ['notificar', 'Notificações por e-mail'], ['visual', 'Visualização'], ['foto', 'Foto de perfil (arquivo no Drive)'], ['cores', 'Cores escolhidas']
+  ['sal', 'Sal'], ['criado', 'Criado em'], ['whatsapp', 'WhatsApp'], ['ultimoAcesso', 'Último acesso'], ['notificar', 'Notificações por e-mail'], ['visual', 'Visualização'], ['foto', 'Foto de perfil (arquivo no Drive)'], ['cores', 'Cores escolhidas'], ['aniversario', 'Aniversário (dd/mm)']
 ];
 const PAPEIS = ['admin', 'diretor', 'gestor', 'social', 'aprovador', 'cliente'];
 const VEEM_TODAS = ['admin', 'diretor', 'gestor']; // chefia: veem a equipe e as tarefas
@@ -167,6 +171,14 @@ function doPost(e) {
         case 'minhasCores': salvarPreferencia_(eu, 'cores', JSON.stringify(limparCores_(req.cores))); return json_({ ok: true });
         case 'salvarEvento': return json_({ ok: true, id: salvarEvento_(eu, req.evento || {}, req.site) });
         case 'responderEvento': responderEvento_(eu, req.id, req.resposta, req.motivo, req.dados || {}, req.site); return json_({ ok: true });
+        case 'salvarAta': salvarAta_(eu, req.id, req.ata, req.tarefas || [], req.enviar, req.site); return json_({ ok: true });
+        case 'horariosLivres': return json_(Object.assign({ ok: true }, horariosLivres_(eu, req.ids || [], req.data)));
+        case 'salvarHora': return json_({ ok: true, id: salvarHora_(eu, req.hora || {}) });
+        case 'excluirHora': excluirHora_(eu, req.id); return json_({ ok: true });
+        case 'salvarAviso': return json_({ ok: true, id: salvarAviso_(eu, req.aviso || {}, req.site) });
+        case 'excluirAviso': excluirAviso_(eu, req.id); return json_({ ok: true });
+        case 'lerAviso': lerAviso_(eu, req.ids || []); return json_({ ok: true });
+        case 'meuAniversario': salvarPreferencia_(eu, 'aniversario', /^\d{2}\/\d{2}$/.test(req.aniversario || '') ? req.aniversario : ''); return json_({ ok: true });
         case 'excluirEvento': excluirEvento_(eu, req.id, req.site); return json_({ ok: true });
         case 'minhasNotificacoes': salvarPreferencia_(eu, 'notificar', req.notificar === false ? 'não' : 'sim'); return json_({ ok: true });
         case 'sair': PropertiesService.getScriptProperties().deleteProperty('tok_' + req.token); return json_({ ok: true });
@@ -219,6 +231,7 @@ function publicoUsuario_(u) {
     notificar: u.notificar !== 'não',
     foto: u.foto || '',
     cores: parseJSON_(u.cores, {}),
+    aniversario: /^\d{2}\/\d{2}$/.test(u.aniversario || '') ? u.aniversario : '',
     visual: u.visual === 'instagram' || u.visual === 'detalhada' ? u.visual : (u.papel === 'cliente' ? 'instagram' : 'detalhada'),
     marcas: String(u.marcas || '').split(',').map(s => s.trim()).filter(String)
   };
@@ -274,11 +287,13 @@ function listar_(eu, desde, se) {
   const pautas = ler_(ABA_PAUTAS, CAMPOS_PAUTA).filter(p => acesso_(eu, p.marcaId) && noPeriodo(p.data)).map(pautaParaSite_);
   registrarAcesso_(eu);
   const r = { ok: true, versao: VERSAO, carimbo: carimbo, eu: eu, marcas: marcas, pautas: pautas };
+  r.horas = ler_(ABA_HORAS, CAMPOS_HORA).filter(h => veHora_(eu, h) && noPeriodo(h.data)).map(h => Object.assign(h, { data: paraISO_(h.data), minutos: Number(h.minutos) || 0, criado: Number(h.criado) || 0 }));
+  r.mural = eu.papel === 'cliente' ? [] : ler_(ABA_MURAL, CAMPOS_AVISO).map(avisoParaSite_).filter(a => !a.ate || a.ate >= Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd') || a.fixado);
   r.agenda = ler_(ABA_AGENDA, CAMPOS_AGENDA).filter(x => veEvento_(eu, x) && noPeriodo(x.data)).map(eventoParaSite_);
   r.stories = ler_(ABA_STORIES, CAMPOS_STORY).filter(x => acesso_(eu, x.marcaId) && noPeriodo(x.data)).map(storyParaSite_);
   r.tarefas = ler_(ABA_TAREFAS, CAMPOS_TAREFA).filter(t => veTarefa_(eu, t)).map(tarefaParaSite_);
   // nomes da equipe (sem dados sensíveis) para escolher o responsável de uma tarefa
-  r.equipe = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(u => u.ativo === 'sim').map(u => Object.assign({ id: u.id, nome: u.nome, papel: u.papel, foto: u.foto || '' }, u.papel === 'cliente' ? { marcas: publicoUsuario_(u).marcas, temEmail: /@/.test(u.login), whatsapp: u.whatsapp || '' } : {}));
+  r.equipe = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(u => u.ativo === 'sim').map(u => Object.assign({ id: u.id, nome: u.nome, papel: u.papel, foto: u.foto || '', aniversario: /^\d{2}\/\d{2}$/.test(u.aniversario || '') ? u.aniversario : '' }, u.papel === 'cliente' ? { marcas: publicoUsuario_(u).marcas, temEmail: /@/.test(u.login), whatsapp: u.whatsapp || '' } : {}));
   if (VEEM_TODAS.indexOf(eu.papel) >= 0) r.usuarios = ler_(ABA_USUARIOS, CAMPOS_USUARIO).map(publicoUsuario_);
   return r;
 }
@@ -887,6 +902,7 @@ function salvarUsuario_(eu, u) {
     sal: sal,
     criado: atual ? atual.criado : String(Date.now()),
     whatsapp: String(u.whatsapp || '').replace(/\D/g, ''),
+    aniversario: /^\d{2}\/\d{2}$/.test(u.aniversario || '') ? u.aniversario : (atual ? atual.aniversario : ''),
     ultimoAcesso: atual ? atual.ultimoAcesso : '',
     notificar: atual ? atual.notificar : '',
     visual: atual ? atual.visual : '',
@@ -1043,6 +1059,8 @@ function configurar() {
   aba_(ABA_USUARIOS, CAMPOS_USUARIO);
   aba_(ABA_STORIES, CAMPOS_STORY);
   aba_(ABA_AGENDA, CAMPOS_AGENDA);
+  aba_(ABA_HORAS, CAMPOS_HORA);
+  aba_(ABA_MURAL, CAMPOS_AVISO);
   instalarGatilhos_();
 
   if (!ler_(ABA_USUARIOS, CAMPOS_USUARIO).length) {
@@ -1522,6 +1540,9 @@ function resumoDiario() {
   const stories = ler_(ABA_STORIES, CAMPOS_STORY).map(storyParaSite_);
   const agendaTudo = ler_(ABA_AGENDA, CAMPOS_AGENDA).map(eventoParaSite_);
   const agendaHoje = agendaTudo.filter(x => x.data === hoje);
+  const ddmm = hoje.slice(8, 10) + '/' + hoje.slice(5, 7), aniversariosHoje = [];
+  ler_(ABA_USUARIOS, CAMPOS_USUARIO).forEach(x => { if (x.ativo === 'sim' && x.aniversario === ddmm) aniversariosHoje.push({ nome: x.nome }); });
+  ler_(ABA_MARCAS, CAMPOS_MARCA).forEach(m => ((parseJSON_(m.perfil, {}) || {}).aniversarios || []).forEach(a => { if (a && a.data === ddmm) aniversariosHoje.push({ nome: a.nome, marca: m.nome, marcaId: m.id }); }));
   const agendaPend = agendaTudo.filter(x => x.status === 'solicitada' && x.data >= hoje);
   const nomes = {}; ler_(ABA_MARCAS, CAMPOS_MARCA).forEach(m => nomes[m.id] = m.nome);
   const nomeM = id => nomes[id] || '';
@@ -1551,6 +1572,7 @@ function resumoDiario() {
         if (atras.length) add('Atrasados na agência', atras.slice(0, 20).map(titulo));
       }
     }
+    if (u.papel !== 'cliente') add('🎂 Aniversários de hoje', aniversariosHoje.filter(a => !a.marcaId || acesso_(u, a.marcaId)).map(a => a.nome + (a.marca ? ' (' + a.marca + ')' : '')));
     add('Suas reuniões de hoje', agendaHoje.filter(x => x.tipo === 'reuniao' && x.status === 'confirmada' && participa_(u, x)).map(x => (x.hora || '') + ' · ' + x.titulo + ' (' + duracaoTxt_(x.duracao) + ')'));
     if (VEEM_TODAS.indexOf(u.papel) >= 0) add('Pedidos de reunião esperando resposta', agendaPend.filter(x => participa_(u, x) || TODAS_MARCAS.indexOf(u.papel) >= 0).map(x => x.criadoPor + ': ' + x.titulo + ' (' + paraBR_(x.data).slice(0, 5) + ')'));
     add('Suas tarefas para hoje ou atrasadas', tarefas.filter(t => t.status !== 'Feita' && t.responsavelId === u.id && ((t.prazo && t.prazo <= hoje) || (t.data && t.data <= hoje))).map(t => t.titulo + (t.prazo ? ' (até ' + paraBR_(t.prazo).slice(0, 5) + ')' : '')));
@@ -1896,4 +1918,111 @@ function avisarEvento_(eu, x, tipo, site) {
 function parse_(isoData) {
   const m = String(isoData || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
   return m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date();
+}
+
+/* ======================================================================
+ * Novidades 2026-11-05.2: ata da reunião, horários livres, banco de horas, mural de avisos
+ * ====================================================================== */
+
+/* ---------- Ata: o que foi decidido vira tarefa ---------- */
+function salvarAta_(eu, id, ata, tarefas, enviar, site) {
+  const x = eventoPorId_(id);
+  if (!x || x.tipo !== 'reuniao') throw erro_('server', 'Reunião não encontrada.');
+  if (!participa_(eu, x) && TODAS_MARCAS.indexOf(eu.papel) < 0) throw erro_('permissao', 'Só quem participou escreve a ata.');
+  x.ata = String(ata || '').slice(0, 10000); x.ataPor = eu.nome; x.atualizado = Date.now();
+  gravarEvento_(x);
+  const criadas = [];
+  (tarefas || []).slice(0, 30).forEach(t => {
+    if (!String(t.titulo || '').trim()) return;
+    salvarTarefa_(eu, { titulo: t.titulo, responsavelId: t.responsavelId || '', prazo: t.prazo || '', prioridade: t.prioridade || 'Média', marcaId: x.marcaId && acesso_(eu, x.marcaId) ? x.marcaId : '', descricao: 'Da reunião "' + x.titulo + '" de ' + paraBR_(x.data) + '.' }, site);
+    criadas.push(t.titulo);
+  });
+  if (enviar && x.ata.trim()) {
+    const pessoas = ler_(ABA_USUARIOS, CAMPOS_USUARIO).map(publicoUsuario_).filter(u => u.ativo && u.id !== eu.id && participa_(u, x) && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(u.login));
+    if (pessoas.length && MailApp.getRemainingDailyQuota() >= pessoas.length) {
+      const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#1d1d1f;max-width:560px"><h2 style="margin:0 0 6px;font-size:22px">📝 Ata: ' + escH_(x.titulo) + '</h2>' +
+        '<p style="margin:0 0 14px;color:#6b6b70">' + paraBR_(x.data) + ' às ' + x.hora + ' · escrita por ' + escH_(eu.nome) + '</p>' +
+        '<div style="white-space:pre-wrap;background:#f2f2f0;border-radius:10px;padding:12px 14px">' + escH_(x.ata) + '</div>' +
+        (criadas.length ? '<h3 style="margin:16px 0 6px;font-size:15px">Tarefas criadas</h3><ul>' + criadas.map(t => '<li>' + escH_(t) + '</li>').join('') + '</ul>' : '') + '</div>';
+      pessoas.forEach(u => MailApp.sendEmail({ to: u.login, subject: '📝 Ata da reunião: ' + x.titulo, htmlBody: html, name: 'Planejamento de Conteúdo' }));
+    }
+  }
+}
+
+/* ---------- Horários ocupados de cada pessoa num dia (sem mostrar o que é) ---------- */
+function horariosLivres_(eu, ids, data) {
+  if (eu.papel === 'cliente') throw erro_('permissao', 'Sem acesso.');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(data || '')) throw erro_('server', 'Dia inválido.');
+  const todos = ler_(ABA_AGENDA, CAMPOS_AGENDA).map(eventoParaSite_).filter(x => x.data === data && x.status !== 'recusada');
+  const ocupado = {};
+  ids.concat([eu.id]).slice(0, 50).forEach(uid => {
+    ocupado[uid] = todos.filter(x => (x.tipo === 'atividade' ? x.criadoPorId === uid : participa_({ id: uid }, x)) && !(x.tipo === 'reuniao' && x.respostas[uid] === 'nao'))
+      .map(x => { const p = x.hora.split(':'); const ini = +p[0] * 60 + +p[1]; return [ini, ini + x.duracao]; });
+  });
+  return { ocupado: ocupado };
+}
+
+/* ---------- Banco de horas ---------- */
+function veHora_(eu, h) {
+  return h.uid === eu.id || TODAS_MARCAS.indexOf(eu.papel) >= 0 || (eu.papel === 'gestor' && h.marcaId && acesso_(eu, h.marcaId));
+}
+function salvarHora_(eu, h) {
+  if (eu.papel === 'cliente') throw erro_('permissao', 'Sem acesso.');
+  const atual = h.id ? ler_(ABA_HORAS, CAMPOS_HORA).filter(x => x.id === String(h.id))[0] : null;
+  if (atual && atual.uid !== eu.id && TODAS_MARCAS.indexOf(eu.papel) < 0) throw erro_('permissao', 'Só quem lançou altera estas horas.');
+  const marcaId = String(h.marcaId || '');
+  if (marcaId && !acesso_(eu, marcaId)) throw erro_('permissao', 'Sem acesso a esta marca.');
+  const min = Math.round(Number(h.minutos) || 0);
+  if (min < 1 || min > 24 * 60) throw erro_('server', 'Coloque um tempo entre 1 minuto e 24 horas.');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(h.data || '')) throw erro_('server', 'Escolha o dia.');
+  const id = atual ? atual.id : Utilities.getUuid().slice(0, 13);
+  gravar_(ABA_HORAS, CAMPOS_HORA, { id: id, uid: atual ? atual.uid : eu.id, nome: atual ? atual.nome : eu.nome, marcaId: marcaId, marca: marcaId ? nomeDaMarca_(marcaId) : '', data: paraBR_(h.data), minutos: min, descricao: String(h.descricao || '').slice(0, 500), criado: atual ? atual.criado : Date.now() });
+  return id;
+}
+function excluirHora_(eu, id) {
+  const x = ler_(ABA_HORAS, CAMPOS_HORA).filter(h => h.id === String(id))[0];
+  if (!x) return;
+  if (x.uid !== eu.id && TODAS_MARCAS.indexOf(eu.papel) < 0) throw erro_('permissao', 'Só quem lançou apaga estas horas.');
+  excluirLinha_(ABA_HORAS, CAMPOS_HORA, id);
+}
+
+/* ---------- Mural de avisos ---------- */
+function avisoParaSite_(a) {
+  a.criado = Number(a.criado) || 0; a.lidos = parseJSON_(a.lidos, []); a.importante = a.importante === 'sim'; a.fixado = a.fixado === 'sim'; a.ate = paraISO_(a.ate);
+  return a;
+}
+function salvarAviso_(eu, a, site) {
+  if (VEEM_TODAS.indexOf(eu.papel) < 0) throw erro_('permissao', 'Só a gestão publica no mural.');
+  const atual = a.id ? ler_(ABA_MURAL, CAMPOS_AVISO).filter(x => x.id === String(a.id))[0] : null;
+  const titulo = String(a.titulo || '').trim().slice(0, 150), texto = String(a.texto || '').slice(0, 4000);
+  if (!titulo) throw erro_('server', 'Escreva o título do aviso.');
+  const id = atual ? atual.id : Utilities.getUuid().slice(0, 13);
+  gravar_(ABA_MURAL, CAMPOS_AVISO, { id: id, titulo: titulo, texto: texto, importante: a.importante ? 'sim' : '', fixado: a.fixado ? 'sim' : '', ate: paraBR_(/^\d{4}-\d{2}-\d{2}$/.test(a.ate || '') ? a.ate : ''), por: atual ? atual.por : eu.nome, uid: atual ? atual.uid : eu.id, criado: atual ? atual.criado : Date.now(), lidos: atual ? atual.lidos : JSON.stringify([eu.id]) });
+  if (!atual && a.importante) {
+    try {
+      const base = /^https:\/\//.test(String(site || '')) ? String(site).split('#')[0] + '#mural' : '';
+      const pessoas = ler_(ABA_USUARIOS, CAMPOS_USUARIO).map(publicoUsuario_).filter(u => u.ativo && u.notificar && u.papel !== 'cliente' && u.id !== eu.id && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(u.login));
+      if (MailApp.getRemainingDailyQuota() >= pessoas.length) pessoas.forEach(u => MailApp.sendEmail({ to: u.login, name: 'Planejamento de Conteúdo', subject: '📌 Aviso: ' + titulo,
+        htmlBody: '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#1d1d1f;max-width:560px"><h2 style="margin:0 0 10px;font-size:22px">📌 ' + escH_(titulo) + '</h2><div style="white-space:pre-wrap">' + escH_(texto) + '</div><p style="color:#6b6b70;font-size:13px">' + escH_(eu.nome) + '</p>' + (base ? '<p><a href="' + base + '" style="background:#1d1d1f;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;display:inline-block">Ver o mural</a></p>' : '') + '</div>' }));
+    } catch (e) { Logger.log(e); }
+  }
+  return id;
+}
+function excluirAviso_(eu, id) {
+  const x = ler_(ABA_MURAL, CAMPOS_AVISO).filter(a => a.id === String(id))[0];
+  if (!x) return;
+  if (x.uid !== eu.id && TODAS_MARCAS.indexOf(eu.papel) < 0) throw erro_('permissao', 'Só quem publicou (ou a direção) apaga o aviso.');
+  excluirLinha_(ABA_MURAL, CAMPOS_AVISO, id);
+}
+function lerAviso_(eu, ids) {
+  const aba = aba_(ABA_MURAL, CAMPOS_AVISO);
+  ler_(ABA_MURAL, CAMPOS_AVISO).forEach(a => {
+    if (ids.indexOf(a.id) < 0) return;
+    const l = parseJSON_(a.lidos, []);
+    if (l.indexOf(eu.id) >= 0) return;
+    l.push(eu.id);
+    const r = linhaDoId_(aba, a.id);
+    if (r) aba.getRange(r, colunaDe_(CAMPOS_AVISO, 'lidos')).setValue(JSON.stringify(l));
+  });
+  mexeu_();
 }

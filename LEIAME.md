@@ -194,6 +194,15 @@ Aba **Agenda** (para toda a equipe; o cliente não vê):
 - Avisa quando o horário bate com outro compromisso seu.
 - O sino e o número na aba mostram pedidos para responder e reuniões esperando a sua resposta. As reuniões do dia entram no resumo diário por e-mail.
 
+## Ata, horários livres, horas, mural e aniversários
+
+- **Ata da reunião:** abra a reunião na Agenda → "Escrever ata". Anote o que foi decidido e crie tarefas com responsável e prazo ali mesmo; a ata pode ir por e-mail para os participantes.
+- **Reunião ligada à marca:** ao marcar, escolha a marca. Em Marca → Visão geral aparecem as reuniões daquela marca, com a ata.
+- **Horários livres:** ao marcar uma reunião, "Ver horários livres de todos neste dia" mostra quando cada participante está ocupado (sem mostrar o que é) e sugere os horários em que todos estão livres.
+- **Horas** (aba nova): cronômetro (Começar / Parar e salvar) ou lançamento manual, por marca. Cada pessoa vê as próprias horas; a gestão vê as horas por marca e por pessoa e o **valor por hora** (valor do contrato ÷ horas). O valor do contrato fica em Marca → Pacote e legendas.
+- **Mural** (aba nova): a gestão publica recados para a equipe toda (pode fixar, marcar como importante para mandar e-mail e definir até quando aparece). Aviso importante não lido aparece numa faixa no topo; a gestão vê quantos já leram.
+- **Aniversários:** cada pessoa coloca o seu em Minha conta (ou a gestão na Equipe); os do cliente e da marca ficam em Marca → Pacote e legendas. Aparecem com 🎂 no Calendário e na Agenda, no sino e no e-mail do dia.
+
 ## Modo claro ou escuro e cores
 
 - O botão ☀️/🌙 no topo, ao lado da marca, troca entre modo claro e escuro (fica lembrado no aparelho).
