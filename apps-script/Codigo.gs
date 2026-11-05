@@ -19,7 +19,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-09.1';
+const VERSAO = '2026-11-10.1';
 // Endereço oficial do site. Os links dos e-mails SEMPRE usam este endereço (nunca o que vem do pedido).
 // A dona da plataforma pode trocar em Gestão → Empresas → Endereço do sistema.
 const SITE_PADRAO = 'https://valimcreativestudio.github.io/anajuliavalim-planejamento-conteudo/';
@@ -223,7 +223,7 @@ function rodarAcao_(eu, req) {
         case 'salvarUsuario': gerencia_(eu); return json_({ ok: true, id: salvarUsuario_(eu, req.usuario || {}) });
         case 'trocarSenha': eu.token = req.token; trocarSenha_(eu, req.atual, req.nova); return json_({ ok: true });
         case 'salvarTarefa': return json_({ ok: true, id: salvarTarefa_(eu, req.tarefa || {}, req.site) });
-        case 'concluirTarefa': concluirTarefa_(eu, req.id, req.feita !== false); return json_({ ok: true });
+        case 'concluirTarefa': concluirTarefa_(eu, req.id, req.status || (req.feita !== false ? 'Feita' : 'Pendente')); return json_({ ok: true });
         case 'excluirTarefa': excluirTarefa_(eu, req.id); return json_({ ok: true });
         case 'meuNome': salvarMeuNome_(eu, req.nome); return json_({ ok: true });
         case 'minhaFoto': return json_(Object.assign({ ok: true }, salvarMinhaFoto_(eu, req.base64, req.remover)));
@@ -694,11 +694,15 @@ function salvarTarefa_(eu, t, site) {
   return id;
 }
 
-function concluirTarefa_(eu, id, feita) {
+const STATUS_TAREFA = ['Pendente', 'Fazendo', 'Feita'];
+function concluirTarefa_(eu, id, status) {
   const t = tarefaPorId_(id);
   if (!t) throw erro_('server', 'Tarefa não encontrada. Atualize a página.');
   if (!podeMexerTarefa_(eu, t)) throw erro_('permissao', 'Só quem criou, o responsável ou a gestão pode marcar esta tarefa.');
-  t.status = feita ? 'Feita' : 'Pendente';
+  if (STATUS_TAREFA.indexOf(status) < 0) throw erro_('server', 'Situação da tarefa inválida.');
+  const feita = status === 'Feita';
+  if (feita && t.status === 'Feita') return;
+  t.status = status;
   t.concluidoPor = feita ? eu.nome : ''; t.concluidoEm = feita ? String(Date.now()) : '';
   t.atualizado = String(Date.now());
   gravar_(ABA_TAREFAS, CAMPOS_TAREFA, t);

@@ -459,6 +459,20 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 /* Tarefas */
 .tf-filtros { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
 .tf-filtros select { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 7px 10px; }
+.tf-modo { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.tf-modo button { border: 0; background: var(--surface); color: var(--muted); padding: 7px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+.tf-modo button[aria-pressed="true"] { background: var(--primary); color: var(--primary-ink); }
+.tf-board { display: grid; grid-template-columns: repeat(3, minmax(240px, 1fr)); gap: 12px; overflow-x: auto; padding-bottom: 8px; margin-top: 14px; }
+.tf-board .col { min-height: 220px; }
+.tf-board .col[data-st="Fazendo"] h3 .dot { background: var(--caramelo); }
+.tf-card { border-left: 4px solid var(--pc, var(--line)); }
+.tf-card.atrasada { box-shadow: inset 0 0 0 1px var(--danger); }
+.tf-card .meta { flex-wrap: wrap; }
+.tf-card .meta .atraso { color: var(--danger); font-weight: 600; }
+.tf-card .mv button:disabled { opacity: .3; }
+.tf-card.feita .t { text-decoration: line-through; color: var(--muted); }
+.tf-st { font-size: 11px; font-weight: 600; color: var(--caramelo); border: 1px solid currentColor; border-radius: 999px; padding: 1px 7px; }
+@media (max-width: 760px) { .tf-board { grid-template-columns: 1fr; overflow: visible; } .tf-board .col { min-height: 0; } }
 .tf-grupo h2 { font-family: var(--f-display); font-weight: 400; font-size: 24px; margin: 22px 0 10px; display: flex; gap: 10px; align-items: baseline; }
 .tf-grupo h2 .n { font-family: var(--f-body); font-size: 13px; color: var(--muted); }
 .tf-grupo.atrasadas h2 { color: var(--danger); }
@@ -1011,7 +1025,7 @@ const DEFAULT_FASES = [
 ];
 
 const S = {
-  canWrite: false, empresa: store("empresa"), empresas: [], insta: {}, agenda: [], horas: [], mural: [], calSt: "", stories: [], met: {}, mh: {}, carimbo: "", desde: "", acessos: {}, tarefas: [], equipe: [], tf: { quem: "minhas", marca: "", feitas: false }, eu: null, usuarios: [], token: store("token") || "", rej: null, uEdit: null,
+  canWrite: false, empresa: store("empresa"), empresas: [], insta: {}, agenda: [], horas: [], mural: [], calSt: "", stories: [], met: {}, mh: {}, carimbo: "", desde: "", acessos: {}, tarefas: [], equipe: [], tf: { quem: "minhas", marca: "", feitas: false, modo: store("tfModo") === "quadro" ? "quadro" : "lista" }, eu: null, usuarios: [], token: store("token") || "", rej: null, uEdit: null,
   marcas: [], posts: [], loadedM: false, loadedP: false, failed: false,
   marcaId: store("marca"), month: null,
   f: { status: "", formato: "", produto: "", q: "" },
@@ -1129,6 +1143,7 @@ function render() {
   const v0 = view();
   if (v0 === "equipe" || v0 === "equipe-atividade" || v0 === "conta" || v0 === "aprovacoes" || v0 === "tarefas" || v0 === "agenda" || v0 === "horas" || v0 === "mural" || v0 === "financeiro" || v0 === "painel" || v0 === "empresas" || v0 === "empresa" || v0 === "registro") {
     app.innerHTML = avisoVersao() + faixaAvisos() + (v0 === "equipe" ? vEquipe : v0 === "equipe-atividade" ? vAtividade : v0 === "conta" ? vConta : v0 === "tarefas" ? vTarefas : v0 === "agenda" ? vAgenda : v0 === "horas" ? vHoras : v0 === "mural" ? vMural : v0 === "financeiro" ? vFinanceiro : v0 === "painel" ? vPainel : v0 === "empresas" ? vEmpresas : v0 === "empresa" ? vEmpresa : v0 === "registro" ? vRegistro : vAprovacoes)();
+    if (v0 === "tarefas" && S.tf.modo === "quadro") wireQuadroTarefas();
     return;
   }
   if (!marca()) {
@@ -2622,7 +2637,7 @@ function tfHtml(t, h) {
   return `<div class="tf${t.status === "Feita" ? " feita" : ""}" style="--pc:${COR_PRIO[t.prioridade] || "var(--line)"}">
     <input type="checkbox" aria-label="Marcar como feita"${t.status === "Feita" ? " checked" : ""}${podeMexerTarefa(t) ? "" : " disabled"} onchange="concluirTarefa(${js(t.id)}, this.checked)">
     <div class="corpo" onclick="abrirTarefa(${js(t.id)})">
-      <div class="tt">${esc(t.titulo)}</div>
+      <div class="tt">${esc(t.titulo)}${t.status === "Fazendo" ? ` <span class="tf-st">Fazendo</span>` : ""}</div>
       ${t.descricao ? `<div class="ds">${esc(t.descricao)}</div>` : ""}
       <div class="meta">
         ${t.marcaId ? `<span>${esc(nomeMarca(t.marcaId))}</span>` : ""}
@@ -2650,12 +2665,50 @@ function vTarefas() {
     `<div class="tf-filtros">
       ${sel("tfQuem", [["minhas", "Minhas tarefas"], ["criei", "Que eu passei"], ["todas", chefia ? "Todas da equipe" : "Todas que vejo"]], f.quem, "S.tf.quem=this.value;render()")}
       ${sel("tfMarca", [["", "Todas as marcas"], ["-", "Sem marca"]].concat(S.marcas.map(m => [m.id, m.nome])), f.marca, "S.tf.marca=this.value;render()")}
-      <label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox"${f.feitas ? " checked" : ""} onchange="S.tf.feitas=this.checked;render()"> Mostrar feitas</label>
+      ${f.modo === "quadro" ? "" : `<label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox"${f.feitas ? " checked" : ""} onchange="S.tf.feitas=this.checked;render()"> Mostrar feitas</label>`}
+      <span class="tf-modo" role="group" aria-label="Ver como"><button type="button" aria-pressed="${f.modo !== "quadro"}" onclick="S.tf.modo='lista';store('tfModo','lista');render()">☰ Lista</button><button type="button" aria-pressed="${f.modo === "quadro"}" onclick="S.tf.modo='quadro';store('tfModo','quadro');render()">▦ Quadro</button></span>
     </div>
     ${atrasadosHtml()}
+    ${f.modo === "quadro" ? quadroTarefas(lista, h, ord) : `
     ${!pend.length && !(f.feitas && feitas.length) ? `<div class="empty"><strong>Nada pendente por aqui</strong><span>Crie uma tarefa com o que precisa ser feito, quem faz, a prioridade e o prazo.</span><button class="btn primary" type="button" onclick="abrirTarefa()">+ Nova tarefa</button></div>` : ""}
     ${grupos.map(([g, titulo]) => { const l = pend.filter(t => grupoTarefa(t, h) === g).sort(ord); return l.length ? `<section class="tf-grupo ${g}"><h2>${titulo}<span class="n">${l.length}</span></h2><div class="tf-lista">${l.map(t => tfHtml(t, h)).join("")}</div></section>` : ""; }).join("")}
-    ${f.feitas && feitas.length ? `<section class="tf-grupo"><h2>Feitas<span class="n">${feitas.length}</span></h2><div class="tf-lista">${feitas.slice(0, 50).map(t => tfHtml(t, h)).join("")}</div></section>` : ""}`;
+    ${f.feitas && feitas.length ? `<section class="tf-grupo"><h2>Feitas<span class="n">${feitas.length}</span></h2><div class="tf-lista">${feitas.slice(0, 50).map(t => tfHtml(t, h)).join("")}</div></section>` : ""}`}`;
+}
+/* quadro (kanban) das tarefas: A fazer, Fazendo, Feita */
+const COLS_TAREFA = [["Pendente", "A fazer"], ["Fazendo", "Fazendo"], ["Feita", "Feita"]];
+function quadroTarefas(lista, h, ord) {
+  return `<div class="tf-board">${COLS_TAREFA.map(([st, titulo], ci) => {
+    let l = lista.filter(t => (t.status || "Pendente") === st);
+    l = st === "Feita" ? l.sort((a, b) => b.concluidoEm - a.concluidoEm) : l.sort(ord);
+    const mais = st === "Feita" && l.length > 30 ? l.length - 30 : 0;
+    return `<section class="col" data-st="${st}"><h3><span class="dot" style="background:${st === "Feita" ? "var(--st-postado)" : st === "Fazendo" ? "var(--caramelo)" : "var(--muted)"}"></span>${titulo}<span class="n">${l.length}</span></h3>
+      ${l.slice(0, 30).map(t => tfCard(t, h, ci)).join("") || `<span class="muted" style="font-size:12.5px;padding:4px">${st === "Fazendo" ? "Arraste para cá o que você começou." : st === "Feita" ? "Nada concluído ainda." : "Nada a fazer. 🎉"}</span>`}
+      ${mais ? `<span class="muted" style="font-size:12px;padding:4px">+ ${mais} mais antigas (veja na lista)</span>` : ""}</section>`;
+  }).join("")}</div>`;
+}
+function tfCard(t, h, ci) {
+  const atrasada = t.status !== "Feita" && t.prazo && t.prazo < h, pode = podeMexerTarefa(t);
+  const quem = t.responsavelId ? (t.responsavelId === S.eu.id ? "Você" : nomePessoa(t.responsavelId) || t.responsavel) : "Sem responsável";
+  const mover = d => `<button type="button" aria-label="${d < 0 ? "Voltar para " + COLS_TAREFA[ci - 1][1] : "Passar para " + COLS_TAREFA[ci + 1][1]}" onclick="event.stopPropagation();mudarTarefa(${js(t.id)},${js(COLS_TAREFA[ci + d][0])})">${d < 0 ? "◀" : "▶"}</button>`;
+  return `<article class="card tf-card${atrasada ? " atrasada" : ""}${t.status === "Feita" ? " feita" : ""}" style="--pc:${COR_PRIO[t.prioridade] || "var(--line)"}" draggable="${pode}" data-id="${esc(t.id)}" onclick="abrirTarefa(${js(t.id)})">
+    <div class="meta"><span>${esc(t.prioridade || "Média")}</span>${t.marcaId ? `<span>${esc(nomeMarca(t.marcaId))}</span>` : ""}</div>
+    <div class="t">${esc(t.titulo)}</div>
+    <div class="meta"><span>👤 ${esc(quem)}</span>${t.prazo ? `<span class="${atrasada ? "atraso" : ""}">⏳ ${esc(br(t.prazo))}${atrasada ? " · atrasada" : ""}</span>` : t.data ? `<span>📅 ${esc(br(t.data))}</span>` : ""}${t.status === "Feita" && t.concluidoPor ? `<span>✓ ${esc(t.concluidoPor)}</span>` : ""}</div>
+    ${pode ? `<div class="mv">${ci > 0 ? mover(-1) : ""}${ci < COLS_TAREFA.length - 1 ? mover(1) : ""}</div>` : ""}
+  </article>`;
+}
+function wireQuadroTarefas() {
+  document.querySelectorAll(".tf-board .card[draggable=true]").forEach(c => c.addEventListener("dragstart", e => e.dataTransfer.setData("text/plain", "tf:" + c.dataset.id)));
+  document.querySelectorAll(".tf-board .col").forEach(col => {
+    col.addEventListener("dragover", e => { e.preventDefault(); col.classList.add("over"); });
+    col.addEventListener("dragleave", () => col.classList.remove("over"));
+    col.addEventListener("drop", e => {
+      e.preventDefault(); col.classList.remove("over");
+      const d = e.dataTransfer.getData("text/plain"); if (!d.startsWith("tf:")) return;
+      const t = S.tarefas.find(x => x.id === d.slice(3));
+      if (t && (t.status || "Pendente") !== col.dataset.st) mudarTarefa(t.id, col.dataset.st);
+    });
+  });
 }
 let TF = null;
 function abrirTarefa(id) {
@@ -2698,12 +2751,13 @@ $("#tfForm").addEventListener("submit", async e => {
   try { await api("salvarTarefa", { tarefa }); $("#tfDlg").close(); await carregar(); toast(tarefa.id ? "Tarefa salva" : (tarefa.responsavelId && tarefa.responsavelId !== S.eu.id ? `Tarefa enviada para ${nomePessoa(tarefa.responsavelId)}` : "Tarefa criada")); }
   catch (err) { b.disabled = false; b.textContent = "Salvar"; writeFail(err); }
 });
-async function concluirTarefa(id, feita) {
+function concluirTarefa(id, feita) { return mudarTarefa(id, feita ? "Feita" : "Pendente"); }
+async function mudarTarefa(id, status) {
   const t = S.tarefas.find(x => x.id === id); if (!t) return;
   const antes = { status: t.status, concluidoPor: t.concluidoPor, concluidoEm: t.concluidoEm };
-  Object.assign(t, feita ? { status: "Feita", concluidoPor: S.eu.nome, concluidoEm: Date.now() } : { status: "Pendente", concluidoPor: "", concluidoEm: 0 });
+  Object.assign(t, status === "Feita" ? { status, concluidoPor: S.eu.nome, concluidoEm: Date.now() } : { status, concluidoPor: "", concluidoEm: 0 });
   render();
-  try { await api("concluirTarefa", { id, feita }); toast(feita ? "Tarefa feita ✓" : "Tarefa reaberta"); await carregar(); }
+  try { await api("concluirTarefa", { id, status, feita: status === "Feita" }); toast(status === "Feita" ? "Tarefa feita ✓" : status === "Fazendo" ? "Tarefa em andamento" : antes.status === "Feita" ? "Tarefa reaberta" : "Tarefa voltou para A fazer"); await carregar(); }
   catch (e) { Object.assign(t, antes); render(); writeFail(e); }
 }
 async function excluirTarefa() {
@@ -5293,7 +5347,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-09.1"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-10.1"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",

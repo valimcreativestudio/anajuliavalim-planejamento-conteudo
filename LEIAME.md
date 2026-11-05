@@ -62,6 +62,7 @@ A aba **Resumo do mês** mostra o relatório pronto para apresentar: postagens p
 
 A aba **Tarefas** é o checklist da equipe: o que fazer, detalhes, marca (opcional), responsável, prioridade (Urgente, Alta, Média, Baixa), data para fazer e prazo máximo. A lista fica separada em **Atrasadas, Para hoje, Próximas e Sem data**, ordenada pela prioridade e pelo prazo; a caixinha marca como feita.
 
+- **☰ Lista ou ▦ Quadro**: o quadro (kanban) tem as colunas **A fazer, Fazendo e Feita**. Arraste o cartão de uma coluna para outra ou use as setas ◀ ▶ (no celular). O site lembra qual modo você prefere. Tarefas atrasadas ficam com borda vermelha.
 - Filtros: **Minhas tarefas**, **Que eu passei** e **Todas** (a gestão vê todas; os demais veem as das suas marcas), por marca e mostrar feitas.
 - Quem recebe uma tarefa é avisado no **sino** e por **e-mail**; quem criou é avisado no sino quando ela é concluída.
 - O número vermelho na aba mostra as suas tarefas atrasadas ou para hoje.
