@@ -194,6 +194,28 @@ Aba **Agenda** (para toda a equipe; o cliente não vê):
 - Avisa quando o horário bate com outro compromisso seu.
 - O sino e o número na aba mostram pedidos para responder e reuniões esperando a sua resposta. As reuniões do dia entram no resumo diário por e-mail.
 
+## Importar, copiar, buscar e recuperar
+
+- **Importar documento** (Calendário): cole o link do documento do mês (Google Docs ou .docx no Drive) ou o texto. Cada post começa com "P1", "Post 1"…; o sistema pega o título, a data (05/11), o formato (carrossel, reels…), a legenda ("Legenda:") e o roteiro. Você confere numa lista e cria tudo de uma vez, como Ideia.
+- **Copiar mês anterior** (Calendário): copia a estrutura (mesmo dia da semana, formatos, fases, produtos e redes) com os temas em branco.
+- **Filtro de rede** (Calendário): mostra só os posts de uma rede (Feed, Reels, TikTok…).
+- **Busca** 🔍 no topo (ou Ctrl+K): acha postagens, stories, tarefas, reuniões, arquivos e marcas.
+- **Lixeira** (link embaixo do Calendário): postagens e stories apagados ficam 30 dias e dá para recuperar.
+- **Trends** (aba Ideias): conecte a planilha de trends da semana; cada trend tem "Virar ideia".
+- **Prévia de outras redes**: no modo Instagram da postagem, escolha TikTok, YouTube Shorts ou LinkedIn para ver como fica.
+
+## Cliente novo, apresentação e avaliação
+
+- **Checklist de cliente novo:** ao criar uma marca, as tarefas de entrada já aparecem em Tarefas (acessos, briefing, manual, reunião inicial, direcionamento, pacote, primeira grade).
+- **Briefing** (Marca → Visão geral → "Gerar link do briefing"): um formulário sem senha que o cliente preenche (marca, público, produtos, tom, visual, acessos e arquivos). As respostas entram direto na marca; os acessos vão para o cofre. Quem gerou o link recebe um e-mail quando o cliente responde.
+- **Apresentar** (Calendário): modo tela cheia para mostrar o mês ao cliente: capa, números, grade, datas, cada post como no Instagram e os stories. Use as setas do teclado; Esc sai.
+- **Avaliação mensal:** no dia 1 o cliente recebe um e-mail para dar nota de 0 a 10 ao mês (também aparece nas Aprovações dele). Nota 6 ou menos avisa a direção por e-mail. A gestão vê as notas em Resumo → Satisfação do cliente.
+
+## Financeiro e biblioteca
+
+- **Financeiro** (aba só do administrador e do diretor): valor mensal, dia de vencimento, início e renovação de cada contrato; "Marcar pago" por mês; previsto, recebido e em aberto; aviso de contrato perto de renovar. Cobranças vencidas entram no e-mail das 8h.
+- **Biblioteca** (Marca → Biblioteca): fotos e vídeos da marca com etiquetas (cole uma pasta do Drive para trazer tudo). No editor da postagem, "Pegar artes da biblioteca da marca" adiciona às artes.
+
 ## Ata, horários livres, horas, mural e aniversários
 
 - **Ata da reunião:** abra a reunião na Agenda → "Escrever ata". Anote o que foi decidido e crie tarefas com responsável e prazo ali mesmo; a ata pode ir por e-mail para os participantes.

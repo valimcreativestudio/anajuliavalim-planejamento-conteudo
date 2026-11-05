@@ -19,7 +19,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-05.2';
+const VERSAO = '2026-11-06.1';
 
 const ABA_PAUTAS = 'POSTAGENS';
 const ABA_MARCAS = 'MARCAS';
@@ -34,6 +34,12 @@ const CAMPOS_AGENDA = [
 ];
 const ABA_HORAS = 'HORAS';
 const CAMPOS_HORA = [['id', 'ID'], ['uid', 'Pessoa ID'], ['nome', 'Pessoa'], ['marcaId', 'Marca ID'], ['marca', 'Marca'], ['data', 'Dia'], ['minutos', 'Minutos'], ['descricao', 'O que fez'], ['criado', 'Criado em']];
+const ABA_LIXEIRA = 'LIXEIRA';
+const CAMPOS_LIXEIRA = [['id', 'ID'], ['tipo', 'Tipo'], ['itemId', 'ID do item'], ['marcaId', 'Marca ID'], ['titulo', 'Título'], ['dados', 'Dados'], ['por', 'Apagado por'], ['em', 'Apagado em']];
+const ABA_AVALIACOES = 'AVALIACOES';
+const CAMPOS_AVALIACAO = [['id', 'ID'], ['marcaId', 'Marca ID'], ['marca', 'Marca'], ['mes', 'Mês'], ['uid', 'Cliente ID'], ['nome', 'Cliente'], ['nota', 'Nota'], ['comentario', 'Comentário'], ['em', 'Respondido em']];
+const ABA_PAGAMENTOS = 'PAGAMENTOS';
+const CAMPOS_PAGAMENTO = [['id', 'ID'], ['marcaId', 'Marca ID'], ['marca', 'Marca'], ['mes', 'Mês'], ['valor', 'Valor'], ['pagoEm', 'Pago em'], ['por', 'Registrado por'], ['obs', 'Observação'], ['criado', 'Criado em']];
 const ABA_MURAL = 'MURAL';
 const CAMPOS_AVISO = [['id', 'ID'], ['titulo', 'Título'], ['texto', 'Recado'], ['importante', 'Importante'], ['fixado', 'Fixado'], ['ate', 'Mostrar até'], ['por', 'Por'], ['uid', 'Por ID'], ['criado', 'Criado em'], ['lidos', 'Quem leu']];
 const PASTA_ARQUIVOS = 'Planejamento de Conteúdo - Arquivos';
@@ -124,6 +130,9 @@ function doPost(e) {
   try { req = JSON.parse(e.postData.contents); } catch (err) { return json_({ ok: false, error: 'Pedido inválido.' }); }
   try {
     if (req.action === 'login') return json_(login_(req.login, req.senha));
+    if (req.action === 'briefingVer') return json_(Object.assign({ ok: true }, briefingVer_(req.chave)));
+    if (req.action === 'briefingArquivo') return json_(Object.assign({ ok: true }, briefingArquivo_(req.chave, req)));
+    if (req.action === 'briefingEnviar') { const lk = LockService.getScriptLock(); lk.waitLock(20000); try { return json_(Object.assign({ ok: true }, briefingEnviar_(req.chave, req.dados || {}, req.site))); } finally { lk.releaseLock(); } }
     const eu = usuarioDoToken_(req.token);
     if (!eu) return json_({ ok: false, code: 'sessao', error: 'Sua sessão expirou. Entre de novo.' });
 
@@ -134,6 +143,8 @@ function doPost(e) {
     if (req.action === 'instaDesconectar') return json_(Object.assign({ ok: true }, instaDesconectar_(eu, req.marcaId)));
     if (req.action === 'instaMidias') return json_(Object.assign({ ok: true }, instaMidias_(eu, req.marcaId, req.forcar)));
     if (req.action === 'lerPasta') return json_(Object.assign({ ok: true }, lerPasta_(eu, req.link)));
+    if (req.action === 'lerConteudo') return json_(Object.assign({ ok: true }, lerConteudo_(eu, req.link)));
+    if (req.action === 'trends') return json_(Object.assign({ ok: true }, lerTrends_(eu)));
     if (req.action === 'metricas') return json_(Object.assign({ ok: true }, metricas_(eu, req.marcaId, req.mes, req.forcar)));
     if (req.action === 'melhorHorario') return json_(Object.assign({ ok: true }, melhorHorario_(eu, req.marcaId, req.forcar)));
     if (req.action === 'enviarRelatorio') return json_(Object.assign({ ok: true }, enviarRelatorio_(eu, req.marcaId, req.mes, req.site)));
@@ -179,6 +190,14 @@ function doPost(e) {
         case 'excluirAviso': excluirAviso_(eu, req.id); return json_({ ok: true });
         case 'lerAviso': lerAviso_(eu, req.ids || []); return json_({ ok: true });
         case 'meuAniversario': salvarPreferencia_(eu, 'aniversario', /^\d{2}\/\d{2}$/.test(req.aniversario || '') ? req.aniversario : ''); return json_({ ok: true });
+        case 'copiarMes': return json_({ ok: true, n: copiarMes_(eu, req.marcaId, req.de, req.para) });
+        case 'importarPostagens': return json_({ ok: true, ids: importarPostagens_(eu, req.marcaId, req.posts || []) });
+        case 'lixeira': return json_({ ok: true, itens: lixeira_(eu) });
+        case 'restaurar': restaurar_(eu, req.id); return json_({ ok: true });
+        case 'briefingLink': return json_(Object.assign({ ok: true }, briefingLink_(eu, req.marcaId, req.site)));
+        case 'avaliar': avaliar_(eu, req.marcaId, req.mes, req.nota, req.comentario); return json_({ ok: true });
+        case 'pagamento': pagamento_(eu, req.marcaId, req.mes, req.pago, req.valor, req.obs); return json_({ ok: true });
+        case 'trendsConfig': gerencia_(eu); PropertiesService.getScriptProperties().setProperty('trends', String(req.link || '').trim()); CacheService.getScriptCache().remove('trends'); return json_({ ok: true });
         case 'excluirEvento': excluirEvento_(eu, req.id, req.site); return json_({ ok: true });
         case 'minhasNotificacoes': salvarPreferencia_(eu, 'notificar', req.notificar === false ? 'não' : 'sim'); return json_({ ok: true });
         case 'sair': PropertiesService.getScriptProperties().deleteProperty('tok_' + req.token); return json_({ ok: true });
@@ -288,6 +307,9 @@ function listar_(eu, desde, se) {
   registrarAcesso_(eu);
   const r = { ok: true, versao: VERSAO, carimbo: carimbo, eu: eu, marcas: marcas, pautas: pautas };
   r.horas = ler_(ABA_HORAS, CAMPOS_HORA).filter(h => veHora_(eu, h) && noPeriodo(h.data)).map(h => Object.assign(h, { data: paraISO_(h.data), minutos: Number(h.minutos) || 0, criado: Number(h.criado) || 0 }));
+  r.avaliacoes = ler_(ABA_AVALIACOES, CAMPOS_AVALIACAO).filter(a => eu.papel === 'cliente' ? a.uid === eu.id : (VEEM_TODAS.indexOf(eu.papel) >= 0 && acesso_(eu, a.marcaId))).map(a => Object.assign(a, { nota: Number(a.nota), em: Number(a.em) || 0 }));
+  r.pagamentos = TODAS_MARCAS.indexOf(eu.papel) >= 0 ? ler_(ABA_PAGAMENTOS, CAMPOS_PAGAMENTO).map(x => Object.assign(x, { valor: Number(x.valor) || 0, pagoEm: paraISO_(x.pagoEm), criado: Number(x.criado) || 0 })) : [];
+  r.temTrends = !!PropertiesService.getScriptProperties().getProperty('trends');
   r.mural = eu.papel === 'cliente' ? [] : ler_(ABA_MURAL, CAMPOS_AVISO).map(avisoParaSite_).filter(a => !a.ate || a.ate >= Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd') || a.fixado);
   r.agenda = ler_(ABA_AGENDA, CAMPOS_AGENDA).filter(x => veEvento_(eu, x) && noPeriodo(x.data)).map(eventoParaSite_);
   r.stories = ler_(ABA_STORIES, CAMPOS_STORY).filter(x => acesso_(eu, x.marcaId) && noPeriodo(x.data)).map(storyParaSite_);
@@ -407,6 +429,7 @@ function excluirPauta_(eu, id) {
   const atual = pautaPorId_(id);
   if (!atual) return;
   if (!podeEditar_(eu, atual.marcaId)) throw erro_('permissao', 'Você não pode excluir postagens desta marca.');
+  paraLixeira_(eu, 'postagem', ler_(ABA_PAUTAS, CAMPOS_PAUTA).filter(x => x.id === String(id))[0], atual.postagem);
   excluirLinha_(ABA_PAUTAS, CAMPOS_PAUTA, id);
 }
 
@@ -686,6 +709,7 @@ function nomeDaMarca_(id) {
 }
 
 function salvarMarca_(eu, m) {
+  const nova = !m.id;
   if (!m.id) gerencia_(eu);
   else if (!podeEditar_(eu, m.id)) throw erro_('permissao', 'Você não pode editar esta marca.');
   const id = m.id || Utilities.getUuid().slice(0, 13);
@@ -707,6 +731,7 @@ function salvarMarca_(eu, m) {
     const col = aba.getRange(2, colunaDe_(CAMPOS_PAUTA, 'marca'), n, 1);
     col.setValues(col.getValues().map((v, i) => [ids[i][0] === id ? (m.nome || 'Sem nome') : v[0]]));
   }
+  if (nova) checklistMarca_(eu, id);
   return id;
 }
 
@@ -1061,6 +1086,9 @@ function configurar() {
   aba_(ABA_AGENDA, CAMPOS_AGENDA);
   aba_(ABA_HORAS, CAMPOS_HORA);
   aba_(ABA_MURAL, CAMPOS_AVISO);
+  aba_(ABA_LIXEIRA, CAMPOS_LIXEIRA);
+  aba_(ABA_AVALIACOES, CAMPOS_AVALIACAO);
+  aba_(ABA_PAGAMENTOS, CAMPOS_PAGAMENTO);
   instalarGatilhos_();
 
   if (!ler_(ABA_USUARIOS, CAMPOS_USUARIO).length) {
@@ -1305,6 +1333,7 @@ function excluirStory_(eu, id) {
   const x = ler_(ABA_STORIES, CAMPOS_STORY).filter(s => s.id === String(id))[0];
   if (!x) return;
   if (!podeEditar_(eu, x.marcaId)) throw erro_('permissao', 'Você não pode excluir os stories desta marca.');
+  paraLixeira_(eu, 'story', x, x.titulo || x.tipo || 'Story');
   excluirLinha_(ABA_STORIES, CAMPOS_STORY, id);
 }
 // recebe a sequência na ordem nova: [{id, data}] (a data muda quando o story é arrastado para outro dia)
@@ -1573,6 +1602,7 @@ function resumoDiario() {
       }
     }
     if (u.papel !== 'cliente') add('🎂 Aniversários de hoje', aniversariosHoje.filter(a => !a.marcaId || acesso_(u, a.marcaId)).map(a => a.nome + (a.marca ? ' (' + a.marca + ')' : '')));
+    if (TODAS_MARCAS.indexOf(u.papel) >= 0) add('💰 Cobranças vencidas ou vencendo hoje', cobrancas_(hoje).filter(c => c.vence <= hoje).map(c => c.marca + ' · ' + c.valorTxt + ' · vence ' + paraBR_(c.vence).slice(0, 5)));
     add('Suas reuniões de hoje', agendaHoje.filter(x => x.tipo === 'reuniao' && x.status === 'confirmada' && participa_(u, x)).map(x => (x.hora || '') + ' · ' + x.titulo + ' (' + duracaoTxt_(x.duracao) + ')'));
     if (VEEM_TODAS.indexOf(u.papel) >= 0) add('Pedidos de reunião esperando resposta', agendaPend.filter(x => participa_(u, x) || TODAS_MARCAS.indexOf(u.papel) >= 0).map(x => x.criadoPor + ': ' + x.titulo + ' (' + paraBR_(x.data).slice(0, 5) + ')'));
     add('Suas tarefas para hoje ou atrasadas', tarefas.filter(t => t.status !== 'Feita' && t.responsavelId === u.id && ((t.prazo && t.prazo <= hoje) || (t.data && t.data <= hoje))).map(t => t.titulo + (t.prazo ? ' (até ' + paraBR_(t.prazo).slice(0, 5) + ')' : '')));
@@ -1590,6 +1620,7 @@ function resumoDiario() {
 
 /* ---------- Cópia de segurança semanal da planilha (guarda as 8 últimas) ---------- */
 function backupSemanal() {
+  try { limparLixeira_(); } catch (e) { Logger.log(e); }
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const pasta = pasta_(DriveApp.getRootFolder(), 'Planejamento de Conteúdo - Cópias de segurança');
   const nome = ss.getName() + ' - cópia ' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
@@ -1749,6 +1780,7 @@ function relatorioMensal() {
     if (!(parseJSON_(m.perfil, {}) || {}).relatorioAuto) return;
     try { mandarRelatorio_(m.id, mes, null, ''); } catch (e) { Logger.log('Relatório ' + m.nome + ': ' + e.message); }
   });
+  try { pedirAvaliacoes_(mes); } catch (e) { Logger.log('Avaliações: ' + e.message); }
 }
 
 /* ======================================================================
@@ -2025,4 +2057,250 @@ function lerAviso_(eu, ids) {
     if (r) aba.getRange(r, colunaDe_(CAMPOS_AVISO, 'lidos')).setValue(JSON.stringify(l));
   });
   mexeu_();
+}
+
+/* ======================================================================
+ * Novidades 2026-11-06: importar conteúdo do mês, trends, copiar mês, lixeira, briefing do cliente,
+ * avaliação mensal, financeiro e checklist de cliente novo
+ * ====================================================================== */
+
+/* ---------- Importar o documento do conteúdo do mês ---------- */
+function textoDoDrive_(id) {
+  const tok = { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() };
+  let mt = '';
+  try { mt = DriveApp.getFileById(id).getMimeType(); } catch (e) { throw erro_('server', 'Não consegui abrir o arquivo. Confira se a conta dona da planilha tem acesso a ele.'); }
+  let docId = id, temp = '';
+  if (mt !== MimeType.GOOGLE_DOCS) {
+    // .docx ou outro: converte numa cópia temporária em Google Docs
+    const c = UrlFetchApp.fetch('https://www.googleapis.com/drive/v3/files/' + id + '/copy', { method: 'post', contentType: 'application/json', headers: tok, payload: JSON.stringify({ mimeType: MimeType.GOOGLE_DOCS, name: 'tmp-importacao' }), muteHttpExceptions: true });
+    const j = parseJSON_(c.getContentText(), {});
+    if (!j.id) throw erro_('server', 'Não consegui converter o arquivo. Use um Google Docs ou um .docx.');
+    docId = temp = j.id;
+  }
+  const r = UrlFetchApp.fetch('https://www.googleapis.com/drive/v3/files/' + docId + '/export?mimeType=text/plain', { headers: tok, muteHttpExceptions: true });
+  if (temp) { try { DriveApp.getFileById(temp).setTrashed(true); } catch (e) {} }
+  if (r.getResponseCode() !== 200) throw erro_('server', 'Não consegui ler o documento.');
+  return r.getContentText().replace(/^﻿/, '');
+}
+function lerConteudo_(eu, link) {
+  if (['cliente', 'aprovador'].indexOf(eu.papel) >= 0) throw erro_('permissao', 'Sem permissão.');
+  const m = String(link || '').match(/\/d\/([\w-]{20,})/) || String(link || '').match(/[?&]id=([\w-]{20,})/);
+  if (!m) throw erro_('server', 'Cole o link do documento (Google Docs ou .docx no Drive).');
+  return { texto: textoDoDrive_(m[1]).slice(0, 200000) };
+}
+function importarPostagens_(eu, marcaId, posts) {
+  if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Você não pode criar postagens nesta marca.');
+  const ok = ['data', 'postagem', 'formato', 'legenda', 'observacao', 'objetivo', 'cta', 'pauta', 'fase', 'produto', 'rede', 'gravacao', 'inspiracao'];
+  return posts.slice(0, 80).map(p => {
+    const o = { marcaId: marcaId };
+    ok.forEach(k => { if (p[k] != null) o[k] = String(p[k]).slice(0, k === 'legenda' || k === 'observacao' ? 8000 : 500); });
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(o.data || '')) o.data = '';
+    if (o.data) { o.prazoArte = somaDias_(o.data, -5); o.prazoAprovacao = somaDias_(o.data, -2); }
+    return salvarPauta_(eu, o);
+  });
+}
+
+/* ---------- Trends da semana (planilha que a agência já mantém) ---------- */
+function lerTrends_(eu) {
+  if (eu.papel === 'cliente') throw erro_('permissao', 'Sem acesso.');
+  const link = PropertiesService.getScriptProperties().getProperty('trends');
+  if (!link) return { configurado: false };
+  const cache = CacheService.getScriptCache(), c = cache.get('trends');
+  if (c) return JSON.parse(c);
+  const m = String(link).match(/\/d\/([\w-]{20,})/);
+  let ss;
+  try { ss = SpreadsheetApp.openById(m ? m[1] : link); } catch (e) { return { configurado: true, erro: 'Não consegui abrir a planilha de trends. Confira o link e se a conta dona do sistema tem acesso.' }; }
+  const itens = [];
+  ss.getSheets().forEach(aba => {
+    const v = aba.getDataRange().getDisplayValues();
+    if (v.length < 2) return;
+    const cab = v[0].map(h => String(h).toLowerCase());
+    const col = re => cab.findIndex(h => re.test(h));
+    const cN = col(/trend|nome|t[íi]tulo/), cL = col(/link|v[íi]deo|url/), cP = col(/por que|porque|motivo|alta|descri/), cR = col(/rede|plataforma/), cD = col(/data|semana/);
+    v.slice(1).forEach(l => {
+      const nome = String(l[cN >= 0 ? cN : 0] || '').trim();
+      if (!nome) return;
+      itens.push({ nome: nome.slice(0, 200), link: cL >= 0 ? String(l[cL] || '').trim() : '', porque: cP >= 0 ? String(l[cP] || '').slice(0, 600) : '', rede: cR >= 0 ? String(l[cR] || '') : '', data: cD >= 0 ? String(l[cD] || '') : aba.getName() });
+    });
+  });
+  const res = { configurado: true, itens: itens.slice(-40).reverse() };
+  try { cache.put('trends', JSON.stringify(res), 1800); } catch (e) {}
+  return res;
+}
+
+/* ---------- Copiar a estrutura de um mês para outro ---------- */
+function copiarMes_(eu, marcaId, de, para) {
+  if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Você não pode criar postagens nesta marca.');
+  if (!/^\d{4}-\d{2}$/.test(de || '') || !/^\d{4}-\d{2}$/.test(para || '') || de === para) throw erro_('server', 'Escolha os meses.');
+  const origem = ler_(ABA_PAUTAS, CAMPOS_PAUTA).map(pautaParaSite_).filter(p => p.marcaId === marcaId && p.data.indexOf(de) === 0);
+  if (!origem.length) throw erro_('server', 'O mês de origem não tem postagens.');
+  const [ay, am] = para.split('-').map(Number), ultimo = new Date(ay, am, 0).getDate();
+  // mesmo dia da semana e mesma semana do mês (ex.: 2ª terça); se não existir, a última daquele dia da semana
+  const destino = iso => {
+    const d = parse_(iso), dow = d.getDay(), n = Math.ceil(d.getDate() / 7);
+    const dias = []; for (let i = 1; i <= ultimo; i++) if (new Date(ay, am - 1, i).getDay() === dow) dias.push(i);
+    const dia = dias[Math.min(n, dias.length) - 1];
+    return para + '-' + ('0' + dia).slice(-2);
+  };
+  origem.forEach(p => {
+    const data = destino(p.data);
+    salvarPauta_(eu, { marcaId: marcaId, data: data, formato: p.formato, fase: p.fase, produto: p.produto, rede: p.rede, objetivo: p.objetivo, cta: p.cta, gravacao: p.gravacao,
+      postagem: '', observacao: 'Mês anterior (' + paraBR_(p.data).slice(0, 5) + '): ' + (p.postagem || p.pauta || ''), prazoArte: somaDias_(data, -5), prazoAprovacao: somaDias_(data, -2) });
+  });
+  return origem.length;
+}
+
+/* ---------- Lixeira (30 dias) ---------- */
+function paraLixeira_(eu, tipo, linha, titulo) {
+  if (!linha) return;
+  gravar_(ABA_LIXEIRA, CAMPOS_LIXEIRA, { id: Utilities.getUuid().slice(0, 13), tipo: tipo, itemId: linha.id, marcaId: linha.marcaId, titulo: String(titulo || '').slice(0, 200), dados: JSON.stringify(linha), por: eu.nome, em: Date.now() });
+}
+function lixeira_(eu) {
+  const lim = Date.now() - 30 * 864e5;
+  return ler_(ABA_LIXEIRA, CAMPOS_LIXEIRA).filter(x => Number(x.em) >= lim && podeEditar_(eu, x.marcaId))
+    .map(x => { const d = parseJSON_(x.dados, {}); return { id: x.id, tipo: x.tipo, marcaId: x.marcaId, titulo: x.titulo, data: paraISO_(d.data), por: x.por, em: Number(x.em) }; })
+    .sort((a, b) => b.em - a.em);
+}
+function restaurar_(eu, id) {
+  const x = ler_(ABA_LIXEIRA, CAMPOS_LIXEIRA).filter(l => l.id === String(id))[0];
+  if (!x) throw erro_('server', 'Item não está mais na lixeira.');
+  if (!podeEditar_(eu, x.marcaId)) throw erro_('permissao', 'Sem permissão nesta marca.');
+  const d = parseJSON_(x.dados, null);
+  if (!d) throw erro_('server', 'Não consegui recuperar.');
+  if (x.tipo === 'story') gravar_(ABA_STORIES, CAMPOS_STORY, d);
+  else {
+    const h = parseJSON_(d.historico, []); h.push({ em: Date.now(), por: eu.nome, uid: eu.id, acao: 'Recuperou da lixeira' }); d.historico = JSON.stringify(h);
+    gravar_(ABA_PAUTAS, CAMPOS_PAUTA, d);
+  }
+  excluirLinha_(ABA_LIXEIRA, CAMPOS_LIXEIRA, id);
+}
+function limparLixeira_() {
+  const lim = Date.now() - 30 * 864e5;
+  ler_(ABA_LIXEIRA, CAMPOS_LIXEIRA).filter(x => Number(x.em) < lim).forEach(x => excluirLinha_(ABA_LIXEIRA, CAMPOS_LIXEIRA, x.id));
+}
+
+/* ---------- Briefing do cliente novo (link público, sem login) ---------- */
+const CAMPOS_BRIEFING = ['instagram', 'site', 'segmento', 'cidade', 'desde', 'canais', 'ticket', 'responsavel', 'historia', 'proposito', 'diferenciais', 'carroChefe',
+  'pResumo', 'pIdade', 'pGenero', 'pLocal', 'pClasse', 'pMomento', 'pValores', 'pHorarios', 'tom', 'palavrasUsar', 'palavrasEvitar', 'naoFazer', 'concorrentes', 'referencias', 'cores', 'fontes', 'estiloFoto', 'datasImportantes', 'expectativas'];
+function briefingLink_(eu, marcaId, site) {
+  if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Só quem alimenta a marca gera o briefing.');
+  const chave = Utilities.getUuid().replace(/-/g, '');
+  PropertiesService.getScriptProperties().setProperty('brf_' + chave, JSON.stringify({ marcaId: marcaId, exp: Date.now() + 30 * 864e5, por: eu.nome, uid: eu.id }));
+  site = String(site || PropertiesService.getScriptProperties().getProperty('site') || '').split('#')[0];
+  return { url: site + '#briefing=' + chave };
+}
+function briefingDe_(chave) {
+  const raw = chave ? PropertiesService.getScriptProperties().getProperty('brf_' + String(chave).replace(/\W/g, '')) : null;
+  const b = raw ? parseJSON_(raw, null) : null;
+  if (!b || b.exp < Date.now()) throw erro_('briefing', 'Este link de briefing expirou ou não existe. Peça um novo para a agência.');
+  return b;
+}
+function briefingVer_(chave) {
+  const b = briefingDe_(chave);
+  const m = ler_(ABA_MARCAS, CAMPOS_MARCA).filter(x => x.id === b.marcaId)[0];
+  if (!m) throw erro_('briefing', 'Marca não encontrada.');
+  const pf = parseJSON_(m.perfil, {}) || {}, atuais = {};
+  CAMPOS_BRIEFING.forEach(k => { if (pf[k]) atuais[k] = pf[k]; });
+  return { marca: m.nome, agencia: b.por, atuais: atuais, produtos: String(m.produtos || '').split('\n').filter(String), enviado: pf.briefingEm || 0 };
+}
+function briefingArquivo_(chave, req) {
+  const b = briefingDe_(chave);
+  if (!req.base64 || req.base64.length > 30000000) throw erro_('server', 'Arquivo vazio ou grande demais (máx. 20 MB).');
+  const pasta = pasta_(pasta_(DriveApp.getRootFolder(), PASTA_ARQUIVOS), nomeDaMarca_(b.marcaId) || 'Sem marca');
+  const f = pasta.createFile(Utilities.newBlob(Utilities.base64Decode(req.base64), req.mime || 'application/octet-stream', String(req.nome || 'arquivo').slice(0, 120)));
+  try { f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
+  return { url: f.getUrl(), driveId: f.getId() };
+}
+function briefingEnviar_(chave, d, site) {
+  const b = briefingDe_(chave);
+  const m = ler_(ABA_MARCAS, CAMPOS_MARCA).filter(x => x.id === b.marcaId)[0];
+  if (!m) throw erro_('briefing', 'Marca não encontrada.');
+  const pf = parseJSON_(m.perfil, {}) || {};
+  CAMPOS_BRIEFING.forEach(k => { const v = String((d.campos || {})[k] || '').trim(); if (v) pf[k] = v.slice(0, 4000); });
+  pf.briefingEm = Date.now(); pf.briefingNome = String(d.nome || '').slice(0, 100);
+  const pe = d.persona || {};
+  if (['dores', 'desejos', 'objecoes'].some(k => String(pe[k] || '').trim())) {
+    pf.personas = (Array.isArray(pf.personas) ? pf.personas : []).concat([{ nome: 'Cliente ideal (do briefing)', dores: String(pe.dores || '').slice(0, 2000), desejos: String(pe.desejos || '').slice(0, 2000), objecoes: String(pe.objecoes || '').slice(0, 2000) }]);
+  }
+  const produtos = String(m.produtos || '').split('\n').filter(String);
+  (d.produtos || []).forEach(p => { p = String(p || '').trim().slice(0, 120); if (p && produtos.indexOf(p) < 0) produtos.push(p); });
+  const arquivos = parseJSON_(m.arquivos, []);
+  (d.arquivos || []).slice(0, 20).forEach(a => { if (a && a.url) arquivos.push({ id: 'b' + Date.now().toString(36) + Math.floor(Math.random() * 1e4), tipo: a.tipo || 'Outros', nome: String(a.nome || 'Arquivo').slice(0, 120), nota: 'Enviado pelo cliente no briefing', data: Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd'), url: a.url, driveId: a.driveId || '' }); });
+  gravar_(ABA_MARCAS, CAMPOS_MARCA, Object.assign({}, m, { produtos: produtos.join('\n'), perfil: JSON.stringify(pf), arquivos: JSON.stringify(arquivos) }));
+  // acessos vão para o cofre da marca, fora da planilha
+  const acs = (d.acessos || []).filter(a => a && (a.usuario || a.email || a.senha)).slice(0, 20);
+  if (acs.length) {
+    const props = PropertiesService.getScriptProperties(), atual = parseJSON_(props.getProperty('cred_' + b.marcaId), null) || {};
+    const lista = (atual.acessos || []).concat(acs.map(a => ({ plataforma: String(a.plataforma || '').slice(0, 100), usuario: String(a.usuario || '').slice(0, 200), email: String(a.email || '').slice(0, 200), senha: String(a.senha || '').slice(0, 200), chave: '', obs: 'Enviado pelo cliente no briefing' })));
+    props.setProperty('cred_' + b.marcaId, JSON.stringify({ acessos: lista, por: 'Cliente (briefing)', em: Date.now() }));
+  }
+  // avisa quem gerou o link
+  try {
+    const u = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(x => x.id === b.uid)[0];
+    if (u && /@/.test(u.login) && MailApp.getRemainingDailyQuota() > 0) {
+      const base = String(site || PropertiesService.getScriptProperties().getProperty('site') || '').split('#')[0];
+      MailApp.sendEmail({ to: u.login, name: 'Planejamento de Conteúdo', subject: '📋 Briefing recebido: ' + m.nome,
+        htmlBody: '<div style="font-family:Arial,sans-serif;font-size:15px"><h2>📋 Briefing de ' + escH_(m.nome) + ' recebido</h2><p>' + escH_(d.nome || 'O cliente') + ' preencheu o briefing. As respostas já estão na área da marca (Sobre, Público-alvo, Produtos, Arquivos e Acessos).</p>' + (base ? '<p><a href="' + base + '#marca" style="background:#1d1d1f;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;display:inline-block">Ver a marca</a></p>' : '') + '</div>' });
+    }
+  } catch (e) { Logger.log(e); }
+  return { ok: true };
+}
+
+/* ---------- Avaliação mensal do cliente ---------- */
+function avaliar_(eu, marcaId, mes, nota, comentario) {
+  if (eu.papel !== 'cliente' || !acesso_(eu, marcaId)) throw erro_('permissao', 'Só o cliente da marca avalia.');
+  nota = parseInt(nota, 10);
+  if (!(nota >= 0 && nota <= 10)) throw erro_('server', 'Escolha uma nota de 0 a 10.');
+  if (!/^\d{4}-\d{2}$/.test(mes || '')) throw erro_('server', 'Mês inválido.');
+  const atual = ler_(ABA_AVALIACOES, CAMPOS_AVALIACAO).filter(a => a.marcaId === marcaId && a.mes === mes && a.uid === eu.id)[0];
+  gravar_(ABA_AVALIACOES, CAMPOS_AVALIACAO, { id: atual ? atual.id : Utilities.getUuid().slice(0, 13), marcaId: marcaId, marca: nomeDaMarca_(marcaId), mes: mes, uid: eu.id, nome: eu.nome, nota: nota, comentario: String(comentario || '').slice(0, 2000), em: Date.now() });
+  // nota baixa: avisa a direção na hora
+  if (nota <= 6) {
+    try {
+      const dir = ler_(ABA_USUARIOS, CAMPOS_USUARIO).map(publicoUsuario_).filter(u => u.ativo && TODAS_MARCAS.indexOf(u.papel) >= 0 && /@/.test(u.login));
+      dir.forEach(u => MailApp.sendEmail({ to: u.login, name: 'Planejamento de Conteúdo', subject: '⚠️ Nota ' + nota + ' de ' + eu.nome + ' (' + nomeDaMarca_(marcaId) + ')', htmlBody: '<p style="font-family:Arial,sans-serif;font-size:15px"><b>' + escH_(eu.nome) + '</b> deu nota <b>' + nota + '</b> para ' + mes + '.<br><br>' + escH_(comentario || '(sem comentário)') + '</p>' }));
+    } catch (e) { Logger.log(e); }
+  }
+}
+function pedirAvaliacoes_(mes) {
+  const site = PropertiesService.getScriptProperties().getProperty('site') || '';
+  ler_(ABA_USUARIOS, CAMPOS_USUARIO).map(publicoUsuario_).filter(u => u.ativo && u.papel === 'cliente' && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(u.login) && u.marcas.indexOf('*') < 0).forEach(u => {
+    if (MailApp.getRemainingDailyQuota() < 1 || !site) return;
+    const link = site + '#entrar=' + criarSessao_(u.id, 14, true);
+    MailApp.sendEmail({ to: u.login, name: 'Planejamento de Conteúdo', subject: '⭐ Como foi o seu conteúdo em ' + mes.slice(5, 7) + '/' + mes.slice(0, 4) + '?',
+      htmlBody: '<div style="font-family:Arial,sans-serif;font-size:15px;max-width:520px"><h2>Olá, ' + escH_(u.nome.split(' ')[0]) + '!</h2><p>Leva 10 segundos: de 0 a 10, quanto você ficou satisfeito(a) com o conteúdo do mês passado? A sua resposta ajuda a gente a melhorar.</p><p><a href="' + link + '" style="background:#1d1d1f;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">Dar minha nota</a></p></div>' });
+  });
+}
+
+/* ---------- Financeiro ---------- */
+function pagamento_(eu, marcaId, mes, pago, valor, obs) {
+  if (TODAS_MARCAS.indexOf(eu.papel) < 0) throw erro_('permissao', 'Só o administrador e o diretor mexem no financeiro.');
+  if (!/^\d{4}-\d{2}$/.test(mes || '')) throw erro_('server', 'Mês inválido.');
+  const atual = ler_(ABA_PAGAMENTOS, CAMPOS_PAGAMENTO).filter(p => p.marcaId === marcaId && p.mes === mes)[0];
+  if (!pago) { if (atual) excluirLinha_(ABA_PAGAMENTOS, CAMPOS_PAGAMENTO, atual.id); return; }
+  gravar_(ABA_PAGAMENTOS, CAMPOS_PAGAMENTO, { id: atual ? atual.id : Utilities.getUuid().slice(0, 13), marcaId: marcaId, marca: nomeDaMarca_(marcaId), mes: mes, valor: Number(valor) || 0,
+    pagoEm: paraBR_(/^\d{4}-\d{2}-\d{2}$/.test(pago) ? pago : Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd')), por: eu.nome, obs: String(obs || '').slice(0, 300), criado: atual ? atual.criado : Date.now() });
+}
+// cobranças em aberto do mês atual e do anterior
+function cobrancas_(hoje) {
+  const pagos = {}; ler_(ABA_PAGAMENTOS, CAMPOS_PAGAMENTO).forEach(p => pagos[p.marcaId + '|' + p.mes] = true);
+  const meses = [hoje.slice(0, 7), somaDias_(hoje.slice(0, 7) + '-01', 0, -1).slice(0, 7)], l = [];
+  ler_(ABA_MARCAS, CAMPOS_MARCA).forEach(m => {
+    const pf = parseJSON_(m.perfil, {}) || {}, fin = pf.financeiro || {}, valor = Number(pf.valorMensal) || 0, dia = parseInt(fin.vencimento, 10);
+    if (!valor || !(dia >= 1 && dia <= 31)) return;
+    meses.forEach(mes => {
+      if (pagos[m.id + '|' + mes] || (fin.inicio && mes < String(fin.inicio).slice(0, 7))) return;
+      const ult = new Date(+mes.slice(0, 4), +mes.slice(5, 7), 0).getDate();
+      l.push({ marca: m.nome, mes: mes, vence: mes + '-' + ('0' + Math.min(dia, ult)).slice(-2), valorTxt: 'R$ ' + valor.toFixed(2).replace('.', ',') });
+    });
+  });
+  return l;
+}
+
+/* ---------- Checklist de cliente novo ---------- */
+function checklistMarca_(eu, marcaId) {
+  const hoje = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  [['Pegar os acessos das contas (Instagram, Meta, TikTok…)', 1, 'Alta'], ['Mandar o link do briefing para o cliente', 1, 'Alta'], ['Receber o manual da marca, logotipo e fontes', 3, 'Alta'],
+    ['Reunião inicial com o cliente', 3, 'Alta'], ['Fazer o direcionamento de marca', 7, 'Média'], ['Cadastrar o pacote contratado e o valor do contrato', 2, 'Média'], ['Montar a primeira grade do mês', 10, 'Média']]
+    .forEach(t => { try { salvarTarefa_(eu, { titulo: t[0], marcaId: marcaId, responsavelId: eu.id, prazo: somaDias_(hoje, t[1]), prioridade: t[2], descricao: 'Checklist de cliente novo.' }, ''); } catch (e) { Logger.log(e); } });
 }

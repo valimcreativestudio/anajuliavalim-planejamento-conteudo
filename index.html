@@ -84,6 +84,7 @@ nav.tabs { flex-basis: 100%; display: flex; gap: 2px; overflow-x: auto; scrollba
 nav.tabs a { color: color-mix(in srgb, var(--vinho-ink) 72%, transparent); text-decoration: none; padding: 10px 14px 11px; border-radius: 10px 10px 0 0; white-space: nowrap; font-weight: 500; }
 nav.tabs a:hover { color: var(--vinho-ink); }
 nav.tabs a[aria-current="page"] { background: var(--bg); color: var(--ink); }
+@media (min-width: 900px) { nav.tabs { flex-wrap: wrap; row-gap: 4px; overflow: visible; } nav.tabs a { padding: 9px 12px 10px; } nav.tabs a[aria-current="page"] { border-radius: 10px; } }
 
 main { padding-block: 22px 60px; }
 .view-head { display: flex; flex-wrap: wrap; align-items: end; gap: 12px 20px; margin-bottom: 18px; }
@@ -684,6 +685,7 @@ td.n.atraso { color: var(--danger); font-weight: 600; }
 :root[style*="--cal:"] { --cal-mix: 16%; }
 .tema-btn { width: 36px; height: 36px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 17px; padding: 0; line-height: 1; }
 /* legenda do calendário */
+.cal-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: -6px 0 12px; justify-content: flex-end; }
 .legenda { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; align-items: center; }
 .lg-it { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 99px; padding: 4px 10px 4px 8px; font-size: 12.5px; cursor: pointer; }
 .lg-it i { width: 10px; height: 10px; border-radius: 50%; flex: none; }
@@ -774,6 +776,80 @@ td.n.atraso { color: var(--danger); font-weight: 600; }
 .av-f { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); }
 .av-f > span:first-of-type { flex: 1; }
 .faixa-aviso { display: block; background: color-mix(in srgb, var(--s-cliente) 16%, var(--surface)); border: 1px solid color-mix(in srgb, var(--s-cliente) 40%, var(--line)); color: var(--ink); text-decoration: none; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; font-size: 14px; }
+.im-lista { display: grid; gap: 6px; max-height: 55vh; overflow-y: auto; }
+.im-it { display: grid; grid-template-columns: 22px 140px 120px 1fr auto; gap: 6px; align-items: center; }
+.im-it.fora { opacity: .45; }
+.im-it input, .im-it select { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 5px 7px; color: var(--ink); min-width: 0; }
+@media (max-width: 640px) { .im-it { grid-template-columns: 22px 1fr 1fr; } .im-it input:not([type]), .im-it small { grid-column: 2 / -1; } }
+#imDlg, #lxDlg { width: min(820px, calc(100vw - 24px)); }
+.trends { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin-top: 10px; }
+.trend { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 6px; }
+#buDlg { width: min(680px, calc(100vw - 24px)); align-self: start; margin-top: 8vh; }
+.busca-top { display: flex; gap: 8px; padding: 14px; border-bottom: 1px solid var(--line); }
+.busca-top input { flex: 1; font-size: 17px; border: 0; background: none; color: var(--ink); outline: none; }
+.busca-res { padding: 6px 14px 14px; max-height: 60vh; overflow-y: auto; }
+.busca-res h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 12px 0 4px; }
+.bu-it { display: grid; width: 100%; text-align: left; border: 0; background: none; padding: 7px 8px; border-radius: 8px; cursor: pointer; color: var(--ink); text-decoration: none; font: inherit; }
+.bu-it:hover, .bu-it:focus { background: var(--surface-2); outline: none; }
+.bu-it span { font-size: 12.5px; color: var(--muted); }
+.lx-it { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.vert { position: relative; aspect-ratio: 9/16; width: min(100%, calc(70vh * 9 / 16)); margin: 0 auto; border-radius: 14px; overflow: hidden; background: #000; color: #fff; font-size: 13px; }
+.vert > img, .vert > video, .vert > iframe { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border: 0; }
+.vert .sem-arte { position: absolute; inset: 0; display: grid; place-items: center; color: #aaa; }
+.vert .v-dir { position: absolute; right: 8px; bottom: 90px; display: grid; gap: 14px; justify-items: center; font-size: 22px; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+.vert .v-dir small { display: block; font-size: 10.5px; text-align: center; }
+.vert .v-dir .av { border: 2px solid #fff; }
+.vert .v-base { position: absolute; left: 10px; right: 60px; bottom: 14px; display: grid; gap: 4px; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+.vert .v-top { position: absolute; top: 10px; left: 0; right: 0; text-align: center; font-size: 14px; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+.vert.yt .v-top { text-align: left; left: 12px; font-weight: 700; }
+.v-insc { background: #fff; color: #000; border-radius: 99px; padding: 2px 8px; font-size: 11px; font-weight: 700; margin-left: 6px; text-shadow: none; }
+.li-post { background: #fff; color: #191919; border: 1px solid #e0dfdc; border-radius: 10px; overflow: hidden; max-width: 520px; margin: 0 auto; font-size: 14px; }
+.li-h { display: flex; gap: 8px; padding: 12px; align-items: center; } .li-h small { display: block; color: #666; font-size: 12px; } .li-h .av { background: #0a66c2; color: #fff; }
+.li-t { padding: 0 12px 10px; white-space: pre-wrap; } .li-m { position: relative; aspect-ratio: 1; background: #f3f2ef; } .li-m img, .li-m video { width: 100%; height: 100%; object-fit: cover; display: block; } .li-m .sem-arte { position: absolute; inset: 0; display: grid; place-items: center; color: #999; }
+.li-a { display: flex; justify-content: space-around; padding: 8px; color: #666; font-size: 13px; border-top: 1px solid #eee; }
+body.publico header.top .marca-pick, body.publico header.top .tabs, body.publico #me { display: none !important; }
+.briefing { display: grid; gap: 14px; max-width: 820px; margin: 0 auto; }
+.br-capa { padding: 10px 0; } .br-capa small { text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 600; } .br-capa h1 { font: 400 44px/1.1 var(--f-display); margin: 4px 0 8px; }
+.br-sec textarea, .br-sec input:not([type=file]):not([type=checkbox]), .br-sec select { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 10px; color: var(--ink); font: inherit; }
+.br-acc { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; } .br-acc input { min-width: 0; width: 100%; } @media (max-width: 640px) { .br-acc { grid-template-columns: 1fr 1fr; } }
+#apres { position: fixed; inset: 0; z-index: 1000; background: var(--bg); color: var(--ink); display: grid; grid-template-rows: 1fr auto; }
+.ap-slide { overflow: auto; padding: 4vh 5vw; display: grid; align-content: center; }
+.ap-nav { display: flex; gap: 10px; justify-content: center; align-items: center; padding: 10px; border-top: 1px solid var(--line); }
+.ap-nav button { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 99px; width: 40px; height: 40px; font-size: 18px; cursor: pointer; }
+.ap-capa { text-align: center; } .ap-capa small { text-transform: uppercase; letter-spacing: .14em; color: var(--muted); font-weight: 600; }
+.ap-capa h1 { font: 400 clamp(48px, 9vw, 110px)/1 var(--f-display); margin: 10px 0; } .ap-capa h2 { font-weight: 400; color: var(--muted); font-size: clamp(18px, 2.4vw, 28px); }
+.ap-slide h2 { font: 400 clamp(28px, 4vw, 48px)/1.1 var(--f-display); margin: 0 0 18px; }
+.ap-kpis { display: flex; flex-wrap: wrap; gap: 14px; } .ap-kpis div { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 24px; display: grid; } .ap-kpis b { font: 400 54px/1 var(--f-display); } .ap-kpis span { color: var(--muted); }
+.ap-fases { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; } .ap-fases span { display: inline-flex; gap: 6px; align-items: center; border: 1px solid var(--line); border-radius: 99px; padding: 6px 12px; } .ap-fases i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.ap-grade { justify-items: center; } .ap-grade > div { max-width: 560px; margin: 0 auto; }
+.ap-datas ul { columns: 2; font-size: 18px; line-height: 1.7; padding-left: 18px; }
+.ap-post { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: 4vw; align-items: center; }
+.ap-info small { color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 600; } .ap-info dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 16px; } .ap-info dt { color: var(--muted); } .ap-info dd { margin: 0; }
+.ap-obs { white-space: pre-wrap; color: var(--muted); }
+.ap-st-l { display: flex; gap: 16px; flex-wrap: wrap; } .ap-st-l > div { display: grid; gap: 4px; width: 150px; } .ap-ph .phone { width: 150px; border-radius: 14px; }
+@media (max-width: 760px) { .ap-post { grid-template-columns: 1fr; } .ap-datas ul { columns: 1; } }
+.aval { display: grid; gap: 8px; margin-bottom: 16px; border-color: var(--s-cliente); }
+.notas { display: flex; flex-wrap: wrap; gap: 6px; } .notas label { cursor: pointer; } .notas input { position: absolute; opacity: 0; }
+.notas span { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 10px; font-weight: 600; }
+.notas label:has(input:checked) span { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.aval textarea { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 10px; color: var(--ink); font: inherit; }
+.aval-l { display: grid; gap: 10px; } .aval-l > div { display: flex; gap: 10px; align-items: flex-start; }
+.nota-b { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; color: #fff; background: var(--c); }
+table.fin input { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 5px 7px; color: var(--ink); width: 120px; }
+table.fin td.n input { text-align: right; }
+.fin-st { font-weight: 700; color: var(--c); font-size: 13px; }
+.bib { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.bib-it { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.bib-it a { position: relative; display: grid; place-items: center; aspect-ratio: 1; background: var(--surface-2); font-size: 28px; text-decoration: none; }
+.bib-it img { width: 100%; height: 100%; object-fit: cover; }
+.bib-v { position: absolute; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.6); }
+.bib-it figcaption { display: grid; grid-template-columns: 1fr auto; gap: 4px; padding: 6px 8px; font-size: 12px; }
+.bib-it figcaption span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; grid-column: 1 / -1; }
+.bib-it figcaption input { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 3px 6px; color: var(--ink); min-width: 0; font-size: 12px; }
+.bib-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 6px; max-height: 220px; overflow-y: auto; margin-top: 6px; }
+.bib-pick button { position: relative; aspect-ratio: 1; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; padding: 0; cursor: pointer; background: var(--surface-2); }
+.bib-pick img { width: 100%; height: 100%; object-fit: cover; } .bib-pick span { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; text-shadow: 0 1px 3px #000; }
+.rede-sel { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 7px 10px; color: var(--ink); }
 </style>
 </head>
 <body>
@@ -784,6 +860,7 @@ td.n.atraso { color: var(--danger); font-weight: 600; }
       <label for="marcaSel" class="muted" style="color:inherit;opacity:.75;font-size:13px">Marca</label>
       <select id="marcaSel"></select>
       <button class="ghost-light" id="novaMarca" type="button">+ Nova marca</button>
+      <button class="ghost-light tema-btn" id="buBtn" type="button" onclick="abrirBusca()" aria-label="Buscar (Ctrl+K)" title="Buscar (Ctrl+K)">🔍</button>
       <button class="ghost-light tema-btn" id="temaBtn" type="button" onclick="trocarTema()" aria-label="Trocar tema">🌙</button>
     </div>
     <div class="me" id="me" hidden></div>
@@ -802,6 +879,7 @@ td.n.atraso { color: var(--danger); font-weight: 600; }
       <a href="#agenda" id="tabAgenda">Agenda<span class="badge" id="agBadge" hidden></span></a>
       <a href="#horas" id="tabHoras">Horas</a>
       <a href="#mural" id="tabMural">Mural<span class="badge" id="muBadge" hidden></span></a>
+      <a href="#financeiro" id="tabFin" hidden>Financeiro</a>
       <a href="#equipe" id="tabEquipe" hidden>Equipe</a>
     </nav>
   </div>
@@ -818,6 +896,10 @@ td.n.atraso { color: var(--danger); font-weight: 600; }
 <dialog id="seDlg"><form id="seForm" method="dialog"></form></dialog>
 <dialog id="lkDlg"><form id="lkForm" method="dialog"></form></dialog>
 <dialog id="evDlg"><form id="evForm" method="dialog"></form></dialog>
+<dialog id="imDlg"><form id="imForm" method="dialog"></form></dialog>
+<dialog id="lxDlg"><form id="lxForm" method="dialog"></form></dialog>
+<dialog id="buDlg"><form id="buForm" method="dialog" onsubmit="event.preventDefault()"></form></dialog>
+<div id="apres" hidden role="dialog" aria-label="Apresentação"></div>
 <div class="toast" id="toast" hidden></div>
 
 <script src="config.js"></script>
@@ -950,10 +1032,13 @@ function setMonth(ym) {
 /* ---------- Vistas ---------- */
 const view = () => {
   const h = location.hash.replace("#", "");
-  return ["calendario", "stories", "ideias", "agenda", "horas", "mural", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-acessos", "marca-config", "marca-plano", "aprovacoes", "equipe", "equipe-atividade", "conta", "tarefas"].includes(h) ? h : "calendario";
+  return ["calendario", "stories", "ideias", "agenda", "horas", "mural", "financeiro", "marca-midias", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-acessos", "marca-config", "marca-plano", "aprovacoes", "equipe", "equipe-atividade", "conta", "tarefas"].includes(h) ? h : "calendario";
 };
 
 function render() {
+  // briefing do cliente: página pública, sem login
+  if (location.hash.startsWith("#briefing=")) { vBriefingPublico(location.hash.slice(10).replace(/\W/g, "")); return; }
+  document.body.classList.remove("publico");
   document.querySelectorAll("#tabs a").forEach(a => a.setAttribute("aria-current", view().split("-")[0] === a.getAttribute("href").slice(1) ? "page" : "false"));
   const sel = $("#marcaSel");
   sel.innerHTML = S.marcas.map(m => `<option value="${esc(m.id)}"${m.id === S.marcaId ? " selected" : ""}>${esc(m.nome)}</option>`).join("") || `<option>—</option>`;
@@ -961,11 +1046,13 @@ function render() {
   S.canWrite = podeEditar(S.marcaId);
   $("#novaMarca").hidden = !podeGerir();
   $("#tabEquipe").hidden = !TODAS.includes(S.eu?.papel);
+  $("#tabFin").hidden = !TODAS_MARCAS.includes(S.eu?.papel);
+  $("#buBtn").hidden = !S.eu;
   $("#me").hidden = !S.eu;
   if (S.eu) $("#me").innerHTML = sinoHtml() + avatarHtml(S.eu, 30) + `<span class="who">Olá, <b>${esc(S.eu.nome)}</b></span><span class="papel">${esc(PAPEIS[S.eu.papel] || "")}</span><a href="#conta">Minha conta</a><button class="ghost-light" type="button" onclick="sair()">Sair</button>`;
   if (S.eu && !$("#notifPop").hidden) desenharNotif();
   const LIBERADAS_CLIENTE = ["#calendario", "#stories", "#grade", "#aprovacoes"];
-  document.querySelectorAll("#tabs a").forEach(a => { if (a.id !== "tabEquipe") a.hidden = ehCliente() && !LIBERADAS_CLIENTE.includes(a.getAttribute("href")); });
+  document.querySelectorAll("#tabs a").forEach(a => { if (a.id !== "tabEquipe" && a.id !== "tabFin") a.hidden = ehCliente() && !LIBERADAS_CLIENTE.includes(a.getAttribute("href")); });
   if (ehCliente() && !["calendario", "stories", "grade", "aprovacoes", "conta"].includes(view())) { location.replace("#aprovacoes"); return; }
   const pend = pendencias().length, bd = $("#apvBadge");
   bd.hidden = !pend; bd.textContent = pend;
@@ -989,8 +1076,8 @@ function render() {
   if (!S.token) { app.innerHTML = vLogin(); $("#lgLogin")?.focus(); return; }
   if (!S.loadedM || !S.loadedP) return;
   const v0 = view();
-  if (v0 === "equipe" || v0 === "equipe-atividade" || v0 === "conta" || v0 === "aprovacoes" || v0 === "tarefas" || v0 === "agenda" || v0 === "horas" || v0 === "mural") {
-    app.innerHTML = avisoVersao() + faixaAvisos() + (v0 === "equipe" ? vEquipe : v0 === "equipe-atividade" ? vAtividade : v0 === "conta" ? vConta : v0 === "tarefas" ? vTarefas : v0 === "agenda" ? vAgenda : v0 === "horas" ? vHoras : v0 === "mural" ? vMural : vAprovacoes)();
+  if (v0 === "equipe" || v0 === "equipe-atividade" || v0 === "conta" || v0 === "aprovacoes" || v0 === "tarefas" || v0 === "agenda" || v0 === "horas" || v0 === "mural" || v0 === "financeiro") {
+    app.innerHTML = avisoVersao() + faixaAvisos() + (v0 === "equipe" ? vEquipe : v0 === "equipe-atividade" ? vAtividade : v0 === "conta" ? vConta : v0 === "tarefas" ? vTarefas : v0 === "agenda" ? vAgenda : v0 === "horas" ? vHoras : v0 === "mural" ? vMural : v0 === "financeiro" ? vFinanceiro : vAprovacoes)();
     return;
   }
   if (!marca()) {
@@ -1001,7 +1088,7 @@ function render() {
   }
   if (!S.month) S.month = pickMonth();
   const v = view();
-  app.innerHTML = avisoVersao() + faixaAvisos() + ({ calendario: vCal, stories: vStories, ideias: vIdeias, pautas: vPautas, fluxo: vFluxo, grade: vGrade, resumo: vResumo, marca: vMarcaGeral, "marca-sobre": () => vPerfil("sobre"), "marca-publico": vPublico, "marca-arquivos": vArquivos, "marca-notas": () => vPerfil("notas"), "marca-produtos": vProdutos, "marca-redes": vRedes, "marca-acessos": vAcessos, "marca-config": vMarca, "marca-plano": vPlano })[v]();
+  app.innerHTML = avisoVersao() + faixaAvisos() + ({ calendario: vCal, stories: vStories, ideias: vIdeias, pautas: vPautas, fluxo: vFluxo, grade: vGrade, resumo: vResumo, marca: vMarcaGeral, "marca-sobre": () => vPerfil("sobre"), "marca-publico": vPublico, "marca-arquivos": vArquivos, "marca-notas": () => vPerfil("notas"), "marca-produtos": vProdutos, "marca-redes": vRedes, "marca-acessos": vAcessos, "marca-config": vMarca, "marca-plano": vPlano, "marca-midias": vBiblioteca })[v]();
   if (v === "fluxo") wireBoard();
   if (v === "calendario") wireCalendario();
   if (v === "stories") wireStories();
@@ -1057,7 +1144,7 @@ function vCal() {
   const last = new Date(first.getFullYear(), first.getMonth() + 1, 0);
   const end = new Date(last); end.setDate(last.getDate() + (6 - last.getDay()));
   const byDay = {};
-  postsMarca().forEach(p => { if (p.data) (byDay[p.data] ||= []).push(p); });
+  postsMarca().forEach(p => { if (p.data && (!S.calRede || redesDe(p.rede).includes(S.calRede))) (byDay[p.data] ||= []).push(p); });
   const verDatas = store("datas") !== "0", comem = verDatas ? datasComemorativas(m) : {};
   const today = iso(new Date());
   let cells = WD.map(d => `<div class="dow">${d}</div>`).join("");
@@ -1078,9 +1165,12 @@ function vCal() {
     </div>`;
   }
   const n = postsMes().length;
-  return headM(m.nome, "Calendário", monthNav() + addBtn()) + pacoteHtml(m, S.month) + legendaHtml(postsMes()) +
+  const redesUsadas = [...new Set(postsMarca().flatMap(p => redesDe(p.rede)))];
+  const ferramentas = `<select class="rede-sel" aria-label="Filtrar por rede" onchange="S.calRede=this.value;render()"><option value="">Todas as redes</option>${redesUsadas.map(x => `<option${S.calRede === x ? " selected" : ""}>${esc(x)}</option>`).join("")}</select>
+    <button class="btn" type="button" onclick="abrirApresentacao()">▶ Apresentar</button>${S.canWrite ? `<button class="btn" type="button" onclick="abrirImportar()">Importar documento</button><button class="btn" type="button" onclick="copiarMesAnterior()">Copiar mês anterior</button>` : ""}`;
+  return headM(m.nome, "Calendário", monthNav() + addBtn()) + `<div class="cal-tools">${ferramentas}</div>` + pacoteHtml(m, S.month) + legendaHtml(postsMes()) +
     `<div class="cal">${cells}</div>
-    <p class="muted" style="margin-top:12px">${n} ${n === 1 ? "publicação" : "publicações"} em ${esc(monthLabel(S.month))}. A bolinha no canto de cada post mostra a fase (veja a legenda em cima; clique numa fase para destacar só ela). Clique num post para abrir o detalhamento${S.canWrite ? " ou arraste para outro dia para mudar a data" : ""}. Ideias sem data ficam na aba Ideias. <label style="display:inline-flex;gap:5px;align-items:center;margin-left:6px"><input type="checkbox"${verDatas ? " checked" : ""} onchange="store('datas', this.checked ? '1' : '0');render()"> Mostrar datas comemorativas</label></p>`;
+    <p class="muted" style="margin-top:12px">${n} ${n === 1 ? "publicação" : "publicações"} em ${esc(monthLabel(S.month))}. A bolinha no canto de cada post mostra a fase (veja a legenda em cima; clique numa fase para destacar só ela). Clique num post para abrir o detalhamento${S.canWrite ? " ou arraste para outro dia para mudar a data" : ""}. Ideias sem data ficam na aba Ideias.${S.canWrite ? ` <button type="button" class="lg-limpar" onclick="abrirLixeira()">🗑 Lixeira</button>` : ""} <label style="display:inline-flex;gap:5px;align-items:center;margin-left:6px"><input type="checkbox"${verDatas ? " checked" : ""} onchange="store('datas', this.checked ? '1' : '0');render()"> Mostrar datas comemorativas</label></p>`;
 }
 
 function filtered() {
@@ -1393,7 +1483,7 @@ function vResumo() {
       <button class="btn" type="button" id="dlPng" onclick="baixarRelatorio('png')">Baixar imagem</button>
       <button class="btn" type="button" onclick="baixarCsv()">Baixar planilha (CSV)</button>
       ${!S.resumoTodas && podeEditar(m.id) && S.equipe.some(u => u.papel === "cliente" && (u.marcas || []).includes(m.id) && u.temEmail) ? `<button class="btn" type="button" id="btRel" onclick="enviarRelatorioCliente()">Enviar ao cliente por e-mail</button>` : ""}
-    </div>` + (!S.resumoTodas ? pacoteHtml(m, S.month, true) : "") + relatorioHtml() + metricasHtml() + horarioHtml() + temposHtml(dadosResumo().ps) +
+    </div>` + (!S.resumoTodas ? pacoteHtml(m, S.month, true) : "") + relatorioHtml() + metricasHtml() + horarioHtml() + temposHtml(dadosResumo().ps) + satisfacaoHtml(S.resumoTodas ? S.marcas.map(x => x.id) : [S.marcaId]) +
     (!S.resumoTodas && m.observacoes ? `<div class="panel" style="margin-top:16px"><h2>Observações da marca</h2><p class="obs">${esc(m.observacoes)}</p></div>` : "");
 }
 
@@ -1578,7 +1668,7 @@ const pct = x => x.total ? Math.round(x.ok / x.total * 100) : 0;
 
 function subnav() {
   const pr = progresso(marca()), v = view();
-  const it = [["marca", "Visão geral"], ["marca-sobre", "Sobre", pr.sobre], ["marca-produtos", "Produtos"], ["marca-redes", "Redes"], ["marca-publico", "Público-alvo", pr.publico], ["marca-arquivos", "Arquivos e identidade", pr.arquivos], ["marca-notas", "Observações", pr.notas], ["marca-acessos", "Acessos"], ["marca-plano", "Pacote e legendas"], ["marca-config", "Configurações"]];
+  const it = [["marca", "Visão geral"], ["marca-sobre", "Sobre", pr.sobre], ["marca-produtos", "Produtos"], ["marca-redes", "Redes"], ["marca-publico", "Público-alvo", pr.publico], ["marca-arquivos", "Arquivos e identidade", pr.arquivos], ["marca-notas", "Observações", pr.notas], ["marca-acessos", "Acessos"], ["marca-plano", "Pacote e legendas"], ["marca-midias", "Biblioteca"], ["marca-config", "Configurações"]];
   return `<nav class="subnav" aria-label="Seções da marca">${it.map(([h, l, x]) => `<a href="#${h}"${v === h ? ' aria-current="page"' : ""}>${l}${x ? `<span class="pct">${pct(x)}%</span>` : ""}</a>`).join("")}</nav>`;
 }
 
@@ -1598,7 +1688,7 @@ function vMarcaGeral() {
       ${card("marca-publico", "Público-alvo", pr.publico, `${(p.personas || []).length} persona(s) cadastrada(s).`)}
       ${card("marca-arquivos", "Arquivos e identidade", pr.arquivos, `${arquivosDe(m).length} arquivo(s): direcionamento, manual, logotipo e vetores.`)}
       ${card("marca-notas", "Observações", pr.notas, "Tom de voz, pilares, datas, aprovação e aprendizados.")}
-    </div>` + reunioesMarcaHtml(m);
+    </div>` + briefingPainelHtml(m) + reunioesMarcaHtml(m);
 }
 
 function campoHtml([k, label, tipo, ph], val, extra = "") {
@@ -1984,7 +2074,7 @@ async function novaMarca() {
     const r = await api("salvarMarca", { marca: { nome: `Marca ${n}`, produtos: [], fases: DEFAULT_FASES, observacoes: "", criado: Date.now() } });
     S.marcaId = r.id; store("marca", r.id); S.month = null;
     await carregar();
-    location.hash = "#marca-config"; toast("Marca criada. Dê um nome a ela.");
+    location.hash = "#marca-config"; toast("Marca criada. Dê um nome a ela. O checklist de cliente novo já está em Tarefas.");
   } catch (e) { writeFail(e); }
 }
 async function excluirMarca() {
@@ -2027,7 +2117,7 @@ function drawEditor() {
       <h2>${esc(p.id ? nm(p) : "Nova postagem")}</h2></div>
       ${p.id ? `<div class="modo-sel" role="group" aria-label="Visualização"><button type="button" aria-pressed="${!insta}" onclick="trocarModoEditor('detalhada')">Detalhada</button><button type="button" aria-pressed="${!!insta}" onclick="trocarModoEditor('instagram')">Instagram</button></div>` : ""}
       <button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#dlg').close()">×</button></div>
-    ${insta ? `<div class="dlg-body" style="grid-template-columns:1fr"><div>${fluxoHtml(p)}</div><div>${igPost(p)}</div></div>
+    ${insta ? `<div class="dlg-body" style="grid-template-columns:1fr"><div>${fluxoHtml(p)}</div><div>${previaRede(p)}</div></div>
     <div class="dlg-foot"><span class="sp"></span><button class="btn" type="button" onclick="$('#dlg').close()">Fechar</button></div>` : `
     <div class="dlg-body">
       ${p.id ? `<div class="full">${fluxoHtml(p)}</div>` : ""}
@@ -2053,6 +2143,7 @@ function drawEditor() {
         <small>Com o link de uma pasta, "Puxar da pasta" traz as artes na ordem do número no fim do nome (P2-1, P2-2, P2-3…) e a legenda do documento (sem a linha de cabeçalho "P2 · título · data").</small></label>
       <div class="field full" id="eMidiasBox"${(p.midias || []).length ? "" : " hidden"}><span>Artes da publicação (${(p.midias || []).length})</span><div class="midias" id="eMidias">${midiasHtml(p.midias)}</div>
         ${S.canWrite ? `<button class="btn sm" type="button" style="justify-self:start;margin-top:6px" onclick="EDIT.midias=[];$('#eMidiasBox').hidden=true">Limpar artes</button>` : ""}</div>
+      ${S.canWrite ? `<details class="full"><summary class="muted" style="cursor:pointer;font-size:13.5px">📚 Pegar artes da biblioteca da marca</summary>${bibPickerHtml()}</details>` : ""}
       ${p.id ? `<div class="full">${versoesHtml(p)}</div>` : ""}
       <div class="full" id="eLegNova" hidden></div>
       <label class="field full"><span>Link da imagem de prévia (arquivo de imagem no Drive)</span><input id="eCapa" value="${esc(p.capa || "")}" placeholder="https://drive.google.com/file/d/…" oninput="atualizarPrevia()"${ro}>
@@ -2417,7 +2508,7 @@ function vAprovacoes() {
   const edita = !["aprovador", "cliente"].includes(S.eu.papel);
   const meus = p => temAcesso(p.marcaId);
   const trocaVisual = `<div class="escopo" role="group" aria-label="Visualização"><button type="button" aria-pressed="${modoVisual() !== "instagram"}" onclick="definirVisual('detalhada')">Detalhada</button><button type="button" aria-pressed="${modoVisual() === "instagram"}" onclick="definirVisual('instagram')">Como Instagram</button></div>`;
-  let html = head("Todas as suas marcas", "Aprovações", trocaVisual) + clientesHtml();
+  let html = head("Todas as suas marcas", "Aprovações", trocaVisual) + avaliacaoClienteHtml() + clientesHtml();
   if (ehCliente()) {
     html += sec("Ideias para você aprovar", "Nenhuma ideia esperando a sua aprovação.", S.posts.filter(p => p.status === "Validação do cliente" && temAcesso(p.marcaId)), "clienteValidar", "clienteReprovar");
     html += sec("Posts para você aprovar", "Nenhum post esperando a sua aprovação.", S.posts.filter(p => p.status === "Aprovação do cliente" && temAcesso(p.marcaId)), "clienteAprovar", "clienteAjustes");
@@ -3549,7 +3640,7 @@ function vIdeias() {
           <b>${esc(nm(p))}</b>${cheio(p.observacao) ? `<span class="muted" style="font-size:13px">${esc(p.observacao.slice(0, 140))}</span>` : ""}</button>
         ${pode ? `<div class="ic-acts"><input type="date" aria-label="Dia para ${esc(nm(p))}" id="dia-${esc(p.id)}"><button class="btn sm primary" type="button" onclick="agendarIdeia('${esc(p.id)}')">Colocar no calendário</button></div>` : ""}
       </article>`).join("")}</div>`
-      : `<div class="empty"><strong>Nenhuma ideia guardada</strong><span>Escreva acima e clique em Guardar ideia.</span></div>`}`;
+      : `<div class="empty"><strong>Nenhuma ideia guardada</strong><span>Escreva acima e clique em Guardar ideia.</span></div>`}` + trendsHtml();
 }
 async function agendarIdeia(id) {
   const dia = $("#dia-" + id).value;
@@ -4002,6 +4093,7 @@ async function excluirEvento() {
   try { await api("excluirEvento", { id: EV.id }); $("#evDlg").close(); await carregar(); toast(EV.tipo === "reuniao" ? "Reunião cancelada" : "Atividade excluída"); } catch (e) { writeFail(e); }
 }
 $("#evDlg").addEventListener("click", e => { if (e.target === $("#evDlg")) $("#evDlg").close(); });
+["buDlg", "imDlg", "lxDlg"].forEach(d => $("#" + d).addEventListener("click", e => { if (e.target === $("#" + d)) $("#" + d).close(); }));
 $("#evDlg").addEventListener("close", () => { EV = null; render(); });
 
 /* ---------- Aniversários ---------- */
@@ -4159,6 +4251,361 @@ function faixaAvisos() {
 }
 
 const aniChips = k => aniversariosDia(k).map(a => `<span class="ev-tf" style="border-style:solid">🎂 ${esc(a.nome)}</span>`).join("");
+/* ---------- 1. Importar o conteúdo do mês (documento) ---------- */
+function formatoDe(t) { t = String(t || "").toLowerCase(); return /carross/.test(t) ? "Carrossel" : /reel|v[íi]deo|video/.test(t) ? "Vídeo" : /est[áa]tic|frase|foto|imagem|post/.test(t) ? "Estático" : ""; }
+function lerDataTxt(t, ano) {
+  const m = String(t || "").match(/\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/);
+  if (!m) return "";
+  let y = m[3] ? (m[3].length === 2 ? 2000 + +m[3] : +m[3]) : ano;
+  return `${y}-${pad(+m[2])}-${pad(+m[1])}`;
+}
+function parseConteudo(texto, ano) {
+  const linhas = String(texto || "").replace(/\r/g, "").split("\n").map(l => l.replace(/[ \s]+$/g, "").replace(/^\s+/, ""));
+  const posts = []; let p = null, campo = null;
+  const ROT = { tema: "postagem", "título": "postagem", titulo: "postagem", headline: "postagem", formato: "formato", data: "data", dia: "data", objetivo: "objetivo", cta: "cta", legenda: "legenda", roteiro: "observacao", slides: "observacao", slide: "observacao", texto: "observacao", "observação": "observacao", observacao: "observacao", produto: "produto", fase: "fase", nome: "pauta", pauta: "pauta" };
+  const fecha = () => { if (p) { Object.keys(p).forEach(k => { if (typeof p[k] === "string") p[k] = p[k].trim(); }); posts.push(p); } };
+  linhas.forEach(l => {
+    const ini = l.match(/^(?:post|p)\s*0?(\d{1,2})\b\s*[-–—:·.|)]*\s*(.*)$/i);
+    if (ini && !/^(produto|pauta)\b/i.test(l)) {
+      fecha();
+      let resto = ini[2] || "";
+      p = { n: +ini[1], postagem: "", formato: "", data: lerDataTxt(resto, ano), legenda: "", observacao: "", objetivo: "", cta: "", produto: "", pauta: "" };
+      const fm = resto.match(/\(([^)]*)\)/); if (fm && formatoDe(fm[1])) p.formato = formatoDe(fm[1]);
+      if (!p.formato) p.formato = formatoDe(resto.split(/[·|–—-]/).slice(1).join(" "));
+      p.postagem = (resto.replace(/\([^)]*\)/g, "").replace(/\b\d{1,2}\/\d{1,2}(\/\d{2,4})?\b/g, "").split(/[·|–—]/).map(x => x.trim()).filter(x => x && !(formatoDe(x) && x.split(" ").length < 3))[0] || "").replace(/^[:\-\s]+|[:\-\s]+$/g, "");
+      campo = null; return;
+    }
+    if (!p) return;
+    const lab = l.match(/^([A-Za-zÀ-ú]+)(?:\s*\d+)?\s*:\s*(.*)$/);
+    if (lab && ROT[lab[1].toLowerCase()]) {
+      const k = ROT[lab[1].toLowerCase()], v = lab[2];
+      if (k === "formato") { p.formato = formatoDe(v) || p.formato; campo = null; return; }
+      if (k === "data") { p.data = lerDataTxt(v, ano) || p.data; campo = null; return; }
+      if (k === "postagem" && p.postagem && lab[1].toLowerCase() !== "tema") { p.observacao += l + "\n"; campo = "observacao"; return; }
+      if (k === "observacao") { p.observacao += l + "\n"; campo = "observacao"; return; }
+      p[k] = (p[k] ? p[k] + "\n" : "") + v; campo = k; return;
+    }
+    if (campo === "legenda") { p.legenda += "\n" + l; return; }
+    if (campo && campo !== "postagem" && campo !== "objetivo" && campo !== "cta") { p[campo] += (l ? l : "") + "\n"; return; }
+    if (l) { p.observacao += l + "\n"; campo = "observacao"; }
+  });
+  fecha();
+  posts.forEach(x => { if (!x.formato) x.formato = "Estático"; if (!x.postagem) x.postagem = x.pauta || `Post ${x.n}`; x.legenda = x.legenda.trim(); x.incluir = true; });
+  return posts;
+}
+let IMP = null;
+function abrirImportar() { IMP = { etapa: 1, link: "", texto: "", posts: [] }; desenharImportar(); $("#imDlg").showModal(); }
+function desenharImportar() {
+  const m = marca();
+  $("#imForm").innerHTML = `<div class="dlg-head"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600">${esc(m.nome)}</div><h2>Importar o conteúdo do mês</h2></div><button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#imDlg').close()">×</button></div>
+    <div class="dlg-body" style="grid-template-columns:1fr">
+    ${IMP.etapa === 1 ? `<p class="muted" style="margin:0;font-size:13.5px">Cole o link do documento do mês (Google Docs ou .docx no Drive) ou cole o texto. Cada post começa com "P1", "Post 1"… e pode ter a data (05/11), o formato (carrossel, reels…) e uma linha "Legenda:".</p>
+      <label class="field"><span>Link do documento</span><input id="imLink" value="${esc(IMP.link)}" placeholder="https://docs.google.com/document/d/…"></label>
+      <label class="field"><span>Ou cole o texto aqui</span><textarea id="imTexto" rows="8" placeholder="P1 · Conheça o Xpert (carrossel) · 05/11&#10;Legenda: …">${esc(IMP.texto)}</textarea></label>`
+    : `<p style="margin:0;font-size:13.5px"><b>${IMP.posts.filter(x => x.incluir).length}</b> de ${IMP.posts.length} postagens vão ser criadas como <b>Ideia</b>. Confira as datas e os formatos (sem data, vai para o banco de ideias).</p>
+      <div class="im-lista">${IMP.posts.map((x, i) => `<div class="im-it${x.incluir ? "" : " fora"}"><input type="checkbox"${x.incluir ? " checked" : ""} onchange="IMP.posts[${i}].incluir=this.checked;desenharImportar()" aria-label="Incluir">
+        <input type="date" value="${esc(x.data)}" onchange="IMP.posts[${i}].data=this.value"><select onchange="IMP.posts[${i}].formato=this.value">${FORMATOS.map(f => `<option${f === x.formato ? " selected" : ""}>${f}</option>`).join("")}</select>
+        <input value="${esc(x.postagem)}" oninput="IMP.posts[${i}].postagem=this.value" aria-label="Título">
+        <small class="muted">${x.legenda ? "✓ legenda" : "sem legenda"}${x.observacao ? " · roteiro" : ""}</small></div>`).join("")}</div>`}
+    </div>
+    <div class="dlg-foot">${IMP.etapa === 2 ? `<button class="btn" type="button" onclick="IMP.etapa=1;desenharImportar()">Voltar</button>` : ""}<span class="sp"></span>
+      <button class="btn primary" type="button" id="imBtn" onclick="${IMP.etapa === 1 ? "lerImportar()" : "criarImportados()"}">${IMP.etapa === 1 ? "Ler o documento" : "Criar postagens"}</button></div>`;
+}
+async function lerImportar() {
+  IMP.link = $("#imLink").value.trim(); IMP.texto = $("#imTexto").value;
+  const b = $("#imBtn"); b.disabled = true; b.textContent = "Lendo…";
+  try {
+    let texto = IMP.texto;
+    if (IMP.link) texto = (await api("lerConteudo", { link: IMP.link })).texto;
+    if (!texto.trim()) throw { code: "local", message: "Cole o link ou o texto." };
+    IMP.posts = parseConteudo(texto, +S.month.slice(0, 4));
+    if (!IMP.posts.length) throw { code: "local", message: 'Não achei nenhum post. Cada post precisa começar com "P1", "Post 1"…' };
+    IMP.etapa = 2; desenharImportar();
+  } catch (e) { b.disabled = false; b.textContent = "Ler o documento"; writeFail(e); }
+}
+async function criarImportados() {
+  const l = IMP.posts.filter(x => x.incluir).map(({ n, incluir, ...x }) => x);
+  if (!l.length) return toast("Marque pelo menos uma postagem.");
+  const b = $("#imBtn"); b.disabled = true; b.textContent = "Criando…";
+  try { const r = await api("importarPostagens", { marcaId: S.marcaId, posts: l }); $("#imDlg").close(); await carregar(); toast(`${r.ids.length} postagens criadas`); }
+  catch (e) { b.disabled = false; b.textContent = "Criar postagens"; writeFail(e); }
+}
+
+/* ---------- 2. Trends da semana ---------- */
+function carregarTrends() { S.trends = { carregando: true }; api("trends").then(r => { S.trends = r; }).catch(e => { S.trends = { erro: e.message }; }).finally(() => { if (view() === "ideias") render(); }); }
+function trendsHtml() {
+  if (!S.temTrends) return ehChefe() ? `<div class="panel" style="margin-top:18px;display:grid;gap:8px"><h2 style="margin:0">🔥 Trends da semana</h2><span class="muted" style="font-size:13px">Cole o link da planilha de trends que a agência atualiza toda semana. As trends aparecem aqui com o botão "Virar ideia".</span>
+    <div style="display:flex;gap:8px"><input id="trLink" placeholder="https://docs.google.com/spreadsheets/d/…" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px;color:var(--ink)"><button class="btn" type="button" onclick="ligarTrends()">Conectar</button></div></div>` : "";
+  const t = S.trends; if (!t) carregarTrends();
+  const corpo = !t || t.carregando ? `<p class="muted">Carregando as trends…</p>` : t.erro ? `<p class="muted">${esc(t.erro)}</p>` : !(t.itens || []).length ? `<p class="muted">A planilha ainda não tem trends.</p>`
+    : `<div class="trends">${t.itens.slice(0, 18).map((x, i) => `<article class="trend"><div class="muted" style="font-size:11.5px">${esc([x.rede, x.data].filter(Boolean).join(" · "))}</div><b>${esc(x.nome)}</b>${x.porque ? `<span style="font-size:13px">${esc(x.porque)}</span>` : ""}
+        <div style="display:flex;gap:6px;margin-top:auto">${/^https?:/.test(x.link) ? `<a class="btn sm" href="${esc(x.link)}" target="_blank" rel="noopener">Ver vídeo</a>` : ""}${S.canWrite ? `<button class="btn sm primary" type="button" onclick="trendIdeia(${i})">Virar ideia</button>` : ""}</div></article>`).join("")}</div>`;
+  return `<div style="margin-top:22px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 style="margin:0;font-size:18px">🔥 Trends da semana</h2>${t && !t.carregando ? `<button class="btn sm" type="button" onclick="carregarTrends();render()">Atualizar</button>` : ""}</div>${corpo}</div>`;
+}
+async function ligarTrends() { try { await api("trendsConfig", { link: $("#trLink").value.trim() }); S.temTrends = true; S.trends = null; render(); toast("Planilha de trends conectada"); } catch (e) { writeFail(e); } }
+async function trendIdeia(i) {
+  const x = S.trends.itens[i], m = marca();
+  try { await api("salvarPauta", { pauta: { marcaId: m.id, data: "", postagem: x.nome, formato: "Vídeo", inspiracao: x.link || "", observacao: x.porque ? "Trend: " + x.porque : "Trend da semana", fase: fasesDe(m)[0]?.nome || "" } }); await carregar(); toast("Trend guardada como ideia"); } catch (e) { writeFail(e); }
+}
+
+/* ---------- 3. Copiar o mês anterior ---------- */
+async function copiarMesAnterior() {
+  const de = shiftMonth(S.month, -1), n = S.posts.filter(p => p.marcaId === S.marcaId && (p.data || "").startsWith(de)).length;
+  if (!n) return toast(`${monthLabel(de)} não tem postagens para copiar.`);
+  if (!confirm(`Copiar a estrutura de ${monthLabel(de)} (${n} postagens: dias da semana, formatos, fases, produtos e redes) para ${monthLabel(S.month)}? Os temas ficam em branco para você preencher.`)) return;
+  try { const r = await api("copiarMes", { marcaId: S.marcaId, de, para: S.month }); await carregar(); toast(`${r.n} postagens criadas em ${monthLabel(S.month)}`); } catch (e) { writeFail(e); }
+}
+
+/* ---------- 4. Busca geral ---------- */
+function abrirBusca() { $("#buForm").innerHTML = `<div class="busca-top"><input id="buQ" type="search" placeholder="Buscar postagens, stories, tarefas, reuniões, arquivos…" autocomplete="off" oninput="desenharBusca()" onkeydown="if(event.key==='Escape'){event.preventDefault();$('#buDlg').close()}"><button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#buDlg').close()">×</button></div><div id="buRes" class="busca-res"><p class="muted">Digite pelo menos 2 letras. Busca em todas as marcas que você vê.</p></div>`; $("#buDlg").showModal(); $("#buQ").focus(); }
+function desenharBusca() {
+  const q = ($("#buQ").value || "").trim().toLowerCase(), box = $("#buRes");
+  if (q.length < 2) { box.innerHTML = `<p class="muted">Digite pelo menos 2 letras.</p>`; return; }
+  const tem = (...t) => t.join(" ").toLowerCase().includes(q), grupos = [];
+  const add = (titulo, itens) => { if (itens.length) grupos.push(`<h3>${titulo} <span class="muted">${itens.length}</span></h3>` + itens.slice(0, 12).join("")); };
+  const it = (onclick, t, sub) => `<button type="button" class="bu-it" onclick="$('#buDlg').close();${onclick}"><b>${esc(t)}</b><span>${esc(sub)}</span></button>`;
+  add("Postagens", S.posts.filter(p => tem(p.postagem, p.pauta, p.legenda, p.produto, p.observacao)).map(p => it(`S.marcaId='${esc(p.marcaId)}';store('marca','${esc(p.marcaId)}');openEditor('${esc(p.id)}')`, nm(p), `${nomeMarca(p.marcaId)} · ${p.data ? brFull(p.data) : "sem data"} · ${p.status}`)));
+  add("Stories", (S.stories || []).filter(x => tem(x.titulo, x.texto, x.roteiro)).map(x => it(`S.marcaId='${esc(x.marcaId)}';location.hash='#stories';setTimeout(()=>abrirStories('${esc(x.data)}',0),80)`, x.titulo || x.tipo || "Story", `${nomeMarca(x.marcaId)} · ${brFull(x.data)}`)));
+  add("Tarefas", S.tarefas.filter(t => tem(t.titulo, t.descricao)).map(t => it(`abrirTarefa('${esc(t.id)}')`, t.titulo, `${t.status}${t.prazo ? " · até " + br(t.prazo) : ""}`)));
+  add("Reuniões e atividades", (S.agenda || []).filter(x => tem(x.titulo, x.descricao, x.ata)).map(x => it(`location.hash='#agenda';setTimeout(()=>abrirEvento('${esc(x.id)}'),80)`, x.titulo, `${brFull(x.data)} ${x.hora}`)));
+  add("Arquivos das marcas", S.marcas.flatMap(m => arquivosDe(m).filter(a => tem(a.nome, a.nota, a.tipo)).map(a => `<a class="bu-it" href="${esc(a.url)}" target="_blank" rel="noopener"><b>${esc(a.nome)}</b><span>${esc(m.nome)} · ${esc(a.tipo || "")}</span></a>`)));
+  add("Marcas", S.marcas.filter(m => tem(m.nome, JSON.stringify(perfilDe(m)))).map(m => it(`S.marcaId='${esc(m.id)}';store('marca','${esc(m.id)}');S.month=null;location.hash='#marca';render()`, m.nome, "Abrir a marca")));
+  box.innerHTML = grupos.join("") || `<p class="muted">Nada encontrado para "${esc(q)}".</p>`;
+}
+document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k" && S.eu) { e.preventDefault(); abrirBusca(); } });
+
+/* ---------- 5. Lixeira ---------- */
+async function abrirLixeira() {
+  $("#lxForm").innerHTML = `<div class="dlg-head"><div><h2>🗑 Lixeira</h2></div><button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#lxDlg').close()">×</button></div><div class="dlg-body" style="grid-template-columns:1fr"><p class="muted">Carregando…</p></div>`;
+  $("#lxDlg").showModal();
+  try {
+    const r = await api("lixeira");
+    $("#lxForm .dlg-body").innerHTML = `<p class="muted" style="margin:0;font-size:13px">Postagens e stories apagados ficam aqui por 30 dias.</p>` + (r.itens.length ? r.itens.map(x => `<div class="lx-it"><div><b>${esc(x.titulo || "(sem título)")}</b><div class="muted" style="font-size:12.5px">${x.tipo === "story" ? "Story" : "Postagem"} · ${esc(nomeMarca(x.marcaId))}${x.data ? " · " + brFull(x.data) : ""} · apagado por ${esc(x.por)} ${esc(quando(x.em))}</div></div><button class="btn sm" type="button" onclick="restaurarItem('${esc(x.id)}', this)">Recuperar</button></div>`).join("") : `<p class="muted">A lixeira está vazia.</p>`);
+  } catch (e) { writeFail(e); }
+}
+async function restaurarItem(id, b) { b.disabled = true; try { await api("restaurar", { id }); b.closest(".lx-it").remove(); await carregar(); toast("Recuperado"); } catch (e) { b.disabled = false; writeFail(e); } }
+
+/* ---------- 12. Outras redes ---------- */
+const REDES_PREV = ["Instagram", "TikTok", "YouTube Shorts", "LinkedIn"];
+function previaRede(p) {
+  const r = S.prevRede || "Instagram";
+  const seletor = `<div class="escopo" role="group" aria-label="Rede da prévia" style="margin-bottom:10px">${REDES_PREV.map(x => `<button type="button" aria-pressed="${x === r}" onclick="S.prevRede='${x}';drawEditor()">${x}</button>`).join("")}</div>`;
+  if (r === "Instagram") return seletor + igPost(p);
+  const m = S.marcas.find(x => x.id === p.marcaId) || {}, perfil = perfilDe(m), arroba = String(perfil.instagram || m.nome || "marca").replace(/^.*instagram\.com\//i, "").replace(/[\/\s@]/g, "");
+  const md = midiasDe(p), x = md[0], id = x && x.id;
+  const midia = id ? (x.tipo === "video" ? `<video src="https://drive.google.com/uc?export=download&id=${esc(id)}" poster="https://drive.google.com/thumbnail?id=${esc(id)}&sz=w1080" playsinline loop muted onclick="this.paused?this.play():this.pause()" onerror="this.outerHTML='<iframe src=&quot;https://drive.google.com/file/d/${esc(id)}/preview&quot;></iframe>'"></video>` : `<img src="https://drive.google.com/thumbnail?id=${esc(id)}&sz=w1080" alt="">`) : `<div class="sem-arte">Sem arte ainda</div>`;
+  const leg = esc((p.legenda || "").slice(0, 220)) + ((p.legenda || "").length > 220 ? "…" : "");
+  if (r === "LinkedIn") return seletor + `<div class="li-post"><div class="li-h"><span class="av" style="--av:42px">${esc((m.nome || "?").charAt(0))}</span><div><b>${esc(m.nome || "")}</b><small>1.234 seguidores · agora · 🌐</small></div></div>
+    <div class="li-t">${esc(p.legenda || "Sem legenda ainda.").slice(0, 600)}</div><div class="li-m">${midia}</div><div class="li-a"><span>👍 Gostei</span><span>💬 Comentar</span><span>🔁 Compartilhar</span><span>➤ Enviar</span></div></div>`;
+  const yt = r === "YouTube Shorts";
+  return seletor + `<div class="vert ${yt ? "yt" : "tt"}">${midia}
+    <div class="v-dir">${yt ? `<span>👍<small>Gostei</small></span><span>👎<small>Não gostei</small></span><span>💬<small>12</small></span><span>↗<small>Compartilhar</small></span>` : `<span class="av" style="--av:40px">${esc((m.nome || "?").charAt(0))}</span><span>♥<small>1.2K</small></span><span>💬<small>48</small></span><span>🔖<small>90</small></span><span>↗<small>31</small></span>`}</div>
+    <div class="v-base"><b>@${esc(arroba)}</b>${yt ? ` <span class="v-insc">Inscrever-se</span>` : ""}<div>${leg}</div>${yt ? "" : `<div style="font-size:12px;opacity:.85">♪ som original – ${esc(arroba)}</div>`}</div>
+    ${yt ? `<div class="v-top">Shorts</div>` : `<div class="v-top">Seguindo | <b>Para você</b></div>`}</div>`;
+}
+
+/* ---------- 6. Briefing do cliente novo ---------- */
+const BRIEF_EXTRA = [["tom", "Como a marca fala (tom de voz)", "area", "Ex.: próxima, divertida, técnica, acolhedora…"], ["palavrasUsar", "Palavras e expressões que vocês usam", "area", ""], ["palavrasEvitar", "Palavras ou assuntos proibidos", "area", ""],
+  ["cores", "Cores da marca", "text", "Ex.: rosa #E91E63 e preto"], ["fontes", "Fontes (se souber)", "text", ""], ["estiloFoto", "Estilo de foto e vídeo que vocês gostam", "area", ""], ["naoFazer", "O que NÃO fazer no visual", "area", ""],
+  ["concorrentes", "Concorrentes (e o que fazem bem)", "area", "@perfil — o que você admira"], ["referencias", "Perfis que vocês admiram (referências)", "area", ""], ["datasImportantes", "Datas importantes (lançamentos, promoções, aniversário da marca)", "area", ""], ["expectativas", "O que você espera do nosso trabalho nos próximos meses?", "area", ""]];
+const BRIEF_PERSONA = [["dores", "Quais problemas o seu cliente quer resolver?"], ["desejos", "O que ele deseja / sonha?"], ["objecoes", "O que faz ele hesitar antes de comprar?"]];
+function briefingPainelHtml(m) {
+  const pf = perfilDe(m), extras = BRIEF_EXTRA.filter(([k]) => ["datasImportantes", "expectativas"].includes(k) && cheio(pf[k]));
+  return `<div class="panel" style="margin-top:16px;display:grid;gap:8px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="margin:0">📋 Briefing do cliente</h2>${podeEditar(m.id) ? `<button class="btn sm primary" type="button" id="btBrief" onclick="gerarBriefing()">Gerar link do briefing</button>` : ""}</div>
+    <span class="muted" style="font-size:13.5px">Um formulário que o cliente preenche sozinho, sem senha: sobre a marca, público, produtos, tom de voz, acessos e arquivos (logo, manual). As respostas entram direto aqui na área da marca.</span>
+    ${pf.briefingEm ? `<div style="font-size:13.5px">✅ Respondido ${pf.briefingNome ? "por <b>" + esc(pf.briefingNome) + "</b> " : ""}em ${new Date(pf.briefingEm).toLocaleDateString("pt-BR")}.</div>` : ""}
+    ${extras.map(([k, l]) => `<div><b style="font-size:13px">${esc(l)}</b><div class="obs" style="white-space:pre-wrap;font-size:14px">${esc(pf[k])}</div></div>`).join("")}
+    <div id="briefLink"></div></div>`;
+}
+async function gerarBriefing() {
+  try {
+    const r = await api("briefingLink", { marcaId: S.marcaId }), m = marca();
+    const msg = `Olá! Para começarmos o trabalho com a ${m.nome}, preencha este briefing (leva uns 15 minutos e dá para mandar o logo e o manual por ele): ${r.url}`;
+    $("#briefLink").innerHTML = `<label class="field"><span>Link (vale 30 dias)</span><input readonly value="${esc(r.url)}" onclick="this.select()"></label><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><button class="btn sm" type="button" onclick="copiarTexto(${esc(JSON.stringify(r.url))},'Link copiado')">Copiar link</button><a class="btn sm" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Mandar no WhatsApp</a></div>`;
+  } catch (e) { writeFail(e); }
+}
+// página pública (sem login): #briefing=<chave>
+let BR = null;
+async function vBriefingPublico(chave) {
+  document.body.classList.add("publico");
+  const app = $("#app");
+  if (!BR || BR.chave !== chave) {
+    app.innerHTML = `<div class="empty"><strong>Carregando o briefing…</strong></div>`;
+    try { BR = { chave, ...(await api("briefingVer", { chave })), arquivos: [], acessos: [{}] }; }
+    catch (e) { app.innerHTML = `<div class="empty"><strong>Link inválido</strong><span>${esc(e.message || "Este link expirou. Peça um novo para a agência.")}</span></div>`; return; }
+  }
+  if (!BR.feito && $("#brForm")) return; // já está na tela: não apaga o que o cliente digitou
+  if (BR.feito) { app.innerHTML = `<div class="empty"><strong>Obrigado! 💛</strong><span>Recebemos o briefing da ${esc(BR.marca)}. A equipe já pode começar.</span></div>`; return; }
+  const campo = (c, v) => { const cw = S.canWrite; S.canWrite = true; const h = campoHtml(c, v); S.canWrite = cw; return h; };
+  const sec = (t, d, html) => `<section class="panel br-sec"><h2>${t}</h2>${d ? `<p class="muted" style="margin:-4px 0 12px;font-size:13.5px">${d}</p>` : ""}${html}</section>`;
+  app.innerHTML = `<form id="brForm" class="briefing" onsubmit="event.preventDefault();enviarBriefing()">
+    <div class="br-capa"><small>Briefing</small><h1>${esc(BR.marca)}</h1><p>Conte pra gente sobre a sua marca. Quanto mais detalhe, melhor o conteúdo. Pode deixar em branco o que não souber.</p></div>
+    ${sec("Sobre a marca", "", `<div class="pf-grid">${SECOES.sobre.campos.map(c => campo(c, BR.atuais[c[0]])).join("")}</div>`)}
+    ${sec("Público", "Quem compra de vocês?", `<div class="pf-grid">${SECOES.publico.campos.filter(c => ["pResumo", "pIdade", "pGenero", "pLocal", "pClasse", "pMomento", "pValores", "pHorarios"].includes(c[0])).map(c => campo(c, BR.atuais[c[0]])).join("")}
+      ${BRIEF_PERSONA.map(([k, l]) => `<label class="field full"><span>${l}</span><textarea data-persona-k="${k}" rows="2"></textarea></label>`).join("")}</div>`)}
+    ${sec("Produtos ou serviços", "Um por linha.", `<textarea id="brProd" rows="5" style="width:100%">${esc((BR.produtos || []).join("\n"))}</textarea>`)}
+    ${sec("Comunicação e visual", "", `<div class="pf-grid">${BRIEF_EXTRA.map(c => campo(c, BR.atuais[c[0]])).join("")}</div>`)}
+    ${sec("Acessos das contas", "Instagram, Facebook, TikTok… Ficam guardados com segurança, fora da planilha, e só a equipe da sua marca vê.", `<div id="brAcc" style="display:grid;gap:8px">${BR.acessos.map(brAccRow).join("")}</div><button class="btn sm" type="button" style="margin-top:8px" onclick="$('#brAcc').insertAdjacentHTML('beforeend', brAccRow())">+ Conta</button>`)}
+    ${sec("Arquivos", "Logo, manual da marca, fotos… (até 20 MB cada)", `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><select id="brTipo">${TIPOS_ARQ.map(t => `<option>${esc(t)}</option>`).join("")}</select><input type="file" id="brFile"><button class="btn sm" type="button" id="brUp" onclick="enviarArqBriefing()">Enviar arquivo</button></div><ul id="brArqs">${BR.arquivos.map(a => `<li>${esc(a.tipo)}: ${esc(a.nome)}</li>`).join("")}</ul>`)}
+    ${sec("Quem está preenchendo", "", `<input id="brNome" required placeholder="Seu nome" style="width:100%">`)}
+    <button class="btn primary" type="submit" id="brEnviar" style="justify-self:start;font-size:16px;padding:12px 22px">Enviar briefing</button></form>`;
+}
+const brAccRow = (a = {}) => `<div class="br-acc" data-bracc><input data-b="plataforma" placeholder="Plataforma (Instagram…)" value="${esc(a.plataforma || "")}"><input data-b="usuario" placeholder="Usuário / @"><input data-b="email" placeholder="E-mail de login"><input data-b="senha" type="password" placeholder="Senha" autocomplete="new-password"></div>`;
+async function enviarArqBriefing() {
+  const f = $("#brFile").files[0]; if (!f) return toast("Escolha o arquivo.");
+  if (f.size > 20 * 1024 * 1024) return toast("Arquivo grande demais (máx. 20 MB).");
+  const b = $("#brUp"); b.disabled = true; b.textContent = "Enviando…";
+  try { const r = await api("briefingArquivo", { chave: BR.chave, nome: f.name, mime: f.type, base64: await lerBase64(f) }); BR.arquivos.push({ nome: f.name, tipo: $("#brTipo").value, url: r.url, driveId: r.driveId }); $("#brArqs").insertAdjacentHTML("beforeend", `<li>${esc($("#brTipo").value)}: ${esc(f.name)} ✓</li>`); $("#brFile").value = ""; toast("Arquivo enviado"); }
+  catch (e) { writeFail(e); }
+  b.disabled = false; b.textContent = "Enviar arquivo";
+}
+async function enviarBriefing() {
+  const f = $("#brForm"), campos = {};
+  f.querySelectorAll("[data-k]").forEach(el => { if (el.value.trim()) campos[el.dataset.k] = el.value.trim(); });
+  const persona = {}; f.querySelectorAll("[data-persona-k]").forEach(el => persona[el.dataset.personaK] = el.value.trim());
+  const acessos = [...f.querySelectorAll("[data-bracc]")].map(r => { const o = {}; r.querySelectorAll("[data-b]").forEach(i => o[i.dataset.b] = i.value.trim()); return o; }).filter(a => a.usuario || a.email || a.senha);
+  const b = $("#brEnviar"); b.disabled = true; b.textContent = "Enviando…";
+  try { await api("briefingEnviar", { chave: BR.chave, dados: { nome: $("#brNome").value.trim(), campos, persona, produtos: $("#brProd").value.split("\n").map(s => s.trim()).filter(Boolean), acessos, arquivos: BR.arquivos } }); BR.feito = true; vBriefingPublico(BR.chave); window.scrollTo(0, 0); }
+  catch (e) { b.disabled = false; b.textContent = "Enviar briefing"; toast(e.message || "Não consegui enviar. Tente de novo."); }
+}
+
+/* ---------- 7. Apresentação do mês ---------- */
+let AP = null;
+function abrirApresentacao() {
+  const m = marca(), ps = postsMes().filter(p => p.data), sts = storiesMarca().filter(x => (x.data || "").startsWith(S.month));
+  const comem = datasComemorativas(m), datas = Object.entries(comem).filter(([k]) => k.startsWith(S.month)).sort();
+  const slides = [];
+  slides.push(`<div class="ap-capa"><small>Planejamento de conteúdo</small><h1>${esc(m.nome)}</h1><h2>${esc(monthLabel(S.month))}</h2></div>`);
+  const porFmt = FORMATOS.map(f => [f, ps.filter(p => p.formato === f).length]).filter(x => x[1]);
+  slides.push(`<div class="ap-num"><h2>O mês em números</h2><div class="ap-kpis"><div><b>${ps.length}</b><span>posts no feed</span></div>${porFmt.map(([f, n]) => `<div><b>${n}</b><span>${f.toLowerCase()}${n > 1 ? "s" : ""}</span></div>`).join("")}<div><b>${sts.length}</b><span>stories</span></div></div>
+    ${fasesDe(m).length ? `<div class="ap-fases">${fasesDe(m).map(f => { const n = ps.filter(p => p.fase === f.nome).length; return n ? `<span style="--c:${esc(f.cor)}"><i></i>${esc(f.nome)} · ${n}</span>` : ""; }).join("")}</div>` : ""}</div>`);
+  slides.push(`<div class="ap-grade"><h2>Como fica a grade</h2>${gradeBox(m, S.month, "").html || gradeBox(m, S.month, "")}</div>`);
+  if (datas.length) slides.push(`<div class="ap-datas"><h2>Datas do mês</h2><ul>${datas.map(([k, l]) => `<li><b>${br(k)}</b> ${esc(l.join(" · "))}</li>`).join("")}</ul></div>`);
+  ps.forEach((p, i) => slides.push(`<div class="ap-post"><div class="ap-info"><small>Post ${i + 1} de ${ps.length} · ${esc(wd(p.data))}, ${brFull(p.data)}</small><h2>${esc(p.postagem || "Sem título")}</h2>
+    <dl>${[["Formato", p.formato], ["Fase", p.fase], ["Produto", prodsDe(p.produto).join(", ")], ["Objetivo", p.objetivo], ["CTA", p.cta]].filter(x => cheio(x[1])).map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>
+    ${p.observacao ? `<p class="ap-obs">${esc(p.observacao.slice(0, 400))}</p>` : ""}</div><div class="ap-ig">${igPost(p)}</div></div>`));
+  const dias = [...new Set(sts.map(x => x.data))].sort();
+  if (dias.length) slides.push(`<div class="ap-st"><h2>Stories do mês</h2><div class="ap-st-l">${dias.slice(0, 8).map(k => { const l = sts.filter(x => x.data === k); return `<div><div class="ap-ph">${phoneHtml(l[0])}</div><b>${br(k)}</b><span>${l.length} ${l.length > 1 ? "stories" : "story"}</span></div>`; }).join("")}</div></div>`);
+  slides.push(`<div class="ap-capa"><h1>Obrigado!</h1><h2>Dúvidas ou ajustes? É só falar com a gente.</h2></div>`);
+  AP = { slides, i: 0 };
+  $("#apres").hidden = false; document.body.style.overflow = "hidden"; desenharAp();
+  try { $("#apres").requestFullscreen?.(); } catch (e) {}
+}
+function desenharAp() {
+  $("#apres").innerHTML = `<div class="ap-slide">${AP.slides[AP.i]}</div>
+    <div class="ap-nav"><button type="button" onclick="apIr(-1)" ${AP.i ? "" : "disabled"} aria-label="Anterior">‹</button><span>${AP.i + 1} / ${AP.slides.length}</span><button type="button" onclick="apIr(1)" ${AP.i < AP.slides.length - 1 ? "" : "disabled"} aria-label="Próximo">›</button><button type="button" onclick="fecharAp()" aria-label="Sair">✕</button></div>`;
+}
+function apIr(d) { AP.i = Math.max(0, Math.min(AP.slides.length - 1, AP.i + d)); desenharAp(); }
+function fecharAp() { $("#apres").hidden = true; AP = null; document.body.style.overflow = ""; try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {} }
+document.addEventListener("keydown", e => { if (!AP) return; if (["ArrowRight", " ", "PageDown"].includes(e.key)) { e.preventDefault(); apIr(1); } else if (["ArrowLeft", "PageUp"].includes(e.key)) apIr(-1); else if (e.key === "Escape") fecharAp(); });
+
+/* ---------- 8. Avaliação mensal ---------- */
+function avaliacaoClienteHtml() {
+  if (!ehCliente()) return "";
+  const mes = shiftMonth(hojeIso().slice(0, 7), -1);
+  const pend = S.marcas.filter(m => !(S.avaliacoes || []).some(a => a.marcaId === m.id && a.mes === mes) && S.posts.some(p => p.marcaId === m.id && (p.data || "").startsWith(mes)));
+  return pend.map(m => `<div class="panel aval" id="aval-${esc(m.id)}"><h2 style="margin:0">⭐ Como foi o conteúdo de ${esc(m.nome)} em ${esc(monthLabel(mes).toLowerCase())}?</h2>
+    <span class="muted" style="font-size:13.5px">De 0 a 10, quanto você ficou satisfeito(a)?</span>
+    <div class="notas">${Array.from({ length: 11 }, (_, n) => `<label><input type="radio" name="nota-${esc(m.id)}" value="${n}"><span>${n}</span></label>`).join("")}</div>
+    <textarea id="avc-${esc(m.id)}" rows="2" placeholder="Quer comentar algo? (opcional)"></textarea>
+    <button class="btn primary" type="button" style="justify-self:start" onclick="enviarAvaliacao('${esc(m.id)}','${mes}')">Enviar</button></div>`).join("");
+}
+async function enviarAvaliacao(mid, mes) {
+  const n = ($(`input[name="nota-${mid}"]:checked`) || {}).value;
+  if (n == null) return toast("Escolha uma nota.");
+  try { await api("avaliar", { marcaId: mid, mes, nota: +n, comentario: $("#avc-" + mid).value }); await carregar(); toast("Obrigado pela avaliação! 💛"); } catch (e) { writeFail(e); }
+}
+function satisfacaoHtml(mids) {
+  const l = (S.avaliacoes || []).filter(a => mids.includes(a.marcaId)).sort((a, b) => b.mes.localeCompare(a.mes) || b.em - a.em);
+  if (!l.length || !ehChefe()) return "";
+  const media = (l.reduce((s, a) => s + a.nota, 0) / l.length).toFixed(1).replace(".", ",");
+  const cor = n => n >= 9 ? "var(--st-postado)" : n >= 7 ? "var(--s-validacao)" : "var(--danger)";
+  return `<div class="panel" style="margin-top:16px"><h2>Satisfação do cliente</h2><p style="margin:-4px 0 10px">Média: <b>${media}</b> em ${l.length} avaliação(ões)</p>
+    <div class="aval-l">${l.slice(0, 12).map(a => `<div><span class="nota-b" style="--c:${cor(a.nota)}">${a.nota}</span><div><b>${esc(a.nome)}</b> <span class="muted">· ${esc(nomeMarca(a.marcaId))} · ${esc(monthLabel(a.mes))}</span>${a.comentario ? `<div style="font-size:13.5px">"${esc(a.comentario)}"</div>` : ""}</div></div>`).join("")}</div></div>`;
+}
+
+/* ---------- 9. Financeiro ---------- */
+const brl = v => (+v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+function vFinanceiro() {
+  if (!TODAS_MARCAS.includes(S.eu.papel)) return `<div class="empty"><strong>Só o administrador e o diretor veem o financeiro</strong></div>`;
+  if (!S.fMes) S.fMes = hojeIso().slice(0, 7);
+  const mes = S.fMes, hoje = hojeIso(), ult = new Date(+mes.slice(0, 4), +mes.slice(5, 7), 0).getDate();
+  const linhas = S.marcas.map(m => {
+    const pf = perfilDe(m), fin = pf.financeiro || {}, valor = +pf.valorMensal || 0, dia = +fin.vencimento || 0;
+    const pag = (S.pagamentos || []).find(p => p.marcaId === m.id && p.mes === mes);
+    const vence = dia ? `${mes}-${pad(Math.min(dia, ult))}` : "";
+    const ativo = !fin.inicio || fin.inicio.slice(0, 7) <= mes;
+    const st = !valor || !ativo ? "—" : pag ? "pago" : vence && vence < hoje ? "atrasado" : "aberto";
+    return { m, fin, valor, vence, pag, st };
+  });
+  const soma = f => linhas.filter(f).reduce((s, x) => s + x.valor, 0);
+  const previsto = soma(x => x.st !== "—"), recebido = (S.pagamentos || []).filter(p => p.mes === mes).reduce((s, p) => s + p.valor, 0), aberto = soma(x => x.st === "aberto" || x.st === "atrasado");
+  const renovar = linhas.filter(x => x.fin.renovacao && x.fin.renovacao >= hoje && x.fin.renovacao <= prazoPadrao(hoje, -45));
+  const nav = `<div class="month-nav"><button class="icon-btn" type="button" aria-label="Mês anterior" onclick="S.fMes=shiftMonth(S.fMes,-1);render()">‹</button><div class="lbl">${esc(monthLabel(mes))}</div><button class="icon-btn" type="button" aria-label="Próximo mês" onclick="S.fMes=shiftMonth(S.fMes,1);render()">›</button></div>`;
+  const ST = { pago: ["✓ Pago", "var(--st-postado)"], atrasado: ["Atrasado", "var(--danger)"], aberto: ["Em aberto", "var(--s-validacao)"], "—": ["—", "var(--muted)"] };
+  return head("Administração", "Financeiro", nav) +
+    `<div class="met-kpis" style="margin-bottom:16px"><div><b>${brl(previsto)}</b><span>previsto no mês</span></div><div><b>${brl(recebido)}</b><span>recebido</span></div><div><b style="color:${aberto ? "var(--danger)" : "inherit"}">${brl(aberto)}</b><span>em aberto</span></div><div><b>${linhas.filter(x => x.st !== "—").length}</b><span>clientes ativos</span></div></div>
+    ${renovar.length ? `<div class="faixa-aviso" style="cursor:default">📄 Contrato perto de renovar: ${renovar.map(x => `<b>${esc(x.m.nome)}</b> (${brFull(x.fin.renovacao)})`).join(", ")}</div>` : ""}
+    <div class="table-wrap"><table class="fin" style="min-width:860px"><thead><tr><th>Marca</th><th class="n">Valor mensal</th><th>Vence dia</th><th>Início</th><th>Renovação</th><th>Situação</th><th></th></tr></thead><tbody>
+    ${linhas.map(x => `<tr data-fin="${esc(x.m.id)}"><td><b>${esc(x.m.nome)}</b></td>
+      <td class="n"><input type="number" min="0" step="0.01" data-f="valor" value="${esc(x.valor || "")}" placeholder="0,00" onchange="salvarFin('${esc(x.m.id)}')"></td>
+      <td><input type="number" min="1" max="31" data-f="vencimento" value="${esc(x.fin.vencimento || "")}" placeholder="dia" style="width:64px" onchange="salvarFin('${esc(x.m.id)}')"></td>
+      <td><input type="date" data-f="inicio" value="${esc(x.fin.inicio || "")}" onchange="salvarFin('${esc(x.m.id)}')"></td>
+      <td><input type="date" data-f="renovacao" value="${esc(x.fin.renovacao || "")}" onchange="salvarFin('${esc(x.m.id)}')"></td>
+      <td><span class="fin-st" style="--c:${ST[x.st][1]}">${ST[x.st][0]}</span>${x.pag ? `<div class="muted" style="font-size:11.5px">${brFull(x.pag.pagoEm)} · ${esc(x.pag.por)}</div>` : x.vence && x.st !== "—" ? `<div class="muted" style="font-size:11.5px">vence ${brFull(x.vence)}</div>` : ""}</td>
+      <td>${x.st === "—" ? "" : x.pag ? `<button class="btn sm" type="button" onclick="marcarPago('${esc(x.m.id)}',false)">Desfazer</button>` : `<button class="btn sm ok" type="button" onclick="marcarPago('${esc(x.m.id)}',true)">Marcar pago</button>`}</td></tr>`).join("")}</tbody></table></div>
+    <p class="muted" style="font-size:12.5px;margin-top:8px">O valor mensal também é usado em Horas (valor por hora). Cobranças vencidas aparecem no seu e-mail das 8h. Só o administrador e o diretor veem esta aba.</p>`;
+}
+async function salvarFin(mid) {
+  const tr = document.querySelector(`[data-fin="${mid}"]`), m = S.marcas.find(x => x.id === mid), pf = perfilDe(m), v = k => tr.querySelector(`[data-f=${k}]`).value;
+  const novo = { ...pf, valorMensal: +v("valor") || 0, financeiro: { ...(pf.financeiro || {}), vencimento: +v("vencimento") || "", inicio: v("inicio"), renovacao: v("renovacao") } };
+  try { await api("salvarMarca", { marca: { ...m, perfil: novo } }); m.perfil = novo; toast("Salvo"); render(); } catch (e) { writeFail(e); }
+}
+async function marcarPago(mid, pago) {
+  const m = S.marcas.find(x => x.id === mid);
+  try { await api("pagamento", { marcaId: mid, mes: S.fMes, pago: pago ? hojeIso() : "", valor: +perfilDe(m).valorMensal || 0 }); await carregar(); toast(pago ? "Pagamento registrado" : "Pagamento desfeito"); } catch (e) { writeFail(e); }
+}
+
+/* ---------- 11. Biblioteca de mídia ---------- */
+const bibliotecaDe = m => Array.isArray(perfilDe(m).biblioteca) ? perfilDe(m).biblioteca : [];
+function vBiblioteca() {
+  const m = marca(), l = bibliotecaDe(m), f = (S.bibTag || ""), tags = [...new Set(l.flatMap(x => x.tags || []))].sort();
+  const vis = f ? l.filter(x => (x.tags || []).includes(f)) : l;
+  return headM(m.nome, "Biblioteca de mídia") + subnav() +
+    `<p class="sec-intro">Fotos de produto, depoimentos, vídeos brutos… guardados aqui com etiquetas para reaproveitar nos posts (no editor da postagem, "Da biblioteca").</p>
+    ${S.canWrite ? `<div class="panel" style="display:grid;gap:8px;margin-bottom:14px"><div style="display:flex;gap:8px;flex-wrap:wrap"><input id="bibLink" placeholder="Link de uma pasta ou arquivo do Drive" style="flex:1;min-width:220px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px;color:var(--ink)"><input id="bibTags" placeholder="Etiquetas (ex.: produto, shampoo)" style="flex:1;min-width:180px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px;color:var(--ink)"><button class="btn primary" type="button" id="bibBtn" onclick="addBiblioteca()">Adicionar</button></div><small class="muted">Com o link de uma pasta, entram todas as fotos e vídeos dela.</small></div>` : ""}
+    ${tags.length ? `<div class="legenda"><button type="button" class="lg-it${f ? "" : " on"}" onclick="S.bibTag='';render()">Todas <b>${l.length}</b></button>${tags.map(t => `<button type="button" class="lg-it${f === t ? " on" : ""}" onclick="S.bibTag='${esc(t)}';render()">${esc(t)} <b>${l.filter(x => (x.tags || []).includes(t)).length}</b></button>`).join("")}</div>` : ""}
+    ${vis.length ? `<div class="bib">${vis.map(x => `<figure class="bib-it"><a href="https://drive.google.com/file/d/${esc(x.id)}/view" target="_blank" rel="noopener"><img src="https://drive.google.com/thumbnail?id=${esc(x.id)}&sz=w400" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${x.tipo === "video" ? "▶" : "🖼"}'}))">${x.tipo === "video" ? `<span class="bib-v">▶</span>` : ""}</a>
+      <figcaption><span title="${esc(x.nome)}">${esc(x.nome)}</span>${S.canWrite ? `<input value="${esc((x.tags || []).join(", "))}" placeholder="etiquetas" onchange="tagsBiblioteca('${esc(x.id)}', this.value)"><button type="button" class="com-x" aria-label="Remover" onclick="tirarBiblioteca('${esc(x.id)}')">×</button>` : `<small>${esc((x.tags || []).join(", "))}</small>`}</figcaption></figure>`).join("")}</div>` : `<div class="empty"><strong>Biblioteca vazia</strong><span>Adicione uma pasta do Drive com as fotos e vídeos da marca.</span></div>`}`;
+}
+async function salvarBiblioteca(l) { const m = marca(); await api("salvarMarca", { marca: { ...m, perfil: { ...perfilDe(m), biblioteca: l.slice(0, 400) } } }); await carregar(); }
+async function addBiblioteca() {
+  const link = $("#bibLink").value.trim(), tags = $("#bibTags").value.split(",").map(t => t.trim().toLowerCase()).filter(Boolean);
+  if (!link) return toast("Cole o link do Drive.");
+  const b = $("#bibBtn"); b.disabled = true; b.textContent = "Lendo…";
+  try {
+    let itens;
+    if (/folders\//.test(link)) itens = (await api("lerPasta", { link })).midias || [];
+    else { const id = driveId(link) || (link.match(/[\w-]{25,}/) || [])[0]; if (!id) throw { code: "local", message: "Link do Drive inválido." }; itens = [{ id, nome: "Arquivo", tipo: /video|mp4|mov/i.test(link) ? "video" : "imagem" }]; }
+    const atual = bibliotecaDe(marca()), novos = itens.filter(x => !atual.some(a => a.id === x.id)).map(x => ({ id: x.id, nome: x.nome, tipo: x.tipo, tags }));
+    await salvarBiblioteca(atual.concat(novos)); toast(`${novos.length} item(ns) na biblioteca`);
+  } catch (e) { writeFail(e); }
+  b.disabled = false; b.textContent = "Adicionar";
+}
+async function tagsBiblioteca(id, v) { const l = bibliotecaDe(marca()).map(x => x.id === id ? { ...x, tags: v.split(",").map(t => t.trim().toLowerCase()).filter(Boolean) } : x); try { await salvarBiblioteca(l); toast("Etiquetas salvas"); } catch (e) { writeFail(e); } }
+async function tirarBiblioteca(id) { try { await salvarBiblioteca(bibliotecaDe(marca()).filter(x => x.id !== id)); } catch (e) { writeFail(e); } }
+function bibPickerHtml() {
+  const l = bibliotecaDe(marca()); if (!l.length) return `<span class="muted" style="font-size:13px">A biblioteca desta marca está vazia (Marca → Biblioteca).</span>`;
+  return `<div class="bib-pick">${l.slice(0, 120).map(x => `<button type="button" title="${esc(x.nome + " · " + (x.tags || []).join(", "))}" onclick="usarDaBiblioteca('${esc(x.id)}')"><img src="https://drive.google.com/thumbnail?id=${esc(x.id)}&sz=w200" alt="" loading="lazy">${x.tipo === "video" ? "<span>▶</span>" : ""}</button>`).join("")}</div>`;
+}
+function usarDaBiblioteca(id) {
+  const x = bibliotecaDe(marca()).find(a => a.id === id); if (!x) return;
+  EDIT.midias = (EDIT.midias || []).concat([{ id: x.id, nome: x.nome, tipo: x.tipo }]);
+  $("#eMidias").innerHTML = midiasHtml(EDIT.midias); $("#eMidiasBox").hidden = false; $("#eMidiasBox > span").textContent = `Artes da publicação (${EDIT.midias.length})`;
+  if (!$("#eCapa").value.trim() && x.tipo !== "video") { $("#eCapa").value = `https://drive.google.com/file/d/${x.id}/view`; atualizarPrevia(); }
+  S.dirty = true; toast("Adicionada às artes");
+}
+
 /* ---------- Eventos ---------- */
 $("#marcaSel").addEventListener("change", e => { S.marcaId = e.target.value; store("marca", S.marcaId); S.month = null; S.f = { status: "", formato: "", produto: "", q: "" }; S.confirmDel = false; S.dirty = false; render(); });
 $("#novaMarca").addEventListener("click", novaMarca);
@@ -4174,7 +4621,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-05.2"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-06.1"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",
@@ -4192,7 +4639,7 @@ async function carregar() {
     const j = await api("listar", { desde: S.desde, se: S.carimbo });
     if (j.igual) { S.versao = j.versao || S.versao; return; }
     S.carimbo = j.carimbo || "";
-    S.stories = j.stories || []; S.agenda = j.agenda || []; S.horas = j.horas || []; S.mural = j.mural || [];
+    S.stories = j.stories || []; S.agenda = j.agenda || []; S.horas = j.horas || []; S.mural = j.mural || []; S.avaliacoes = j.avaliacoes || []; S.pagamentos = j.pagamentos || []; S.temTrends = !!j.temTrends;
     S.eu = j.eu; S.usuarios = j.usuarios || []; S.tarefas = j.tarefas || []; S.equipe = j.equipe || [];
     S.versao = j.versao || "antiga";
     S.marcas = (j.marcas || []).sort((a, b) => (a.criado || 0) - (b.criado || 0) || String(a.nome).localeCompare(b.nome));
