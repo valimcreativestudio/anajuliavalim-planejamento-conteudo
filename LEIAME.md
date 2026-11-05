@@ -1,4 +1,4 @@
-# Planeja AI
+# Planeja Aê
 
 Sistema de planejamento de Instagram por marca: calendário, postagens, fluxo de produção, grade do feed e resumo do mês.
 

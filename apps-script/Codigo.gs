@@ -19,8 +19,8 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-07.2';
-const NOME_APP = 'Planeja AI';
+const VERSAO = '2026-11-07.3';
+const NOME_APP = 'Planeja Aê';
 
 const ABA_PAUTAS = 'POSTAGENS';
 const ABA_MARCAS = 'MARCAS';

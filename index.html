@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Planeja AI</title>
+<title>Planeja Aê</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icone-192.png">
 <link rel="apple-touch-icon" href="icone-180.png">
@@ -11,7 +11,7 @@
 <script>try { const t = localStorage.getItem("plan.tema"); if (t === "dark" || t === "light") document.documentElement.dataset.theme = t; } catch (e) {}</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Planeja AI">
+<meta name="apple-mobile-web-app-title" content="Planeja Aê">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Figtree:wght@400;500;600;700&display=swap">
 <style>
@@ -907,7 +907,7 @@ header .brand .emp-app { font: 500 11px var(--f-body); opacity: .6; letter-spaci
 <body>
 <header class="top">
   <div class="wrap">
-    <div class="brand">Planeja <em>AI</em></div>
+    <div class="brand">Planeja <em>Aê</em></div>
     <div class="marca-pick">
       <span id="empBox"></span>
       <label for="marcaSel" class="muted" style="color:inherit;opacity:.75;font-size:13px">Marca</label>
@@ -2746,7 +2746,7 @@ function avatarHtml(u, tam = 28) {
 }
 function sinoHtml() {
   const novas = notificacoes().filter(n => n.em > vistoEm()).length;
-  document.title = (novas ? `(${novas}) ` : "") + "Planeja AI";
+  document.title = (novas ? `(${novas}) ` : "") + "Planeja Aê";
   const aberto = !$("#notifPop").hidden;
   return `<button class="sino" type="button" id="sinoBtn" aria-label="Notificações${novas ? `: ${novas} novas` : ""}" aria-expanded="${aberto}" onclick="abrirNotif(event)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
@@ -2776,7 +2776,7 @@ function abrirNotif(e) {
   store(chaveNotif(), String(Date.now()));
   $("#me").innerHTML = $("#me").innerHTML.replace(/<span class="badge">[^<]*<\/span>/, "");
   $("#sinoBtn")?.setAttribute("aria-expanded", "true");
-  document.title = "Planeja AI";
+  document.title = "Planeja Aê";
 }
 function fecharNotif() {
   $("#notifPop").hidden = true; S.notifBase = null;
@@ -4945,7 +4945,7 @@ async function salvarEmpresa() {
   if (!f.id) d.admin = { nome: $("#emAdmNome").value.trim(), login: $("#emAdmLogin").value.trim(), senha: $("#emAdmSenha").value.trim() };
   try {
     await api("salvarEmpresa", { empresaDados: d }); S.empEdit = null; S.dirty = false; S.carimbo = ""; await carregar();
-    if (d.admin) { S.empMsg = { msg: `Olá, ${d.admin.nome || ""}! Seu acesso ao Planeja AI da ${d.nome} está pronto.\n\nEndereço: ${location.origin + location.pathname}\nLogin: ${d.admin.login}\nSenha provisória: ${d.admin.senha}\n\nNo primeiro acesso, troque a senha em "Minha conta".` }; copiarTexto(S.empMsg.msg, "Empresa criada. Mensagem de acesso copiada"); }
+    if (d.admin) { S.empMsg = { msg: `Olá, ${d.admin.nome || ""}! Seu acesso ao Planeja Aê da ${d.nome} está pronto.\n\nEndereço: ${location.origin + location.pathname}\nLogin: ${d.admin.login}\nSenha provisória: ${d.admin.senha}\n\nNo primeiro acesso, troque a senha em "Minha conta".` }; copiarTexto(S.empMsg.msg, "Empresa criada. Mensagem de acesso copiada"); }
     else toast("Salvo");
     render();
   } catch (e) { writeFail(e); }
@@ -5062,7 +5062,7 @@ async function salvarEmpresaPerfil(soPerm) {
 function desenharMarcaApp() {
   const b = $("header .brand"), e = S.empresaInfo, pf = (e && e.perfil) || {};
   if (!b) return;
-  b.innerHTML = e && (pf.logo || e.nome) ? `${pf.logo ? `<img class="emp-logo" src="https://drive.google.com/thumbnail?id=${esc(pf.logo)}&sz=w120" alt="">` : ""}<span class="emp-n">${esc(e.nome)}</span><small class="emp-app">Planeja <em>AI</em></small>` : `Planeja <em>AI</em>`;
+  b.innerHTML = e && (pf.logo || e.nome) ? `${pf.logo ? `<img class="emp-logo" src="https://drive.google.com/thumbnail?id=${esc(pf.logo)}&sz=w120" alt="">` : ""}<span class="emp-n">${esc(e.nome)}</span><small class="emp-app">Planeja <em>Aê</em></small>` : `Planeja <em>Aê</em>`;
 }
 
 /* ---------- Eventos ---------- */
@@ -5080,7 +5080,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-07.2"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-07.3"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",
