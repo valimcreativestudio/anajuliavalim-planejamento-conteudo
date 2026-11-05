@@ -19,13 +19,19 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-03.2';
+const VERSAO = '2026-11-05.1';
 
 const ABA_PAUTAS = 'POSTAGENS';
 const ABA_MARCAS = 'MARCAS';
 const ABA_USUARIOS = 'USUARIOS';
 const ABA_TAREFAS = 'TAREFAS';
 const ABA_STORIES = 'STORIES';
+const ABA_AGENDA = 'AGENDA';
+const CAMPOS_AGENDA = [
+  ['id', 'ID'], ['tipo', 'Tipo'], ['status', 'Status'], ['titulo', 'Assunto'], ['data', 'Dia'], ['hora', 'Horário'], ['duracao', 'Duração (min)'],
+  ['participantes', 'Participantes (IDs)'], ['local', 'Local ou link'], ['descricao', 'Pauta / detalhes'], ['respostas', 'Respostas'], ['motivo', 'Motivo'],
+  ['cor', 'Cor'], ['marcaId', 'Marca ID'], ['criadoPorId', 'Criado por ID'], ['criadoPor', 'Criado por'], ['criado', 'Criado em'], ['atualizado', 'Atualizado em'], ['decididoPor', 'Decidido por']
+];
 const PASTA_ARQUIVOS = 'Planejamento de Conteúdo - Arquivos';
 const DIAS_DE_SESSAO = 30;
 
@@ -65,7 +71,7 @@ const PRIORIDADES = ['Urgente', 'Alta', 'Média', 'Baixa'];
 const CAMPOS_USUARIO = [
   ['id', 'ID'], ['nome', 'Nome'], ['login', 'Login (e-mail)'], ['papel', 'Papel'],
   ['marcas', 'Marcas liberadas (IDs)'], ['ativo', 'Ativo'], ['hash', 'Senha (protegida)'],
-  ['sal', 'Sal'], ['criado', 'Criado em'], ['whatsapp', 'WhatsApp'], ['ultimoAcesso', 'Último acesso'], ['notificar', 'Notificações por e-mail'], ['visual', 'Visualização'], ['foto', 'Foto de perfil (arquivo no Drive)']
+  ['sal', 'Sal'], ['criado', 'Criado em'], ['whatsapp', 'WhatsApp'], ['ultimoAcesso', 'Último acesso'], ['notificar', 'Notificações por e-mail'], ['visual', 'Visualização'], ['foto', 'Foto de perfil (arquivo no Drive)'], ['cores', 'Cores escolhidas']
 ];
 const PAPEIS = ['admin', 'diretor', 'gestor', 'social', 'aprovador', 'cliente'];
 const VEEM_TODAS = ['admin', 'diretor', 'gestor']; // chefia: veem a equipe e as tarefas
@@ -158,6 +164,10 @@ function doPost(e) {
         case 'meuNome': salvarMeuNome_(eu, req.nome); return json_({ ok: true });
         case 'minhaFoto': return json_(Object.assign({ ok: true }, salvarMinhaFoto_(eu, req.base64, req.remover)));
         case 'minhaVisualizacao': salvarPreferencia_(eu, 'visual', req.visual === 'instagram' ? 'instagram' : 'detalhada'); return json_({ ok: true });
+        case 'minhasCores': salvarPreferencia_(eu, 'cores', JSON.stringify(limparCores_(req.cores))); return json_({ ok: true });
+        case 'salvarEvento': return json_({ ok: true, id: salvarEvento_(eu, req.evento || {}, req.site) });
+        case 'responderEvento': responderEvento_(eu, req.id, req.resposta, req.motivo, req.dados || {}, req.site); return json_({ ok: true });
+        case 'excluirEvento': excluirEvento_(eu, req.id, req.site); return json_({ ok: true });
         case 'minhasNotificacoes': salvarPreferencia_(eu, 'notificar', req.notificar === false ? 'não' : 'sim'); return json_({ ok: true });
         case 'sair': PropertiesService.getScriptProperties().deleteProperty('tok_' + req.token); return json_({ ok: true });
         default: return json_({ ok: false, error: 'Ação desconhecida: ' + req.action });
@@ -208,6 +218,7 @@ function publicoUsuario_(u) {
     ultimoAcesso: Number(u.ultimoAcesso) || 0,
     notificar: u.notificar !== 'não',
     foto: u.foto || '',
+    cores: parseJSON_(u.cores, {}),
     visual: u.visual === 'instagram' || u.visual === 'detalhada' ? u.visual : (u.papel === 'cliente' ? 'instagram' : 'detalhada'),
     marcas: String(u.marcas || '').split(',').map(s => s.trim()).filter(String)
   };
@@ -263,6 +274,7 @@ function listar_(eu, desde, se) {
   const pautas = ler_(ABA_PAUTAS, CAMPOS_PAUTA).filter(p => acesso_(eu, p.marcaId) && noPeriodo(p.data)).map(pautaParaSite_);
   registrarAcesso_(eu);
   const r = { ok: true, versao: VERSAO, carimbo: carimbo, eu: eu, marcas: marcas, pautas: pautas };
+  r.agenda = ler_(ABA_AGENDA, CAMPOS_AGENDA).filter(x => veEvento_(eu, x) && noPeriodo(x.data)).map(eventoParaSite_);
   r.stories = ler_(ABA_STORIES, CAMPOS_STORY).filter(x => acesso_(eu, x.marcaId) && noPeriodo(x.data)).map(storyParaSite_);
   r.tarefas = ler_(ABA_TAREFAS, CAMPOS_TAREFA).filter(t => veTarefa_(eu, t)).map(tarefaParaSite_);
   // nomes da equipe (sem dados sensíveis) para escolher o responsável de uma tarefa
@@ -1030,6 +1042,7 @@ function configurar() {
   const pautas = aba_(ABA_PAUTAS, CAMPOS_PAUTA);
   aba_(ABA_USUARIOS, CAMPOS_USUARIO);
   aba_(ABA_STORIES, CAMPOS_STORY);
+  aba_(ABA_AGENDA, CAMPOS_AGENDA);
   instalarGatilhos_();
 
   if (!ler_(ABA_USUARIOS, CAMPOS_USUARIO).length) {
@@ -1507,6 +1520,9 @@ function resumoDiario() {
   const pautas = ler_(ABA_PAUTAS, CAMPOS_PAUTA).map(pautaParaSite_);
   const tarefas = ler_(ABA_TAREFAS, CAMPOS_TAREFA).map(tarefaParaSite_);
   const stories = ler_(ABA_STORIES, CAMPOS_STORY).map(storyParaSite_);
+  const agendaTudo = ler_(ABA_AGENDA, CAMPOS_AGENDA).map(eventoParaSite_);
+  const agendaHoje = agendaTudo.filter(x => x.data === hoje);
+  const agendaPend = agendaTudo.filter(x => x.status === 'solicitada' && x.data >= hoje);
   const nomes = {}; ler_(ABA_MARCAS, CAMPOS_MARCA).forEach(m => nomes[m.id] = m.nome);
   const nomeM = id => nomes[id] || '';
   const ANTES_ARTE = ['Ideia', 'Em validação', 'Validação do cliente', 'Ideia reprovada', 'Em produção', 'Ajustes solicitados'];
@@ -1535,6 +1551,8 @@ function resumoDiario() {
         if (atras.length) add('Atrasados na agência', atras.slice(0, 20).map(titulo));
       }
     }
+    add('Suas reuniões de hoje', agendaHoje.filter(x => x.tipo === 'reuniao' && x.status === 'confirmada' && participa_(u, x)).map(x => (x.hora || '') + ' · ' + x.titulo + ' (' + duracaoTxt_(x.duracao) + ')'));
+    if (VEEM_TODAS.indexOf(u.papel) >= 0) add('Pedidos de reunião esperando resposta', agendaPend.filter(x => participa_(u, x) || TODAS_MARCAS.indexOf(u.papel) >= 0).map(x => x.criadoPor + ': ' + x.titulo + ' (' + paraBR_(x.data).slice(0, 5) + ')'));
     add('Suas tarefas para hoje ou atrasadas', tarefas.filter(t => t.status !== 'Feita' && t.responsavelId === u.id && ((t.prazo && t.prazo <= hoje) || (t.data && t.data <= hoje))).map(t => t.titulo + (t.prazo ? ' (até ' + paraBR_(t.prazo).slice(0, 5) + ')' : '')));
     if (!secoes.length || MailApp.getRemainingDailyQuota() < 1) return;
     const link = site ? (u.papel === 'cliente' ? site + '#entrar=' + criarSessao_(u.id, 14, true) : site + (u.papel === 'cliente' ? '#aprovacoes' : '#tarefas')) : '';
@@ -1709,4 +1727,173 @@ function relatorioMensal() {
     if (!(parseJSON_(m.perfil, {}) || {}).relatorioAuto) return;
     try { mandarRelatorio_(m.id, mes, null, ''); } catch (e) { Logger.log('Relatório ' + m.nome + ': ' + e.message); }
   });
+}
+
+/* ======================================================================
+ * Novidades 2026-11-05: agenda (reuniões, pedidos de reunião, atividades) e cores pessoais
+ * ====================================================================== */
+
+// só aceita cores no formato #rrggbb e chaves conhecidas
+function limparCores_(c) {
+  const ok = ['destaque', 'cabecalho', 'calendario', 's-ideia', 's-validacao', 's-cliente', 's-ajustes', 's-producao', 's-aprovacao', 's-aprovado', 's-agendado', 's-postado', 's-reuniao', 's-atividade'];
+  const o = {};
+  Object.keys(c || {}).forEach(k => { if (ok.indexOf(k) >= 0 && /^#[0-9a-fA-F]{6}$/.test(String(c[k]))) o[k] = String(c[k]); });
+  return o;
+}
+
+/* ---------- Agenda ----------
+ * tipo reuniao: quem é da gestão (admin, diretor, gestor) marca direto; os outros mandam um pedido
+ *   (status "solicitada") que a gestão aceita (pode mudar dia e hora) ou recusa com motivo.
+ * tipo atividade: compromisso pessoal; só a própria pessoa vê. */
+const chefe_ = u => VEEM_TODAS.indexOf(u.papel) >= 0;
+function eventoParaSite_(x) {
+  x.data = paraISO_(x.data);
+  x.duracao = Number(x.duracao) || 60;
+  x.participantes = parseJSON_(x.participantes, []);
+  x.respostas = parseJSON_(x.respostas, {});
+  x.criado = Number(x.criado) || 0;
+  x.atualizado = Number(x.atualizado) || 0;
+  return x;
+}
+function participa_(u, x) {
+  const parts = Array.isArray(x.participantes) ? x.participantes : parseJSON_(x.participantes, []);
+  return x.criadoPorId === u.id || parts.indexOf(u.id) >= 0;
+}
+function veEvento_(eu, x) {
+  if (x.tipo === 'atividade') return x.criadoPorId === eu.id;
+  if (participa_(eu, x)) return true;
+  // a direção vê todas as reuniões; o gestor vê os pedidos para poder responder
+  return TODAS_MARCAS.indexOf(eu.papel) >= 0 || (eu.papel === 'gestor' && x.status === 'solicitada');
+}
+function duracaoTxt_(min) {
+  min = Number(min) || 60;
+  const h = Math.floor(min / 60), m = min % 60;
+  return (h ? h + 'h' : '') + (m ? (h ? ('0' + m).slice(-2) : m + ' min') : '');
+}
+function eventoPorId_(id) {
+  const x = ler_(ABA_AGENDA, CAMPOS_AGENDA).filter(e => e.id === String(id))[0];
+  return x ? eventoParaSite_(x) : null;
+}
+function gravarEvento_(x) {
+  const o = Object.assign({}, x, { data: paraBR_(x.data), participantes: JSON.stringify(x.participantes || []), respostas: JSON.stringify(x.respostas || {}) });
+  gravar_(ABA_AGENDA, CAMPOS_AGENDA, o);
+}
+function salvarEvento_(eu, ev, site) {
+  const atual = ev.id ? eventoPorId_(ev.id) : null;
+  if (ev.id && !atual) throw erro_('server', 'Compromisso não encontrado. Atualize a página.');
+  const tipo = atual ? atual.tipo : (ev.tipo === 'atividade' ? 'atividade' : 'reuniao');
+  if (atual && atual.criadoPorId !== eu.id && !(tipo === 'reuniao' && chefe_(eu))) throw erro_('permissao', 'Só quem criou (ou a gestão) altera este compromisso.');
+  if (eu.papel === 'cliente') throw erro_('permissao', 'O cliente não marca reuniões por aqui.');
+  const data = String(ev.data || ''), hora = String(ev.hora || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) throw erro_('server', 'Escolha o dia.');
+  if (!/^\d{1,2}:\d{2}$/.test(hora)) throw erro_('server', 'Escolha o horário.');
+  const titulo = String(ev.titulo || '').trim().slice(0, 200);
+  if (!titulo) throw erro_('server', tipo === 'reuniao' ? 'Escreva o assunto da reunião.' : 'Escreva o que é a atividade.');
+  const duracao = Math.max(5, Math.min(600, parseInt(ev.duracao, 10) || 60));
+  const ativos = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(u => u.ativo === 'sim').map(u => u.id);
+  let parts = tipo === 'reuniao' ? (Array.isArray(ev.participantes) ? ev.participantes : []).map(String).filter(id => ativos.indexOf(id) >= 0 && id !== eu.id) : [];
+  parts = parts.filter((id, i) => parts.indexOf(id) === i).slice(0, 50);
+  if (tipo === 'reuniao' && !parts.length) throw erro_('server', 'Escolha quem participa da reunião.');
+  // quem não é da gestão: vira pedido (ou continua pedido ao editar)
+  let status = 'confirmada';
+  if (tipo === 'reuniao' && !chefe_(eu)) status = 'solicitada';
+  if (atual && atual.status === 'confirmada' && tipo === 'reuniao' && !chefe_(eu)) status = 'solicitada';
+  const x = {
+    id: atual ? atual.id : Utilities.getUuid().slice(0, 13), tipo: tipo, status: tipo === 'atividade' ? 'confirmada' : status,
+    titulo: titulo, data: data, hora: hora, duracao: duracao, participantes: parts,
+    local: String(ev.local || '').trim().slice(0, 500), descricao: String(ev.descricao || '').slice(0, 3000),
+    respostas: atual ? (atual.data !== data || atual.hora !== hora ? {} : atual.respostas) : {}, motivo: '',
+    cor: /^#[0-9a-fA-F]{6}$/.test(ev.cor || '') ? ev.cor : (atual ? atual.cor : ''), marcaId: String(ev.marcaId || (atual ? atual.marcaId : '') || ''),
+    criadoPorId: atual ? atual.criadoPorId : eu.id, criadoPor: atual ? atual.criadoPor : eu.nome,
+    criado: atual ? atual.criado : Date.now(), atualizado: Date.now(), decididoPor: atual ? atual.decididoPor : (status === 'confirmada' ? eu.nome : '')
+  };
+  gravarEvento_(x);
+  if (tipo === 'reuniao') {
+    try {
+      if (x.status === 'solicitada') avisarEvento_(eu, x, 'pedido', site);
+      else avisarEvento_(eu, x, atual ? 'alterada' : 'marcada', site);
+    } catch (e) { Logger.log('Aviso de reunião: ' + e); }
+  }
+  return x.id;
+}
+// resposta: aceitar ou recusar um pedido (gestão); sim / nao / talvez (participante)
+function responderEvento_(eu, id, resposta, motivo, dados, site) {
+  const x = eventoPorId_(id);
+  if (!x || x.tipo !== 'reuniao') throw erro_('server', 'Reunião não encontrada. Atualize a página.');
+  if (resposta === 'aceitar' || resposta === 'recusar') {
+    if (!chefe_(eu)) throw erro_('permissao', 'Só a gestão aceita ou recusa pedidos de reunião.');
+    if (x.status !== 'solicitada') throw erro_('server', 'Este pedido já foi respondido.');
+    if (resposta === 'recusar') {
+      motivo = String(motivo || '').trim();
+      if (!motivo) throw erro_('server', 'Escreva o motivo (ou sugira outro horário).');
+      x.status = 'recusada'; x.motivo = motivo.slice(0, 1000);
+    } else {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dados.data || '')) x.data = dados.data;
+      if (/^\d{1,2}:\d{2}$/.test(dados.hora || '')) x.hora = dados.hora;
+      if (parseInt(dados.duracao, 10) > 0) x.duracao = Math.min(600, parseInt(dados.duracao, 10));
+      x.status = 'confirmada'; x.motivo = '';
+      if (x.participantes.indexOf(eu.id) < 0 && x.criadoPorId !== eu.id) x.participantes.push(eu.id);
+      x.respostas[eu.id] = 'sim';
+    }
+    x.decididoPor = eu.nome; x.atualizado = Date.now();
+    gravarEvento_(x);
+    try { avisarEvento_(eu, x, resposta === 'aceitar' ? 'aceita' : 'recusada', site); } catch (e) { Logger.log(e); }
+    return;
+  }
+  if (['sim', 'nao', 'talvez'].indexOf(resposta) < 0) throw erro_('server', 'Resposta inválida.');
+  if (!participa_(eu, x)) throw erro_('permissao', 'Você não está nesta reunião.');
+  x.respostas[eu.id] = resposta; x.atualizado = Date.now();
+  gravarEvento_(x);
+}
+function excluirEvento_(eu, id, site) {
+  const x = eventoPorId_(id);
+  if (!x) return;
+  if (x.criadoPorId !== eu.id && !(x.tipo === 'reuniao' && chefe_(eu))) throw erro_('permissao', 'Só quem criou (ou a gestão) cancela este compromisso.');
+  excluirLinha_(ABA_AGENDA, CAMPOS_AGENDA, id);
+  if (x.tipo === 'reuniao' && x.status === 'confirmada') { try { avisarEvento_(eu, x, 'cancelada', site); } catch (e) { Logger.log(e); } }
+}
+// arquivo .ics: abre direto no Google Agenda, Outlook ou no calendário do celular
+function icsDe_(x) {
+  const m = x.data.match(/^(\d{4})-(\d{2})-(\d{2})$/), h = x.hora.match(/^(\d{1,2}):(\d{2})$/);
+  const ini = new Date(+m[1], +m[2] - 1, +m[3], +h[1], +h[2]), fim = new Date(ini.getTime() + x.duracao * 60000);
+  const f = d => Utilities.formatDate(d, 'UTC', "yyyyMMdd'T'HHmmss'Z'");
+  const t = s => String(s || '').replace(/([,;\\])/g, '\\$1').replace(/\n/g, '\\n');
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Planejamento de Conteudo//PT-BR', 'METHOD:PUBLISH', 'BEGIN:VEVENT',
+    'UID:' + x.id + '@planejamento', 'DTSTAMP:' + f(new Date()), 'DTSTART:' + f(ini), 'DTEND:' + f(fim),
+    'SUMMARY:' + t(x.titulo), 'DESCRIPTION:' + t(x.descricao), 'LOCATION:' + t(x.local), 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+}
+function avisarEvento_(eu, x, tipo, site) {
+  const pessoas = ler_(ABA_USUARIOS, CAMPOS_USUARIO).map(publicoUsuario_).filter(u => u.ativo && u.notificar && u.id !== eu.id && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(u.login));
+  let dest = [];
+  if (tipo === 'pedido') {
+    // vai para quem da gestão está na reunião; se não tiver ninguém, para a direção
+    dest = pessoas.filter(u => chefe_(u) && x.participantes.indexOf(u.id) >= 0);
+    if (!dest.length) dest = pessoas.filter(u => TODAS_MARCAS.indexOf(u.papel) >= 0);
+  } else if (tipo === 'aceita' || tipo === 'recusada') {
+    dest = pessoas.filter(u => u.id === x.criadoPorId || (tipo === 'aceita' && x.participantes.indexOf(u.id) >= 0));
+  } else {
+    dest = pessoas.filter(u => x.participantes.indexOf(u.id) >= 0 || u.id === x.criadoPorId);
+  }
+  if (!dest.length || MailApp.getRemainingDailyQuota() < dest.length) return;
+  const titulos = { pedido: '🙋 Pedido de reunião', marcada: '📅 Reunião marcada', alterada: '🔁 Reunião alterada', aceita: '✅ Reunião confirmada', recusada: '❌ Pedido de reunião recusado', cancelada: '🚫 Reunião cancelada' };
+  const frases = { pedido: 'pediu uma reunião', marcada: 'marcou uma reunião com você', alterada: 'alterou a reunião', aceita: 'confirmou a reunião', recusada: 'recusou o pedido de reunião', cancelada: 'cancelou a reunião' };
+  const nomes = {}; ler_(ABA_USUARIOS, CAMPOS_USUARIO).forEach(u => nomes[u.id] = u.nome);
+  const quem = [x.criadoPor].concat(x.participantes.map(id => nomes[id]).filter(String)).filter((n, i, a) => n && a.indexOf(n) === i);
+  const dia = DIAS[parse_(x.data).getDay()] + ', ' + paraBR_(x.data);
+  const link = /^https:\/\//.test(String(site || '')) ? String(site).split('#')[0] + '#agenda' : '';
+  const linha = (k, v) => v ? '<tr><td style="padding:4px 12px 4px 0;color:#6b6b70;vertical-align:top">' + k + '</td><td style="padding:4px 0">' + escH_(v) + '</td></tr>' : '';
+  const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#1d1d1f;max-width:560px">' +
+    '<h2 style="margin:0 0 14px;font-size:22px;font-weight:600">' + titulos[tipo] + '</h2>' +
+    '<p style="margin:0 0 12px"><b>' + escH_(eu.nome) + '</b> ' + frases[tipo] + ':</p>' +
+    '<p style="margin:0 0 12px;font-size:18px"><b>' + escH_(x.titulo) + '</b></p>' +
+    (x.motivo ? '<div style="border-left:4px solid #b3362f;background:#fbeeed;padding:10px 14px;margin:0 0 14px"><b style="color:#b3362f">Motivo</b><br>' + escH_(x.motivo) + '</div>' : '') +
+    '<table style="border-collapse:collapse;font-size:14px;margin:0 0 18px">' + linha('Quando', dia + ' às ' + x.hora) + linha('Duração', duracaoTxt_(x.duracao)) + linha('Participantes', quem.join(', ')) + linha('Local / link', x.local) + linha('Pauta', x.descricao) + '</table>' +
+    (link ? '<p><a href="' + link + '" style="background:#1d1d1f;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none;display:inline-block">' + (tipo === 'pedido' ? 'Responder o pedido' : 'Ver na agenda') + '</a></p>' : '') +
+    (['marcada', 'alterada', 'aceita'].indexOf(tipo) >= 0 ? '<p style="margin:0;color:#6b6b70;font-size:12px">O convite vai em anexo: abra para colocar no seu Google Agenda ou no calendário do celular.</p>' : '') + '</div>';
+  const anexo = ['marcada', 'alterada', 'aceita'].indexOf(tipo) >= 0 ? [Utilities.newBlob(icsDe_(x), 'text/calendar', 'reuniao.ics')] : null;
+  dest.forEach(u => { const o = { to: u.login, subject: titulos[tipo] + ': ' + x.titulo + ' · ' + paraBR_(x.data).slice(0, 5) + ' ' + x.hora, htmlBody: html, name: 'Planejamento de Conteúdo' }; if (anexo) o.attachments = anexo; MailApp.sendEmail(o); });
+}
+function parse_(isoData) {
+  const m = String(isoData || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date();
 }

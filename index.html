@@ -8,6 +8,7 @@
 <link rel="icon" href="icone-192.png">
 <link rel="apple-touch-icon" href="icone-180.png">
 <meta name="theme-color" content="#26262A">
+<script>try { const t = localStorage.getItem("plan.tema"); if (t === "dark" || t === "light") document.documentElement.dataset.theme = t; } catch (e) {}</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Planejamento">
@@ -677,6 +678,69 @@ table.mh { min-width: 520px; } table.mh td { text-align: center; font-size: 12px
 table.mh th { font-size: 11.5px; }
 td.n.atraso { color: var(--danger); font-weight: 600; }
 .apv-sec h2 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+/* cores de status (cada pessoa pode trocar em Minha conta) */
+:root { --s-ideia: var(--st-ideia); --s-validacao: var(--st-validado); --s-cliente: var(--pr-alta); --s-producao: var(--st-produzido); --s-aprovacao: var(--st-aprovado); --s-ajustes: var(--danger); --s-aprovado: var(--st-postado); --s-agendado: var(--st-agendado); --s-postado: var(--ink); --s-reuniao: var(--st-produzido); --s-atividade: var(--st-postado); }
+.day, .sday { background: color-mix(in srgb, var(--cal, var(--surface)) var(--cal-mix, 0%), var(--surface)); }
+:root[style*="--cal:"] { --cal-mix: 16%; }
+.tema-btn { width: 36px; height: 36px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 17px; padding: 0; line-height: 1; }
+/* legenda do calendário */
+.legenda { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; align-items: center; }
+.lg-it { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 99px; padding: 4px 10px 4px 8px; font-size: 12.5px; cursor: pointer; }
+.lg-it i { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.lg-it b { font-size: 11px; color: var(--muted); font-weight: 700; }
+.lg-it.zero { opacity: .55; }
+.lg-it.on { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+.lg-limpar { border: 0; background: none; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: 12.5px; }
+.chip { position: relative; }
+.chip .st-bola { position: absolute; top: -4px; right: -4px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+.chip.apagado { opacity: .22; }
+.pal-amostra { display: inline-flex; margin-right: 6px; } .pal-amostra i { width: 10px; height: 14px; display: inline-block; } .pal-amostra i:first-child { border-radius: 3px 0 0 3px; } .pal-amostra i:last-child { border-radius: 0 3px 3px 0; }
+.cores-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.cor-it { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; font-size: 13.5px; cursor: pointer; }
+.cor-it input[type=color] { width: 30px; height: 30px; border: 0; padding: 0; background: none; cursor: pointer; flex: none; }
+.cor-it span { flex: 1; }
+/* agenda */
+.ag-sec { margin-bottom: 16px; } .ag-sec h2 { font-size: 16px; display: flex; gap: 8px; align-items: center; margin: 0 0 8px; } .ag-sec h2 .n { font-size: 12px; background: var(--surface-2); border-radius: 99px; padding: 1px 8px; }
+.ag-card { display: flex; justify-content: space-between; gap: 10px 16px; align-items: center; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--c); border-radius: 12px; padding: 10px 14px; margin-bottom: 8px; font-size: 14px; }
+.ag-card .muted { font-size: 13px; }
+.ag-acts { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.ag-acts input { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 5px 8px; color: var(--ink); }
+.wk-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.agw { display: grid; grid-template-columns: 46px repeat(7, minmax(110px, 1fr)); min-width: 820px; position: relative; }
+.wk-h { position: sticky; top: 0; background: var(--surface-2); padding: 8px; text-align: center; font-size: 12px; color: var(--muted); border-bottom: 1px solid var(--line); display: grid; gap: 2px; }
+.wk-h b { font-size: 18px; color: var(--ink); font-weight: 600; }
+.wk-h.hoje b { background: var(--ink); color: var(--bg); border-radius: 50%; width: 30px; height: 30px; display: grid; place-items: center; margin: 0 auto; font-size: 15px; }
+.wk-h.tf { padding: 0; border-radius: 0; background: var(--surface-2); }
+.wk-dia { border-bottom: 1px solid var(--line); border-left: 1px solid var(--line); padding: 3px; display: grid; gap: 3px; align-content: start; min-height: 6px; }
+.wk-horas { position: relative; } .wk-horas span { position: absolute; right: 6px; transform: translateY(-50%); font-size: 11px; color: var(--muted); } .wk-horas span:first-child { transform: none; }
+.wk-col { position: relative; border-left: 1px solid var(--line); background-image: repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px var(--h)); cursor: cell; background-color: color-mix(in srgb, var(--cal, var(--surface)) var(--cal-mix, 0%), var(--surface)); }
+.wk-col.hoje { background-color: color-mix(in srgb, var(--ink) 3%, var(--surface)); }
+.wk-col .ev { position: absolute; }
+.agora { position: absolute; left: 0; right: 0; height: 2px; background: var(--danger); z-index: 2; pointer-events: none; } .agora::before { content: ""; position: absolute; left: -4px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--danger); }
+.ev { display: grid; align-content: start; gap: 1px; text-align: left; border: 0; border-left: 3px solid var(--c); background: color-mix(in srgb, var(--c) 22%, var(--surface)); color: var(--ink); border-radius: 6px; padding: 3px 6px; font-size: 12px; line-height: 1.25; overflow: hidden; cursor: pointer; width: 100%; z-index: 1; }
+.ev b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ev span { font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ev.curto { grid-template-columns: auto 1fr; gap: 6px; align-items: center; padding-top: 1px; padding-bottom: 1px; } .ev.curto span { font-size: 10.5px; }
+.ev:hover { background: color-mix(in srgb, var(--c) 34%, var(--surface)); }
+.ev.pend { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--c) 18%, var(--surface)) 0 6px, var(--surface) 6px 12px); border-left-style: dashed; }
+.ev-tf { border: 1px dashed var(--line); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 2px 6px; font-size: 11.5px; text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
+.ag-mes .day { cursor: cell; } .ag-mes .ev { margin-top: 2px; }
+.ag-lista { display: grid; gap: 10px; }
+.ag-dia { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: grid; gap: 6px; }
+.ag-dia.hoje { border-color: var(--ink); }
+.ag-dia h3 { margin: 0; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+.ag-dia .ev { padding: 6px 8px; }
+.ag-leg { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: 12.5px; color: var(--muted); align-items: center; }
+.ag-leg i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.ag-leg i.tr { background: repeating-linear-gradient(135deg, var(--s-reuniao) 0 3px, transparent 3px 6px); border: 1px dashed var(--s-reuniao); }
+.ag-leg label { display: inline-flex; gap: 5px; align-items: center; }
+.ev-pessoas { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 6px; max-height: 220px; overflow-y: auto; margin-top: 6px; }
+.ev-pessoas label { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; cursor: pointer; font-size: 13.5px; }
+.ev-pessoas label:has(input:checked) { border-color: var(--ink); background: var(--surface-2); }
+.ev-pessoas small { display: block; font-size: 11px; color: var(--muted); }
+.ev-info { display: grid; gap: 8px; border-left: 4px solid var(--c); padding-left: 12px; font-size: 14px; }
+.ev-lista { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 6px; } .ev-lista li { display: flex; align-items: center; gap: 8px; font-size: 14px; } .ev-lista li span { flex: 1; }
+#evDlg { width: min(680px, calc(100vw - 24px)); }
+.atraso { color: var(--danger); }
 </style>
 </head>
 <body>
@@ -687,6 +751,7 @@ td.n.atraso { color: var(--danger); font-weight: 600; }
       <label for="marcaSel" class="muted" style="color:inherit;opacity:.75;font-size:13px">Marca</label>
       <select id="marcaSel"></select>
       <button class="ghost-light" id="novaMarca" type="button">+ Nova marca</button>
+      <button class="ghost-light tema-btn" id="temaBtn" type="button" onclick="trocarTema()" aria-label="Trocar tema">🌙</button>
     </div>
     <div class="me" id="me" hidden></div>
     <div class="notif-pop" id="notifPop" hidden role="dialog" aria-label="Notificações"></div>
@@ -701,6 +766,7 @@ td.n.atraso { color: var(--danger); font-weight: 600; }
       <a href="#marca">Marca</a>
       <a href="#aprovacoes">Aprovações<span class="badge" id="apvBadge" hidden></span></a>
       <a href="#tarefas">Tarefas<span class="badge" id="tfBadge" hidden></span></a>
+      <a href="#agenda" id="tabAgenda">Agenda<span class="badge" id="agBadge" hidden></span></a>
       <a href="#equipe" id="tabEquipe" hidden>Equipe</a>
     </nav>
   </div>
@@ -716,13 +782,14 @@ td.n.atraso { color: var(--danger); font-weight: 600; }
 <dialog id="stDlg"><form id="stForm" method="dialog"></form></dialog>
 <dialog id="seDlg"><form id="seForm" method="dialog"></form></dialog>
 <dialog id="lkDlg"><form id="lkForm" method="dialog"></form></dialog>
+<dialog id="evDlg"><form id="evForm" method="dialog"></form></dialog>
 <div class="toast" id="toast" hidden></div>
 
 <script src="config.js"></script>
 <script>
 const STATUS = ["Ideia", "Em validação", "Validação do cliente", "Ideia reprovada", "Em produção", "Em aprovação", "Aprovação do cliente", "Ajustes solicitados", "Aprovado", "Agendado", "Postado"];
 const COM_CLIENTE = ["Validação do cliente", "Aprovação do cliente"];
-const ST_VAR = { "Validação do cliente": "--pr-alta", "Aprovação do cliente": "--pr-alta", "Ideia": "--st-ideia", "Em validação": "--st-validado", "Ideia reprovada": "--danger", "Em produção": "--st-produzido", "Em aprovação": "--st-aprovado", "Ajustes solicitados": "--danger", "Aprovado": "--st-postado", "Agendado": "--st-agendado", "Postado": "--ink" };
+const ST_VAR = { "Validação do cliente": "--s-cliente", "Aprovação do cliente": "--s-cliente", "Ideia": "--s-ideia", "Em validação": "--s-validacao", "Ideia reprovada": "--s-ajustes", "Em produção": "--s-producao", "Em aprovação": "--s-aprovacao", "Ajustes solicitados": "--s-ajustes", "Aprovado": "--s-aprovado", "Agendado": "--s-agendado", "Postado": "--s-postado" };
 const STATUS_ANTIGOS = { Validado: "Em produção", Produzido: "Em aprovação" };
 const REPROVADOS = ["Ideia reprovada", "Ajustes solicitados"];
 // colunas do quadro: status reprovado fica junto da etapa em que precisa ser refeito
@@ -771,7 +838,7 @@ const DEFAULT_FASES = [
 ];
 
 const S = {
-  canWrite: false, insta: {}, stories: [], met: {}, mh: {}, carimbo: "", desde: "", acessos: {}, tarefas: [], equipe: [], tf: { quem: "minhas", marca: "", feitas: false }, eu: null, usuarios: [], token: store("token") || "", rej: null, uEdit: null,
+  canWrite: false, insta: {}, agenda: [], calSt: "", stories: [], met: {}, mh: {}, carimbo: "", desde: "", acessos: {}, tarefas: [], equipe: [], tf: { quem: "minhas", marca: "", feitas: false }, eu: null, usuarios: [], token: store("token") || "", rej: null, uEdit: null,
   marcas: [], posts: [], loadedM: false, loadedP: false, failed: false,
   marcaId: store("marca"), month: null,
   f: { status: "", formato: "", produto: "", q: "" },
@@ -794,7 +861,7 @@ const brFull = s => s ? `${s.slice(8, 10)}/${s.slice(5, 7)}/${s.slice(0, 4)}` : 
 const wd = s => s ? WD[parse(s).getDay()] : "";
 const monthLabel = ym => { const t = parse(ym + "-01").toLocaleDateString("pt-BR", { month: "long", year: "numeric" }); return t.charAt(0).toUpperCase() + t.slice(1); };
 const shiftMonth = (ym, n) => { const d = parse(ym + "-01"); d.setMonth(d.getMonth() + n); return iso(d).slice(0, 7); };
-const stColor = st => `var(${ST_VAR[st] || "--st-ideia"})`;
+const stColor = st => `var(${ST_VAR[st] || "--s-ideia"})`;
 // vários produtos ficam guardados como "Produto A + Produto B"
 const prodsDe = t => String(t || "").split(/\s+\+\s+/).map(x => x.trim()).filter(Boolean);
 const prodCurto = p => { const l = prodsDe(p.produto); return l.length > 1 ? `${l[0]} +${l.length - 1}` : (l[0] || ""); };
@@ -848,7 +915,7 @@ function setMonth(ym) {
 /* ---------- Vistas ---------- */
 const view = () => {
   const h = location.hash.replace("#", "");
-  return ["calendario", "stories", "ideias", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-acessos", "marca-config", "marca-plano", "aprovacoes", "equipe", "equipe-atividade", "conta", "tarefas"].includes(h) ? h : "calendario";
+  return ["calendario", "stories", "ideias", "agenda", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-acessos", "marca-config", "marca-plano", "aprovacoes", "equipe", "equipe-atividade", "conta", "tarefas"].includes(h) ? h : "calendario";
 };
 
 function render() {
@@ -869,6 +936,9 @@ function render() {
   bd.hidden = !pend; bd.textContent = pend;
   const ni = S.marcaId ? ideiasMarca().length : 0, ib = $("#ideiaBadge");
   ib.hidden = !ni; ib.textContent = ni; ib.style.background = "var(--surface-2)"; ib.style.color = "var(--ink)";
+  desenharTemaBtn();
+  const nag = S.eu ? pedidosParaMim().length + convitesSemResposta().length : 0, ab = $("#agBadge");
+  ab.hidden = !nag; ab.textContent = nag;
   const urg = minhasUrgentes(), tb = $("#tfBadge");
   tb.hidden = !urg; tb.textContent = urg;
   if (!API) {
@@ -882,8 +952,8 @@ function render() {
   if (!S.token) { app.innerHTML = vLogin(); $("#lgLogin")?.focus(); return; }
   if (!S.loadedM || !S.loadedP) return;
   const v0 = view();
-  if (v0 === "equipe" || v0 === "equipe-atividade" || v0 === "conta" || v0 === "aprovacoes" || v0 === "tarefas") {
-    app.innerHTML = avisoVersao() + (v0 === "equipe" ? vEquipe : v0 === "equipe-atividade" ? vAtividade : v0 === "conta" ? vConta : v0 === "tarefas" ? vTarefas : vAprovacoes)();
+  if (v0 === "equipe" || v0 === "equipe-atividade" || v0 === "conta" || v0 === "aprovacoes" || v0 === "tarefas" || v0 === "agenda") {
+    app.innerHTML = avisoVersao() + (v0 === "equipe" ? vEquipe : v0 === "equipe-atividade" ? vAtividade : v0 === "conta" ? vConta : v0 === "tarefas" ? vTarefas : v0 === "agenda" ? vAgenda : vAprovacoes)();
     return;
   }
   if (!marca()) {
@@ -962,16 +1032,17 @@ function vCal() {
       <div class="dhead"><span class="dnum"><b>${d.getDate()}</b><span class="wd">${WD[d.getDay()]}</span></span>
       ${S.canWrite ? `<button class="add-day" type="button" aria-label="Nova postagem em ${br(k)}" onclick="openEditor(null,'${k}')">+</button>` : ""}</div>
       ${comem[k] && !out ? `<div class="comem" title="${esc(comem[k].join(" · "))}">🎉 ${esc(comem[k].join(" · "))}</div>` : ""}
-      ${ps.map(p => `<button class="chip" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="openEditor('${esc(p.id)}')"${S.canWrite ? ` draggable="true" data-id="${esc(p.id)}"` : ""}>
+      ${ps.map(p => `<button class="chip${S.calSt && grupoSt(p.status)[0] !== S.calSt ? " apagado" : ""}" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="openEditor('${esc(p.id)}')"${S.canWrite ? ` draggable="true" data-id="${esc(p.id)}"` : ""}>
+        <span class="st-bola" style="background:${stColor(p.status)}" title="${esc(grupoSt(p.status)[0])}"></span>
         ${blobSrc(p) ? `<span class="prev"><img src="${esc(blobSrc(p))}" alt="" loading="lazy" onerror="this.parentNode.remove()"></span>` : ""}
-        <span class="meta"><span class="fmt">${FMT_ICON[p.formato] || ""} ${esc(p.formato || "")}</span><span class="dot" style="background:${stColor(p.status)}" title="${esc(p.status)}"></span>${REPROVADOS.includes(p.status) ? `<span class="flag">${p.status === "Ideia reprovada" ? "Reprovada" : "Ajustes"}</span>` : ""}${COM_CLIENTE.includes(p.status) ? `<span style="color:var(--pr-alta)">Com o cliente</span>` : ""}${atrasoDe(p) ? `<span class="atr" title="${esc(atrasoDe(p).txt)}">⚠ Atrasado</span>` : ""}${(p.comentarios || []).length ? `<span title="Comentários">💬 ${p.comentarios.length}</span>` : ""}${p.status === "Agendado" && p.agHora ? `<span title="Agendado">⏰ ${esc(p.agHora)}${p.agData && p.agData !== p.data ? " " + br(p.agData) : ""}</span>` : ""}</span>
+        <span class="meta"><span class="fmt">${FMT_ICON[p.formato] || ""} ${esc(p.formato || "")}</span>${REPROVADOS.includes(p.status) ? `<span class="flag">${p.status === "Ideia reprovada" ? "Reprovada" : "Ajustes"}</span>` : ""}${COM_CLIENTE.includes(p.status) ? `<span style="color:var(--pr-alta)">Com o cliente</span>` : ""}${atrasoDe(p) ? `<span class="atr" title="${esc(atrasoDe(p).txt)}">⚠ Atrasado</span>` : ""}${(p.comentarios || []).length ? `<span title="Comentários">💬 ${p.comentarios.length}</span>` : ""}${p.status === "Agendado" && p.agHora ? `<span title="Agendado">⏰ ${esc(p.agHora)}${p.agData && p.agData !== p.data ? " " + br(p.agData) : ""}</span>` : ""}</span>
         <span class="t" title="${esc(prodsDe(p.produto).join(", "))}"><b>${esc(prodCurto(p))}${prodCurto(p) ? ":" : ""}</b> ${esc(p.postagem || "sem título")}</span></button>`).join("")}
     </div>`;
   }
   const n = postsMes().length;
-  return headM(m.nome, "Calendário", monthNav() + addBtn()) + pacoteHtml(m, S.month) +
+  return headM(m.nome, "Calendário", monthNav() + addBtn()) + pacoteHtml(m, S.month) + legendaHtml(postsMes()) +
     `<div class="cal">${cells}</div>
-    <p class="muted" style="margin-top:12px">${n} ${n === 1 ? "publicação" : "publicações"} em ${esc(monthLabel(S.month))}. A bolinha indica o status. Clique num post para abrir o detalhamento${S.canWrite ? " ou arraste para outro dia para mudar a data" : ""}. Ideias sem data ficam na aba Ideias. <label style="display:inline-flex;gap:5px;align-items:center;margin-left:6px"><input type="checkbox"${verDatas ? " checked" : ""} onchange="store('datas', this.checked ? '1' : '0');render()"> Mostrar datas comemorativas</label></p>`;
+    <p class="muted" style="margin-top:12px">${n} ${n === 1 ? "publicação" : "publicações"} em ${esc(monthLabel(S.month))}. A bolinha no canto de cada post mostra a fase (veja a legenda em cima; clique numa fase para destacar só ela). Clique num post para abrir o detalhamento${S.canWrite ? " ou arraste para outro dia para mudar a data" : ""}. Ideias sem data ficam na aba Ideias. <label style="display:inline-flex;gap:5px;align-items:center;margin-left:6px"><input type="checkbox"${verDatas ? " checked" : ""} onchange="store('datas', this.checked ? '1' : '0');render()"> Mostrar datas comemorativas</label></p>`;
 }
 
 function filtered() {
@@ -2469,6 +2540,14 @@ function notificacoes() {
       : t[3] === "aprovar" ? podeAprovar(p.marcaId) && papel === "aprovador" : t[3] === "editar" ? podeEditar(p.marcaId) && papel === "social" : false);
     if (serve) lista.push({ em: h.em, por: h.por, acao: h.acao, motivo: h.motivo, titulo: nm(p), marcaId: p.marcaId, ic: t[1], cls: t[2], abrir: `openEditor('${esc(p.id)}')` });
   }));
+  // agenda: reunião marcada comigo, pedido para eu responder, resposta ao meu pedido
+  (S.agenda || []).forEach(x => {
+    if (x.tipo !== "reuniao" || x.atualizado < desde) return;
+    const abrir = `location.hash='#agenda';setTimeout(()=>abrirEvento('${esc(x.id)}'),50)`;
+    if (x.criadoPorId === S.eu.id) { if (["confirmada", "recusada"].includes(x.status) && x.decididoPor && x.decididoPor !== S.eu.nome) lista.push({ em: x.atualizado, por: x.decididoPor, acao: x.status === "recusada" ? "Recusou o seu pedido de reunião" : "Confirmou a reunião", motivo: x.motivo, titulo: x.titulo, ic: x.status === "recusada" ? "✗" : "📅", cls: x.status === "recusada" ? "danger" : "ok", abrir }); return; }
+    if (x.status === "solicitada" && ehChefe()) lista.push({ em: x.criado, por: x.criadoPor, acao: "Pediu uma reunião", titulo: `${x.titulo} · ${br(x.data)} ${x.hora}`, ic: "🙋", cls: "", abrir });
+    else if (x.status === "confirmada" && (x.participantes || []).includes(S.eu.id)) lista.push({ em: x.criado, por: x.criadoPor, acao: "Marcou uma reunião com você", titulo: `${x.titulo} · ${br(x.data)} ${x.hora}`, ic: "📅", cls: "", abrir });
+  });
   // comentários de outras pessoas nas postagens que eu vejo
   S.posts.forEach(p => (p.comentarios || []).forEach(c => {
     if (c.em < desde || c.uid === S.eu.id || !temAcesso(p.marcaId)) return;
@@ -2560,8 +2639,9 @@ async function entrar() {
 function limparTela() {
   S.dirty = false; S.rej = null; S.uEdit = null; S.boasVindas = null; S.confirmDel = false; S.delArq = null;
   S.acessos = {}; S.insta = {}; // senhas e chaves não passam de uma pessoa para outra no mesmo navegador
-  S.carimbo = ""; S.met = {}; S.stories = [];
-  ["stDlg", "seDlg", "lkDlg"].forEach(d => { if ($("#" + d).open) $("#" + d).close(); });
+  S.carimbo = ""; S.met = {}; S.stories = []; S.agenda = [];
+  store("cores", "{}"); aplicarCores({});
+  ["stDlg", "seDlg", "lkDlg", "evDlg"].forEach(d => { if ($("#" + d).open) $("#" + d).close(); });
   if ($("#dlg").open) $("#dlg").close();
   if ($("#agDlg").open) $("#agDlg").close();
   if ($("#tfDlg").open) $("#tfDlg").close();
@@ -2574,7 +2654,7 @@ async function sair() {
   location.hash = "#calendario"; render();
 }
 function vConta() {
-  return head(PAPEIS[S.eu.papel] || "", "Minha conta") + `<div style="max-width:460px;margin-bottom:16px">${avisosContaHtml()}</div>` + `<form class="panel" style="max-width:460px;display:grid;gap:12px;margin-bottom:16px" onsubmit="event.preventDefault();salvarMeuNome()">
+  return head(PAPEIS[S.eu.papel] || "", "Minha conta") + `<div style="max-width:760px;margin-bottom:16px">${coresContaHtml()}</div><div style="max-width:460px;margin-bottom:16px">${avisosContaHtml()}</div>` + `<form class="panel" style="max-width:460px;display:grid;gap:12px;margin-bottom:16px" onsubmit="event.preventDefault();salvarMeuNome()">
     <h2>Seu nome</h2>
     <label class="field"><span>Como você quer ser chamado(a)</span><input id="cNome" required maxlength="60" value="${esc(S.eu.nome)}" autocomplete="name"></label>
     <span class="muted" style="font-size:13px">Aparece no "Olá" lá em cima e no histórico das postagens. Seu login continua <b>${esc(S.eu.login)}</b>.</span>
@@ -3578,6 +3658,295 @@ function avisosContaHtml() {
   </div>`;
 }
 
+/* ---------- Modo claro / escuro ---------- */
+const temaAtual = () => document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+function desenharTemaBtn() {
+  const b = $("#temaBtn"); if (!b) return;
+  const escuro = temaAtual() === "dark";
+  b.innerHTML = escuro ? "☀️" : "🌙";
+  b.title = b.ariaLabel = escuro ? "Mudar para o modo claro" : "Mudar para o modo escuro";
+}
+function trocarTema() {
+  const novo = temaAtual() === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = novo; store("tema", novo);
+  desenharTemaBtn(); aplicarCores();
+}
+
+/* ---------- Cores de cada pessoa ---------- */
+const CORES_ITENS = [
+  ["destaque", "Botões e destaques", "--primary"], ["cabecalho", "Faixa do topo", "--vinho"], ["calendario", "Fundo do calendário", "--cal"],
+  ["s-ideia", "Ideia", "--s-ideia"], ["s-validacao", "Em validação", "--s-validacao"], ["s-cliente", "Com o cliente", "--s-cliente"], ["s-producao", "Em produção", "--s-producao"],
+  ["s-aprovacao", "Em aprovação", "--s-aprovacao"], ["s-ajustes", "Ajustes / reprovada", "--s-ajustes"], ["s-aprovado", "Aprovado", "--s-aprovado"], ["s-agendado", "Agendado", "--s-agendado"], ["s-postado", "Postado", "--s-postado"],
+  ["s-reuniao", "Reuniões", "--s-reuniao"], ["s-atividade", "Minhas atividades", "--s-atividade"]
+];
+const PALETAS = {
+  "Neutro (padrão)": {},
+  "Rosa": { destaque: "#c2185b", cabecalho: "#4a1630", calendario: "#f8bbd0" },
+  "Oceano": { destaque: "#1565c0", cabecalho: "#0d2a4a", calendario: "#bbdefb" },
+  "Floresta": { destaque: "#2e7d32", cabecalho: "#1b3a24", calendario: "#c8e6c9" },
+  "Lavanda": { destaque: "#6a4fb3", cabecalho: "#2d2347", calendario: "#d9cdf3" },
+  "Terracota": { destaque: "#c2552d", cabecalho: "#4a2418", calendario: "#f5d0bd" },
+  "Status vivos": { "s-ideia": "#9e9e9e", "s-validacao": "#f2b705", "s-cliente": "#ff7a00", "s-producao": "#1e88e5", "s-aprovacao": "#8e24aa", "s-ajustes": "#e53935", "s-aprovado": "#43a047", "s-agendado": "#d81b60", "s-postado": "#263238" }
+};
+const contraste = hex => { const n = parseInt(String(hex).slice(1), 16); return ((n >> 16) * 299 + ((n >> 8) & 255) * 587 + (n & 255) * 114) / 1000 > 150 ? "#141415" : "#F5F5F3"; };
+const minhasCores = () => (S.eu && S.eu.cores) || (() => { try { return JSON.parse(store("cores") || "{}"); } catch (e) { return {}; } })();
+function aplicarCores(c = minhasCores()) {
+  const r = document.documentElement.style;
+  CORES_ITENS.forEach(([k, , v]) => r.removeProperty(v));
+  ["--primary-ink", "--vinho-ink"].forEach(v => r.removeProperty(v));
+  Object.entries(c || {}).forEach(([k, val]) => {
+    const it = CORES_ITENS.find(x => x[0] === k); if (!it || !/^#[0-9a-f]{6}$/i.test(val)) return;
+    r.setProperty(it[2], val);
+    if (k === "destaque") r.setProperty("--primary-ink", contraste(val));
+    if (k === "cabecalho") r.setProperty("--vinho-ink", contraste(val));
+  });
+}
+let _coresTimer = null;
+function mudarCor(k, val) {
+  const c = { ...minhasCores() };
+  if (val) c[k] = val; else delete c[k];
+  guardarCores(c);
+}
+function usarPaleta(nome) { guardarCores(nome === "Neutro (padrão)" ? {} : { ...minhasCores(), ...PALETAS[nome] }); render(); }
+function guardarCores(c) {
+  if (S.eu) S.eu.cores = c;
+  store("cores", JSON.stringify(c)); aplicarCores(c);
+  clearTimeout(_coresTimer);
+  _coresTimer = setTimeout(() => api("minhasCores", { cores: c }).then(() => toast("Cores salvas")).catch(writeFail), 700);
+}
+function coresContaHtml() {
+  const c = minhasCores(), cs = getComputedStyle(document.documentElement);
+  const hex = v => { const x = cs.getPropertyValue(v).trim(); if (/^#[0-9a-f]{6}$/i.test(x)) return x; const m = x.match(/\d+/g); return m && m.length >= 3 ? "#" + m.slice(0, 3).map(n => (+n).toString(16).padStart(2, "0")).join("") : "#888888"; };
+  return `<div class="panel" style="display:grid;gap:12px"><h2 style="margin:0">Minhas cores</h2>
+    <p class="muted" style="margin:0;font-size:13.5px">Só mudam para você, em qualquer aparelho em que entrar.</p>
+    <div class="field"><span>Paletas prontas</span><div class="chips">${Object.keys(PALETAS).map(n => `<label><input type="radio" name="paleta" onchange="usarPaleta('${n}')"><span class="pal-amostra">${["destaque", "cabecalho", "calendario"].map(k => `<i style="background:${PALETAS[n][k] || "var(--line)"}"></i>`).join("")}</span>${esc(n)}</label>`).join("")}</div></div>
+    <div class="cores-grid">${CORES_ITENS.map(([k, l, v]) => `<label class="cor-it"><input type="color" value="${esc(c[k] || hex(v))}" oninput="mudarCor('${k}', this.value)"><span>${esc(l)}</span>${c[k] ? `<button type="button" class="com-x" title="Voltar ao padrão" aria-label="Voltar ${esc(l)} ao padrão" onclick="event.preventDefault();mudarCor('${k}','');render()">↺</button>` : ""}</label>`).join("")}</div>
+    <button class="btn sm" type="button" style="justify-self:start" onclick="guardarCores({});render()">Restaurar todas as cores</button>
+  </div>`;
+}
+
+/* ---------- Legenda de status no calendário ---------- */
+const GRUPOS_ST = [
+  ["Ideia", ["Ideia"], "--s-ideia"], ["Em validação", ["Em validação"], "--s-validacao"], ["Com o cliente", ["Validação do cliente", "Aprovação do cliente"], "--s-cliente"],
+  ["Em produção", ["Em produção"], "--s-producao"], ["Em aprovação", ["Em aprovação"], "--s-aprovacao"], ["Ajustes / reprovada", ["Ideia reprovada", "Ajustes solicitados"], "--s-ajustes"],
+  ["Aprovado", ["Aprovado"], "--s-aprovado"], ["Agendado", ["Agendado"], "--s-agendado"], ["Postado", ["Postado"], "--s-postado"]
+];
+const grupoSt = st => GRUPOS_ST.find(g => g[1].includes(st)) || GRUPOS_ST[0];
+function legendaHtml(lista) {
+  return `<div class="legenda" role="group" aria-label="Legenda das fases">${GRUPOS_ST.map(([nome, sts, v]) => {
+    const n = lista.filter(p => sts.includes(p.status)).length, on = S.calSt === nome;
+    return `<button type="button" class="lg-it${on ? " on" : ""}${n ? "" : " zero"}" aria-pressed="${on}" onclick="S.calSt=S.calSt==='${nome}'?'':'${nome}';render()" title="${on ? "Mostrar todos" : "Destacar só " + nome}"><i style="background:var(${v})"></i>${esc(nome)}<b>${n}</b></button>`;
+  }).join("")}${S.calSt ? `<button type="button" class="lg-limpar" onclick="S.calSt='';render()">Mostrar todos</button>` : ""}</div>`;
+}
+
+/* ---------- Agenda: reuniões, pedidos e atividades ---------- */
+const DURACOES = [15, 30, 45, 60, 90, 120, 180, 240];
+const durTxt = m => { m = +m || 60; const h = Math.floor(m / 60), r = m % 60; return (h ? h + "h" : "") + (r ? (h ? pad(r) : r + " min") : ""); };
+const minDe = h => { const [a, b] = String(h || "0:0").split(":").map(Number); return a * 60 + (b || 0); };
+const horaDe = m => pad(Math.floor(m / 60) % 24) + ":" + pad(m % 60);
+const ehChefe = () => TODAS.includes(S.eu?.papel);
+const participo = x => x.criadoPorId === S.eu.id || (x.participantes || []).includes(S.eu.id);
+const eventosDia = k => (S.agenda || []).filter(x => x.data === k && x.status !== "recusada").sort((a, b) => minDe(a.hora) - minDe(b.hora));
+const pedidosParaMim = () => (S.agenda || []).filter(x => x.tipo === "reuniao" && x.status === "solicitada" && ehChefe() && x.criadoPorId !== S.eu.id && x.data >= hojeIso());
+const convitesSemResposta = () => (S.agenda || []).filter(x => x.tipo === "reuniao" && x.status === "confirmada" && x.criadoPorId !== S.eu.id && (x.participantes || []).includes(S.eu.id) && !(x.respostas || {})[S.eu.id] && x.data >= hojeIso());
+const corEvento = x => x.cor || (x.tipo === "atividade" ? "var(--s-atividade)" : "var(--s-reuniao)");
+function conflitos(x) {
+  const ini = minDe(x.hora), fim = ini + (+x.duracao || 60);
+  return (S.agenda || []).filter(y => y.id !== x.id && y.data === x.data && y.status !== "recusada" && participo(y) && minDe(y.hora) < fim && minDe(y.hora) + (+y.duracao || 60) > ini);
+}
+function semanaDe(k) { const d = parse(k); d.setDate(d.getDate() - d.getDay()); return Array.from({ length: 7 }, (_, i) => { const x = new Date(d); x.setDate(d.getDate() + i); return iso(x); }); }
+function vAgenda() {
+  if (ehCliente()) return `<div class="empty"><strong>A agenda é da equipe</strong></div>`;
+  if (!S.agDia) S.agDia = hojeIso();
+  const modo = S.agModo || (innerWidth < 760 ? "lista" : "semana");
+  const dias = modo === "mes" ? null : semanaDe(S.agDia);
+  const titulo = modo === "mes" ? monthLabel(S.agDia.slice(0, 7)) : `${br(dias[0])} a ${br(dias[6])}`;
+  const pedidos = pedidosParaMim(), meus = (S.agenda || []).filter(x => x.tipo === "reuniao" && x.criadoPorId === S.eu.id && ["solicitada", "recusada"].includes(x.status) && x.data >= prazoPadrao(hojeIso(), 7));
+  const convites = convitesSemResposta();
+  const nav = `<div class="month-nav"><button class="icon-btn" type="button" aria-label="Anterior" onclick="agMover(-1)">‹</button><div class="lbl">${esc(titulo)}</div><button class="icon-btn" type="button" aria-label="Próximo" onclick="agMover(1)">›</button></div>`;
+  const tools = `<div class="escopo" role="group" aria-label="Visualização">${[["semana", "Semana"], ["mes", "Mês"], ["lista", "Lista"]].map(([k, l]) => `<button type="button" aria-pressed="${modo === k}" onclick="S.agModo='${k}';render()">${l}</button>`).join("")}</div>
+    <button class="btn" type="button" onclick="S.agDia=hojeIso();render()">Hoje</button>${nav}
+    <button class="btn" type="button" onclick="novoEvento('atividade')">+ Atividade</button>
+    <button class="btn primary" type="button" onclick="novoEvento('reuniao')">${ehChefe() ? "+ Reunião" : "Pedir reunião"}</button>`;
+  let topo = "";
+  if (pedidos.length) topo += `<section class="ag-sec"><h2>🙋 Pedidos de reunião para responder<span class="n">${pedidos.length}</span></h2>${pedidos.map(pedidoHtml).join("")}</section>`;
+  if (convites.length) topo += `<section class="ag-sec"><h2>📩 Reuniões esperando sua resposta<span class="n">${convites.length}</span></h2><div class="ag-conv">${convites.map(x => `<div class="ag-card" style="--c:${corEvento(x)}"><div><b>${esc(x.titulo)}</b><div class="muted">${esc(wd(x.data))}, ${br(x.data)} às ${esc(x.hora)} · ${durTxt(x.duracao)} · com ${esc(x.criadoPor)}</div></div><div class="ag-acts">${rsvpBtns(x)}<button class="btn sm" type="button" onclick="abrirEvento('${esc(x.id)}')">Detalhes</button></div></div>`).join("")}</div></section>`;
+  if (meus.length) topo += `<section class="ag-sec"><h2>Seus pedidos</h2>${meus.map(x => `<div class="ag-card" style="--c:${corEvento(x)}"><div><b>${esc(x.titulo)}</b><div class="muted">${br(x.data)} às ${esc(x.hora)} · ${x.status === "solicitada" ? "⏳ esperando resposta" : `❌ recusado por ${esc(x.decididoPor)}: "${esc(x.motivo)}"`}</div></div><div class="ag-acts"><button class="btn sm" type="button" onclick="abrirEvento('${esc(x.id)}')">${x.status === "recusada" ? "Pedir de novo" : "Ver"}</button></div></div>`).join("")}</section>`;
+  const corpo = modo === "mes" ? agMesHtml() : modo === "lista" ? agListaHtml(dias) : agSemanaHtml(dias);
+  return head("Sua agenda", "Agenda", tools) + topo + corpo +
+    `<div class="ag-leg"><span><i style="background:var(--s-reuniao)"></i>Reunião</span><span><i style="background:var(--s-atividade)"></i>Atividade sua</span><span><i class="tr"></i>Pedido (esperando resposta)</span><label><input type="checkbox"${store("agTarefas") !== "0" ? " checked" : ""} onchange="store('agTarefas', this.checked ? '1' : '0');render()"> Mostrar minhas tarefas</label></div>`;
+}
+function agMover(n) {
+  const d = parse(S.agDia || hojeIso());
+  if ((S.agModo || (innerWidth < 760 ? "lista" : "semana")) === "mes") { d.setDate(1); d.setMonth(d.getMonth() + n); } else d.setDate(d.getDate() + 7 * n);
+  S.agDia = iso(d);
+  if (S.desde && S.agDia.slice(0, 7) < S.desde) { S.desde = S.agDia.slice(0, 7); S.carimbo = ""; carregar(); }
+  render();
+}
+const tarefasDia = k => store("agTarefas") === "0" ? [] : S.tarefas.filter(t => t.status !== "Feita" && t.responsavelId === S.eu.id && (t.data === k || (!t.data && t.prazo === k)));
+function blocoEvento(x, estilo = "") {
+  const pend = x.status === "solicitada", resp = (x.respostas || {})[S.eu.id];
+  return `<button type="button" class="ev${/--curto/.test(estilo) ? " curto" : ""}${pend ? " pend" : ""}${x.tipo === "atividade" ? " atv" : ""}" style="--c:${corEvento(x)};${estilo}" onclick="event.stopPropagation();abrirEvento('${esc(x.id)}')" title="${esc(x.hora + " · " + x.titulo + " (" + durTxt(x.duracao) + ")")}">
+    <b>${esc(x.titulo)}</b><span>${esc(x.hora)}–${horaDe(minDe(x.hora) + (+x.duracao || 60))}${x.tipo === "reuniao" ? ` · ${(x.participantes || []).length + 1} pessoas` : ""}${pend ? " · pedido" : ""}${resp === "nao" ? " · não vou" : resp === "talvez" ? " · talvez" : ""}</span></button>`;
+}
+function agSemanaHtml(dias) {
+  const evs = dias.flatMap(eventosDia);
+  let ini = 7 * 60, fim = 21 * 60;
+  evs.forEach(x => { ini = Math.min(ini, Math.floor(minDe(x.hora) / 60) * 60); fim = Math.max(fim, Math.ceil((minDe(x.hora) + (+x.duracao || 60)) / 60) * 60); });
+  fim = Math.min(fim, 24 * 60);
+  const PX = 0.9, h = (fim - ini) * PX, hoje = hojeIso();
+  const horas = []; for (let m = ini; m < fim; m += 60) horas.push(m);
+  const col = k => {
+    const l = eventosDia(k), faixas = [];
+    // reuniões ao mesmo tempo ficam lado a lado
+    const pos = l.map(x => { const a = minDe(x.hora), b = a + (+x.duracao || 60); let f = faixas.findIndex(e => e <= a); if (f < 0) { f = faixas.length; faixas.push(b); } else faixas[f] = b; return { x, a, b, f }; });
+    return `<div class="wk-col${k === hoje ? " hoje" : ""}" style="height:${h}px" data-agdia="${k}" onclick="cliqueSemana(event,'${k}',${ini},${PX})">
+      ${pos.map(({ x, a, b, f }) => { const n = Math.max(1, ...pos.filter(o => o.a < b && o.b > a).map(o => o.f + 1)); return blocoEvento(x, `${(b - a) * PX < 40 ? "--curto:1;" : ""}top:${(a - ini) * PX}px;height:${Math.max(22, (b - a) * PX - 2)}px;left:calc(${f * 100 / n}% + 2px);width:calc(${100 / n}% - 4px)`); }).join("")}
+      ${k === hoje ? (() => { const agora = new Date().getHours() * 60 + new Date().getMinutes(); return agora >= ini && agora <= fim ? `<span class="agora" style="top:${(agora - ini) * PX}px"></span>` : ""; })() : ""}</div>`;
+  };
+  return `<div class="wk-wrap"><div class="agw" style="--h:${60 * PX}px">
+    <div class="wk-h"></div>${dias.map(k => `<div class="wk-h${k === hoje ? " hoje" : ""}"><span>${WD[parse(k).getDay()].slice(0, 3)}</span><b>${parse(k).getDate()}</b></div>`).join("")}
+    <div class="wk-h tf"></div>${dias.map(k => `<div class="wk-dia">${tarefasDia(k).map(t => `<button type="button" class="ev-tf" onclick="abrirTarefa('${esc(t.id)}')">☐ ${esc(t.titulo)}</button>`).join("")}</div>`).join("")}
+    <div class="wk-horas" style="height:${h}px">${horas.map(m => `<span style="top:${(m - ini) * PX}px">${pad(m / 60)}h</span>`).join("")}</div>
+    ${dias.map(col).join("")}
+  </div></div><p class="muted" style="font-size:12.5px;margin-top:8px">Clique num horário vazio para criar uma atividade ali.</p>`;
+}
+function cliqueSemana(e, k, ini, px) {
+  if (e.target.closest(".ev")) return;
+  const r = e.currentTarget.getBoundingClientRect(), m = ini + Math.floor((e.clientY - r.top) / px / 30) * 30;
+  novoEvento("atividade", k, horaDe(m));
+}
+function agMesHtml() {
+  const ym = S.agDia.slice(0, 7), first = parse(ym + "-01"), start = new Date(first); start.setDate(1 - first.getDay());
+  const last = new Date(first.getFullYear(), first.getMonth() + 1, 0), end = new Date(last); end.setDate(last.getDate() + (6 - last.getDay()));
+  let cells = WD.map(d => `<div class="dow">${d}</div>`).join(""), hoje = hojeIso();
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const k = iso(d), l = eventosDia(k), t = tarefasDia(k);
+    cells += `<div class="day${d.getMonth() !== first.getMonth() ? " out" : ""}${k === hoje ? " today" : ""}" onclick="if(!event.target.closest('button'))novoEvento('atividade','${k}')"><div class="dhead"><span class="dnum"><b>${d.getDate()}</b></span></div>
+      ${l.map(x => blocoEvento(x)).join("")}${t.map(x => `<button type="button" class="ev-tf" onclick="abrirTarefa('${esc(x.id)}')">☐ ${esc(x.titulo)}</button>`).join("")}</div>`;
+  }
+  return `<div class="cal ag-mes">${cells}</div>`;
+}
+function agListaHtml(dias) {
+  const hoje = hojeIso();
+  return `<div class="ag-lista">${dias.map(k => { const l = eventosDia(k), t = tarefasDia(k); return `<section class="ag-dia${k === hoje ? " hoje" : ""}"><h3>${esc(WD[parse(k).getDay()])}, ${br(k)}${k === hoje ? " · hoje" : ""}<button class="btn sm" type="button" onclick="novoEvento('atividade','${k}')">+</button></h3>
+    ${l.length || t.length ? l.map(x => blocoEvento(x)).join("") + t.map(x => `<button type="button" class="ev-tf" onclick="abrirTarefa('${esc(x.id)}')">☐ ${esc(x.titulo)}</button>`).join("") : `<span class="muted" style="font-size:13px">Livre</span>`}</section>`; }).join("")}</div>`;
+}
+function rsvpBtns(x) {
+  const r = (x.respostas || {})[S.eu.id];
+  return [["sim", "Vou"], ["talvez", "Talvez"], ["nao", "Não vou"]].map(([k, l]) => `<button class="btn sm${r === k ? (k === "sim" ? " ok" : k === "nao" ? " danger" : " primary") : ""}" type="button" onclick="responderEvento('${esc(x.id)}','${k}')">${l}</button>`).join("");
+}
+function pedidoHtml(x) {
+  const rej = S.agRej === x.id, conf = conflitos(x);
+  return `<div class="ag-card" style="--c:${corEvento(x)}"><div><b>${esc(x.titulo)}</b><div class="muted">${esc(x.criadoPor)} pediu para ${esc(wd(x.data)).toLowerCase()}, ${br(x.data)} às ${esc(x.hora)} · ${durTxt(x.duracao)}${(x.participantes || []).length > 1 ? ` · com ${esc(x.participantes.map(nomePessoa).filter(Boolean).join(", "))}` : ""}</div>
+    ${x.descricao ? `<div style="font-size:13.5px;margin-top:4px">${esc(x.descricao)}</div>` : ""}${conf.length ? `<div class="atraso" style="font-size:12.5px;margin-top:4px">⚠ Você já tem ${esc(conf.map(y => y.titulo).join(", "))} neste horário</div>` : ""}</div>
+    <div class="ag-acts">${rej ? `<input id="agRejTxt" placeholder="Motivo ou outro horário sugerido" style="min-width:200px"><button class="btn sm danger" type="button" onclick="responderEvento('${esc(x.id)}','recusar')">Recusar</button><button class="btn sm" type="button" onclick="S.agRej=null;render()">Voltar</button>`
+      : S.agAce === x.id ? `<input id="agAceData" type="date" value="${esc(x.data)}"><input id="agAceHora" type="time" value="${esc(x.hora)}"><button class="btn sm ok" type="button" onclick="responderEvento('${esc(x.id)}','aceitar')">Confirmar</button><button class="btn sm" type="button" onclick="S.agAce=null;render()">Voltar</button>`
+      : `<button class="btn sm ok" type="button" onclick="responderEvento('${esc(x.id)}','aceitar')">Aceitar</button><button class="btn sm" type="button" onclick="S.agAce='${esc(x.id)}';render()">Aceitar em outro horário</button><button class="btn sm danger" type="button" onclick="S.agRej='${esc(x.id)}';render();$('#agRejTxt').focus()">Recusar</button>`}</div></div>`;
+}
+async function responderEvento(id, resposta) {
+  const dados = {}; let motivo = "";
+  if (resposta === "recusar") { motivo = ($("#agRejTxt")?.value || "").trim(); if (!motivo) return toast("Escreva o motivo ou sugira outro horário."); }
+  if (resposta === "aceitar" && S.agAce === id) { dados.data = $("#agAceData").value; dados.hora = $("#agAceHora").value; }
+  try {
+    await api("responderEvento", { id, resposta, motivo, dados });
+    S.agRej = S.agAce = null; await carregar();
+    toast({ aceitar: "Reunião confirmada", recusar: "Pedido recusado", sim: "Presença confirmada", talvez: "Respondido: talvez", nao: "Respondido: não vou" }[resposta]);
+    if ($("#evDlg").open) { const x = S.agenda.find(e => e.id === id); if (x) desenharEvento(x, false); }
+  } catch (e) { writeFail(e); }
+}
+/* diálogo: ver ou criar */
+let EV = null;
+function novoEvento(tipo, dia, hora) {
+  EV = { tipo, data: dia || (S.agDia && S.agDia >= hojeIso() ? S.agDia : hojeIso()), hora: hora || "10:00", duracao: tipo === "reuniao" ? 60 : 60, titulo: "", participantes: [], local: "", descricao: "", cor: "" };
+  desenharEvento(EV, true); $("#evDlg").showModal(); setTimeout(() => $("#evTitulo")?.focus(), 30);
+}
+function abrirEvento(id) {
+  const x = S.agenda.find(e => e.id === id); if (!x) return;
+  EV = JSON.parse(JSON.stringify(x));
+  const pode = x.criadoPorId === S.eu.id || (x.tipo === "reuniao" && ehChefe());
+  desenharEvento(EV, false, pode);
+  $("#evDlg").showModal();
+}
+function linkGoogleAgenda(x) {
+  const [y, mo, d] = x.data.split("-").map(Number), [hh, mm] = x.hora.split(":").map(Number);
+  const ini = new Date(y, mo - 1, d, hh, mm), fim = new Date(ini.getTime() + (+x.duracao || 60) * 60000);
+  const f = t => t.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(x.titulo)}&dates=${f(ini)}/${f(fim)}&details=${encodeURIComponent(x.descricao || "")}&location=${encodeURIComponent(x.local || "")}`;
+}
+function desenharEvento(x, editar, podeEditarEv) {
+  const novo = !x.id, reun = x.tipo === "reuniao";
+  if (editar) {
+    const pessoas = S.equipe.filter(u => u.id !== S.eu.id && u.papel !== "cliente").sort((a, b) => a.nome.localeCompare(b.nome));
+    const conf = x.data && x.hora ? conflitos(x) : [];
+    $("#evForm").innerHTML = `<div class="dlg-head"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600">Agenda</div>
+      <h2>${novo ? (reun ? (ehChefe() ? "Marcar reunião" : "Pedir reunião") : "Nova atividade") : "Editar"}</h2></div><button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#evDlg').close()">×</button></div>
+    <div class="dlg-body" style="grid-template-columns:1fr 1fr">
+      ${novo ? `<div class="field full"><span>Tipo</span><div class="seg"><label><input type="radio" name="evTipo" value="reuniao"${reun ? " checked" : ""} onchange="lerEvento();EV.tipo='reuniao';desenharEvento(EV,true)"><span>Reunião</span></label><label><input type="radio" name="evTipo" value="atividade"${reun ? "" : " checked"} onchange="lerEvento();EV.tipo='atividade';desenharEvento(EV,true)"><span>Atividade minha</span></label></div></div>` : ""}
+      ${reun && !ehChefe() ? `<div class="full motivo" style="border-left-color:var(--s-cliente);background:var(--surface-2)"><b style="color:var(--ink)">Vai como pedido</b>A reunião só entra na agenda de todos quando alguém da gestão aceitar.</div>` : ""}
+      <label class="field full"><span>${reun ? "Assunto" : "O que você vai fazer"}</span><input id="evTitulo" required value="${esc(x.titulo)}" placeholder="${reun ? "Ex.: Alinhamento do conteúdo de dezembro" : "Ex.: Gravar os reels da Liso"}"></label>
+      <label class="field"><span>Dia</span><input id="evData" type="date" required value="${esc(x.data)}" onchange="lerEvento();desenharEvento(EV,true)"></label>
+      <label class="field"><span>Horário</span><input id="evHora" type="time" required value="${esc(x.hora)}" onchange="lerEvento();desenharEvento(EV,true)"></label>
+      <div class="field full"><span>Duração</span><div class="seg">${DURACOES.map(m => `<label><input type="radio" name="evDur" value="${m}"${+x.duracao === m ? " checked" : ""} onchange="lerEvento();desenharEvento(EV,true)"><span>${durTxt(m)}</span></label>`).join("")}</div>
+        <small>Termina às ${horaDe(minDe(x.hora) + (+x.duracao || 60))}.</small></div>
+      ${conf.length ? `<div class="full atraso" style="font-size:13px">⚠ Nesse horário você já tem: ${esc(conf.map(y => `${y.hora} ${y.titulo}`).join(", "))}</div>` : ""}
+      ${reun ? `<div class="field full"><span id="evPartN">Participantes (${(x.participantes || []).length})</span>
+        <input id="evBusca" placeholder="Buscar pessoa…" oninput="document.querySelectorAll('#evPessoas label').forEach(l=>l.hidden=!l.textContent.toLowerCase().includes(this.value.toLowerCase()))" style="border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 10px;color:var(--ink)">
+        <div class="ev-pessoas" id="evPessoas">${pessoas.map(u => `<label><input type="checkbox" value="${esc(u.id)}"${(x.participantes || []).includes(u.id) ? " checked" : ""} onchange="lerEvento();$('#evPartN').textContent='Participantes ('+EV.participantes.length+')'">${avatarHtml(u, 24)}<span>${esc(u.nome)}<small>${esc(PAPEIS[u.papel] || "")}</small></span></label>`).join("")}</div></div>
+        <label class="field full"><span>Local ou link (Meet, Zoom…)</span><input id="evLocal" value="${esc(x.local)}" placeholder="https://meet.google.com/…"></label>` : ""}
+      <label class="field full"><span>${reun ? "Pauta / o que vai ser falado" : "Detalhes"}</span><textarea id="evDesc" rows="3">${esc(x.descricao)}</textarea></label>
+      <div class="field full"><span>Cor</span><div class="cores">${["", "#1e88e5", "#43a047", "#f2b705", "#ff7a00", "#e53935", "#d81b60", "#8e24aa", "#546e7a"].map(c => `<label style="--c:${c || (reun ? "var(--s-reuniao)" : "var(--s-atividade)")}" title="${c ? c : "Padrão"}"><input type="radio" name="evCor" value="${c}"${(x.cor || "") === c ? " checked" : ""} aria-label="${c || "Cor padrão"}"></label>`).join("")}</div></div>
+    </div>
+    <div class="dlg-foot">${!novo ? `<button class="btn danger" type="button" onclick="excluirEvento()">${reun ? "Cancelar reunião" : "Excluir"}</button>` : ""}<span class="sp"></span>
+      <button class="btn" type="button" onclick="${novo ? "$('#evDlg').close()" : "desenharEvento(EV,false,true)"}">Voltar</button>
+      <button class="btn primary" type="submit" id="evSalvar">${reun ? (ehChefe() ? (novo ? "Marcar reunião" : "Salvar") : "Enviar pedido") : "Salvar"}</button></div>`;
+    return;
+  }
+  // visualização
+  const resp = x.respostas || {}, partes = [{ id: x.criadoPorId, nome: x.criadoPor, org: true }].concat((x.participantes || []).map(id => ({ id, nome: nomePessoa(id) || "?" })));
+  const ROT = { sim: "✓ vai", nao: "✗ não vai", talvez: "? talvez" };
+  $("#evForm").innerHTML = `<div class="dlg-head"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600">${reun ? (x.status === "solicitada" ? "Pedido de reunião" : x.status === "recusada" ? "Pedido recusado" : "Reunião") : "Atividade"}</div>
+    <h2>${esc(x.titulo)}</h2></div><button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#evDlg').close()">×</button></div>
+    <div class="dlg-body" style="grid-template-columns:1fr">
+      <div class="ev-info" style="--c:${corEvento(x)}"><div>📅 <b>${esc(wd(x.data))}, ${brFull(x.data)}</b> · ${esc(x.hora)}–${horaDe(minDe(x.hora) + (+x.duracao || 60))} (${durTxt(x.duracao)})</div>
+        ${x.local ? `<div>📍 ${/^https?:/.test(x.local) ? `<a class="lnk" href="${esc(x.local)}" target="_blank" rel="noopener">${esc(x.local)}</a>` : esc(x.local)}</div>` : ""}
+        ${x.status === "recusada" ? `<div class="motivo"><b>Recusado por ${esc(x.decididoPor)}</b>${esc(x.motivo)}</div>` : ""}
+        ${x.descricao ? `<div class="rot" style="white-space:pre-wrap;background:var(--surface-2);border-radius:10px;padding:10px 12px">${esc(x.descricao)}</div>` : ""}</div>
+      ${reun ? `<div><b style="font-size:14px">Participantes</b><ul class="ev-lista">${partes.map(p => { const u = S.equipe.find(e => e.id === p.id) || p; return `<li>${avatarHtml(u, 26)}<span>${esc(p.nome)}${p.org ? ` <small class="muted">· marcou</small>` : ""}</span><small class="${resp[p.id] === "nao" ? "atraso" : "muted"}">${p.org ? "" : esc(ROT[resp[p.id]] || "sem resposta")}</small></li>`; }).join("")}</ul></div>` : ""}
+      ${reun && x.status === "confirmada" && (x.participantes || []).includes(S.eu.id) && x.criadoPorId !== S.eu.id ? `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><b style="font-size:14px">Você vai?</b>${rsvpBtns(x)}</div>` : ""}
+      ${reun && x.status === "solicitada" && ehChefe() && x.criadoPorId !== S.eu.id ? `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ok" type="button" onclick="responderEvento('${esc(x.id)}','aceitar')">Aceitar pedido</button><button class="btn" type="button" onclick="$('#evDlg').close();location.hash='#agenda'">Responder na agenda</button></div>` : ""}
+      ${x.status === "confirmada" ? `<a class="lnk" href="${esc(linkGoogleAgenda(x))}" target="_blank" rel="noopener" style="font-size:13.5px">Adicionar ao meu Google Agenda</a>` : ""}
+    </div>
+    <div class="dlg-foot"><span class="muted" style="font-size:12.5px">${reun ? `Marcada por ${esc(x.criadoPor)}${x.decididoPor && x.decididoPor !== x.criadoPor && x.status === "confirmada" ? ` · aceita por ${esc(x.decididoPor)}` : ""}` : ""}</span><span class="sp"></span>
+      ${podeEditarEv ? `<button class="btn primary" type="button" onclick="${x.status === "recusada" ? "EV.status='';" : ""}desenharEvento(EV,true)">${x.status === "recusada" ? "Pedir de novo" : "Editar"}</button>` : ""}
+      <button class="btn" type="button" onclick="$('#evDlg').close()">Fechar</button></div>`;
+}
+function lerEvento() {
+  const v = id => ($("#" + id)?.value ?? "");
+  Object.assign(EV, { titulo: v("evTitulo").trim(), data: v("evData"), hora: v("evHora"), local: v("evLocal").trim(), descricao: v("evDesc"),
+    duracao: +(($("#evForm input[name=evDur]:checked") || {}).value || EV.duracao), cor: ($("#evForm input[name=evCor]:checked") || {}).value ?? EV.cor });
+  if ($("#evPessoas")) EV.participantes = [...document.querySelectorAll("#evPessoas input:checked")].map(i => i.value);
+}
+$("#evForm").addEventListener("submit", async e => {
+  e.preventDefault(); if (!$("#evTitulo")) return;
+  lerEvento();
+  if (!EV.titulo) return toast("Escreva o assunto.");
+  if (EV.tipo === "reuniao" && !EV.participantes.length) return toast("Escolha quem participa.");
+  const b = $("#evSalvar"); b.disabled = true; b.textContent = "Salvando…";
+  try {
+    await api("salvarEvento", { evento: EV });
+    const pedido = EV.tipo === "reuniao" && !ehChefe();
+    S.agDia = EV.data; $("#evDlg").close(); await carregar();
+    toast(pedido ? "Pedido enviado para a gestão" : EV.tipo === "reuniao" ? "Reunião marcada. Os participantes recebem o convite por e-mail." : "Atividade salva");
+  } catch (err) { b.disabled = false; b.textContent = "Salvar"; writeFail(err); }
+});
+async function excluirEvento() {
+  if (!confirm(EV.tipo === "reuniao" ? "Cancelar esta reunião? Os participantes recebem um aviso." : "Excluir esta atividade?")) return;
+  try { await api("excluirEvento", { id: EV.id }); $("#evDlg").close(); await carregar(); toast(EV.tipo === "reuniao" ? "Reunião cancelada" : "Atividade excluída"); } catch (e) { writeFail(e); }
+}
+$("#evDlg").addEventListener("click", e => { if (e.target === $("#evDlg")) $("#evDlg").close(); });
+$("#evDlg").addEventListener("close", () => { EV = null; render(); });
+
 /* ---------- Eventos ---------- */
 $("#marcaSel").addEventListener("change", e => { S.marcaId = e.target.value; store("marca", S.marcaId); S.month = null; S.f = { status: "", formato: "", produto: "", q: "" }; S.confirmDel = false; S.dirty = false; render(); });
 $("#novaMarca").addEventListener("click", novaMarca);
@@ -3593,7 +3962,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-03.2"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-05.1"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",
@@ -3611,13 +3980,14 @@ async function carregar() {
     const j = await api("listar", { desde: S.desde, se: S.carimbo });
     if (j.igual) { S.versao = j.versao || S.versao; return; }
     S.carimbo = j.carimbo || "";
-    S.stories = j.stories || [];
+    S.stories = j.stories || []; S.agenda = j.agenda || [];
     S.eu = j.eu; S.usuarios = j.usuarios || []; S.tarefas = j.tarefas || []; S.equipe = j.equipe || [];
     S.versao = j.versao || "antiga";
     S.marcas = (j.marcas || []).sort((a, b) => (a.criado || 0) - (b.criado || 0) || String(a.nome).localeCompare(b.nome));
     S.posts = (j.pautas || []).map(p => ({ ...p, status: normStatus(p.status) }));
     if (!S.marcas.find(m => m.id === S.marcaId)) { S.marcaId = S.marcas[0]?.id || null; S.month = null; }
     S.loadedM = S.loadedP = true; S.failed = false;
+    if (S.eu) { store("cores", JSON.stringify(S.eu.cores || {})); aplicarCores(S.eu.cores || {}); }
     avisarNovidades();
   } catch (e) {
     if (e.code === "sessao") return writeFail(e);
@@ -3632,6 +4002,7 @@ if (location.hash.startsWith("#entrar=")) {
   history.replaceState(null, "", location.pathname + location.search + "#aprovacoes");
 }
 setInterval(() => { if (API && S.token && document.visibilityState === "visible" && !$("#dlg").open && !$("#agDlg").open && !$("#tfDlg").open) carregar(); }, 30000);
+aplicarCores();
 carregar();
 render();
 </script>

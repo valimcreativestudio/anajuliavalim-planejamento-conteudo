@@ -184,6 +184,22 @@ Ao rodar **configurar**, o script cria quatro rotinas (a quarta é o relatório 
 - **Instalar:** abra o site no celular → iPhone: Compartilhar → Adicionar à Tela de Início; Android: menu ⋮ → Instalar app.
 - **Avisos no aparelho:** em Minha conta, ligue "Avisar neste aparelho". Chega aviso de aprovação, devolução, comentário e tarefa enquanto o app ou o site estiver aberto (mesmo em segundo plano). Com tudo fechado, quem avisa é o e-mail (o Google Apps Script não consegue mandar notificação para o celular com o app fechado).
 
+## Agenda e reuniões
+
+Aba **Agenda** (para toda a equipe; o cliente não vê):
+- **Semana, Mês ou Lista.** Mostra as suas reuniões, as suas atividades e as suas tarefas com data. Clique num horário vazio da semana para criar uma atividade ali.
+- **+ Atividade:** compromisso seu (gravar, editar, visita…). Só você vê.
+- **+ Reunião** (administrador, diretor e gestor): dia, horário, assunto, duração, participantes, local ou link e pauta. Os participantes recebem e-mail com o convite (abre no Google Agenda ou no celular) e respondem **Vou / Talvez / Não vou**.
+- **Pedir reunião** (social media e aprovador): o pedido vai para a gestão, que **aceita** (pode mudar dia e hora) ou **recusa** com o motivo. Só depois de aceito entra na agenda de todos.
+- Avisa quando o horário bate com outro compromisso seu.
+- O sino e o número na aba mostram pedidos para responder e reuniões esperando a sua resposta. As reuniões do dia entram no resumo diário por e-mail.
+
+## Modo claro ou escuro e cores
+
+- O botão ☀️/🌙 no topo, ao lado da marca, troca entre modo claro e escuro (fica lembrado no aparelho).
+- Em **Minha conta → Minhas cores**, cada pessoa escolhe as próprias cores: botões, faixa do topo, fundo do calendário, a cor de cada fase dos posts, das reuniões e das atividades. Tem paletas prontas e "Restaurar todas as cores". Vale só para você, em qualquer aparelho.
+- No **Calendário**, a legenda em cima mostra a cor de cada fase e quantos posts estão nela; cada post tem uma bolinha no canto com a cor da fase. Clique numa fase da legenda para destacar só os posts dela.
+
 ## Fluxo de aprovação (2 etapas)
 
 1. **Ideia** → a social media cria a postagem e clica em **Enviar ideia para validação**.
