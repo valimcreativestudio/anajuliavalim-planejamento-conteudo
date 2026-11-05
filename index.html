@@ -175,7 +175,17 @@ a.lnk:hover { text-decoration: underline; }
 .muted { color: var(--muted); }
 
 /* Fluxo */
-.board { display: grid; grid-template-columns: repeat(7, minmax(210px, 1fr)); gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+.board { display: grid; grid-template-columns: repeat(7, minmax(210px, 1fr)); gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
+.board::-webkit-scrollbar { display: none; }
+/* barra de rolagem do quadro fica em cima, logo abaixo do texto */
+.board-rolo { overflow-x: auto; overflow-y: hidden; height: 16px; margin: 0 0 8px; }
+.board-rolo > div { height: 1px; }
+.board-rolo { scrollbar-color: color-mix(in srgb, var(--muted) 55%, transparent) var(--surface-2); }
+.board-rolo::-webkit-scrollbar { height: 10px; }
+.board-rolo::-webkit-scrollbar-track { background: var(--surface-2); border-radius: 999px; }
+.board-rolo::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--muted) 55%, transparent); border-radius: 999px; }
+.board-rolo::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+.board-rolo[hidden] { display: none; }
 .col { background: var(--surface-2); border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 160px; }
 .col.over { outline: 2px dashed var(--caramelo); outline-offset: -2px; }
 .col h3 { margin: 2px 4px 4px; font-size: 13px; display: flex; align-items: center; gap: 8px; }
@@ -1320,7 +1330,7 @@ function vFluxo() {
     </section>`;
   }).join("");
   return headM(m.nome, "Fluxo de produção", monthNav() + addBtn()) +
-    `<p class="muted" style="margin:-6px 0 14px">Abra um card para enviar para validação, aprovar ou pedir ajustes.${adm ? " Como administrador, você também pode arrastar os cards entre as colunas." : ""}</p><div class="board">${cols}</div>`;
+    `<p class="muted" style="margin:-6px 0 14px">Abra um card para enviar para validação, aprovar ou pedir ajustes.${adm ? " Como administrador, você também pode arrastar os cards entre as colunas." : ""}</p><div class="board-rolo" aria-hidden="true"><div></div></div><div class="board">${cols}</div>`;
 }
 /* arrastar a postagem para outro dia do calendário */
 function wireCalendario() {
@@ -1346,7 +1356,17 @@ async function moverPostagem(id, dia) {
     await carregar();
   } catch (e) { p.data = antes; render(); writeFail(e); }
 }
+function rolagemNoTopo() {
+  const rolo = $(".board-rolo"), board = $(".board"); if (!rolo || !board) return;
+  const medir = () => { rolo.firstElementChild.style.width = board.scrollWidth + "px"; rolo.hidden = board.scrollWidth <= board.clientWidth + 1; };
+  medir(); requestAnimationFrame(medir);
+  let trava = false;
+  rolo.addEventListener("scroll", () => { if (trava) return; trava = true; board.scrollLeft = rolo.scrollLeft; trava = false; });
+  board.addEventListener("scroll", () => { if (trava) return; trava = true; rolo.scrollLeft = board.scrollLeft; trava = false; });
+  if (!window.__roloResize) { window.__roloResize = true; addEventListener("resize", () => { const r = $(".board-rolo"), b = $(".board"); if (r && b) { r.firstElementChild.style.width = b.scrollWidth + "px"; r.hidden = b.scrollWidth <= b.clientWidth + 1; } }); }
+}
 function wireBoard() {
+  rolagemNoTopo();
   if (!podeGerir()) return;
   document.querySelectorAll(".card").forEach(c => c.addEventListener("dragstart", e => e.dataTransfer.setData("text/plain", c.dataset.id)));
   document.querySelectorAll(".col").forEach(col => {
