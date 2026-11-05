@@ -204,6 +204,14 @@ O sistema separa tudo por **empresa** (agência). Cada empresa tem a própria eq
 - Dá para **desativar** uma empresa: ninguém dela consegue entrar até reativar.
 - Os papéis continuam os mesmos dentro de cada empresa: administrador e diretor veem tudo **da empresa deles**; gestor, social media e aprovadores veem as marcas liberadas.
 
+## Senha, tour, ajuda, registro e exportação
+
+- **Esqueci minha senha:** na tela de entrar, "Esqueci minha senha" manda um link por e-mail (vale 1 hora) para criar uma senha nova. Ao criar, as sessões abertas em outros aparelhos são encerradas. Para evitar abuso, são no máximo 5 pedidos por hora.
+- **Tour do primeiro acesso:** na primeira vez que cada pessoa entra, um passo a passo mostra onde fica cada coisa, diferente para cada papel (social media, aprovador, gestão, cliente). Dá para rever em **? → Rever o tour**.
+- **Central de ajuda (?)** no topo: perguntas frequentes com busca, separadas por assunto e mostrando só o que faz sentido para o papel da pessoa, mais os botões para falar com a gestão ou a agência (WhatsApp e e-mail cadastrados em Minha empresa).
+- **Registro** (Gestão → Registro; administrador e diretor): quem fez o quê, com data e hora. Inclui entradas no sistema, tentativas com senha errada, pedidos de senha nova, pessoas cadastradas ou alteradas (papel, marcas, acesso), posts e stories apagados, quem abriu ou mudou as senhas das contas, mudanças de permissão e de integrações, pagamentos, propostas, links de cliente e exportações. Tem filtros por pessoa e ação, busca e download em CSV. Guardado por 1 ano.
+- **Exportar dados** (Gestão → Minha empresa → Dados; administrador): baixa tudo da empresa em Excel (uma aba para cada coisa) ou um backup completo em JSON. As senhas de login e as senhas das contas dos clientes não saem na exportação.
+
 ## Minha empresa: perfil, cores e quem vê o quê
 
 Em **Gestão → Minha empresa** (administrador da empresa; a dona da plataforma edita a empresa escolhida no topo):

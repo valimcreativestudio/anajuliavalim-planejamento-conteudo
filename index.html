@@ -902,6 +902,17 @@ header .brand .emp-logo { width: 34px; height: 34px; border-radius: 9px; object-
 header .brand .emp-n { font-size: inherit; }
 header .brand .emp-app { font: 500 11px var(--f-body); opacity: .6; letter-spacing: .04em; align-self: flex-end; margin-bottom: 4px; }
 @media (max-width: 520px) { header .brand .emp-app { display: none; } }
+#tour { position: fixed; inset: 0; z-index: 2000; pointer-events: none; }
+#tour .tour-fundo { position: fixed; inset: 0; background: rgba(0,0,0,.55); pointer-events: auto; }
+#tour .tour-foco { position: fixed; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,.55); outline: 2px solid #fff; transition: all .25s; pointer-events: none; }
+#tour .tour-cx { position: fixed; pointer-events: auto; width: min(340px, calc(100vw - 20px)); background: var(--surface); color: var(--ink); border-radius: 14px; box-shadow: var(--shadow); padding: 14px 16px; display: grid; gap: 6px; }
+#tour .tour-cx small { color: var(--muted); font-size: 12px; } #tour .tour-cx b { font-size: 16px; } #tour .tour-cx p { margin: 0; font-size: 14px; line-height: 1.45; }
+#tour .tour-acts { display: flex; gap: 6px; align-items: center; margin-top: 4px; } #tour .tour-acts .sp { flex: 1; }
+#ajDlg { width: min(640px, calc(100vw - 24px)); }
+.aj-g { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 12px 0 4px; }
+.aj-it { border-bottom: 1px solid var(--line); padding: 8px 2px; } .aj-it summary { cursor: pointer; font-weight: 600; font-size: 14.5px; } .aj-it p { margin: 6px 0 2px; font-size: 14px; line-height: 1.5; }
+tr.reg-alerta td:first-child { box-shadow: inset 3px 0 0 var(--pr-alta); }
+.login .link-esq { justify-self: start; border: 0; background: none; color: var(--muted); text-decoration: underline; cursor: pointer; font: inherit; font-size: 13.5px; padding: 0; }
 </style>
 </head>
 <body>
@@ -913,6 +924,7 @@ header .brand .emp-app { font: 500 11px var(--f-body); opacity: .6; letter-spaci
       <label for="marcaSel" class="muted" style="color:inherit;opacity:.75;font-size:13px">Marca</label>
       <select id="marcaSel"></select>
       <button class="ghost-light" id="novaMarca" type="button">+ Nova marca</button>
+      <button class="ghost-light tema-btn" id="ajBtn" type="button" onclick="abrirAjuda()" aria-label="Ajuda" title="Ajuda">?</button>
       <button class="ghost-light tema-btn" id="buBtn" type="button" onclick="abrirBusca()" aria-label="Buscar (Ctrl+K)" title="Buscar (Ctrl+K)">🔍</button>
       <button class="ghost-light tema-btn" id="temaBtn" type="button" onclick="trocarTema()" aria-label="Trocar tema">🌙</button>
     </div>
@@ -934,6 +946,8 @@ header .brand .emp-app { font: 500 11px var(--f-body); opacity: .6; letter-spaci
 <dialog id="seDlg"><form id="seForm" method="dialog"></form></dialog>
 <dialog id="lkDlg"><form id="lkForm" method="dialog"></form></dialog>
 <dialog id="evDlg"><form id="evForm" method="dialog"></form></dialog>
+<dialog id="ajDlg"><form id="ajForm" method="dialog" onsubmit="event.preventDefault()"></form></dialog>
+<div id="tour" hidden></div>
 <dialog id="cfDlg"><form id="cfForm" method="dialog"></form></dialog>
 <dialog id="imDlg"><form id="imForm" method="dialog"></form></dialog>
 <dialog id="lxDlg"><form id="lxForm" method="dialog"></form></dialog>
@@ -1071,11 +1085,12 @@ function setMonth(ym) {
 /* ---------- Vistas ---------- */
 const view = () => {
   const h = location.hash.replace("#", "");
-  return ["calendario", "stories", "ideias", "resultados", "painel", "empresas", "empresa", "agenda", "horas", "mural", "financeiro", "marca-midias", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-acessos", "marca-config", "marca-plano", "aprovacoes", "equipe", "equipe-atividade", "conta", "tarefas"].includes(h) ? h : "calendario";
+  return ["calendario", "stories", "ideias", "resultados", "painel", "empresas", "empresa", "registro", "agenda", "horas", "mural", "financeiro", "marca-midias", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-acessos", "marca-config", "marca-plano", "aprovacoes", "equipe", "equipe-atividade", "conta", "tarefas"].includes(h) ? h : "calendario";
 };
 
 function render() {
   // briefing do cliente: página pública, sem login
+  if (location.hash.startsWith("#redefinir=")) { vRedefinir(location.hash.slice(11).replace(/\W/g, "")); return; }
   if (location.hash.startsWith("#proposta=")) { vPropostaPublica(location.hash.slice(10).replace(/\W/g, "")); return; }
   if (location.hash.startsWith("#briefing=")) { vBriefingPublico(location.hash.slice(10).replace(/\W/g, "")); return; }
   document.body.classList.remove("publico");
@@ -1084,7 +1099,7 @@ function render() {
   const app = $("#app");
   S.canWrite = podeEditar(S.marcaId);
   $("#novaMarca").hidden = !podeGerir();
-  $("#buBtn").hidden = !S.eu;
+  $("#buBtn").hidden = !S.eu; $("#ajBtn").hidden = !S.eu;
   $("#me").hidden = !S.eu;
   if (S.eu) $("#me").innerHTML = sinoHtml() + avatarHtml(S.eu, 30) + `<span class="who">Olá, <b>${esc(S.eu.nome)}</b></span><span class="papel">${esc(PAPEIS[S.eu.papel] || "")}</span><a href="#conta">Minha conta</a><button class="ghost-light" type="button" onclick="sair()">Sair</button>`;
   if (S.eu && !$("#notifPop").hidden) desenharNotif();
@@ -1102,11 +1117,11 @@ function render() {
     app.innerHTML = `<div class="empty"><strong>Não consegui ler a planilha</strong><span>Confira se o endereço em config.js está certo e se o App da Web foi implantado com acesso para "Qualquer pessoa".</span><button class="btn" type="button" onclick="S.failed=false;carregar()">Tentar de novo</button></div>`;
     return;
   }
-  if (!S.token) { app.innerHTML = vLogin(); $("#lgLogin")?.focus(); return; }
+  if (!S.token) { app.innerHTML = S.esqueci ? vEsqueci() : vLogin(); (S.esqueci ? $("#esLogin") : $("#lgLogin"))?.focus(); return; }
   if (!S.loadedM || !S.loadedP) return;
   const v0 = view();
-  if (v0 === "equipe" || v0 === "equipe-atividade" || v0 === "conta" || v0 === "aprovacoes" || v0 === "tarefas" || v0 === "agenda" || v0 === "horas" || v0 === "mural" || v0 === "financeiro" || v0 === "painel" || v0 === "empresas" || v0 === "empresa") {
-    app.innerHTML = avisoVersao() + faixaAvisos() + (v0 === "equipe" ? vEquipe : v0 === "equipe-atividade" ? vAtividade : v0 === "conta" ? vConta : v0 === "tarefas" ? vTarefas : v0 === "agenda" ? vAgenda : v0 === "horas" ? vHoras : v0 === "mural" ? vMural : v0 === "financeiro" ? vFinanceiro : v0 === "painel" ? vPainel : v0 === "empresas" ? vEmpresas : v0 === "empresa" ? vEmpresa : vAprovacoes)();
+  if (v0 === "equipe" || v0 === "equipe-atividade" || v0 === "conta" || v0 === "aprovacoes" || v0 === "tarefas" || v0 === "agenda" || v0 === "horas" || v0 === "mural" || v0 === "financeiro" || v0 === "painel" || v0 === "empresas" || v0 === "empresa" || v0 === "registro") {
+    app.innerHTML = avisoVersao() + faixaAvisos() + (v0 === "equipe" ? vEquipe : v0 === "equipe-atividade" ? vAtividade : v0 === "conta" ? vConta : v0 === "tarefas" ? vTarefas : v0 === "agenda" ? vAgenda : v0 === "horas" ? vHoras : v0 === "mural" ? vMural : v0 === "financeiro" ? vFinanceiro : v0 === "painel" ? vPainel : v0 === "empresas" ? vEmpresas : v0 === "empresa" ? vEmpresa : v0 === "registro" ? vRegistro : vAprovacoes)();
     return;
   }
   if (!marca()) {
@@ -2794,13 +2809,14 @@ function vLogin() {
     <label class="field"><span>Senha</span><input id="lgSenha" type="password" autocomplete="current-password" required></label>
     <span class="err" id="lgErr"></span>
     <button class="btn primary" type="submit" id="lgBtn">Entrar</button>
+    <button class="link-esq" type="button" onclick="S.esqLogin=$('#lgLogin').value;S.esqueci=true;render()">Esqueci minha senha</button>
   </form>`;
 }
 async function entrar() {
   const btn = $("#lgBtn"); btn.disabled = true; btn.textContent = "Entrando…"; $("#lgErr").textContent = "";
   try {
     const r = await api("login", { login: $("#lgLogin").value, senha: $("#lgSenha").value });
-    S.token = r.token; store("token", r.token);
+    S.token = r.token; store("token", r.token); S.esqueci = false;
     limparTela();
     S.loadedM = S.loadedP = false;
     $("#app").innerHTML = `<div class="empty"><strong>Carregando o planejamento…</strong></div>`;
@@ -2814,7 +2830,7 @@ async function entrar() {
 function limparTela() {
   S.dirty = false; S.rej = null; S.uEdit = null; S.boasVindas = null; S.confirmDel = false; S.delArq = null;
   S.acessos = {}; S.insta = {}; // senhas e chaves não passam de uma pessoa para outra no mesmo navegador
-  S.carimbo = ""; S.met = {}; S.stories = []; S.agenda = []; S.empresa = null; S.empresas = [];
+  S.carimbo = ""; S.met = {}; S.stories = []; S.agenda = []; S.empresa = null; S.empresas = []; S.tourChecado = false; S.reg = null; TOUR = null; if ($("#tour")) $("#tour").hidden = true;
   try { localStorage.removeItem("plan.empresa"); } catch (e) {}
   store("cores", "{}"); aplicarCores({});
   ["stDlg", "seDlg", "lkDlg", "evDlg"].forEach(d => { if ($("#" + d).open) $("#" + d).close(); });
@@ -4877,7 +4893,7 @@ function menuGrupos() {
   if (!cli) {
     g.push({ id: "marca", l: "Marca", ic: "🏷️", itens: [["marca", "Visão geral"], ["marca-sobre", "Sobre"], ["marca-publico", "Público-alvo"], ["marca-produtos", "Produtos"], ["marca-redes", "Redes"], ["marca-arquivos", "Arquivos e identidade"], ["marca-midias", "Biblioteca"], ["marca-notas", "Observações"], ["marca-acessos", "Acessos"], ["marca-plano", "Pacote e legendas"], ["marca-config", "Configurações"]].map(([v, l]) => it(v, l)) });
     g.push({ id: "equipe", l: "Equipe", ic: "👥", itens: [it("agenda", "Agenda", "🗓️"), it("tarefas", "Tarefas", "☐"), it("horas", "Horas" + (cronAtual() ? " ⏱" : ""), "⏱"), it("mural", "Mural", "📌"), ...(chefe ? [it("equipe", "Pessoas", "👤"), it("equipe-atividade", "Atividade", "📈")] : [])] });
-    const gest = [...(dir ? [it("financeiro", "Financeiro", "💰")] : []), ...((S.eu.papel === "admin" || dono) && S.empresaInfo ? [it("empresa", "Minha empresa", "🏷️")] : []), ...(dono ? [it("empresas", "Empresas", "🏢")] : [])];
+    const gest = [...(dir ? [it("financeiro", "Financeiro", "💰")] : []), ...((S.eu.papel === "admin" || dono) && S.empresaInfo ? [it("empresa", "Minha empresa", "🏷️")] : []), ...(dir || dono ? [it("registro", "Registro", "📜")] : []), ...(dono ? [it("empresas", "Empresas", "🏢")] : [])];
     if (gest.length) g.push({ id: "gestao", l: "Gestão", ic: "💼", itens: gest });
   }
   return g.map(gr => ({ ...gr, itens: gr.itens.filter(x => x.v === "empresas" || podeVer(x.v)) })).filter(gr => gr.itens.length);
@@ -4974,7 +4990,8 @@ const TELAS = [
   ["equipe", "Pessoas", "Cadastro da equipe, papéis e marcas de cada um.", "admin diretor", "admin diretor"],
   ["equipe-atividade", "Atividade da equipe", "Último acesso e produtividade de cada pessoa.", "admin diretor gestor", "admin diretor gestor"],
   ["financeiro", "Financeiro e propostas", "Contratos, pagamentos e propostas comerciais.", "admin diretor", "admin diretor"],
-  ["empresa", "Minha empresa", "Perfil, logo, cores e esta tabela de permissões.", "admin", "admin"]
+  ["registro", "Registro", "Quem fez o quê: entradas, exclusões, senhas abertas, permissões e pagamentos.", "admin diretor", "admin diretor"],
+  ["empresa", "Minha empresa", "Perfil, logo, cores, permissões e exportar os dados.", "admin", "admin"]
 ].map(([v, nome, desc, pode, padrao]) => ({ v, nome, desc, pode: pode.split(" "), padrao: padrao.split(" ") }));
 const telaDe = v => v === "marca-acessos" ? "marca-acessos" : v.startsWith("marca") ? "marca" : v === "equipe-atividade" ? "equipe-atividade" : v;
 function permitido(v, papel, perm) {
@@ -4995,7 +5012,7 @@ function vEmpresa() {
   const e = S.empresaInfo;
   if (!e) return `<div class="empty"><strong>Escolha uma empresa no topo</strong><span>Para editar o perfil, as cores e as permissões, escolha qual empresa.</span></div>`;
   const pode = S.eu.dono || S.eu.papel === "admin", pf = e.perfil || {}, aba = S.empAba || "perfil", ro = pode ? "" : " disabled";
-  const abas = `<nav class="subnav">${[["perfil", "Perfil"], ["cores", "Cores"], ["permissoes", "Quem vê o quê"]].map(([k, l]) => `<a href="#empresa" onclick="event.preventDefault();S.empAba='${k}';render()"${aba === k ? ' aria-current="page"' : ""}>${l}</a>`).join("")}</nav>`;
+  const abas = `<nav class="subnav">${[["perfil", "Perfil"], ["cores", "Cores"], ["permissoes", "Quem vê o quê"], ...(pode ? [["dados", "Dados"]] : [])].map(([k, l]) => `<a href="#empresa" onclick="event.preventDefault();S.empAba='${k}';render()"${aba === k ? ' aria-current="page"' : ""}>${l}</a>`).join("")}</nav>`;
   let corpo = "";
   if (aba === "perfil") corpo = `<form class="panel" style="display:grid;gap:12px;max-width:760px" onsubmit="event.preventDefault();salvarEmpresaPerfil()">
       <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><div class="emp-logo-g">${pf.logo ? `<img src="https://drive.google.com/thumbnail?id=${esc(pf.logo)}&sz=w300" alt="Logo">` : `<span>${esc(e.nome.charAt(0))}</span>`}</div>
@@ -5026,6 +5043,10 @@ function vEmpresa() {
       ${TELAS.map(t => `<tr><td><b>${esc(t.nome)}</b><div class="muted" style="font-size:12.5px">${esc(t.desc)}</div></td>${PAPEIS_ORDEM.map(p => { const pos = t.pode.includes(p), on = permitido(t.v, p, perm); return `<td class="c"><input type="checkbox" aria-label="${esc(t.nome)} para ${esc(PAPEIS[p])}"${on ? " checked" : ""}${pos && pode && !(t.v === "empresa" && p === "admin") ? "" : " disabled"} onchange="mudarPerm('${t.v}','${p}',this.checked)">${!pos ? `<span class="muted" title="Limite do sistema">—</span>` : ""}</td>`; }).join("")}</tr>`).join("")}</tbody></table></div>
       ${pode ? `<div style="display:flex;gap:8px;margin-top:12px"><button class="btn primary" type="button" onclick="salvarEmpresaPerfil(true)">Salvar permissões</button><button class="btn" type="button" onclick="S.empresaInfo.permissoes={};render()">Voltar ao padrão</button></div>` : ""}`;
   }
+  if (aba === "dados") corpo = `<div class="panel" style="display:grid;gap:10px;max-width:640px"><h2 style="margin:0">Baixar os dados da empresa</h2>
+      <p class="muted" style="margin:0;font-size:13.5px">Tudo da ${esc(e.nome)}: marcas, postagens, stories, pessoas (sem as senhas de login), tarefas, agenda, horas, pagamentos, avaliações, propostas, mural e o registro. As senhas das contas dos clientes (Acessos) não saem por aqui, por segurança.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" id="btExpxlsx" onclick="exportarDados('xlsx')">Baixar tudo em Excel</button><button class="btn" type="button" id="btExpjson" onclick="exportarDados('json')">Baixar backup completo (JSON)</button></div>
+      <small class="muted">Fica registrado quem exportou e quando.</small></div>`;
   return head(S.eu.dono ? "Empresa" : "Gestão", e.nome) + abas + corpo;
 }
 function mudarPerm(v, p, on) {
@@ -5065,6 +5086,187 @@ function desenharMarcaApp() {
   b.innerHTML = e && (pf.logo || e.nome) ? `${pf.logo ? `<img class="emp-logo" src="https://drive.google.com/thumbnail?id=${esc(pf.logo)}&sz=w120" alt="">` : ""}<span class="emp-n">${esc(e.nome)}</span><small class="emp-app">Planeja <em>Aê</em></small>` : `Planeja <em>Aê</em>`;
 }
 
+/* ---------- Esqueci minha senha ---------- */
+function vEsqueci() {
+  return `<form class="login panel" onsubmit="event.preventDefault();pedirSenhaNova()">
+    <h1>Esqueci minha senha</h1>
+    <span class="muted">Coloque o seu login (e-mail). Se ele tiver cadastro, chega um link para criar uma senha nova. O link vale por 1 hora.</span>
+    <label class="field"><span>Login (e-mail)</span><input id="esLogin" type="email" autocomplete="username" required value="${esc(S.esqLogin || "")}"></label>
+    <span class="err" id="esMsg" style="color:var(--ink)"></span>
+    <button class="btn primary" type="submit" id="esBtn">Mandar o link</button>
+    <button class="btn" type="button" onclick="S.esqueci=false;render()">Voltar para entrar</button>
+  </form>`;
+}
+async function pedirSenhaNova() {
+  const b = $("#esBtn"); b.disabled = true; b.textContent = "Enviando…";
+  try { await api("esqueciSenha", { login: $("#esLogin").value.trim() }); $("#esMsg").textContent = "Pronto! Se esse e-mail tiver cadastro, o link chega em alguns minutos. Confira também o spam."; b.textContent = "Enviado"; }
+  catch (e) { $("#esMsg").textContent = e.message || "Não consegui enviar agora. Tente de novo."; b.disabled = false; b.textContent = "Mandar o link"; }
+}
+function vRedefinir(chave) {
+  document.body.classList.add("publico");
+  $("#app").innerHTML = `<form class="login panel" onsubmit="event.preventDefault();criarSenhaNova('${esc(chave)}')">
+    <h1>Criar senha nova</h1><span class="muted">Escolha uma senha com pelo menos 6 caracteres.</span>
+    <label class="field"><span>Senha nova</span><input id="rdS1" type="password" autocomplete="new-password" minlength="6" required></label>
+    <label class="field"><span>Repita a senha</span><input id="rdS2" type="password" autocomplete="new-password" minlength="6" required></label>
+    <span class="err" id="rdErr"></span><button class="btn primary" type="submit" id="rdBtn">Salvar senha</button></form>`;
+}
+async function criarSenhaNova(chave) {
+  const a = $("#rdS1").value, b2 = $("#rdS2").value;
+  if (a !== b2) return ($("#rdErr").textContent = "As duas senhas estão diferentes.");
+  const b = $("#rdBtn"); b.disabled = true;
+  try { const r = await api("redefinirSenha", { chave, nova: a }); S.esqLogin = r.login; S.esqueci = false; history.replaceState(null, "", location.pathname + "#calendario"); document.body.classList.remove("publico"); S.token = ""; store("token", ""); render(); setTimeout(() => { if ($("#lgLogin")) $("#lgLogin").value = r.login; }, 30); toast("Senha criada. Entre com a senha nova."); }
+  catch (e) { b.disabled = false; $("#rdErr").textContent = e.message || "Não consegui salvar."; }
+}
+
+/* ---------- Tour do primeiro acesso ---------- */
+function passosTour() {
+  const p = S.eu.papel, cli = p === "cliente", chefe = TODAS.includes(p);
+  const l = [
+    [null, `Olá, ${S.eu.nome.split(" ")[0]}! 👋`, cli ? "Aqui você acompanha e aprova o conteúdo da sua marca. Leva 1 minuto para conhecer." : "Este é o seu planejamento de conteúdo. Vou te mostrar onde fica cada coisa em 1 minuto."],
+    ['#tabs .mn-a:first-child', "Planejamento", cli ? "Aqui ficam o calendário dos posts, os stories e a grade do Instagram." : "Calendário, stories, banco de ideias, lista de postagens, fluxo de produção e grade do Instagram."],
+    ['#tabs .mn-a[href="#aprovacoes"]', "Aprovações", cli ? "Quando um post estiver pronto, ele aparece aqui para você aprovar ou pedir ajuste. O número mostra quantos esperam por você." : p === "social" ? "Aqui você vê o que foi devolvido para ajuste. Os aprovadores validam ideias e aprovam conteúdos aqui." : "Ideias para validar e conteúdos para aprovar. Dá para aprovar vários de uma vez."]
+  ];
+  if (cli) l.push(['#tabs .mn-a:has-text("Resultados")', "Resultados", "Os números do mês, os posts publicados e o resultado de cada um."]);
+  if (!cli) {
+    l.push(["#marcaSel", "Marca", "Troque aqui a marca que você está vendo. Cada marca tem o próprio calendário, posts e informações."]);
+    if (S.canWrite) l.push(['.add-day, #app .btn.primary', "Criar um post", "No Calendário, clique no + de um dia (ou em “+ Nova postagem”). Preencha, salve e, quando estiver pronto, clique em “Enviar para aprovação”."]);
+    l.push(['#tabs .mn-a:has-text("Equipe")', "Equipe", "Agenda com reuniões, tarefas, banco de horas e o mural de avisos."]);
+    if (chefe) l.push(['#tabs .mn-a:has-text("Gestão"),#tabs .mn-a:has-text("Resultados")', "Gestão", "Painel da agência, pessoas, financeiro e as configurações da empresa ficam por aqui."]);
+  }
+  l.push(["#me .sino, #me button", "Avisos", "O sininho mostra o que aconteceu: aprovações, devoluções, comentários, reuniões e tarefas."]);
+  l.push(["#ajBtn", "Ajuda", "Ficou com dúvida? Clique no ? para ver as perguntas frequentes ou rever este tour."]);
+  return l;
+}
+let TOUR = null;
+function iniciarTour(forcar) {
+  if (!S.eu) return;
+  const k = "tour." + S.eu.id;
+  if (!forcar && (store(k) || navigator.webdriver)) return; // robôs de teste não veem o tour automático
+  store(k, "1");
+  TOUR = { i: 0, passos: passosTour() };
+  desenharTour();
+}
+function alvoTour(sel) {
+  if (!sel) return null;
+  for (const s of sel.split(",")) {
+    let el = null;
+    try {
+      if (s.includes(":has-text(")) { const [base, txt] = s.split(':has-text("'); el = [...document.querySelectorAll(base.trim())].find(e => e.textContent.includes(txt.replace(/"\)$/, ""))); }
+      else el = document.querySelector(s.trim());
+    } catch (e) {}
+    if (el && el.offsetParent !== null) return el;
+  }
+  return null;
+}
+function desenharTour() {
+  const ov = $("#tour");
+  if (!TOUR) { ov.hidden = true; return; }
+  const [sel, tit, txt] = TOUR.passos[TOUR.i], el = alvoTour(sel), n = TOUR.passos.length;
+  ov.hidden = false;
+  const r = el ? el.getBoundingClientRect() : null;
+  ov.innerHTML = `${r ? `<div class="tour-foco" style="top:${r.top - 6}px;left:${r.left - 6}px;width:${r.width + 12}px;height:${r.height + 12}px"></div>` : `<div class="tour-fundo"></div>`}
+    <div class="tour-cx" role="dialog" aria-label="${esc(tit)}"><small>${TOUR.i + 1} de ${n}</small><b>${esc(tit)}</b><p>${esc(txt)}</p>
+      <div class="tour-acts"><button class="btn sm" type="button" onclick="TOUR=null;desenharTour()">Pular</button><span class="sp"></span>${TOUR.i ? `<button class="btn sm" type="button" onclick="TOUR.i--;desenharTour()">Voltar</button>` : ""}<button class="btn sm primary" type="button" onclick="${TOUR.i < n - 1 ? "TOUR.i++;desenharTour()" : "TOUR=null;desenharTour();toast('Bom trabalho! 💛')"}">${TOUR.i < n - 1 ? "Próximo" : "Começar"}</button></div></div>`;
+  const cx = ov.querySelector(".tour-cx");
+  if (r) {
+    const abaixo = r.bottom + 14 + cx.offsetHeight < innerHeight;
+    cx.style.top = (abaixo ? r.bottom + 14 : Math.max(10, r.top - cx.offsetHeight - 14)) + "px";
+    cx.style.left = Math.max(10, Math.min(r.left, innerWidth - cx.offsetWidth - 10)) + "px";
+  } else { cx.style.top = "30%"; cx.style.left = Math.max(10, (innerWidth - cx.offsetWidth) / 2) + "px"; }
+}
+addEventListener("resize", () => { if (TOUR) desenharTour(); });
+document.addEventListener("keydown", e => { if (TOUR && e.key === "Escape") { TOUR = null; desenharTour(); } });
+
+/* ---------- Central de ajuda ---------- */
+const AJUDA = [
+  ["Começando", "todos", "Como troco a minha senha?", "Em Minha conta (no topo, ao lado do seu nome) → Trocar senha. Se esqueceu, na tela de entrar clique em “Esqueci minha senha” e use o link que chega por e-mail."],
+  ["Começando", "todos", "Como instalo no celular como um app?", "No iPhone: abra o site no Safari → Compartilhar → Adicionar à Tela de Início. No Android: menu ⋮ → Instalar app. Em Minha conta dá para ligar os avisos no aparelho."],
+  ["Começando", "todos", "Como mudo para o modo escuro ou troco as cores?", "O botão ☀️/🌙 no topo troca entre claro e escuro. Em Minha conta → Minhas cores você escolhe as suas cores."],
+  ["Posts", "equipe", "Como crio um post?", "Em Planejamento → Calendário, clique no + do dia (ou em “+ Nova postagem”). Preencha título, formato, legenda e o link da arte, e salve. Sem data, ele vai para o Banco de ideias."],
+  ["Posts", "equipe", "Como coloco as artes do Drive no post?", "Cole o link da pasta do Drive no campo “Link da publicação” e clique em “Puxar da pasta”: as artes entram na ordem do número no fim do nome (1, 2, 3…) e a legenda vem do documento da pasta."],
+  ["Posts", "equipe", "Como mudo um post de dia?", "No Calendário, arraste o post para o outro dia."],
+  ["Posts", "equipe", "Como importo o conteúdo do mês de um documento?", "No Calendário, “Importar documento”: cole o link do Google Docs (ou .docx) ou o texto. Cada post começa com P1, P2…; você confere a lista e cria tudo de uma vez."],
+  ["Posts", "equipe", "O que é a conferência antes de enviar?", "Ao enviar para aprovação, o sistema confere a legenda (tamanho, hashtags, CTA, palavras proibidas) e as artes. Erros que o Instagram não aceita impedem o envio; avisos deixam enviar mesmo assim."],
+  ["Aprovação", "todos", "Como funciona a aprovação?", "Ideia → validação → (cliente) → produção → aprovação → (cliente) → aprovado → agendado → postado. Quem reprova precisa escrever o motivo, e ele aparece para quem produziu."],
+  ["Aprovação", "todos", "Como aprovo vários posts de uma vez?", "Em Aprovações, quando há 2 ou mais posts esperando, aparece o botão “Aprovar todos”."],
+  ["Aprovação", "cliente", "Como peço um ajuste num post?", "Em Aprovações, clique em “Não aprovar (pedir ajustes)” e escreva o que precisa mudar. Você também pode comentar no post, inclusive sobre uma arte específica do carrossel."],
+  ["Aprovação", "todos", "Onde vejo como o post vai ficar no Instagram?", "Em Aprovações escolha “Como Instagram” no topo, ou abra o post e clique em “Instagram”. “Ver na grade” mostra o feed do mês."],
+  ["Stories", "todos", "Como planejo stories?", "Planejamento → Stories. Clique no + do dia, escolha o tipo, texto, figurinha e cor. Clique na bolinha do dia para ver a sequência como no Instagram."],
+  ["Equipe", "equipe", "Como marco ou peço uma reunião?", "Equipe → Agenda → “+ Reunião” (gestão) ou “Pedir reunião” (os outros, que vai como pedido para a gestão aceitar). Escolha dia, horário, duração e participantes; “Ver horários livres” mostra quando todos podem."],
+  ["Equipe", "equipe", "Como lanço as minhas horas?", "Equipe → Horas: use o cronômetro (Começar / Parar e salvar) ou lance o tempo à mão, por marca."],
+  ["Equipe", "equipe", "Como passo uma tarefa para alguém?", "Equipe → Tarefas → “+ Nova tarefa”: escolha o responsável, a prioridade e o prazo. A pessoa recebe aviso no sino e por e-mail."],
+  ["Gestão", "gestao", "Como cadastro alguém da equipe?", "Equipe → Pessoas → “+ Pessoa”: nome, e-mail, papel e marcas. O sistema monta a mensagem de boas-vindas para mandar no WhatsApp."],
+  ["Gestão", "gestao", "Como escolho o que cada papel vê?", "Gestão → Minha empresa → Quem vê o quê: marque ou desmarque cada tela para cada papel."],
+  ["Gestão", "gestao", "Como mando o link de aprovação para o cliente?", "Em Pessoas, ao lado do aprovador do cliente, “🔗 Link sem senha”. O link vale 14 dias e entra direto na conta dele."],
+  ["Gestão", "gestao", "Onde vejo quem fez o quê?", "Gestão → Registro: entradas no sistema, pessoas cadastradas, posts apagados, quem abriu as senhas, mudanças de permissão e pagamentos."],
+  ["Gestão", "gestao", "Como baixo todos os dados da empresa?", "Gestão → Minha empresa → Dados: baixe tudo em Excel (uma aba para cada coisa) ou o backup completo."],
+  ["Gestão", "gestao", "Como ligo a IA e o Google Agenda?", "Minha conta → Integrações (administrador): cole a chave da Anthropic para os botões ✨ e ligue o Google Agenda para as reuniões virarem convites com Meet."],
+  ["Marca", "equipe", "Onde ficam as senhas das contas do cliente?", "Marca → Acessos. Ficam fora da planilha, escondidas, e cada vez que alguém abre fica registrado."],
+  ["Marca", "equipe", "Como mando o briefing para um cliente novo?", "Marca → Visão geral → “Gerar link do briefing”. O cliente preenche sem senha e as respostas entram direto na marca."]
+];
+function abrirAjuda() {
+  const cli = ehCliente(), chefe = TODAS_MARCAS.includes(S.eu?.papel) || S.eu?.dono;
+  S.ajudaLista = AJUDA.filter(([, para]) => para === "todos" || (para === "cliente" && cli) || (para === "equipe" && !cli) || (para === "gestao" && chefe));
+  const e = S.empresaInfo, pf = (e && e.perfil) || {};
+  $("#ajForm").innerHTML = `<div class="dlg-head"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600">Central de ajuda</div><h2>Como podemos ajudar?</h2></div><button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#ajDlg').close()">×</button></div>
+    <div class="dlg-body" style="grid-template-columns:1fr"><input id="ajQ" type="search" placeholder="Buscar (ex.: senha, aprovar, stories, reunião…)" oninput="desenharAjuda()" style="border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;color:var(--ink);font:inherit">
+      <div id="ajRes"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px">
+        <button class="btn sm" type="button" onclick="$('#ajDlg').close();iniciarTour(true)">▶ Rever o tour</button>
+        ${pf.whatsapp ? `<a class="btn sm" href="https://wa.me/${esc(telWa(pf.whatsapp))}" target="_blank" rel="noopener">Falar com ${esc(cli ? "a agência" : "a gestão")} no WhatsApp</a>` : ""}${pf.email ? `<a class="btn sm" href="mailto:${esc(pf.email)}">Mandar e-mail</a>` : ""}</div></div>`;
+  $("#ajDlg").showModal(); desenharAjuda(); $("#ajQ").focus();
+}
+function desenharAjuda() {
+  const q = ($("#ajQ").value || "").trim().toLowerCase(), l = S.ajudaLista.filter(([, , p, r]) => !q || (p + " " + r).toLowerCase().includes(q));
+  const grupos = [...new Set(l.map(x => x[0]))];
+  $("#ajRes").innerHTML = l.length ? grupos.map(g => `<h3 class="aj-g">${esc(g)}</h3>${l.filter(x => x[0] === g).map(([, , p, r]) => `<details class="aj-it"${q ? " open" : ""}><summary>${esc(p)}</summary><p>${esc(r)}</p></details>`).join("")}`).join("") : `<p class="muted">Nada encontrado. Tente outra palavra ou fale com a gestão.</p>`;
+}
+
+/* ---------- Registro de quem fez o quê ---------- */
+async function carregarRegistro() {
+  S.reg = { carregando: true };
+  try { S.reg = { itens: (await api("auditoria")).itens }; } catch (e) { S.reg = { erro: e.message || "Não consegui carregar." }; }
+  if (view() === "registro") render();
+}
+function vRegistro() {
+  if (!(TODAS_MARCAS.includes(S.eu.papel) || S.eu.dono)) return `<div class="empty"><strong>Só o administrador e o diretor veem o registro</strong></div>`;
+  if (!S.reg) carregarRegistro();
+  const r = S.reg || {}, f = S.regF || (S.regF = { quem: "", tipo: "", q: "" });
+  if (r.carregando || !r.itens) return head("Gestão", "Registro") + `<div class="empty"><strong>${r.erro ? esc(r.erro) : "Carregando o registro…"}</strong></div>`;
+  const pessoas = [...new Set(r.itens.map(x => x.nome).filter(Boolean))].sort(), tipos = [...new Set(r.itens.map(x => x.acao))].sort();
+  const l = r.itens.filter(x => (!f.quem || x.nome === f.quem) && (!f.tipo || x.acao === f.tipo) && (!f.q || [x.acao, x.alvo, x.detalhe, x.nome].join(" ").toLowerCase().includes(f.q.toLowerCase())));
+  const sel = (k, op, ph) => `<select onchange="S.regF.${k}=this.value;render()"><option value="">${ph}</option>${op.map(o => `<option${f[k] === o ? " selected" : ""}>${esc(o)}</option>`).join("")}</select>`;
+  const alerta = a => /senha errada|Apagou|Excluiu|Abriu os acessos|Alterou os acessos|permissões|quem vê|Forçou|desativ/i.test(a + " ");
+  return head("Gestão", "Registro", `<button class="btn" type="button" onclick="S.reg=null;render()">Atualizar</button><button class="btn" type="button" onclick="baixarRegistro()">Baixar (CSV)</button>`) +
+    `<p class="sec-intro">Quem fez o quê no sistema: entradas, tentativas com senha errada, pessoas cadastradas ou alteradas, posts e stories apagados, quem abriu as senhas das contas, mudanças de permissão, pagamentos e exportações. Guardado por 1 ano.</p>
+    <div class="tf-filtros">${sel("quem", pessoas, "Todas as pessoas")}${sel("tipo", tipos, "Todas as ações")}<input type="search" placeholder="Buscar…" value="${esc(f.q)}" onchange="S.regF.q=this.value;render()" style="border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 10px;color:var(--ink)"></div>
+    <div class="table-wrap"><table style="min-width:720px"><thead><tr><th>Quando</th><th>Quem</th><th>O que fez</th><th>Em quê</th></tr></thead><tbody>
+    ${l.slice(0, 500).map(x => `<tr${alerta(x.acao) ? ' class="reg-alerta"' : ""}><td style="white-space:nowrap">${new Date(x.em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}</td><td>${esc(x.nome)}</td><td>${esc(x.acao)}</td><td>${esc(x.alvo)}${x.detalhe ? `<div class="muted" style="font-size:12px">${esc(x.detalhe)}</div>` : ""}</td></tr>`).join("") || `<tr><td colspan="4" class="muted">Nada encontrado.</td></tr>`}</tbody></table></div>
+    ${l.length > 500 ? `<p class="muted" style="font-size:12.5px">Mostrando 500 de ${l.length}. Use os filtros ou baixe o CSV.</p>` : ""}`;
+}
+function baixarRegistro() {
+  const l = (S.reg && S.reg.itens) || [], q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const csv = "﻿" + ["Quando;Quem;O que fez;Em quê;Detalhe"].concat(l.map(x => [new Date(x.em).toLocaleString("pt-BR"), x.nome, x.acao, x.alvo, x.detalhe].map(q).join(";"))).join("\n");
+  baixarBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), "registro.csv");
+}
+
+/* ---------- Exportar os dados da empresa ---------- */
+async function exportarDados(tipo) {
+  const b = $("#btExp" + tipo); if (b) { b.disabled = true; b.textContent = "Preparando…"; }
+  try {
+    const r = await api("exportar"), nome = "dados-" + String(r.empresa || "empresa").toLowerCase().normalize("NFD").replace(/[^\w]+/g, "-") + "-" + hojeIso();
+    if (tipo === "json") baixarBlob(new Blob([JSON.stringify(r, null, 1)], { type: "application/json" }), nome + ".json");
+    else {
+      await carregarLib("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js");
+      const wb = XLSX.utils.book_new();
+      Object.entries(r.tabelas).forEach(([aba, linhas]) => XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(linhas.length ? linhas : [{ vazio: "" }]), aba.slice(0, 31)));
+      XLSX.writeFile(wb, nome + ".xlsx");
+    }
+    toast("Arquivo baixado");
+  } catch (e) { writeFail(e); }
+  if (b) { b.disabled = false; b.textContent = tipo === "json" ? "Baixar backup completo (JSON)" : "Baixar tudo em Excel"; }
+}
+
 /* ---------- Eventos ---------- */
 $("#marcaSel").addEventListener("change", e => { S.marcaId = e.target.value; store("marca", S.marcaId); S.month = null; S.f = { status: "", formato: "", produto: "", q: "" }; S.confirmDel = false; S.dirty = false; render(); });
 $("#novaMarca").addEventListener("click", novaMarca);
@@ -5080,7 +5282,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-07.3"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-08.1"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",
@@ -5108,6 +5310,7 @@ async function carregar() {
     if (!S.marcas.find(m => m.id === S.marcaId)) { S.marcaId = S.marcas[0]?.id || null; S.month = null; }
     S.loadedM = S.loadedP = true; S.failed = false;
     if (S.eu) { store("cores", JSON.stringify(S.eu.cores || {})); aplicarCores(S.eu.cores || {}); }
+    if (S.eu && !S.tourChecado) { S.tourChecado = true; setTimeout(() => { if (!TOUR && !document.querySelector("dialog[open]")) iniciarTour(); }, 900); }
     avisarNovidades();
   } catch (e) {
     if (e.code === "sessao") return writeFail(e);

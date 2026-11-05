@@ -19,7 +19,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-07.3';
+const VERSAO = '2026-11-08.1';
 const NOME_APP = 'Planeja Aê';
 
 const ABA_PAUTAS = 'POSTAGENS';
@@ -45,6 +45,8 @@ const ABA_PAGAMENTOS = 'PAGAMENTOS';
 const CAMPOS_PAGAMENTO = [['id', 'ID'], ['marcaId', 'Marca ID'], ['marca', 'Marca'], ['mes', 'Mês'], ['valor', 'Valor'], ['pagoEm', 'Pago em'], ['por', 'Registrado por'], ['obs', 'Observação'], ['criado', 'Criado em']];
 const ABA_PROPOSTAS = 'PROPOSTAS';
 const CAMPOS_PROPOSTA = [['id', 'ID'], ['cliente', 'Cliente'], ['status', 'Status'], ['dados', 'Dados'], ['chave', 'Chave do link'], ['marcaId', 'Marca criada'], ['por', 'Criada por'], ['uid', 'Criada por ID'], ['criado', 'Criada em'], ['respondido', 'Respondida em'], ['empresaId', 'Empresa ID']];
+const ABA_AUDITORIA = 'REGISTRO';
+const CAMPOS_AUDITORIA = [['id', 'ID'], ['empresaId', 'Empresa ID'], ['em', 'Quando'], ['uid', 'Pessoa ID'], ['nome', 'Pessoa'], ['acao', 'O que fez'], ['alvo', 'Em quê'], ['detalhe', 'Detalhe']];
 const ABA_MURAL = 'MURAL';
 const CAMPOS_AVISO = [['id', 'ID'], ['titulo', 'Título'], ['texto', 'Recado'], ['importante', 'Importante'], ['fixado', 'Fixado'], ['ate', 'Mostrar até'], ['por', 'Por'], ['uid', 'Por ID'], ['criado', 'Criado em'], ['lidos', 'Quem leu'], ['empresaId', 'Empresa ID']];
 const PASTA_ARQUIVOS = 'Planejamento de Conteúdo - Arquivos';
@@ -135,6 +137,8 @@ function doPost(e) {
   try { req = JSON.parse(e.postData.contents); } catch (err) { return json_({ ok: false, error: 'Pedido inválido.' }); }
   try {
     if (req.action === 'login') return json_(login_(req.login, req.senha));
+    if (req.action === 'esqueciSenha') return json_(Object.assign({ ok: true }, esqueciSenha_(req.login, req.site)));
+    if (req.action === 'redefinirSenha') { const lk = LockService.getScriptLock(); lk.waitLock(20000); try { return json_(Object.assign({ ok: true }, redefinirSenha_(req.chave, req.nova))); } finally { lk.releaseLock(); } }
     if (req.action === 'propostaVer') return json_(Object.assign({ ok: true }, propostaVer_(req.chave)));
     if (req.action === 'propostaAceitar') { const lk = LockService.getScriptLock(); lk.waitLock(20000); try { return json_(Object.assign({ ok: true }, propostaAceitar_(req.chave, req.nome, req.site))); } finally { lk.releaseLock(); } }
     if (req.action === 'briefingVer') return json_(Object.assign({ ok: true }, briefingVer_(req.chave)));
@@ -166,6 +170,19 @@ function doPost(e) {
     const lock = LockService.getScriptLock();
     lock.waitLock(20000);
     try {
+      const antes = antesDoRegistro_(eu, req);
+      const saida = rodarAcao_(eu, req);
+      try { if (antes && JSON.parse(saida.getContent()).ok) auditar_(eu, antes[0], antes[1], antes[2], antes[3]); } catch (e) { Logger.log('Registro: ' + e); }
+      return saida;
+    } finally {
+      lock.releaseLock();
+    }
+  } catch (err) {
+    return json_({ ok: false, code: err.code || 'server', error: String(err.message || err) });
+  }
+}
+
+function rodarAcao_(eu, req) {
       switch (req.action) {
         case 'listar': guardarSite_(req.site); return json_(listar_(eu, req.desde, req.se));
         case 'comentar': return json_(Object.assign({ ok: true }, comentar_(eu, req.id, req.texto, req.arte)));
@@ -217,20 +234,17 @@ function doPost(e) {
         case 'excluirEvento': excluirEvento_(eu, req.id, req.site); return json_({ ok: true });
         case 'minhasNotificacoes': salvarPreferencia_(eu, 'notificar', req.notificar === false ? 'não' : 'sim'); return json_({ ok: true });
         case 'sair': PropertiesService.getScriptProperties().deleteProperty('tok_' + req.token); return json_({ ok: true });
+        case 'auditoria': return json_({ ok: true, itens: listarAuditoria_(eu) });
+        case 'exportar': return json_(Object.assign({ ok: true }, exportar_(eu)));
         default: return json_({ ok: false, error: 'Ação desconhecida: ' + req.action });
       }
-    } finally {
-      lock.releaseLock();
-    }
-  } catch (err) {
-    return json_({ ok: false, code: err.code || 'server', error: String(err.message || err) });
-  }
 }
 
 /* ---------- Login e permissões ---------- */
 
 function login_(login, senha) {
   const u = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(x => x.login === normLogin_(login))[0];
+  if (u && u.ativo === 'sim' && u.hash !== hash_(senha, u.sal)) { try { auditar_(publicoUsuario_(u), 'Tentou entrar com a senha errada', '', '', u.empresaId); } catch (e) {} }
   if (!u || u.ativo !== 'sim' || u.hash !== hash_(senha, u.sal) || !empresaAtiva_(u)) {
     Utilities.sleep(800);
     throw erro_('login', 'Login ou senha incorretos.');
@@ -244,6 +258,7 @@ function login_(login, senha) {
       try { if (JSON.parse(todas[k]).exp < agora) props.deleteProperty(k); } catch (e) { props.deleteProperty(k); }
     }
   });
+  try { auditar_(publicoUsuario_(u), 'Entrou no sistema', '', '', u.empresaId); } catch (e) {}
   return { ok: true, token: criarSessao_(u.id, DIAS_DE_SESSAO) };
 }
 
@@ -887,11 +902,13 @@ function acessosListar_(eu, marcaId) {
   // registro de quem abriu os acessos (últimas 30 vezes)
   const log = parseJSON_(props.getProperty('credlog_' + marcaId), []);
   log.unshift({ por: eu.nome, uid: eu.id, em: Date.now() });
+  try { auditar_(eu, 'Abriu os acessos (senhas) da marca', nomeDaMarca_(marcaId), '', empresaDe_(marcaId)); } catch (e) {}
   props.setProperty('credlog_' + marcaId, JSON.stringify(log.slice(0, 30)));
   return { acessos: Array.isArray(d.acessos) ? d.acessos : [], por: d.por || '', em: d.em || 0, vistos: log.slice(0, 10) };
 }
 
 function acessosSalvar_(eu, marcaId, acessos) {
+  try { auditar_(eu, 'Alterou os acessos (senhas) da marca', nomeDaMarca_(marcaId), '', empresaDe_(marcaId)); } catch (e) {}
   if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Só quem alimenta a marca altera os acessos.');
   const campos = ['plataforma', 'usuario', 'email', 'senha', 'chave', 'obs'];
   const lista = (Array.isArray(acessos) ? acessos : []).slice(0, 60).map(a => {
@@ -1130,6 +1147,7 @@ function configurar() {
   aba_(ABA_AVALIACOES, CAMPOS_AVALIACAO);
   aba_(ABA_PAGAMENTOS, CAMPOS_PAGAMENTO);
   aba_(ABA_PROPOSTAS, CAMPOS_PROPOSTA);
+  aba_(ABA_AUDITORIA, CAMPOS_AUDITORIA);
   instalarGatilhos_();
 
   if (!ler_(ABA_USUARIOS, CAMPOS_USUARIO).length) {
@@ -1665,6 +1683,7 @@ function resumoDiario() {
 
 /* ---------- Cópia de segurança semanal da planilha (guarda as 8 últimas) ---------- */
 function backupSemanal() {
+  try { const lim = Date.now() - 365 * 864e5, aba = aba_(ABA_AUDITORIA, CAMPOS_AUDITORIA); const v = ler_(ABA_AUDITORIA, CAMPOS_AUDITORIA); const velhos = v.filter(x => Number(x.em) < lim).length; if (velhos && aba.getLastRow() > velhos + 1) aba.deleteRows(2, velhos); } catch (e) { Logger.log(e); }
   try { limparLixeira_(); } catch (e) { Logger.log(e); }
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const pasta = pasta_(DriveApp.getRootFolder(), 'Planejamento de Conteúdo - Cópias de segurança');
@@ -2622,4 +2641,114 @@ function logoEmpresa_(eu, req) {
   const f = pasta.createFile(Utilities.newBlob(Utilities.base64Decode(req.base64), req.mime || 'image/png', 'logo-' + eu.empresaId));
   try { f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
   return { id: f.getId() };
+}
+
+/* ======================================================================
+ * Novidades 2026-11-08: esqueci minha senha, registro de quem fez o quê, exportar dados
+ * ====================================================================== */
+
+/* ---------- Esqueci minha senha (link por e-mail, vale 1 hora) ---------- */
+function esqueciSenha_(login, site) {
+  login = normLogin_(login);
+  const cache = CacheService.getScriptCache(), k = 'rstq_' + login;
+  const tent = Number(cache.get(k) || 0);
+  if (tent >= 5) throw erro_('server', 'Muitos pedidos seguidos. Espere uma hora e tente de novo.');
+  cache.put(k, String(tent + 1), 3600);
+  const u = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(x => x.login === login && x.ativo === 'sim')[0];
+  // a resposta é sempre a mesma, para não revelar quem tem cadastro
+  if (!u || !empresaAtiva_(u) || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(u.login) || MailApp.getRemainingDailyQuota() < 1) return { enviado: true };
+  const chave = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
+  PropertiesService.getScriptProperties().setProperty('rst_' + chave, JSON.stringify({ uid: u.id, exp: Date.now() + 3600000 }));
+  const base = String(site || PropertiesService.getScriptProperties().getProperty('site') || '').split('#')[0];
+  const url = base + '#redefinir=' + chave;
+  MailApp.sendEmail({ to: u.login, name: NOME_APP, subject: '🔑 Criar uma senha nova',
+    htmlBody: '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#1d1d1f;max-width:520px"><h2 style="margin:0 0 12px">Olá, ' + escH_(u.nome.split(' ')[0]) + '!</h2>' +
+      '<p>Recebemos um pedido para criar uma senha nova no ' + NOME_APP + '. Clique no botão (vale por 1 hora):</p>' +
+      '<p><a href="' + url + '" style="background:#1d1d1f;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">Criar senha nova</a></p>' +
+      '<p style="color:#6b6b70;font-size:13px">Se não foi você, ignore este e-mail: a sua senha continua a mesma.</p></div>' });
+  try { auditar_(publicoUsuario_(u), 'Pediu para criar uma senha nova', '', '', u.empresaId); } catch (e) {}
+  return { enviado: true };
+}
+function redefinirSenha_(chave, nova) {
+  const props = PropertiesService.getScriptProperties(), k = 'rst_' + String(chave || '').replace(/\W/g, '');
+  const d = parseJSON_(props.getProperty(k), null);
+  if (!d || d.exp < Date.now()) throw erro_('server', 'Este link venceu ou já foi usado. Peça um novo em "Esqueci minha senha".');
+  if (String(nova || '').length < 6) throw erro_('server', 'A senha precisa ter pelo menos 6 caracteres.');
+  const u = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(x => x.id === d.uid)[0];
+  if (!u || u.ativo !== 'sim') throw erro_('server', 'Conta não encontrada.');
+  u.sal = Utilities.getUuid(); u.hash = hash_(nova, u.sal);
+  gravar_(ABA_USUARIOS, CAMPOS_USUARIO, u);
+  props.deleteProperty(k);
+  // encerra as sessões abertas dessa pessoa em outros aparelhos
+  const todas = props.getProperties();
+  Object.keys(todas).forEach(x => { if (x.indexOf('tok_') === 0) { const s = parseJSON_(todas[x], {}); if (s.uid === u.id) props.deleteProperty(x); } });
+  try { auditar_(publicoUsuario_(u), 'Criou uma senha nova pelo link do e-mail', '', '', u.empresaId); } catch (e) {}
+  return { login: u.login };
+}
+
+/* ---------- Registro de quem fez o quê ---------- */
+function auditar_(eu, acao, alvo, detalhe, empresaId) {
+  const aba = aba_(ABA_AUDITORIA, CAMPOS_AUDITORIA);
+  const linha = { id: Utilities.getUuid().slice(0, 12), empresaId: empresaId != null && empresaId !== '' ? empresaId : (eu.empresaId || ''), em: Date.now(), uid: eu.id || '', nome: eu.nome || '', acao: String(acao || '').slice(0, 200), alvo: String(alvo || '').slice(0, 300), detalhe: String(detalhe || '').slice(0, 500) };
+  aba.getRange(aba.getLastRow() + 1, 1, 1, CAMPOS_AUDITORIA.length).setValues([CAMPOS_AUDITORIA.map(c => String(linha[c[0]]))]);
+}
+// descreve a ação antes de rodar (para saber o nome do que vai ser apagado)
+function antesDoRegistro_(eu, req) {
+  const titPost = id => { const p = pautaPorId_(id); return p ? [(p.postagem || 'Postagem') + ' · ' + nomeDaMarca_(p.marcaId), empresaDe_(p.marcaId)] : ['', '']; };
+  switch (req.action) {
+    case 'salvarUsuario': {
+      const u = req.usuario || {}, atual = u.id ? ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(x => x.id === u.id)[0] : null;
+      const mud = atual ? [atual.papel !== u.papel && 'papel: ' + atual.papel + ' → ' + u.papel, (atual.ativo === 'sim') !== (u.ativo !== false) && (u.ativo === false ? 'desativou o acesso' : 'reativou o acesso'), u.senha && 'senha nova', String(atual.marcas) !== (u.marcas || []).join(',') && 'mudou as marcas'].filter(Boolean).join('; ') : 'papel: ' + u.papel;
+      return [atual ? 'Alterou a pessoa' : 'Cadastrou a pessoa', (u.nome || u.login || '') + ' (' + (PAPEIS.indexOf(u.papel) >= 0 ? u.papel : '') + ')', mud];
+    }
+    case 'excluirPauta': { const t = titPost(req.id); return ['Apagou a postagem', t[0], 'foi para a lixeira', t[1]]; }
+    case 'excluirStory': { const x = ler_(ABA_STORIES, CAMPOS_STORY).filter(s => s.id === String(req.id))[0]; return x ? ['Apagou um story', (x.titulo || x.tipo || 'Story') + ' · ' + nomeDaMarca_(x.marcaId), 'foi para a lixeira', empresaDe_(x.marcaId)] : null; }
+    case 'excluirMarca': return ['Excluiu a marca', nomeDaMarca_(req.id), 'com todas as postagens', empresaDe_(req.id)];
+    case 'trocarSenha': return ['Trocou a própria senha', '', ''];
+    case 'iaConfig': return ['Mudou as integrações', '', ('chave' in req ? (req.chave === '' ? 'desligou a IA' : 'trocou a chave da IA') : '') + ('gcal' in req ? (req.gcal ? ' ligou o Google Agenda' : ' desligou o Google Agenda') : '')];
+    case 'perfilEmpresa': return [req.permissoes && !req.perfil ? 'Mudou quem vê o quê' : 'Alterou o perfil e as cores da empresa', '', ''];
+    case 'salvarEmpresa': { const d = req.empresaDados || {}; return [d.id ? 'Alterou a empresa' : 'Criou a empresa', d.nome || '', d.ativo === false ? 'desativou' : '', d.id || '']; }
+    case 'pagamento': return [req.pago ? 'Marcou pagamento como pago' : 'Desfez um pagamento', nomeDaMarca_(req.marcaId) + ' · ' + req.mes, '', empresaDe_(req.marcaId)];
+    case 'restaurar': return ['Recuperou da lixeira', '', ''];
+    case 'linkCliente': { const u = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(x => x.id === req.usuarioId)[0]; return ['Gerou o link sem senha do cliente', u ? u.nome : '', req.enviar ? 'enviado por e-mail' : '']; }
+    case 'briefingLink': return ['Gerou o link do briefing', nomeDaMarca_(req.marcaId), '', empresaDe_(req.marcaId)];
+    case 'excluirEvento': { const x = eventoPorId_(req.id); return x ? [x.tipo === 'reuniao' ? 'Cancelou a reunião' : 'Excluiu uma atividade', x.titulo + ' · ' + paraBR_(x.data), '', x.empresaId] : null; }
+    case 'salvarProposta': return [req.proposta && req.proposta.id ? 'Alterou a proposta' : 'Criou a proposta', (req.proposta || {}).cliente || '', (req.proposta || {}).enviar ? 'enviada por e-mail' : ''];
+    case 'excluirProposta': return ['Apagou a proposta', '', ''];
+    case 'acao': if (req.acao === 'definir') { const t = titPost(req.id); return ['Forçou o status', t[0], 'para ' + req.status, t[1]]; } return null;
+    case 'exportar': return ['Exportou os dados da empresa', '', ''];
+    default: return null;
+  }
+}
+function listarAuditoria_(eu) {
+  if (TODAS_MARCAS.indexOf(eu.papel) < 0 && !eu.dono) throw erro_('permissao', 'Só o administrador e o diretor veem o registro.');
+  const l = ler_(ABA_AUDITORIA, CAMPOS_AUDITORIA).filter(x => mesmaEmp_(eu, x.empresaId));
+  return l.slice(-1500).reverse().map(x => ({ em: Number(x.em) || 0, uid: x.uid, nome: x.nome, acao: x.acao, alvo: x.alvo, detalhe: x.detalhe }));
+}
+
+/* ---------- Exportar todos os dados da empresa ---------- */
+function exportar_(eu) {
+  if (eu.papel !== 'admin' && !eu.dono) throw erro_('permissao', 'Só o administrador da empresa exporta os dados.');
+  if (!eu.empresaId) throw erro_('server', 'Escolha a empresa no topo.');
+  const emp = eu.empresaId, marcas = ler_(ABA_MARCAS, CAMPOS_MARCA).filter(m => m.empresaId === emp), ids = marcas.map(m => m.id);
+  const daMarca = x => ids.indexOf(x.marcaId) >= 0;
+  const sem = (o, ks) => { const c = Object.assign({}, o); ks.forEach(k => delete c[k]); return c; };
+  return {
+    empresa: (empresas_().filter(e => e.id === emp)[0] || {}).nome || '',
+    geradoEm: Date.now(),
+    tabelas: {
+      Marcas: marcas.map(m => sem(m, ['empresaId'])),
+      Postagens: ler_(ABA_PAUTAS, CAMPOS_PAUTA).filter(daMarca),
+      Stories: ler_(ABA_STORIES, CAMPOS_STORY).filter(daMarca),
+      Pessoas: ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(u => u.empresaId === emp).map(u => sem(u, ['hash', 'sal', 'cores', 'empresaId', 'dono'])),
+      Tarefas: ler_(ABA_TAREFAS, CAMPOS_TAREFA).filter(t => t.empresaId === emp),
+      Agenda: ler_(ABA_AGENDA, CAMPOS_AGENDA).filter(x => x.empresaId === emp).map(x => sem(x, ['gcal'])),
+      Horas: ler_(ABA_HORAS, CAMPOS_HORA).filter(h => h.empresaId === emp),
+      Pagamentos: ler_(ABA_PAGAMENTOS, CAMPOS_PAGAMENTO).filter(daMarca),
+      Avaliacoes: ler_(ABA_AVALIACOES, CAMPOS_AVALIACAO).filter(daMarca),
+      Propostas: ler_(ABA_PROPOSTAS, CAMPOS_PROPOSTA).filter(p => p.empresaId === emp).map(p => sem(p, ['chave'])),
+      Mural: ler_(ABA_MURAL, CAMPOS_AVISO).filter(a => a.empresaId === emp),
+      Registro: ler_(ABA_AUDITORIA, CAMPOS_AUDITORIA).filter(a => a.empresaId === emp)
+    }
+  };
 }
