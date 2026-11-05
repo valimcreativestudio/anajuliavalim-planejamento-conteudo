@@ -19,7 +19,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-06.1';
+const VERSAO = '2026-11-06.2';
 
 const ABA_PAUTAS = 'POSTAGENS';
 const ABA_MARCAS = 'MARCAS';
@@ -30,7 +30,7 @@ const ABA_AGENDA = 'AGENDA';
 const CAMPOS_AGENDA = [
   ['id', 'ID'], ['tipo', 'Tipo'], ['status', 'Status'], ['titulo', 'Assunto'], ['data', 'Dia'], ['hora', 'Horário'], ['duracao', 'Duração (min)'],
   ['participantes', 'Participantes (IDs)'], ['local', 'Local ou link'], ['descricao', 'Pauta / detalhes'], ['respostas', 'Respostas'], ['motivo', 'Motivo'],
-  ['cor', 'Cor'], ['marcaId', 'Marca ID'], ['criadoPorId', 'Criado por ID'], ['criadoPor', 'Criado por'], ['criado', 'Criado em'], ['atualizado', 'Atualizado em'], ['decididoPor', 'Decidido por'], ['ata', 'Ata da reunião'], ['ataPor', 'Ata escrita por']
+  ['cor', 'Cor'], ['marcaId', 'Marca ID'], ['criadoPorId', 'Criado por ID'], ['criadoPor', 'Criado por'], ['criado', 'Criado em'], ['atualizado', 'Atualizado em'], ['decididoPor', 'Decidido por'], ['ata', 'Ata da reunião'], ['ataPor', 'Ata escrita por'], ['gcal', 'Evento no Google Agenda'], ['meet', 'Criar Meet']
 ];
 const ABA_HORAS = 'HORAS';
 const CAMPOS_HORA = [['id', 'ID'], ['uid', 'Pessoa ID'], ['nome', 'Pessoa'], ['marcaId', 'Marca ID'], ['marca', 'Marca'], ['data', 'Dia'], ['minutos', 'Minutos'], ['descricao', 'O que fez'], ['criado', 'Criado em']];
@@ -40,6 +40,8 @@ const ABA_AVALIACOES = 'AVALIACOES';
 const CAMPOS_AVALIACAO = [['id', 'ID'], ['marcaId', 'Marca ID'], ['marca', 'Marca'], ['mes', 'Mês'], ['uid', 'Cliente ID'], ['nome', 'Cliente'], ['nota', 'Nota'], ['comentario', 'Comentário'], ['em', 'Respondido em']];
 const ABA_PAGAMENTOS = 'PAGAMENTOS';
 const CAMPOS_PAGAMENTO = [['id', 'ID'], ['marcaId', 'Marca ID'], ['marca', 'Marca'], ['mes', 'Mês'], ['valor', 'Valor'], ['pagoEm', 'Pago em'], ['por', 'Registrado por'], ['obs', 'Observação'], ['criado', 'Criado em']];
+const ABA_PROPOSTAS = 'PROPOSTAS';
+const CAMPOS_PROPOSTA = [['id', 'ID'], ['cliente', 'Cliente'], ['status', 'Status'], ['dados', 'Dados'], ['chave', 'Chave do link'], ['marcaId', 'Marca criada'], ['por', 'Criada por'], ['uid', 'Criada por ID'], ['criado', 'Criada em'], ['respondido', 'Respondida em']];
 const ABA_MURAL = 'MURAL';
 const CAMPOS_AVISO = [['id', 'ID'], ['titulo', 'Título'], ['texto', 'Recado'], ['importante', 'Importante'], ['fixado', 'Fixado'], ['ate', 'Mostrar até'], ['por', 'Por'], ['uid', 'Por ID'], ['criado', 'Criado em'], ['lidos', 'Quem leu']];
 const PASTA_ARQUIVOS = 'Planejamento de Conteúdo - Arquivos';
@@ -56,7 +58,7 @@ const CAMPOS_PAUTA = [
   ['agTipo', 'Agendado como'], ['agQuando', 'Agendado para'], ['postLink', 'Link do post publicado'],
   ['capa', 'Imagem de prévia'], ['midias', 'Mídias da publicação'],
   ['comentarios', 'Comentários'], ['prazoArte', 'Prazo da arte'], ['prazoAprovacao', 'Prazo da aprovação'],
-  ['autoPub', 'Publicar automático'], ['pubInfo', 'Situação da publicação automática'], ['igMidia', 'ID do post no Instagram'], ['versoes', 'Versões anteriores da arte']
+  ['autoPub', 'Publicar automático'], ['pubInfo', 'Situação da publicação automática'], ['igMidia', 'ID do post no Instagram'], ['versoes', 'Versões anteriores da arte'], ['canva', 'Link do design no Canva']
 ];
 const CAMPOS_STORY = [
   ['id', 'ID'], ['marcaId', 'Marca ID'], ['marca', 'Marca'], ['data', 'Data'], ['hora', 'Hora'], ['ordem', 'Ordem'],
@@ -130,6 +132,8 @@ function doPost(e) {
   try { req = JSON.parse(e.postData.contents); } catch (err) { return json_({ ok: false, error: 'Pedido inválido.' }); }
   try {
     if (req.action === 'login') return json_(login_(req.login, req.senha));
+    if (req.action === 'propostaVer') return json_(Object.assign({ ok: true }, propostaVer_(req.chave)));
+    if (req.action === 'propostaAceitar') { const lk = LockService.getScriptLock(); lk.waitLock(20000); try { return json_(Object.assign({ ok: true }, propostaAceitar_(req.chave, req.nome, req.site))); } finally { lk.releaseLock(); } }
     if (req.action === 'briefingVer') return json_(Object.assign({ ok: true }, briefingVer_(req.chave)));
     if (req.action === 'briefingArquivo') return json_(Object.assign({ ok: true }, briefingArquivo_(req.chave, req)));
     if (req.action === 'briefingEnviar') { const lk = LockService.getScriptLock(); lk.waitLock(20000); try { return json_(Object.assign({ ok: true }, briefingEnviar_(req.chave, req.dados || {}, req.site))); } finally { lk.releaseLock(); } }
@@ -143,6 +147,7 @@ function doPost(e) {
     if (req.action === 'instaDesconectar') return json_(Object.assign({ ok: true }, instaDesconectar_(eu, req.marcaId)));
     if (req.action === 'instaMidias') return json_(Object.assign({ ok: true }, instaMidias_(eu, req.marcaId, req.forcar)));
     if (req.action === 'lerPasta') return json_(Object.assign({ ok: true }, lerPasta_(eu, req.link)));
+    if (req.action === 'ia') return json_(Object.assign({ ok: true }, ia_(eu, req.tarefa, req.marcaId, req.dados || {})));
     if (req.action === 'lerConteudo') return json_(Object.assign({ ok: true }, lerConteudo_(eu, req.link)));
     if (req.action === 'trends') return json_(Object.assign({ ok: true }, lerTrends_(eu)));
     if (req.action === 'metricas') return json_(Object.assign({ ok: true }, metricas_(eu, req.marcaId, req.mes, req.forcar)));
@@ -190,6 +195,9 @@ function doPost(e) {
         case 'excluirAviso': excluirAviso_(eu, req.id); return json_({ ok: true });
         case 'lerAviso': lerAviso_(eu, req.ids || []); return json_({ ok: true });
         case 'meuAniversario': salvarPreferencia_(eu, 'aniversario', /^\d{2}\/\d{2}$/.test(req.aniversario || '') ? req.aniversario : ''); return json_({ ok: true });
+        case 'iaConfig': soAdmin_(eu); if (req.chave === '') PropertiesService.getScriptProperties().deleteProperty('ANTHROPIC_KEY'); else if (req.chave) PropertiesService.getScriptProperties().setProperty('ANTHROPIC_KEY', String(req.chave).trim()); if ('gcal' in req) PropertiesService.getScriptProperties().setProperty('gcal', req.gcal ? 'sim' : ''); mexeu_(); return json_({ ok: true });
+        case 'salvarProposta': return json_(Object.assign({ ok: true }, salvarProposta_(eu, req.proposta || {}, req.site)));
+        case 'excluirProposta': excluirProposta_(eu, req.id); return json_({ ok: true });
         case 'copiarMes': return json_({ ok: true, n: copiarMes_(eu, req.marcaId, req.de, req.para) });
         case 'importarPostagens': return json_({ ok: true, ids: importarPostagens_(eu, req.marcaId, req.posts || []) });
         case 'lixeira': return json_({ ok: true, itens: lixeira_(eu) });
@@ -309,7 +317,11 @@ function listar_(eu, desde, se) {
   r.horas = ler_(ABA_HORAS, CAMPOS_HORA).filter(h => veHora_(eu, h) && noPeriodo(h.data)).map(h => Object.assign(h, { data: paraISO_(h.data), minutos: Number(h.minutos) || 0, criado: Number(h.criado) || 0 }));
   r.avaliacoes = ler_(ABA_AVALIACOES, CAMPOS_AVALIACAO).filter(a => eu.papel === 'cliente' ? a.uid === eu.id : (VEEM_TODAS.indexOf(eu.papel) >= 0 && acesso_(eu, a.marcaId))).map(a => Object.assign(a, { nota: Number(a.nota), em: Number(a.em) || 0 }));
   r.pagamentos = TODAS_MARCAS.indexOf(eu.papel) >= 0 ? ler_(ABA_PAGAMENTOS, CAMPOS_PAGAMENTO).map(x => Object.assign(x, { valor: Number(x.valor) || 0, pagoEm: paraISO_(x.pagoEm), criado: Number(x.criado) || 0 })) : [];
-  r.temTrends = !!PropertiesService.getScriptProperties().getProperty('trends');
+  const pp = PropertiesService.getScriptProperties();
+  r.temTrends = !!pp.getProperty('trends');
+  r.temIA = eu.papel !== 'cliente' && !!pp.getProperty('ANTHROPIC_KEY');
+  r.gcal = pp.getProperty('gcal') === 'sim';
+  r.propostas = TODAS_MARCAS.indexOf(eu.papel) >= 0 ? ler_(ABA_PROPOSTAS, CAMPOS_PROPOSTA).map(x => ({ id: x.id, cliente: x.cliente, status: x.status, dados: parseJSON_(x.dados, {}), chave: x.chave, marcaId: x.marcaId, por: x.por, criado: Number(x.criado) || 0, respondido: Number(x.respondido) || 0 })) : [];
   r.mural = eu.papel === 'cliente' ? [] : ler_(ABA_MURAL, CAMPOS_AVISO).map(avisoParaSite_).filter(a => !a.ate || a.ate >= Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd') || a.fixado);
   r.agenda = ler_(ABA_AGENDA, CAMPOS_AGENDA).filter(x => veEvento_(eu, x) && noPeriodo(x.data)).map(eventoParaSite_);
   r.stories = ler_(ABA_STORIES, CAMPOS_STORY).filter(x => acesso_(eu, x.marcaId) && noPeriodo(x.data)).map(storyParaSite_);
@@ -1089,6 +1101,7 @@ function configurar() {
   aba_(ABA_LIXEIRA, CAMPOS_LIXEIRA);
   aba_(ABA_AVALIACOES, CAMPOS_AVALIACAO);
   aba_(ABA_PAGAMENTOS, CAMPOS_PAGAMENTO);
+  aba_(ABA_PROPOSTAS, CAMPOS_PROPOSTA);
   instalarGatilhos_();
 
   if (!ler_(ABA_USUARIOS, CAMPOS_USUARIO).length) {
@@ -1861,6 +1874,9 @@ function salvarEvento_(eu, ev, site) {
     criadoPorId: atual ? atual.criadoPorId : eu.id, criadoPor: atual ? atual.criadoPor : eu.nome,
     criado: atual ? atual.criado : Date.now(), atualizado: Date.now(), decididoPor: atual ? atual.decididoPor : (status === 'confirmada' ? eu.nome : '')
   };
+  x.meet = ev.meet ? 'sim' : (atual ? atual.meet : '');
+  x.gcal = atual ? atual.gcal : '';
+  if (tipo === 'reuniao' && x.status === 'confirmada') sincronizarGcal_(x);
   gravarEvento_(x);
   if (tipo === 'reuniao') {
     try {
@@ -1888,6 +1904,7 @@ function responderEvento_(eu, id, resposta, motivo, dados, site) {
       x.status = 'confirmada'; x.motivo = '';
       if (x.participantes.indexOf(eu.id) < 0 && x.criadoPorId !== eu.id) x.participantes.push(eu.id);
       x.respostas[eu.id] = 'sim';
+      sincronizarGcal_(x);
     }
     x.decididoPor = eu.nome; x.atualizado = Date.now();
     gravarEvento_(x);
@@ -1904,6 +1921,7 @@ function excluirEvento_(eu, id, site) {
   if (!x) return;
   if (x.criadoPorId !== eu.id && !(x.tipo === 'reuniao' && chefe_(eu))) throw erro_('permissao', 'Só quem criou (ou a gestão) cancela este compromisso.');
   excluirLinha_(ABA_AGENDA, CAMPOS_AGENDA, id);
+  if (x.gcal) apagarGcal_(x.gcal);
   if (x.tipo === 'reuniao' && x.status === 'confirmada') { try { avisarEvento_(eu, x, 'cancelada', site); } catch (e) { Logger.log(e); } }
 }
 // arquivo .ics: abre direto no Google Agenda, Outlook ou no calendário do celular
@@ -1944,7 +1962,7 @@ function avisarEvento_(eu, x, tipo, site) {
     '<table style="border-collapse:collapse;font-size:14px;margin:0 0 18px">' + linha('Quando', dia + ' às ' + x.hora) + linha('Duração', duracaoTxt_(x.duracao)) + linha('Participantes', quem.join(', ')) + linha('Local / link', x.local) + linha('Pauta', x.descricao) + '</table>' +
     (link ? '<p><a href="' + link + '" style="background:#1d1d1f;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none;display:inline-block">' + (tipo === 'pedido' ? 'Responder o pedido' : 'Ver na agenda') + '</a></p>' : '') +
     (['marcada', 'alterada', 'aceita'].indexOf(tipo) >= 0 ? '<p style="margin:0;color:#6b6b70;font-size:12px">O convite vai em anexo: abra para colocar no seu Google Agenda ou no calendário do celular.</p>' : '') + '</div>';
-  const anexo = ['marcada', 'alterada', 'aceita'].indexOf(tipo) >= 0 ? [Utilities.newBlob(icsDe_(x), 'text/calendar', 'reuniao.ics')] : null;
+  const anexo = ['marcada', 'alterada', 'aceita'].indexOf(tipo) >= 0 && !x.gcal ? [Utilities.newBlob(icsDe_(x), 'text/calendar', 'reuniao.ics')] : null;
   dest.forEach(u => { const o = { to: u.login, subject: titulos[tipo] + ': ' + x.titulo + ' · ' + paraBR_(x.data).slice(0, 5) + ' ' + x.hora, htmlBody: html, name: 'Planejamento de Conteúdo' }; if (anexo) o.attachments = anexo; MailApp.sendEmail(o); });
 }
 function parse_(isoData) {
@@ -2303,4 +2321,142 @@ function checklistMarca_(eu, marcaId) {
   [['Pegar os acessos das contas (Instagram, Meta, TikTok…)', 1, 'Alta'], ['Mandar o link do briefing para o cliente', 1, 'Alta'], ['Receber o manual da marca, logotipo e fontes', 3, 'Alta'],
     ['Reunião inicial com o cliente', 3, 'Alta'], ['Fazer o direcionamento de marca', 7, 'Média'], ['Cadastrar o pacote contratado e o valor do contrato', 2, 'Média'], ['Montar a primeira grade do mês', 10, 'Média']]
     .forEach(t => { try { salvarTarefa_(eu, { titulo: t[0], marcaId: marcaId, responsavelId: eu.id, prazo: somaDias_(hoje, t[1]), prioridade: t[2], descricao: 'Checklist de cliente novo.' }, ''); } catch (e) { Logger.log(e); } });
+}
+
+/* ======================================================================
+ * Novidades 2026-11-06.2: IA (Claude), Google Agenda com Meet, propostas comerciais
+ * ====================================================================== */
+
+/* ---------- IA: sugestões na voz da marca ----------
+ * Usa a API da Anthropic (Claude). A chave fica só nas Propriedades do script (ANTHROPIC_KEY),
+ * cadastrada pelo administrador em Minha conta. Cada pedido custa centavos. */
+function contextoMarca_(marcaId) {
+  const m = ler_(ABA_MARCAS, CAMPOS_MARCA).filter(x => x.id === marcaId)[0];
+  if (!m) return '';
+  const pf = parseJSON_(m.perfil, {}) || {};
+  const campos = [['Segmento', pf.segmento], ['Cidade', pf.cidade], ['Público', pf.pResumo], ['Faixa etária', pf.pIdade], ['Tom de voz', pf.tom], ['Palavras que usamos', pf.palavrasUsar],
+    ['Palavras e assuntos proibidos', pf.palavrasEvitar], ['Pilares de conteúdo', pf.pilares], ['Diferenciais', pf.diferenciais], ['Carro-chefe', pf.carroChefe], ['Propósito', pf.proposito]];
+  const personas = (pf.personas || []).slice(0, 2).map(p => '- ' + [p.nome, p.dores && 'dores: ' + p.dores, p.desejos && 'desejos: ' + p.desejos].filter(Boolean).join('; ')).join('\n');
+  return 'Marca: ' + m.nome + (pf.instagram ? ' (' + pf.instagram + ')' : '') + '\n' + campos.filter(c => c[1]).map(c => c[0] + ': ' + String(c[1]).slice(0, 600)).join('\n') +
+    (m.produtos ? '\nProdutos: ' + String(m.produtos).split('\n').slice(0, 30).join(', ') : '') + (personas ? '\nPersonas:\n' + personas : '');
+}
+function ia_(eu, tarefa, marcaId, d) {
+  if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Só quem alimenta a marca usa a IA.');
+  const chave = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_KEY');
+  if (!chave) throw erro_('server', 'A IA não está ligada. O administrador cadastra a chave em Minha conta.');
+  const ctx = contextoMarca_(marcaId);
+  const post = d.post || {};
+  const sobrePost = ['Título: ' + (post.postagem || ''), 'Formato: ' + (post.formato || ''), post.produto && 'Produto: ' + post.produto, post.objetivo && 'Objetivo: ' + post.objetivo, post.cta && 'CTA: ' + post.cta, post.observacao && 'Roteiro/observações: ' + String(post.observacao).slice(0, 1500), post.legenda && 'Legenda atual: ' + String(post.legenda).slice(0, 1500)].filter(Boolean).join('\n');
+  const pedidos = {
+    legenda: 'Escreva UMA legenda de Instagram para este post, na voz da marca. Comece com um gancho forte na primeira linha, use parágrafos curtos, termine com a chamada para ação. No fim, até 8 hashtags relevantes. Máximo 1.500 caracteres. Responda só com a legenda, sem comentários.\n\n' + sobrePost,
+    hashtags: 'Sugira 20 hashtags para este post, misturando grandes, médias e de nicho, em português. Responda só com as hashtags separadas por espaço.\n\n' + sobrePost,
+    ideias: 'Sugira ' + Math.min(15, Math.max(3, parseInt(d.quantidade, 10) || 8)) + ' ideias de posts para o Instagram da marca' + (d.mes ? ' em ' + d.mes : '') + (d.tema ? ', com foco em: ' + d.tema : '') + '. Varie formatos (Carrossel, Estático, Vídeo) e objetivos. Responda uma ideia por linha, exatamente assim, sem numeração e sem nada antes ou depois:\nFormato | Título curto do post | Uma frase explicando o conteúdo',
+    stories: 'Monte uma sequência de ' + Math.min(8, Math.max(3, parseInt(d.quantidade, 10) || 5)) + ' stories para o dia' + (d.tema ? ' sobre: ' + d.tema : '') + ', com começo, meio e chamada para ação. Use figurinhas quando fizer sentido (Enquete, Caixinha de perguntas, Quiz, Link, Contagem regressiva). Responda um story por linha, exatamente assim, sem nada antes ou depois:\nTipo (Foto, Vídeo, Texto, Bastidores, Produto ou Depoimento) | Texto curto que aparece na tela | Figurinha ou - | Texto da figurinha ou - | O que mostrar ou falar',
+    roteiro: 'Escreva um roteiro curto de Reels (até 45 segundos) para este post: gancho nos 3 primeiros segundos, cenas numeradas com o que mostrar e o que falar, e o fechamento com CTA. Responda só com o roteiro.\n\n' + sobrePost
+  };
+  const pedido = pedidos[tarefa];
+  if (!pedido) throw erro_('server', 'Pedido inválido.');
+  const corpo = {
+    model: 'claude-opus-5-5', max_tokens: 4000,
+    output_config: { effort: 'low' },
+    fallbacks: 'default',
+    system: 'Você é social media sênior de uma agência brasileira. Escreve em português do Brasil, na voz da marca descrita abaixo, respeitando as palavras e assuntos proibidos. Nunca invente preços, promoções ou dados que não estejam no contexto.\n\n' + ctx,
+    messages: [{ role: 'user', content: pedido }]
+  };
+  const r = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+    method: 'post', contentType: 'application/json', muteHttpExceptions: true, payload: JSON.stringify(corpo),
+    headers: { 'x-api-key': chave, 'anthropic-version': '2026-10-21', 'anthropic-beta': 'server-side-fallback-2026-07-01' }
+  });
+  const j = parseJSON_(r.getContentText(), {});
+  if (r.getResponseCode() !== 200) {
+    const msg = (j.error && j.error.message) || ('erro ' + r.getResponseCode());
+    throw erro_('server', r.getResponseCode() === 401 ? 'A chave da IA é inválida. Confira em Minha conta.' : r.getResponseCode() === 429 ? 'A IA está ocupada agora. Tente de novo em um minuto.' : 'A IA não respondeu: ' + msg);
+  }
+  if (j.stop_reason === 'refusal') throw erro_('server', 'A IA não quis responder a este pedido. Reformule e tente de novo.');
+  const texto = (j.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+  if (!texto) throw erro_('server', 'A IA não devolveu texto. Tente de novo.');
+  return { texto: texto };
+}
+
+/* ---------- Google Agenda: a reunião vira evento com convite e link do Meet ----------
+ * Liga em Minha conta (administrador). Os eventos ficam na agenda da conta dona do sistema. */
+function sincronizarGcal_(x) {
+  if (PropertiesService.getScriptProperties().getProperty('gcal') !== 'sim') return;
+  try {
+    CalendarApp.getDefaultCalendar(); // garante a permissão de agenda
+    const pessoas = ler_(ABA_USUARIOS, CAMPOS_USUARIO);
+    const emails = x.participantes.concat([x.criadoPorId]).map(id => (pessoas.filter(u => u.id === id)[0] || {}).login).filter(e => /@/.test(e || ''));
+    const m = x.data.match(/^(\d{4})-(\d{2})-(\d{2})$/), h = x.hora.match(/^(\d{1,2}):(\d{2})$/);
+    const ini = new Date(+m[1], +m[2] - 1, +m[3], +h[1], +h[2]), fim = new Date(ini.getTime() + x.duracao * 60000);
+    const tz = Session.getScriptTimeZone(), f = dt => Utilities.formatDate(dt, tz, "yyyy-MM-dd'T'HH:mm:ss");
+    const ev = { summary: x.titulo, description: x.descricao || '', location: x.local || '', start: { dateTime: f(ini), timeZone: tz }, end: { dateTime: f(fim), timeZone: tz }, attendees: emails.map(e => ({ email: e })) };
+    if (x.meet === 'sim' && !x.gcal) ev.conferenceData = { createRequest: { requestId: x.id + Date.now(), conferenceSolutionKey: { type: 'hangoutsMeet' } } };
+    const url = 'https://www.googleapis.com/calendar/v3/calendars/primary/events' + (x.gcal ? '/' + x.gcal : '') + '?sendUpdates=all&conferenceDataVersion=1';
+    const r = UrlFetchApp.fetch(url, { method: x.gcal ? 'patch' : 'post', contentType: 'application/json', payload: JSON.stringify(ev), headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() }, muteHttpExceptions: true });
+    const j = parseJSON_(r.getContentText(), {});
+    if (j.id) { x.gcal = j.id; if (j.hangoutLink && !x.local) x.local = j.hangoutLink; }
+    else Logger.log('Google Agenda: ' + r.getContentText());
+  } catch (e) { Logger.log('Google Agenda: ' + e); }
+}
+function apagarGcal_(gid) {
+  try { UrlFetchApp.fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events/' + gid + '?sendUpdates=all', { method: 'delete', headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() }, muteHttpExceptions: true }); } catch (e) { Logger.log(e); }
+}
+
+/* ---------- Propostas comerciais (link para o cliente aceitar) ---------- */
+function salvarProposta_(eu, p, site) {
+  if (TODAS_MARCAS.indexOf(eu.papel) < 0) throw erro_('permissao', 'Só o administrador e o diretor fazem propostas.');
+  const atual = p.id ? ler_(ABA_PROPOSTAS, CAMPOS_PROPOSTA).filter(x => x.id === String(p.id))[0] : null;
+  if (atual && atual.status === 'aceita') throw erro_('server', 'Esta proposta já foi aceita.');
+  const cliente = String(p.cliente || '').trim().slice(0, 120);
+  if (!cliente) throw erro_('server', 'Escreva o nome do cliente.');
+  const n = k => Math.max(0, Number(p[k]) || 0);
+  const dados = { cliente: cliente, contato: String(p.contato || '').slice(0, 200), email: String(p.email || '').trim().slice(0, 200), feed: n('feed'), reels: n('reels'), stories: n('stories'),
+    valor: n('valor'), meses: Math.max(1, Math.min(60, parseInt(p.meses, 10) || 3)), inicio: /^\d{4}-\d{2}-\d{2}$/.test(p.inicio || '') ? p.inicio : '', vencimento: Math.min(31, parseInt(p.vencimento, 10) || 10),
+    inclui: String(p.inclui || '').slice(0, 4000), extras: String(p.extras || '').slice(0, 2000), validade: /^\d{4}-\d{2}-\d{2}$/.test(p.validade || '') ? p.validade : '', agencia: String(p.agencia || '').slice(0, 120) };
+  const chave = atual ? atual.chave : Utilities.getUuid().replace(/-/g, '');
+  const id = atual ? atual.id : Utilities.getUuid().slice(0, 13);
+  gravar_(ABA_PROPOSTAS, CAMPOS_PROPOSTA, { id: id, cliente: cliente, status: p.enviar ? 'enviada' : (atual ? atual.status : 'rascunho'), dados: JSON.stringify(dados), chave: chave, marcaId: '', por: atual ? atual.por : eu.nome, uid: atual ? atual.uid : eu.id, criado: atual ? atual.criado : Date.now(), respondido: '' });
+  const base = String(site || PropertiesService.getScriptProperties().getProperty('site') || '').split('#')[0];
+  const url = base + '#proposta=' + chave;
+  if (p.enviar && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(dados.email) && MailApp.getRemainingDailyQuota() > 0) {
+    MailApp.sendEmail(Object.assign(/@/.test(eu.login || '') ? { replyTo: eu.login } : {}, { to: dados.email, name: dados.agencia || 'Planejamento de Conteúdo', subject: 'Proposta de social media para ' + cliente,
+      htmlBody: '<div style="font-family:Arial,sans-serif;font-size:15px;max-width:540px"><p>Olá' + (dados.contato ? ', ' + escH_(dados.contato.split(' ')[0]) : '') + '!</p><p>Preparamos a proposta de gestão de Instagram para a <b>' + escH_(cliente) + '</b>. Você pode ver todos os detalhes e aceitar pelo link:</p><p><a href="' + url + '" style="background:#1d1d1f;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">Ver a proposta</a></p><p style="color:#6b6b70;font-size:13px">' + escH_(eu.nome) + '</p></div>' }));
+  }
+  return { id: id, url: url };
+}
+function excluirProposta_(eu, id) {
+  if (TODAS_MARCAS.indexOf(eu.papel) < 0) throw erro_('permissao', 'Sem permissão.');
+  excluirLinha_(ABA_PROPOSTAS, CAMPOS_PROPOSTA, id);
+}
+function propostaDe_(chave) {
+  const x = ler_(ABA_PROPOSTAS, CAMPOS_PROPOSTA).filter(p => p.chave && p.chave === String(chave || '').replace(/\W/g, ''))[0];
+  if (!x) throw erro_('proposta', 'Proposta não encontrada.');
+  return x;
+}
+function propostaVer_(chave) {
+  const x = propostaDe_(chave), d = parseJSON_(x.dados, {});
+  const venc = d.validade && d.validade < Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  return { cliente: x.cliente, status: x.status, dados: d, por: x.por, vencida: !!venc && x.status !== 'aceita', briefing: x.status === 'aceita' ? (PropertiesService.getScriptProperties().getProperty('brfprop_' + x.id) || '') : '' };
+}
+function propostaAceitar_(chave, nome, site) {
+  const x = propostaDe_(chave), d = parseJSON_(x.dados, {});
+  if (x.status === 'aceita') return propostaVer_(chave);
+  if (d.validade && d.validade < Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd')) throw erro_('proposta', 'Esta proposta venceu. Fale com a agência.');
+  const autor = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(u => u.id === x.uid)[0];
+  const eu = autor ? publicoUsuario_(autor) : { id: '', nome: x.por, papel: 'admin', marcas: ['*'], login: '' };
+  eu.papel = TODAS_MARCAS.indexOf(eu.papel) >= 0 ? eu.papel : 'admin';
+  // cria a marca já com o pacote, o valor e o financeiro; o checklist de cliente novo nasce junto
+  const perfil = { pacote: {}, valorMensal: d.valor, financeiro: { vencimento: d.vencimento, inicio: d.inicio, renovacao: d.inicio ? somaDias_(d.inicio, 0, d.meses) : '' }, responsavel: [d.contato, d.email].filter(Boolean).join(' · ') };
+  ['feed', 'reels', 'stories'].forEach(k => { if (d[k]) perfil.pacote[k] = d[k]; });
+  const marcaId = salvarMarca_(eu, { nome: x.cliente, produtos: [], fases: FASES_PADRAO, observacoes: 'Cliente desde a proposta aceita em ' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yyyy') + (nome ? ' por ' + nome : '') + '.', perfil: perfil, arquivos: [] });
+  x.status = 'aceita'; x.marcaId = marcaId; x.respondido = Date.now();
+  gravar_(ABA_PROPOSTAS, CAMPOS_PROPOSTA, x);
+  // próximo passo para o cliente: o briefing
+  let brief = '';
+  try { brief = briefingLink_(Object.assign({}, eu, { papel: 'admin' }), marcaId, site).url; PropertiesService.getScriptProperties().setProperty('brfprop_' + x.id, brief); } catch (e) { Logger.log(e); }
+  try {
+    if (autor && /@/.test(autor.login)) MailApp.sendEmail({ to: autor.login, name: 'Planejamento de Conteúdo', subject: '🎉 Proposta aceita: ' + x.cliente,
+      htmlBody: '<div style="font-family:Arial,sans-serif;font-size:15px"><h2>🎉 ' + escH_(x.cliente) + ' aceitou a proposta!</h2><p>' + (nome ? escH_(nome) + ' aceitou. ' : '') + 'A marca já foi criada com o pacote, o valor e o checklist de cliente novo. O cliente recebeu o link do briefing na própria tela.</p></div>' });
+  } catch (e) { Logger.log(e); }
+  return propostaVer_(chave);
 }

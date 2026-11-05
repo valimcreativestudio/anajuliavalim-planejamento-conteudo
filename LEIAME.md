@@ -194,6 +194,16 @@ Aba **Agenda** (para toda a equipe; o cliente não vê):
 - Avisa quando o horário bate com outro compromisso seu.
 - O sino e o número na aba mostram pedidos para responder e reuniões esperando a sua resposta. As reuniões do dia entram no resumo diário por e-mail.
 
+## Conferência, IA, Google Agenda, Canva, resultados, propostas e painel
+
+- **Conferência antes de enviar:** ao clicar em "Enviar conteúdo para aprovação", o sistema confere a legenda (até 2.200 caracteres e 30 hashtags, menções, CTA, preço, palavras que a marca evita), as artes (quantidade, carrossel com 1 arte) e a data. Erros que o Instagram não aceita impedem o envio; avisos deixam "Enviar mesmo assim". Embaixo da legenda há um contador de caracteres e hashtags.
+- **IA (Claude):** o administrador cola a chave da API da Anthropic em **Minha conta → Integrações** (crie em console.anthropic.com → API Keys; cada sugestão custa centavos). Aparecem botões ✨ para sugerir **legenda**, **hashtags** e **roteiro de Reels** no editor, **ideias** na aba Ideias (com "Guardar no banco") e uma **sequência de stories** na aba Stories (com "Criar estes stories"). Tudo usa o que está cadastrado na Marca (tom, público, pilares, palavras proibidas). Sempre revise antes de usar.
+- **Google Agenda:** em Minha conta → Integrações, ligue o Google Agenda e rode **configurar** uma vez para autorizar. As reuniões confirmadas viram eventos na agenda da conta dona do sistema, com convite para os participantes e, se marcar na reunião, link do Google Meet (que entra no campo "Local").
+- **Canva:** cada postagem tem o campo "Link do design no Canva" com o botão "Abrir no Canva". Para trazer a arte, salve do Canva no Google Drive (pasta da publicação) e use "Puxar da pasta". (A ligação direta com o Canva exige um app aprovado pela Canva.)
+- **Resultados (cliente):** o aprovador do cliente ganha a aba Resultados: números do mês, resultados do Instagram, posts publicados, as notas que deu e a apresentação do mês.
+- **Propostas** (Financeiro, embaixo): monte a proposta (pacote, valor, duração, início, vencimento, o que inclui) e envie por e-mail. O cliente vê numa página bonita, pode salvar em PDF e clica em **Aceitar**: a marca é criada sozinha com o pacote, o valor, o financeiro e o checklist, e o cliente já recebe o link do briefing.
+- **Painel** (administrador, diretor e gestor): posts atrasados, aprovações paradas, satisfação, faturamento do mês, horas, carga da semana por pessoa, atrasados por pessoa e pacotes incompletos.
+
 ## Importar, copiar, buscar e recuperar
 
 - **Importar documento** (Calendário): cole o link do documento do mês (Google Docs ou .docx no Drive) ou o texto. Cada post começa com "P1", "Post 1"…; o sistema pega o título, a data (05/11), o formato (carrossel, reels…), a legenda ("Legenda:") e o roteiro. Você confere numa lista e cria tudo de uma vez, como Ideia.
