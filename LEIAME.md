@@ -204,6 +204,13 @@ O sistema separa tudo por **empresa** (agência). Cada empresa tem a própria eq
 - Dá para **desativar** uma empresa: ninguém dela consegue entrar até reativar.
 - Os papéis continuam os mesmos dentro de cada empresa: administrador e diretor veem tudo **da empresa deles**; gestor, social media e aprovadores veem as marcas liberadas.
 
+## Minha empresa: perfil, cores e quem vê o quê
+
+Em **Gestão → Minha empresa** (administrador da empresa; a dona da plataforma edita a empresa escolhida no topo):
+- **Perfil:** logo, nome, desde quando está no mercado, Instagram, WhatsApp, e-mail, site, cidade e um texto sobre a empresa. A logo e o nome aparecem no topo do sistema para toda a empresa.
+- **Cores:** paletas prontas, os códigos HEX da paleta da marca (destaque, topo e fundo do calendário) ou cada cor uma a uma (botões, topo e menu, calendário, reuniões, atividades e as fases dos posts). Valem para todo mundo da empresa; cada pessoa ainda pode ajustar as próprias em Minha conta.
+- **Quem vê o quê:** uma tabela com cada tela, o que ela faz e uma coluna para cada papel (Administrador, Diretor, Gestor, Social media, Aprovador gestor, Aprovador cliente). Marque ou desmarque: o que estiver desmarcado some do menu daquela pessoa e a tela não abre. Os quadrados apagados são limites do sistema (ex.: cliente nunca vê o financeiro). "Voltar ao padrão" desfaz tudo.
+
 ## Menu
 
 O menu do topo agora é agrupado (toque para abrir o submenu):

@@ -19,7 +19,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-07.1';
+const VERSAO = '2026-11-07.2';
 const NOME_APP = 'Planeja AI';
 
 const ABA_PAUTAS = 'POSTAGENS';
@@ -28,7 +28,7 @@ const ABA_USUARIOS = 'USUARIOS';
 const ABA_TAREFAS = 'TAREFAS';
 const ABA_STORIES = 'STORIES';
 const ABA_EMPRESAS = 'EMPRESAS';
-const CAMPOS_EMPRESA = [['id', 'ID'], ['nome', 'Nome'], ['ativo', 'Ativa'], ['criado', 'Criada em'], ['obs', 'Observação']];
+const CAMPOS_EMPRESA = [['id', 'ID'], ['nome', 'Nome'], ['ativo', 'Ativa'], ['criado', 'Criada em'], ['obs', 'Observação'], ['perfil', 'Perfil e cores'], ['permissoes', 'Quem vê o quê']];
 const ABA_AGENDA = 'AGENDA';
 const CAMPOS_AGENDA = [
   ['id', 'ID'], ['tipo', 'Tipo'], ['status', 'Status'], ['titulo', 'Assunto'], ['data', 'Dia'], ['hora', 'Horário'], ['duracao', 'Duração (min)'],
@@ -146,6 +146,7 @@ function doPost(e) {
     if (eu.dono) { const emps = empresas_(); eu.empresaId = req.empresa === '' ? '' : emps.some(e => e.id === req.empresa) ? req.empresa : (emps[0] ? emps[0].id : ''); }
 
     // envio de arquivo vai para o Drive, fora da trava da planilha
+    if (req.action === 'logoEmpresa') return json_(Object.assign({ ok: true }, logoEmpresa_(eu, req)));
     if (req.action === 'enviarArquivo') return json_(Object.assign({ ok: true }, enviarArquivo_(eu, req)));
     // Instagram: chamadas externas, também fora da trava
     if (req.action === 'instaConectar') return json_(Object.assign({ ok: true }, instaConectar_(eu, req.marcaId, req.chave)));
@@ -203,6 +204,7 @@ function doPost(e) {
         case 'iaConfig': soAdmin_(eu); if (!eu.empresaId) throw erro_('server', 'Escolha a empresa no topo.'); if (req.chave === '') PropertiesService.getScriptProperties().deleteProperty('ANTHROPIC_KEY_' + eu.empresaId); else if (req.chave) PropertiesService.getScriptProperties().setProperty('ANTHROPIC_KEY_' + eu.empresaId, String(req.chave).trim()); if ('gcal' in req) PropertiesService.getScriptProperties().setProperty('gcal_' + eu.empresaId, req.gcal ? 'sim' : ''); mexeu_(); return json_({ ok: true });
         case 'salvarProposta': return json_(Object.assign({ ok: true }, salvarProposta_(eu, req.proposta || {}, req.site)));
         case 'excluirProposta': excluirProposta_(eu, req.id); return json_({ ok: true });
+        case 'perfilEmpresa': salvarPerfilEmpresa_(eu, req.perfil, req.permissoes, req.nome); return json_({ ok: true });
         case 'salvarEmpresa': return json_(Object.assign({ ok: true }, salvarEmpresa_(eu, req.empresaDados || {})));
         case 'copiarMes': return json_({ ok: true, n: copiarMes_(eu, req.marcaId, req.de, req.para) });
         case 'importarPostagens': return json_({ ok: true, ids: importarPostagens_(eu, req.marcaId, req.posts || []) });
@@ -2514,7 +2516,7 @@ function propostaAceitar_(chave, nome, site) {
  * ====================================================================== */
 let EMP_CACHE = null;
 function empresas_() {
-  return ler_(ABA_EMPRESAS, CAMPOS_EMPRESA).map(e => ({ id: e.id, nome: e.nome, ativo: e.ativo !== 'não', criado: Number(e.criado) || 0, obs: e.obs || '' }));
+  return ler_(ABA_EMPRESAS, CAMPOS_EMPRESA).map(e => ({ id: e.id, nome: e.nome, ativo: e.ativo !== 'não', criado: Number(e.criado) || 0, obs: e.obs || '', perfil: parseJSON_(e.perfil, {}), permissoes: parseJSON_(e.permissoes, {}) }));
 }
 // empresa de uma marca (lida uma vez por pedido)
 function empresaDe_(marcaId) {
@@ -2547,7 +2549,7 @@ function salvarEmpresa_(eu, e) {
     if (String(e.admin.senha || '').length < 6) throw erro_('server', 'A senha do administrador precisa ter pelo menos 6 caracteres.');
     adm = { login: login, nome: String(e.admin.nome || '').trim() || login, senha: e.admin.senha };
   }
-  gravar_(ABA_EMPRESAS, CAMPOS_EMPRESA, { id: id, nome: nome, ativo: e.ativo === false ? 'não' : 'sim', criado: atual ? atual.criado : Date.now(), obs: String(e.obs || '').slice(0, 500) });
+  gravar_(ABA_EMPRESAS, CAMPOS_EMPRESA, { id: id, nome: nome, ativo: e.ativo === false ? 'não' : 'sim', criado: atual ? atual.criado : Date.now(), obs: String(e.obs || '').slice(0, 500), perfil: atual ? atual.perfil : '', permissoes: atual ? atual.permissoes : '' });
   if (adm) {
     const sal = Utilities.getUuid();
     gravar_(ABA_USUARIOS, CAMPOS_USUARIO, { id: Utilities.getUuid().slice(0, 13), nome: adm.nome, login: adm.login, papel: 'admin', marcas: '*', ativo: 'sim', hash: hash_(adm.senha, sal), sal: sal, criado: String(Date.now()), empresaId: id, dono: '' });
@@ -2587,4 +2589,37 @@ function migrarEmpresas_() {
     if (v) props.deleteProperty(velha);
   });
   mexeu_();
+}
+
+/* ---------- Perfil, cores e permissões de cada empresa ---------- */
+const TELAS_PERM = ['calendario', 'stories', 'ideias', 'pautas', 'fluxo', 'grade', 'aprovacoes', 'resumo', 'painel', 'resultados', 'marca', 'marca-acessos', 'agenda', 'tarefas', 'horas', 'mural', 'equipe', 'equipe-atividade', 'financeiro', 'empresa'];
+function podeEmpresa_(eu) {
+  if (!eu.empresaId) throw erro_('server', 'Escolha a empresa no topo.');
+  if (!eu.dono && eu.papel !== 'admin') throw erro_('permissao', 'Só o administrador da empresa altera isso.');
+}
+function salvarPerfilEmpresa_(eu, perfil, permissoes, nome) {
+  podeEmpresa_(eu);
+  const e = ler_(ABA_EMPRESAS, CAMPOS_EMPRESA).filter(x => x.id === eu.empresaId)[0];
+  if (!e) throw erro_('server', 'Empresa não encontrada.');
+  if (perfil) {
+    const t = (k, n) => String(perfil[k] || '').trim().slice(0, n || 300);
+    const cores = {};
+    Object.keys(perfil.cores || {}).forEach(k => { if (/^[\w-]{3,20}$/.test(k) && /^#[0-9a-fA-F]{6}$/.test(String(perfil.cores[k]))) cores[k] = perfil.cores[k]; });
+    e.perfil = JSON.stringify({ logo: /^[\w-]{20,}$/.test(perfil.logo || '') ? perfil.logo : '', texto: t('texto', 3000), desde: t('desde', 40), instagram: t('instagram', 100), whatsapp: t('whatsapp', 40), email: t('email', 200), site: t('site', 300), cidade: t('cidade', 120), cores: cores });
+  }
+  if (permissoes) {
+    const ok = {};
+    TELAS_PERM.forEach(v => { const x = permissoes[v]; if (x && typeof x === 'object') { ok[v] = {}; PAPEIS.forEach(p => { if (typeof x[p] === 'boolean') ok[v][p] = x[p]; }); } });
+    e.permissoes = JSON.stringify(ok);
+  }
+  if (nome && String(nome).trim()) e.nome = String(nome).trim().slice(0, 120);
+  gravar_(ABA_EMPRESAS, CAMPOS_EMPRESA, e);
+}
+function logoEmpresa_(eu, req) {
+  podeEmpresa_(eu);
+  if (!req.base64 || req.base64.length > 4000000) throw erro_('server', 'Escolha uma imagem de até 3 MB.');
+  const pasta = pasta_(pasta_(DriveApp.getRootFolder(), PASTA_ARQUIVOS), 'Empresas');
+  const f = pasta.createFile(Utilities.newBlob(Utilities.base64Decode(req.base64), req.mime || 'image/png', 'logo-' + eu.empresaId));
+  try { f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
+  return { id: f.getId() };
 }
