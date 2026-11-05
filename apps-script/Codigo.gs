@@ -19,7 +19,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-11.1';
+const VERSAO = '2026-11-12.1';
 // Endereço oficial do site. Os links dos e-mails SEMPRE usam este endereço (nunca o que vem do pedido).
 // A dona da plataforma pode trocar em Gestão → Empresas → Endereço do sistema.
 const SITE_PADRAO = 'https://valimcreativestudio.github.io/anajuliavalim-planejamento-conteudo/';
@@ -48,6 +48,8 @@ const ABA_PAGAMENTOS = 'PAGAMENTOS';
 const CAMPOS_PAGAMENTO = [['id', 'ID'], ['marcaId', 'Marca ID'], ['marca', 'Marca'], ['mes', 'Mês'], ['valor', 'Valor'], ['pagoEm', 'Pago em'], ['por', 'Registrado por'], ['obs', 'Observação'], ['criado', 'Criado em']];
 const ABA_PROPOSTAS = 'PROPOSTAS';
 const CAMPOS_PROPOSTA = [['id', 'ID'], ['cliente', 'Cliente'], ['status', 'Status'], ['dados', 'Dados'], ['chave', 'Chave do link'], ['marcaId', 'Marca criada'], ['por', 'Criada por'], ['uid', 'Criada por ID'], ['criado', 'Criada em'], ['respondido', 'Respondida em'], ['empresaId', 'Empresa ID']];
+const ABA_MODELOS = 'MODELOS';
+const CAMPOS_MODELO = [['id', 'ID'], ['empresaId', 'Empresa ID'], ['nome', 'Nome'], ['itens', 'Itens'], ['por', 'Criado por'], ['uid', 'Criado por ID'], ['criado', 'Criado em']];
 const ABA_AUDITORIA = 'REGISTRO';
 const CAMPOS_AUDITORIA = [['id', 'ID'], ['empresaId', 'Empresa ID'], ['em', 'Quando'], ['uid', 'Pessoa ID'], ['nome', 'Pessoa'], ['acao', 'O que fez'], ['alvo', 'Em quê'], ['detalhe', 'Detalhe']];
 const ABA_MURAL = 'MURAL';
@@ -85,7 +87,8 @@ const CAMPOS_TAREFA = [
   ['id', 'ID'], ['marcaId', 'Marca ID'], ['marca', 'Marca'], ['titulo', 'O que fazer'], ['descricao', 'Detalhes'],
   ['prioridade', 'Prioridade'], ['data', 'Data'], ['prazo', 'Prazo máximo'], ['responsavelId', 'Responsável ID'],
   ['responsavel', 'Responsável'], ['status', 'Status'], ['criadoPorId', 'Criado por ID'], ['criadoPor', 'Criado por'],
-  ['criado', 'Criado em'], ['concluidoPor', 'Concluída por'], ['concluidoEm', 'Concluída em'], ['atualizado', 'Atualizado em'], ['empresaId', 'Empresa ID']
+  ['criado', 'Criado em'], ['concluidoPor', 'Concluída por'], ['concluidoEm', 'Concluída em'], ['atualizado', 'Atualizado em'], ['empresaId', 'Empresa ID'],
+  ['checklist', 'Checklist'], ['comentarios', 'Comentários'], ['anexos', 'Anexos'], ['repetir', 'Repetir'], ['repetida', 'Próxima criada']
 ];
 const PRIORIDADES = ['Urgente', 'Alta', 'Média', 'Baixa'];
 const CAMPOS_USUARIO = [
@@ -139,7 +142,10 @@ function doPost(e) {
   let req;
   try { req = JSON.parse(e.postData.contents); } catch (err) { return json_({ ok: false, error: 'Pedido inválido.' }); }
   try {
-    if (req.action === 'login') return json_(login_(req.login, req.senha));
+    if (req.action === 'login') return json_(login_(req.login, req.senha, req.dispositivo));
+    if (req.action === 'confirmarCodigo') { const lk = LockService.getScriptLock(); lk.waitLock(20000); try { return json_(confirmarCodigo_(req.desafio, req.codigo, req.confiar, req.dispositivo)); } finally { lk.releaseLock(); } }
+    if (req.action === 'loginGoogle') return json_(loginGoogle_(req.credencial));
+    if (req.action === 'configPublica') return json_({ ok: true, googleClientId: PropertiesService.getScriptProperties().getProperty('GOOGLE_CLIENT_ID') || '' });
     if (req.action === 'entrarComLink') return json_(Object.assign({ ok: true }, entrarComLink_(req.chave)));
     if (req.action === 'esqueciSenha') return json_(Object.assign({ ok: true }, esqueciSenha_(req.login, req.site)));
     if (req.action === 'redefinirSenha') { const lk = LockService.getScriptLock(); lk.waitLock(20000); try { return json_(Object.assign({ ok: true }, redefinirSenha_(req.chave, req.nova))); } finally { lk.releaseLock(); } }
@@ -167,6 +173,10 @@ function doPost(e) {
     if (req.action === 'metricas') return json_(Object.assign({ ok: true }, metricas_(eu, req.marcaId, req.mes, req.forcar)));
     if (req.action === 'melhorHorario') return json_(Object.assign({ ok: true }, melhorHorario_(eu, req.marcaId, req.forcar)));
     if (req.action === 'enviarRelatorio') return json_(Object.assign({ ok: true }, enviarRelatorio_(eu, req.marcaId, req.mes, req.site)));
+    if (req.action === 'pushInscrever') { pushInscrever_(eu, req.endpoint); return json_({ ok: true }); }
+    if (req.action === 'pushSair') { pushSair_(eu, req.endpoint); return json_({ ok: true }); }
+    if (req.action === 'pushPendentes') return json_({ ok: true, mensagens: pushPendentes_(eu) });
+    if (req.action === 'pushTeste') { limite_('pusht_' + eu.id, 10, 3600); return json_({ ok: true, enviados: pushPara_(eu.id, '🔔 Avisos ligados', 'É assim que os avisos do ' + NOME_APP + ' vão chegar.', '#calendario') }); }
     if (req.action === 'publicarAgora') return json_(Object.assign({ ok: true }, publicarAgora_(eu, req.id, req.tipo)));
     if (TELA_DA_ACAO[req.action] && ['acessosListar', 'acessosSalvar', 'trends'].indexOf(req.action) >= 0) exigeTela_(eu, TELA_DA_ACAO[req.action]);
     if (req.action === 'acessosListar') return json_(Object.assign({ ok: true }, acessosListar_(eu, req.marcaId)));
@@ -196,7 +206,7 @@ function erroParaSite_(err) {
 const TELA_DA_ACAO = {
   salvarStory: 'stories', excluirStory: 'stories', ordenarStories: 'stories',
   salvarEvento: 'agenda', responderEvento: 'agenda', excluirEvento: 'agenda', salvarAta: 'agenda', horariosLivres: 'agenda',
-  salvarTarefa: 'tarefas', concluirTarefa: 'tarefas', excluirTarefa: 'tarefas',
+  salvarTarefa: 'tarefas', concluirTarefa: 'tarefas', excluirTarefa: 'tarefas', itemTarefa: 'tarefas', comentarTarefa: 'tarefas', apagarComentarioTarefa: 'tarefas',
   salvarHora: 'horas', excluirHora: 'horas', salvarAviso: 'mural', excluirAviso: 'mural', lerAviso: 'mural',
   salvarUsuario: 'equipe', excluirUsuario: 'equipe', pagamento: 'financeiro', salvarProposta: 'financeiro', excluirProposta: 'financeiro',
   auditoria: 'registro', perfilEmpresa: 'empresa', exportar: 'empresa', acessosListar: 'marca-acessos', acessosSalvar: 'marca-acessos',
@@ -206,7 +216,7 @@ function rodarAcao_(eu, req) {
       if (TELA_DA_ACAO[req.action]) exigeTela_(eu, TELA_DA_ACAO[req.action]);
       switch (req.action) {
         case 'listar': guardarSite_(req.site); return json_(listar_(eu, req.desde, req.se));
-        case 'comentar': return json_(Object.assign({ ok: true }, comentar_(eu, req.id, req.texto, req.arte)));
+        case 'comentar': return json_(Object.assign({ ok: true }, comentar_(eu, req.id, req.texto, req.arte, req.x, req.y)));
         case 'apagarComentario': apagarComentario_(eu, req.id, req.cid); return json_({ ok: true });
         case 'repetirPauta': return json_({ ok: true, ids: repetirPauta_(eu, req.id, req.intervalo, req.vezes) });
         case 'salvarStory': return json_({ ok: true, id: salvarStory_(eu, req.story || {}) });
@@ -216,12 +226,20 @@ function rodarAcao_(eu, req) {
         case 'acaoLote': return json_(Object.assign({ ok: true }, acaoLote_(eu, req.ids || [], req.acao, req.site)));
         case 'autoPub': autoPubDefinir_(eu, req.id, req.tipo, req.ligar); return json_({ ok: true });
         case 'salvarPauta': return json_({ ok: true, id: salvarPauta_(eu, req.pauta || {}) });
-        case 'excluirPauta': excluirPauta_(eu, req.id); return json_({ ok: true });
+        case 'excluirPauta': return json_({ ok: true, lixeira: excluirPauta_(eu, req.id) || '' });
         case 'acao': acaoPauta_(eu, req.id, req.acao, req.motivo, req.status, req.dados || {}, req.site); return json_({ ok: true });
         case 'salvarMarca': return json_({ ok: true, id: salvarMarca_(eu, req.marca || {}) });
         case 'excluirMarca': soAdmin_(eu); if (!acesso_(eu, req.id)) throw erro_('permissao', 'Sem acesso a esta marca.'); excluirMarca_(req.id); return json_({ ok: true });
         case 'salvarUsuario': gerencia_(eu); return json_({ ok: true, id: salvarUsuario_(eu, req.usuario || {}) });
         case 'excluirUsuario': gerencia_(eu); excluirUsuario_(eu, req.id); return json_({ ok: true });
+        case 'itemTarefa': itemTarefa_(eu, req.id, req.item, req.ok); return json_({ ok: true });
+        case 'comentarTarefa': return json_(Object.assign({ ok: true }, comentarTarefa_(eu, req.id, req.texto)));
+        case 'apagarComentarioTarefa': apagarComentarioTarefa_(eu, req.id, req.cid); return json_({ ok: true });
+        case 'modeloSalvar': return json_({ ok: true, id: modeloSalvar_(eu, req.marcaId, req.mes, req.nome, req.comTemas) });
+        case 'modeloAplicar': return json_({ ok: true, n: modeloAplicar_(eu, req.id, req.marcaId, req.mes, req.comTemas) });
+        case 'modeloExcluir': modeloExcluir_(eu, req.id); return json_({ ok: true });
+        case 'excluirEmpresa': return json_(Object.assign({ ok: true }, excluirEmpresa_(eu, req.id, req.confirmacao)));
+        case 'definirGoogle': if (!eu.dono) throw erro_('permissao', 'Só a dona da plataforma configura o login com Google.'); { const c = String(req.clientId || '').trim(); if (c && !/^[\w-]+\.apps\.googleusercontent\.com$/.test(c)) throw erro_('server', 'O ID do cliente termina com .apps.googleusercontent.com'); if (c) PropertiesService.getScriptProperties().setProperty('GOOGLE_CLIENT_ID', c); else PropertiesService.getScriptProperties().deleteProperty('GOOGLE_CLIENT_ID'); } return json_({ ok: true });
         case 'trocarSenha': eu.token = req.token; trocarSenha_(eu, req.atual, req.nova); return json_({ ok: true });
         case 'salvarTarefa': return json_({ ok: true, id: salvarTarefa_(eu, req.tarefa || {}, req.site) });
         case 'concluirTarefa': concluirTarefa_(eu, req.id, req.status || (req.feita !== false ? 'Feita' : 'Pendente')); return json_({ ok: true });
@@ -266,7 +284,7 @@ function rodarAcao_(eu, req) {
 /* ---------- Login e permissões ---------- */
 
 const MAX_TENTATIVAS = 5, BLOQUEIO_MIN = 15;
-function login_(login, senha) {
+function login_(login, senha, dispositivo) {
   const lg = normLogin_(login), cache = CacheService.getScriptCache(), kf = 'lgf_' + lg;
   // bloqueio depois de 5 erros seguidos (vale 15 minutos), e um teto geral contra ataques em massa
   const falhas = Number(cache.get(kf) || 0);
@@ -297,7 +315,73 @@ function login_(login, senha) {
       try { if (JSON.parse(todas[k]).exp < agora) props.deleteProperty(k); } catch (e) { props.deleteProperty(k); }
     }
   });
+  if (precisaCodigo_(u) && !aparelhoConfiavel_(u.id, dispositivo)) return desafioCodigo_(u, dispositivo);
   try { auditar_(publicoUsuario_(u), 'Entrou no sistema', '', '', u.empresaId); } catch (e) {}
+  return { ok: true, token: criarSessao_(u.id, DIAS_DE_SESSAO) };
+}
+
+/* ---------- Código por e-mail (administração e direção, em aparelho novo) ---------- */
+const DIAS_APARELHO = 60;
+const precisaCodigo_ = u => u.dono === 'sim' || u.papel === 'admin' || u.papel === 'diretor';
+const hashAparelho_ = d => Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, 'dsp:' + d, Utilities.Charset.UTF_8));
+function aparelhoConfiavel_(uid, d) {
+  if (!/^[a-f0-9]{32,64}$/.test(String(d || ''))) return false;
+  const h = hashAparelho_(d);
+  return parseJSON_(PropertiesService.getScriptProperties().getProperty('dsp_' + uid), []).some(x => x.h === h && x.exp > Date.now());
+}
+function confiarAparelho_(uid, d) {
+  if (!/^[a-f0-9]{32,64}$/.test(String(d || ''))) return;
+  const pp = PropertiesService.getScriptProperties(), h = hashAparelho_(d);
+  const l = parseJSON_(pp.getProperty('dsp_' + uid), []).filter(x => x.h !== h && x.exp > Date.now());
+  l.unshift({ h: h, exp: Date.now() + DIAS_APARELHO * 864e5 });
+  pp.setProperty('dsp_' + uid, JSON.stringify(l.slice(0, 10)));
+}
+function desafioCodigo_(u, dispositivo) {
+  limite_('cod_' + u.id, 8, 3600, 'Muitos códigos pedidos. Espere uma hora e tente de novo.');
+  const dig = (Utilities.getUuid() + Utilities.getUuid()).replace(/\D/g, '');
+  const codigo = (dig + '000000').slice(0, 6), desafio = Utilities.getUuid().replace(/-/g, '');
+  PropertiesService.getScriptProperties().setProperty('cod_' + desafio, JSON.stringify({ uid: u.id, h: hashAparelho_('c:' + codigo + desafio), exp: Date.now() + 10 * 60000, tent: 0 }));
+  MailApp.sendEmail({ to: u.login, name: NOME_APP, subject: 'Seu código de acesso: ' + codigo,
+    htmlBody: '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#1d1d1f;max-width:520px"><p style="margin:0 0 12px">Alguém (provavelmente você) entrou no ' + NOME_APP + ' com a sua senha num aparelho novo. Para terminar de entrar, use o código:</p>' +
+      '<p style="font-size:30px;letter-spacing:.3em;font-weight:700;margin:0 0 14px">' + codigo + '</p><p style="margin:0;color:#6b6b70;font-size:13px">Vale por 10 minutos. Se não foi você, troque a sua senha agora em "Esqueci minha senha".</p></div>' });
+  try { auditar_(publicoUsuario_(u), 'Pediu código de acesso (aparelho novo)', '', '', u.empresaId); } catch (e) {}
+  return { ok: true, precisaCodigo: true, desafio: desafio, email: u.login.replace(/^(.).*(@.*)$/, '$1•••$2') };
+}
+function confirmarCodigo_(desafio, codigo, confiar, dispositivo) {
+  const pp = PropertiesService.getScriptProperties(), k = 'cod_' + String(desafio || '').replace(/\W/g, '');
+  const d = parseJSON_(pp.getProperty(k), null);
+  if (!d || d.exp < Date.now()) throw erro_('login', 'O código venceu. Entre de novo para receber outro.');
+  if (d.h !== hashAparelho_('c:' + String(codigo || '').replace(/\D/g, '') + String(desafio).replace(/\W/g, ''))) {
+    d.tent++;
+    if (d.tent >= 5) { pp.deleteProperty(k); throw erro_('login', 'Código errado várias vezes. Entre de novo para receber outro.'); }
+    pp.setProperty(k, JSON.stringify(d)); Utilities.sleep(600);
+    throw erro_('login', 'Código errado. Confira o e-mail e tente de novo.');
+  }
+  pp.deleteProperty(k);
+  const u = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(x => x.id === d.uid)[0];
+  if (!u || u.ativo !== 'sim' || !empresaAtiva_(u)) throw erro_('login', 'Este acesso não está mais ativo.');
+  if (confiar) confiarAparelho_(u.id, dispositivo);
+  try { auditar_(publicoUsuario_(u), 'Entrou no sistema (com código por e-mail)', '', '', u.empresaId); } catch (e) {}
+  return { ok: true, token: criarSessao_(u.id, DIAS_DE_SESSAO) };
+}
+
+/* ---------- Entrar com o Google ---------- */
+function loginGoogle_(credencial) {
+  const cliente = PropertiesService.getScriptProperties().getProperty('GOOGLE_CLIENT_ID');
+  if (!cliente) throw erro_('login', 'O login com Google não está ligado.');
+  const kg = 'lgg_' + Math.floor(Date.now() / 600000), cache = CacheService.getScriptCache(), geral = Number(cache.get(kg) || 0);
+  if (geral > 300) throw erro_('login', 'O sistema recebeu tentativas demais agora. Tente de novo em alguns minutos.');
+  cache.put(kg, String(geral + 1), 900);
+  const cred = String(credencial || '');
+  if (!/^[\w-]+\.[\w-]+\.[\w-]+$/.test(cred) || cred.length > 4000) throw erro_('login', 'Não consegui confirmar a conta Google.');
+  const r = UrlFetchApp.fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(cred), { muteHttpExceptions: true });
+  const info = r.getResponseCode() === 200 ? parseJSON_(r.getContentText(), {}) : {};
+  if (info.aud !== cliente || ['accounts.google.com', 'https://accounts.google.com'].indexOf(info.iss) < 0 || String(info.email_verified) !== 'true' || Number(info.exp) * 1000 < Date.now())
+    throw erro_('login', 'Não consegui confirmar a conta Google. Tente de novo.');
+  const email = normLogin_(info.email);
+  const u = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(x => x.login === email)[0];
+  if (!u || u.ativo !== 'sim' || !empresaAtiva_(u)) throw erro_('login', 'O e-mail ' + email + ' não está cadastrado no ' + NOME_APP + '. Peça para a gestão cadastrar você com este e-mail.');
+  try { auditar_(publicoUsuario_(u), 'Entrou com o Google', '', '', u.empresaId); } catch (e) {}
   return { ok: true, token: criarSessao_(u.id, DIAS_DE_SESSAO) };
 }
 
@@ -394,6 +478,10 @@ function listar_(eu, desde, se) {
   r.temTrends = !!pp.getProperty('trends_' + eu.empresaId);
   r.temIA = eu.papel !== 'cliente' && !!pp.getProperty('ANTHROPIC_KEY_' + eu.empresaId);
   r.gcal = pp.getProperty('gcal_' + eu.empresaId) === 'sim';
+  try { r.pushChave = chavesPush_().pub; } catch (e) { r.pushChave = ''; }
+  r.pushAparelhos = parseJSON_(pp.getProperty('psh_' + eu.id), []).map(a => a.e);
+  r.modelos = ['cliente', 'aprovador'].indexOf(eu.papel) >= 0 ? [] : ler_(ABA_MODELOS, CAMPOS_MODELO).filter(x => mesmaEmp_(eu, x.empresaId)).map(x => ({ id: x.id, nome: x.nome, por: x.por, uid: x.uid, criado: Number(x.criado) || 0, itens: parseJSON_(x.itens, []) }));
+  if (eu.dono) r.googleClientId = pp.getProperty('GOOGLE_CLIENT_ID') || '';
   r.propostas = TODAS_MARCAS.indexOf(eu.papel) >= 0 ? ler_(ABA_PROPOSTAS, CAMPOS_PROPOSTA).filter(x => mesmaEmp_(eu, x.empresaId)).map(x => ({ id: x.id, cliente: x.cliente, status: x.status, dados: parseJSON_(x.dados, {}), chave: x.chave, marcaId: x.marcaId, por: x.por, criado: Number(x.criado) || 0, respondido: Number(x.respondido) || 0 })) : [];
   r.mural = eu.papel === 'cliente' || !podeTela_(eu, 'mural') ? [] : ler_(ABA_MURAL, CAMPOS_AVISO).filter(a => mesmaEmp_(eu, a.empresaId)).map(avisoParaSite_).filter(a => !a.ate || a.ate >= Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd') || a.fixado);
   r.agenda = ler_(ABA_AGENDA, CAMPOS_AGENDA).filter(x => veEvento_(eu, x) && noPeriodo(x.data)).map(eventoParaSite_);
@@ -409,7 +497,7 @@ function listar_(eu, desde, se) {
   // o cliente só vê nome, papel e foto da equipe (e a si mesmo); nunca os outros clientes
   if (eu.papel === 'cliente') r.equipe = r.equipe.filter(u => u.papel !== 'cliente' || u.id === eu.id).map(u => ({ id: u.id, nome: u.nome, papel: u.papel, foto: u.foto }));
   if (VEEM_TODAS.indexOf(eu.papel) >= 0 && (podeTela_(eu, 'equipe') || podeTela_(eu, 'equipe-atividade'))) r.usuarios = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(u => mesmaEmp_(eu, u.empresaId)).map(publicoUsuario_);
-  if (eu.dono) { r.empresas = empresas_(); r.siteOficial = site_(); }
+  if (eu.dono) { r.empresas = empresas_(); r.siteOficial = site_(); r.empresaDona = (ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(u => u.id === eu.id)[0] || {}).empresaId || ''; }
   r.empresa = eu.empresaId ? (empresas_().filter(e => e.id === eu.empresaId)[0] || null) : null;
   return r;
 }
@@ -525,8 +613,9 @@ function excluirPauta_(eu, id) {
   const atual = pautaPorId_(id);
   if (!atual) return;
   if (!podeEditar_(eu, atual.marcaId)) throw erro_('permissao', 'Você não pode excluir postagens desta marca.');
-  paraLixeira_(eu, 'postagem', ler_(ABA_PAUTAS, CAMPOS_PAUTA).filter(x => x.id === String(id))[0], atual.postagem);
+  const idL = paraLixeira_(eu, 'postagem', ler_(ABA_PAUTAS, CAMPOS_PAUTA).filter(x => x.id === String(id))[0], atual.postagem);
   excluirLinha_(ABA_PAUTAS, CAMPOS_PAUTA, id);
+  return idL;
 }
 
 function acaoPauta_(eu, id, acao, motivo, status, dados, site, coletor) {
@@ -621,6 +710,7 @@ function notificar_(eu, p, acao, motivo, historico, site, paraStatus, coletor) {
   const titulo = (p.produto ? p.produto + ': ' : '') + (p.postagem || 'Postagem');
   // aprovação em lote: junta tudo num e-mail só por pessoa
   if (coletor) { dest.forEach(u => { const c = coletor[u.login] || (coletor[u.login] = { u: u, av: av, itens: [] }); c.itens.push(titulo + ' (' + marca + ')'); }); return; }
+  dest.forEach(u => pushPara_(u.id, av.titulo, titulo + ' · ' + marca, '#aprovacoes'));
   if (MailApp.getRemainingDailyQuota() < dest.length) return;
   const link = /^https:\/\//.test(String(site || '')) ? String(site).split('#')[0] + '#aprovacoes' : '';
   // o cliente recebe um link que já entra, sem senha (vale 14 dias)
@@ -645,6 +735,8 @@ function tarefaParaSite_(t) {
   t.data = paraISO_(t.data); t.prazo = paraISO_(t.prazo);
   t.criado = Number(t.criado) || 0; t.concluidoEm = Number(t.concluidoEm) || 0; t.atualizado = Number(t.atualizado) || 0;
   delete t.marca;
+  t.checklist = parseJSON_(t.checklist, []); t.comentarios = parseJSON_(t.comentarios, []); t.anexos = parseJSON_(t.anexos, []);
+  delete t.repetida;
   return t;
 }
 // o gestor só chefia as tarefas sem marca ou das marcas dele
@@ -673,7 +765,11 @@ function salvarTarefa_(eu, t, site) {
   const pessoas = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(u => mesmaEmp_(eu, u.empresaId));
   const resp = pessoas.filter(u => u.id === t.responsavelId && u.ativo === 'sim')[0];
   const id = atual ? atual.id : Utilities.getUuid().slice(0, 13);
+  const checklist = (Array.isArray(t.checklist) ? t.checklist : []).slice(0, 50).map(i => ({ id: idSeguro_(i.id) || Utilities.getUuid().slice(0, 8), t: String(i.t || '').trim().slice(0, 200), ok: !!i.ok })).filter(i => i.t);
+  const anexos = (Array.isArray(t.anexos) ? t.anexos : []).slice(0, 20).map(a => ({ nome: textoCurto_(a.nome, 120) || 'Link', url: urlSegura_(a.url) })).filter(a => a.url);
   const linha = {
+    checklist: JSON.stringify(checklist), anexos: JSON.stringify(anexos), repetir: REPETIR_TAREFA.indexOf(t.repetir) >= 0 ? t.repetir : '',
+    comentarios: atual ? (atual.comentarios || '[]') : '[]', repetida: atual ? (atual.repetida || '') : '',
     id: id, marcaId: marcaId, marca: marcaId ? nomeDaMarca_(marcaId) : '',
     titulo: titulo, descricao: String(t.descricao || '').slice(0, 3000),
     prioridade: PRIORIDADES.indexOf(t.prioridade) >= 0 ? t.prioridade : 'Média',
@@ -691,6 +787,7 @@ function salvarTarefa_(eu, t, site) {
   // avisa por e-mail quem recebeu a tarefa (se não foi a própria pessoa)
   if (resp && resp.id !== eu.id && (!atual || atual.responsavelId !== resp.id)) {
     try { avisarTarefa_(eu, linha, publicoUsuario_(resp), site); } catch (e) { Logger.log('Falha no aviso da tarefa: ' + e); }
+    pushPara_(resp.id, '📋 Nova tarefa de ' + eu.nome, titulo, '#tarefas');
   }
   return id;
 }
@@ -704,8 +801,52 @@ function concluirTarefa_(eu, id, status) {
   const feita = status === 'Feita';
   if (feita && t.status === 'Feita') return;
   t.status = status;
+  // tarefa que se repete: ao concluir, cria a próxima (uma vez só)
+  if (feita && REPETIR_TAREFA.indexOf(t.repetir) > 0 && t.repetida !== 'sim') { proximaTarefa_(eu, t); t.repetida = 'sim'; }
   t.concluidoPor = feita ? eu.nome : ''; t.concluidoEm = feita ? String(Date.now()) : '';
   t.atualizado = String(Date.now());
+  gravar_(ABA_TAREFAS, CAMPOS_TAREFA, t);
+}
+
+const REPETIR_TAREFA = ['', 'semana', 'quinzena', 'mes'];
+function proximaTarefa_(eu, t) {
+  const passo = d => d ? (t.repetir === 'mes' ? somaDias_(d, 0, 1) : somaDias_(d, t.repetir === 'quinzena' ? 14 : 7)) : '';
+  const hoje = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  const d0 = paraISO_(t.data), p0 = paraISO_(t.prazo);
+  gravar_(ABA_TAREFAS, CAMPOS_TAREFA, Object.assign({}, t, {
+    id: Utilities.getUuid().slice(0, 13), status: 'Pendente', concluidoPor: '', concluidoEm: '', repetida: '',
+    data: paraBR_(passo(d0 || (p0 ? '' : hoje))), prazo: paraBR_(passo(p0)),
+    checklist: JSON.stringify(parseJSON_(t.checklist, []).map(i => Object.assign(i, { ok: false }))), comentarios: '[]',
+    criado: String(Date.now()), atualizado: String(Date.now())
+  }));
+}
+function itemTarefa_(eu, id, item, ok) {
+  const t = tarefaPorId_(id);
+  if (!t) throw erro_('server', 'Tarefa não encontrada. Atualize a página.');
+  if (!podeMexerTarefa_(eu, t)) throw erro_('permissao', 'Só quem criou, o responsável ou a gestão pode marcar os itens.');
+  const l = parseJSON_(t.checklist, []), i = l.filter(x => x.id === String(item))[0];
+  if (!i) throw erro_('server', 'Item não encontrado. Atualize a página.');
+  i.ok = !!ok; t.checklist = JSON.stringify(l); t.atualizado = String(Date.now());
+  gravar_(ABA_TAREFAS, CAMPOS_TAREFA, t);
+}
+function comentarTarefa_(eu, id, texto) {
+  const t = tarefaPorId_(id);
+  if (!t || !veTarefa_(eu, t) || !mesmaEmp_(eu, t.empresaId)) throw erro_('server', 'Tarefa não encontrada. Atualize a página.');
+  texto = String(texto || '').trim().slice(0, 2000);
+  if (!texto) throw erro_('server', 'Escreva o comentário.');
+  const c = { id: Utilities.getUuid().slice(0, 8), em: Date.now(), por: eu.nome, uid: eu.id, texto: texto };
+  t.comentarios = JSON.stringify(parseJSON_(t.comentarios, []).concat([c]).slice(-100)); t.atualizado = String(Date.now());
+  gravar_(ABA_TAREFAS, CAMPOS_TAREFA, t);
+  [t.responsavelId, t.criadoPorId].filter((u, i, a) => u && u !== eu.id && a.indexOf(u) === i).forEach(u => pushPara_(u, '💬 ' + eu.nome + ' comentou numa tarefa', t.titulo + ': ' + texto, '#tarefas'));
+  return { comentario: c };
+}
+function apagarComentarioTarefa_(eu, id, cid) {
+  const t = tarefaPorId_(id);
+  if (!t || !mesmaEmp_(eu, t.empresaId)) return;
+  const l = parseJSON_(t.comentarios, []), c = l.filter(x => x.id === cid)[0];
+  if (!c) return;
+  if (c.uid !== eu.id && !chefia_(eu, t)) throw erro_('permissao', 'Só quem escreveu pode apagar o comentário.');
+  t.comentarios = JSON.stringify(l.filter(x => x.id !== cid));
   gravar_(ABA_TAREFAS, CAMPOS_TAREFA, t);
 }
 
@@ -983,6 +1124,51 @@ function acessosSalvar_(eu, marcaId, acessos) {
   return { total: lista.length };
 }
 
+// apaga as linhas de uma aba em que a coluna "campo" está na lista (de baixo para cima)
+function apagarLinhasOnde_(nome, campos, campo, valores) {
+  const aba = aba_(nome, campos), n = aba.getLastRow() - 1;
+  if (n < 1 || !valores.length) return 0;
+  const col = aba.getRange(2, colunaDe_(campos, campo), n, 1).getValues();
+  let k = 0;
+  for (let i = col.length - 1; i >= 0; i--) if (valores.indexOf(String(col[i][0])) >= 0) { aba.deleteRow(i + 2); k++; }
+  if (k) mexeu_();
+  return k;
+}
+// apaga a empresa inteira (só a dona). Antes guarda uma cópia completa em JSON no Drive.
+function excluirEmpresa_(eu, id, confirmacao) {
+  if (!eu.dono) throw erro_('permissao', 'Só a dona da plataforma apaga empresas.');
+  const emp = ler_(ABA_EMPRESAS, CAMPOS_EMPRESA).filter(e => e.id === String(id || ''))[0];
+  if (!emp) throw erro_('server', 'Empresa não encontrada. Atualize a página.');
+  if (String(confirmacao || '').trim().toLowerCase() !== String(emp.nome).trim().toLowerCase()) throw erro_('server', 'Para confirmar, digite o nome da empresa exatamente como está.');
+  const usuarios = ler_(ABA_USUARIOS, CAMPOS_USUARIO);
+  if (usuarios.some(u => u.dono === 'sim' && u.empresaId === emp.id)) throw erro_('permissao', 'Esta é a empresa da dona da plataforma e não pode ser apagada.');
+  // 1) cópia de segurança
+  const dados = exportar_(Object.assign({}, eu, { empresaId: emp.id }));
+  dados.empresaRegistro = emp;
+  const pasta = pasta_(DriveApp.getRootFolder(), 'Planejamento de Conteúdo - Cópias de segurança');
+  const arq = pasta.createFile(Utilities.newBlob(JSON.stringify(dados, null, 1), 'application/json', 'Empresa apagada - ' + emp.nome + ' - ' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH-mm') + '.json'));
+  // 2) apaga tudo o que é dela
+  const marcas = ler_(ABA_MARCAS, CAMPOS_MARCA).filter(m => m.empresaId === emp.id).map(m => m.id);
+  const pessoas = usuarios.filter(u => u.empresaId === emp.id).map(u => u.id);
+  const porMarca = [[ABA_PAUTAS, CAMPOS_PAUTA], [ABA_STORIES, CAMPOS_STORY], [ABA_PAGAMENTOS, CAMPOS_PAGAMENTO], [ABA_AVALIACOES, CAMPOS_AVALIACAO], [ABA_LIXEIRA, CAMPOS_LIXEIRA]];
+  const porEmpresa = [[ABA_TAREFAS, CAMPOS_TAREFA], [ABA_AGENDA, CAMPOS_AGENDA], [ABA_HORAS, CAMPOS_HORA], [ABA_MURAL, CAMPOS_AVISO], [ABA_PROPOSTAS, CAMPOS_PROPOSTA], [ABA_MODELOS, CAMPOS_MODELO], [ABA_AUDITORIA, CAMPOS_AUDITORIA], [ABA_MARCAS, CAMPOS_MARCA], [ABA_USUARIOS, CAMPOS_USUARIO]];
+  let linhas = 0;
+  porMarca.forEach(([a, c]) => { linhas += apagarLinhasOnde_(a, c, 'marcaId', marcas); });
+  porEmpresa.forEach(([a, c]) => { linhas += apagarLinhasOnde_(a, c, 'empresaId', [emp.id]); });
+  excluirLinha_(ABA_EMPRESAS, CAMPOS_EMPRESA, emp.id);
+  // 3) chaves, sessões e avisos guardados
+  const pp = PropertiesService.getScriptProperties(), todas = pp.getProperties();
+  Object.keys(todas).forEach(k => {
+    const alvo = ['ANTHROPIC_KEY_', 'trends_', 'gcal_'].some(pre => k === pre + emp.id) ||
+      marcas.some(m => k === 'ig_' + m || k === 'cred_' + m || k === 'credlog_' + m) ||
+      pessoas.some(u => k === 'psh_' + u || k === 'psm_' + u || k === 'dsp_' + u);
+    const sess = /^(tok_|lnk_|cod_)/.test(k) && pessoas.indexOf(parseJSON_(todas[k], {}).uid) >= 0;
+    if (alvo || sess) pp.deleteProperty(k);
+  });
+  EMP_CACHE = null;
+  return { backup: arq.getUrl(), marcas: marcas.length, pessoas: pessoas.length, linhas: linhas };
+}
+
 function excluirMarca_(id) {
   const aba = aba_(ABA_PAUTAS, CAMPOS_PAUTA);
   const n = aba.getLastRow() - 1;
@@ -1256,6 +1442,7 @@ function configurar() {
   aba_(ABA_AVALIACOES, CAMPOS_AVALIACAO);
   aba_(ABA_PAGAMENTOS, CAMPOS_PAGAMENTO);
   aba_(ABA_PROPOSTAS, CAMPOS_PROPOSTA);
+  aba_(ABA_MODELOS, CAMPOS_MODELO);
   aba_(ABA_AUDITORIA, CAMPOS_AUDITORIA);
   instalarGatilhos_();
 
@@ -1433,7 +1620,7 @@ function setPauta_(id, campos) {
   Object.keys(campos).forEach(k => aba.getRange(r, colunaDe_(CAMPOS_PAUTA, k)).setNumberFormat('@').setValue(campos[k]));
   mexeu_();
 }
-function comentar_(eu, id, texto, arte) {
+function comentar_(eu, id, texto, arte, x, y) {
   const p = pautaPorId_(id);
   if (!p) throw erro_('server', 'Postagem não encontrada. Atualize a página.');
   if (!acesso_(eu, p.marcaId)) throw erro_('permissao', 'Sem acesso a esta marca.');
@@ -1442,6 +1629,8 @@ function comentar_(eu, id, texto, arte) {
   const c = { id: Utilities.getUuid().slice(0, 8), em: Date.now(), por: eu.nome, uid: eu.id, papel: eu.papel, texto: texto };
   const n = parseInt(arte, 10);
   if (n > 0) c.arte = n;
+  const px = Number(x), py = Number(y);
+  if (isFinite(px) && isFinite(py) && x !== '' && y !== '' && x != null && y != null && px >= 0 && px <= 100 && py >= 0 && py <= 100) { c.x = Math.round(px * 10) / 10; c.y = Math.round(py * 10) / 10; if (!c.arte) c.arte = 1; }
   const lista = (p.comentarios || []).concat([c]).slice(-200);
   setPauta_(id, { comentarios: JSON.stringify(lista), atualizado: String(Date.now()) });
   return { comentario: c };
@@ -1859,6 +2048,7 @@ function acaoLote_(eu, ids, acao, site) {
   const base = /^https:\/\//.test(String(site || '')) ? String(site).split('#')[0] : '';
   Object.keys(coletor).forEach(k => {
     const c = coletor[k];
+    pushPara_(c.u.id, c.av.titulo, c.itens.length + (c.itens.length === 1 ? ' post' : ' posts') + ': ' + c.itens.slice(0, 3).join(', '), '#aprovacoes');
     if (MailApp.getRemainingDailyQuota() < 1) return;
     const link = base ? (c.u.papel === 'cliente' ? base + '#entrar=' + criarLink_(c.u.id) : base + '#aprovacoes') : '';
     MailApp.sendEmail({
@@ -2166,6 +2356,7 @@ function avisarEvento_(eu, x, tipo, site) {
     (link ? '<p><a href="' + link + '" style="background:#1d1d1f;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none;display:inline-block">' + (tipo === 'pedido' ? 'Responder o pedido' : 'Ver na agenda') + '</a></p>' : '') +
     (['marcada', 'alterada', 'aceita'].indexOf(tipo) >= 0 ? '<p style="margin:0;color:#6b6b70;font-size:12px">O convite vai em anexo: abra para colocar no seu Google Agenda ou no calendário do celular.</p>' : '') + '</div>';
   const anexo = ['marcada', 'alterada', 'aceita'].indexOf(tipo) >= 0 && !x.gcal ? [Utilities.newBlob(icsDe_(x), 'text/calendar', 'reuniao.ics')] : null;
+  dest.forEach(u => pushPara_(u.id, titulos[tipo], x.titulo + ' · ' + paraBR_(x.data).slice(0, 5) + ' ' + x.hora, '#agenda'));
   dest.forEach(u => { const o = { to: u.login, subject: titulos[tipo] + ': ' + x.titulo + ' · ' + paraBR_(x.data).slice(0, 5) + ' ' + x.hora, htmlBody: html, name: NOME_APP }; if (anexo) o.attachments = anexo; MailApp.sendEmail(o); });
 }
 function parse_(isoData) {
@@ -2358,6 +2549,44 @@ function lerTrends_(eu) {
 }
 
 /* ---------- Copiar a estrutura de um mês para outro ---------- */
+// dia do mês "para" com o mesmo dia da semana e a mesma semana (ex.: 2ª terça); se não existir, a última
+function diaEquivalente_(para, dow, semana) {
+  const [ay, am] = para.split('-').map(Number), ultimo = new Date(ay, am, 0).getDate();
+  const dias = []; for (let i = 1; i <= ultimo; i++) if (new Date(ay, am - 1, i).getDay() === dow) dias.push(i);
+  return para + '-' + ('0' + dias[Math.min(Math.max(1, semana), dias.length) - 1]).slice(-2);
+}
+const CAMPOS_ITEM_MODELO = ['formato', 'fase', 'produto', 'rede', 'objetivo', 'cta', 'gravacao', 'postagem', 'pauta', 'agHora'];
+function modeloSalvar_(eu, marcaId, mes, nome, comTemas) {
+  if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Você não pode criar modelos desta marca.');
+  if (!/^\d{4}-\d{2}$/.test(mes || '')) throw erro_('server', 'Escolha o mês.');
+  nome = textoCurto_(nome, 80); if (!nome) throw erro_('server', 'Dê um nome ao modelo.');
+  const ps = ler_(ABA_PAUTAS, CAMPOS_PAUTA).map(pautaParaSite_).filter(p => p.marcaId === marcaId && String(p.data).indexOf(mes) === 0).slice(0, 120);
+  if (!ps.length) throw erro_('server', 'Este mês não tem postagens para virar modelo.');
+  const itens = ps.map(p => { const d = parse_(p.data), o = { dow: d.getDay(), semana: Math.ceil(d.getDate() / 7) }; CAMPOS_ITEM_MODELO.forEach(c => { if (p[c] && (comTemas || (c !== 'postagem' && c !== 'pauta'))) o[c] = String(p[c]).slice(0, 300); }); return o; });
+  const id = Utilities.getUuid().slice(0, 13);
+  gravar_(ABA_MODELOS, CAMPOS_MODELO, { id: id, empresaId: empresaDe_(marcaId), nome: nome, itens: JSON.stringify(itens), por: eu.nome, uid: eu.id, criado: String(Date.now()) });
+  return id;
+}
+function modeloAplicar_(eu, id, marcaId, mes, comTemas) {
+  const m = ler_(ABA_MODELOS, CAMPOS_MODELO).filter(x => x.id === String(id))[0];
+  if (!m || !mesmaEmp_(eu, m.empresaId)) throw erro_('server', 'Modelo não encontrado. Atualize a página.');
+  if (!podeEditar_(eu, marcaId) || empresaDe_(marcaId) !== m.empresaId) throw erro_('permissao', 'Você não pode criar postagens nesta marca.');
+  if (!/^\d{4}-\d{2}$/.test(mes || '')) throw erro_('server', 'Escolha o mês.');
+  const itens = parseJSON_(m.itens, []);
+  itens.forEach(it => {
+    const data = diaEquivalente_(mes, Number(it.dow) || 0, Number(it.semana) || 1), p = { marcaId: marcaId, data: data, prazoArte: somaDias_(data, -5), prazoAprovacao: somaDias_(data, -2), observacao: 'Do modelo "' + m.nome + '"' };
+    CAMPOS_ITEM_MODELO.forEach(c => { if (it[c] && (comTemas !== false || (c !== 'postagem' && c !== 'pauta'))) p[c] = it[c]; });
+    salvarPauta_(eu, p);
+  });
+  return itens.length;
+}
+function modeloExcluir_(eu, id) {
+  const m = ler_(ABA_MODELOS, CAMPOS_MODELO).filter(x => x.id === String(id))[0];
+  if (!m) return;
+  if (!mesmaEmp_(eu, m.empresaId) || (m.uid !== eu.id && TODAS_MARCAS.indexOf(eu.papel) < 0)) throw erro_('permissao', 'Só quem criou o modelo ou a direção pode apagar.');
+  excluirLinha_(ABA_MODELOS, CAMPOS_MODELO, m.id);
+}
+
 function copiarMes_(eu, marcaId, de, para) {
   if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Você não pode criar postagens nesta marca.');
   if (!/^\d{4}-\d{2}$/.test(de || '') || !/^\d{4}-\d{2}$/.test(para || '') || de === para) throw erro_('server', 'Escolha os meses.');
@@ -2382,7 +2611,9 @@ function copiarMes_(eu, marcaId, de, para) {
 /* ---------- Lixeira (30 dias) ---------- */
 function paraLixeira_(eu, tipo, linha, titulo) {
   if (!linha) return;
-  gravar_(ABA_LIXEIRA, CAMPOS_LIXEIRA, { id: Utilities.getUuid().slice(0, 13), tipo: tipo, itemId: linha.id, marcaId: linha.marcaId, titulo: String(titulo || '').slice(0, 200), dados: JSON.stringify(linha), por: eu.nome, em: Date.now() });
+  const idL = Utilities.getUuid().slice(0, 13);
+  gravar_(ABA_LIXEIRA, CAMPOS_LIXEIRA, { id: idL, tipo: tipo, itemId: linha.id, marcaId: linha.marcaId, titulo: String(titulo || '').slice(0, 200), dados: JSON.stringify(linha), por: eu.nome, em: Date.now() });
+  return idL;
 }
 function lixeira_(eu) {
   const lim = Date.now() - 30 * 864e5;
@@ -2861,6 +3092,9 @@ function antesDoRegistro_(eu, req) {
       const mud = atual ? [atual.papel !== u.papel && 'papel: ' + atual.papel + ' → ' + u.papel, (atual.ativo === 'sim') !== (u.ativo !== false) && (u.ativo === false ? 'desativou o acesso' : 'reativou o acesso'), u.senha && 'senha nova', String(atual.marcas) !== (u.marcas || []).join(',') && 'mudou as marcas'].filter(Boolean).join('; ') : 'papel: ' + u.papel;
       return [atual ? 'Alterou a pessoa' : 'Cadastrou a pessoa', (u.nome || u.login || '') + ' (' + (PAPEIS.indexOf(u.papel) >= 0 ? u.papel : '') + ')', mud];
     }
+    case 'excluirEmpresa': { const x = ler_(ABA_EMPRESAS, CAMPOS_EMPRESA).filter(e => e.id === String(req.id))[0]; return x ? ['Apagou a empresa', x.nome, 'com todos os dados (cópia guardada no Drive)', ''] : null; }
+    case 'modeloExcluir': { const x = ler_(ABA_MODELOS, CAMPOS_MODELO).filter(m => m.id === String(req.id))[0]; return x ? ['Apagou o modelo de mês', x.nome, '', x.empresaId] : null; }
+    case 'definirGoogle': return ['Mudou o login com Google', req.clientId ? 'ligado' : 'desligado', ''];
     case 'excluirUsuario': { const x = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(u => u.id === String(req.id))[0]; return x ? ['Apagou a pessoa', x.nome + ' (' + x.login + ')', x.papel, x.empresaId] : null; }
     case 'excluirPauta': { const t = titPost(req.id); return ['Apagou a postagem', t[0], 'foi para a lixeira', t[1]]; }
     case 'excluirStory': { const x = ler_(ABA_STORIES, CAMPOS_STORY).filter(s => s.id === String(req.id))[0]; return x ? ['Apagou um story', (x.titulo || x.tipo || 'Story') + ' · ' + nomeDaMarca_(x.marcaId), 'foi para a lixeira', empresaDe_(x.marcaId)] : null; }
@@ -2999,9 +3233,110 @@ function limpezaDiaria() {
   const props = PropertiesService.getScriptProperties(), todas = props.getProperties(), agora = Date.now();
   let n = 0;
   Object.keys(todas).forEach(k => {
-    if (!/^(tok_|lnk_|rst_|brf_)/.test(k)) return;
+    if (/^dsp_/.test(k)) { const l = parseJSON_(todas[k], []).filter(x => x.exp > agora); if (l.length) props.setProperty(k, JSON.stringify(l)); else props.deleteProperty(k); return; }
+    if (/^psm_/.test(k)) { const l = parseJSON_(todas[k], []).filter(x => x.em > agora - 3 * 864e5); if (!l.length) { props.deleteProperty(k); n++; } return; }
+    if (!/^(tok_|lnk_|rst_|brf_|cod_)/.test(k)) return;
     const d = parseJSON_(todas[k], null);
     if (!d || !d.exp || d.exp < agora) { props.deleteProperty(k); n++; }
   });
   Logger.log('Limpeza: ' + n + ' acessos vencidos removidos.');
+}
+
+/* ---------- Avisos no celular (Web Push) ----------
+   O aviso vai sem conteúdo: o celular acorda, o app pergunta ao servidor o que há de novo e mostra.
+   A assinatura (VAPID, curva P-256) é feita aqui mesmo, com BigInt. */
+const P256_ = (function () {
+  const B = x => BigInt(x), Z = B(0), UM = B(1), DOIS = B(2), TRES = B(3);
+  const p = B('0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF');
+  const n = B('0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551');
+  const G = [B('0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296'), B('0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5')];
+  const md = (a, m) => { const r = a % m; return r < Z ? r + m : r; };
+  function inv(a, m) {
+    let t = Z, nt = UM, r = m, nr = md(a, m);
+    while (nr !== Z) { const q = r / nr; let x = t - q * nt; t = nt; nt = x; x = r - q * nr; r = nr; nr = x; }
+    return md(t, m);
+  }
+  function soma(P, Q) {
+    if (!P) return Q; if (!Q) return P;
+    let l;
+    if (P[0] === Q[0]) {
+      if (md(P[1] + Q[1], p) === Z) return null;
+      l = md((TRES * P[0] * P[0] - TRES) * inv(DOIS * P[1], p), p);
+    } else l = md((Q[1] - P[1]) * inv(Q[0] - P[0], p), p);
+    const x = md(l * l - P[0] - Q[0], p);
+    return [x, md(l * (P[0] - x) - P[1], p)];
+  }
+  function vezes(k, P) { let R = null, A = P; while (k > Z) { if (k & UM) R = soma(R, A); A = soma(A, A); k >>= UM; } return R; }
+  const hex = x => { let h = x.toString(16); while (h.length < 64) h = '0' + h; return h; };
+  const deBytes = b => B('0x' + (b.map(v => ('0' + (v & 255).toString(16)).slice(-2)).join('') || '0'));
+  const paraBytes = h => { const o = []; for (let i = 0; i < h.length; i += 2) { const v = parseInt(h.substr(i, 2), 16); o.push(v > 127 ? v - 256 : v); } return o; };
+  const aleatorio = () => md(deBytes(Utilities.computeHmacSha256Signature(Utilities.getUuid() + Utilities.getUuid() + Date.now(), Utilities.getUuid())), n - UM) + UM;
+  return {
+    novaChave() { const d = aleatorio(), Q = vezes(d, G); return { d: hex(d), pub: '04' + hex(Q[0]) + hex(Q[1]) }; },
+    publica(dHex) { const Q = vezes(B('0x' + dHex), G); return '04' + hex(Q[0]) + hex(Q[1]); },
+    // ECDSA-SHA256; devolve r||s (64 bytes) como bytes
+    assinar(dHex, texto) {
+      const d = B('0x' + dHex), e = deBytes(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, texto, Utilities.Charset.UTF_8));
+      for (let i = 0; i < 20; i++) {
+        const k = aleatorio(), R = vezes(k, G), r = md(R[0], n); if (r === Z) continue;
+        const s = md(inv(k, n) * (e + r * d), n); if (s === Z) continue;
+        return paraBytes(hex(r) + hex(s));
+      }
+      throw new Error('falha ao assinar');
+    },
+    paraBytes: paraBytes
+  };
+})();
+const b64url_ = bytes => Utilities.base64Encode(bytes).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const PUSH_HOSTS = /^https:\/\/([a-z0-9-]+\.)*(fcm\.googleapis\.com|push\.services\.mozilla\.com|push\.apple\.com|notify\.windows\.com|android\.googleapis\.com)\/[\w\-.~:/?=&%]+$/i;
+function chavesPush_() {
+  const pp = PropertiesService.getScriptProperties();
+  let k = parseJSON_(pp.getProperty('VAPID'), null);
+  if (!k || !k.d || !k.pub) { k = P256_.novaChave(); pp.setProperty('VAPID', JSON.stringify(k)); }
+  return { d: k.d, pub: b64url_(P256_.paraBytes(k.pub)) };
+}
+function jwtPush_(endpoint, chaves) {
+  const aud = endpoint.match(/^https:\/\/[^/]+/)[0];
+  const corpo = b64url_(Utilities.newBlob(JSON.stringify({ typ: 'JWT', alg: 'ES256' })).getBytes()) + '.' +
+    b64url_(Utilities.newBlob(JSON.stringify({ aud: aud, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: 'mailto:' + (Session.getEffectiveUser().getEmail() || 'avisos@planeja.app') })).getBytes());
+  return corpo + '.' + b64url_(P256_.assinar(chaves.d, corpo));
+}
+function pushInscrever_(eu, endpoint) {
+  endpoint = String(endpoint || '');
+  if (!PUSH_HOSTS.test(endpoint) || endpoint.length > 800) throw erro_('server', 'Este navegador não é compatível com os avisos.');
+  const pp = PropertiesService.getScriptProperties(), k = 'psh_' + eu.id;
+  const l = parseJSON_(pp.getProperty(k), []).filter(x => x.e !== endpoint);
+  l.unshift({ e: endpoint, em: Date.now() });
+  pp.setProperty(k, JSON.stringify(l.slice(0, 5)));
+}
+function pushSair_(eu, endpoint) {
+  const pp = PropertiesService.getScriptProperties(), k = 'psh_' + eu.id;
+  const l = parseJSON_(pp.getProperty(k), []).filter(x => x.e !== String(endpoint || ''));
+  if (l.length) pp.setProperty(k, JSON.stringify(l)); else pp.deleteProperty(k);
+}
+// guarda a mensagem e acorda os aparelhos da pessoa
+function pushPara_(uid, titulo, corpo, destino) {
+  try {
+    const pp = PropertiesService.getScriptProperties(), aparelhos = parseJSON_(pp.getProperty('psh_' + uid), []);
+    if (!aparelhos.length) return 0;
+    const km = 'psm_' + uid, agora = Date.now();
+    const msgs = parseJSON_(pp.getProperty(km), []).filter(m => m.em > agora - 3 * 864e5);
+    msgs.push({ t: String(titulo || NOME_APP).slice(0, 80), c: String(corpo || '').slice(0, 160), h: /^#[\w=-]*$/.test(destino || '') ? destino : '#', em: agora });
+    pp.setProperty(km, JSON.stringify(msgs.slice(-8)));
+    const chaves = chavesPush_(); let ok = 0;
+    const vivos = aparelhos.filter(a => {
+      try {
+        const r = UrlFetchApp.fetch(a.e, { method: 'post', payload: '', muteHttpExceptions: true, headers: { TTL: '86400', Urgency: 'high', Authorization: 'vapid t=' + jwtPush_(a.e, chaves) + ', k=' + chaves.pub } });
+        const c = r.getResponseCode(); if (c < 300) ok++;
+        return c !== 404 && c !== 410;
+      } catch (e) { return true; }
+    });
+    if (vivos.length !== aparelhos.length) { if (vivos.length) pp.setProperty('psh_' + uid, JSON.stringify(vivos)); else pp.deleteProperty('psh_' + uid); }
+    return ok;
+  } catch (e) { Logger.log('Push: ' + e); return 0; }
+}
+function pushPendentes_(eu) {
+  const pp = PropertiesService.getScriptProperties(), km = 'psm_' + eu.id;
+  const msgs = parseJSON_(pp.getProperty(km), []); pp.deleteProperty(km);
+  return msgs;
 }

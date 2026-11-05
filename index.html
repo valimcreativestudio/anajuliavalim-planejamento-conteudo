@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; frame-src https://drive.google.com https://docs.google.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; font-src https://fonts.gstatic.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://accounts.google.com/gsi/; img-src 'self' data: blob: https:; media-src 'self' blob: https:; frame-src https://drive.google.com https://docs.google.com https://accounts.google.com/gsi/; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <script>if (window.top !== window.self) { try { window.top.location = window.self.location; } catch (e) { document.documentElement.style.display = "none"; } }</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -469,6 +469,61 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 /* Tarefas */
 .tf-filtros { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
 .tf-filtros select { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 7px 10px; }
+.tf-sel { display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; font-weight: 500; color: var(--muted); margin-left: 6px; }
+.tf-sel.cheio { color: var(--st-postado); font-weight: 600; }
+.card .meta .tf-sel:first-child { margin-left: 0; }
+.ck-lista, .an-lista { display: grid; gap: 6px; }
+.ck-it { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.ck-it .ck-t { border: 1px solid transparent; background: transparent; padding: 5px 6px; border-radius: 8px; font: inherit; color: var(--ink); min-width: 0; }
+.ck-it .ck-t:not([readonly]):hover, .ck-it .ck-t:focus { border-color: var(--line); background: var(--surface); }
+.ck-it.ok .ck-t { text-decoration: line-through; color: var(--muted); }
+.ck-novo { display: flex; gap: 8px; margin-top: 6px; }
+.ck-novo input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 7px 10px; color: var(--ink); font: inherit; }
+.an-it { display: grid; grid-template-columns: minmax(80px, 1fr) minmax(0, 2fr) auto auto; gap: 6px; align-items: center; }
+.an-it input { min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 7px 10px; color: var(--ink); font: inherit; }
+@media (max-width: 560px) { .an-it { grid-template-columns: 1fr auto auto; } .an-it input:first-child { grid-column: 1 / -1; } }
+.emp-del { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--danger); border-radius: 12px; background: color-mix(in srgb, var(--danger) 6%, transparent); white-space: normal; }
+.emp-del > span { font-size: 13.5px; }
+.tf-dica { margin: 0; align-self: end; font-size: 12.5px; padding-bottom: 8px; }
+.mk-corpo { padding: 14px 20px 20px; display: grid; gap: 12px; }
+.mk-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.mk-tabs button { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 5px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+.mk-tabs button[aria-pressed="true"] { background: var(--primary); color: var(--primary-ink); border-color: var(--primary); }
+.mk-img { position: relative; justify-self: center; width: min(100%, 560px); border-radius: 10px; overflow: hidden; background: var(--surface-2); }
+.mk-img img { display: block; width: 100%; height: auto; user-select: none; }
+.mk-img.pode { cursor: crosshair; }
+.mk-pin { position: absolute; transform: translate(-50%, -50%); width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fff; background: var(--danger); color: #fff; font: 700 13px/24px var(--f-body); text-align: center; padding: 0; box-shadow: 0 2px 8px rgba(0,0,0,.35); cursor: pointer; }
+.mk-pin.foco { transform: translate(-50%, -50%) scale(1.25); background: var(--ink); }
+.mk-pin.novo { background: var(--caramelo, var(--pr-alta)); animation: mkpulse 1.2s infinite; }
+@keyframes mkpulse { 50% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--pr-alta) 30%, transparent); } }
+.mk-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.mk-lista li { display: flex; gap: 10px; align-items: baseline; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); cursor: pointer; font-size: 14px; }
+.mk-lista li.foco { border-color: var(--danger); background: color-mix(in srgb, var(--danger) 8%, transparent); }
+.mk-n { flex: none; width: 22px; height: 22px; border-radius: 50%; background: var(--danger); color: #fff; font-weight: 700; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
+.mk-tag { border: 0; cursor: pointer; font-family: inherit; }
+#mkDlg, #mdDlg { width: min(640px, calc(100vw - 24px)); }
+.md-lista { display: grid; gap: 8px; }
+.md-it { display: flex; justify-content: space-between; gap: 10px; align-items: center; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; flex-wrap: wrap; }
+.md-it > div:first-child { display: grid; gap: 2px; min-width: 0; }
+.md-it .muted { font-size: 13px; }
+.md-acts { display: flex; gap: 6px; }
+.cmp .cmp-d { font-size: 12px; font-weight: 600; white-space: nowrap; }
+.cmp .cmp-d.bom { color: var(--st-postado); }
+.cmp .cmp-d.ruim { color: var(--danger); }
+.cg-lista { display: grid; gap: 10px; }
+.cg-it { padding: 0; }
+.cg-it summary { list-style: none; display: grid; grid-template-columns: minmax(180px, 1.2fr) minmax(120px, 1fr) 120px; gap: 6px 14px; align-items: center; padding: 12px 14px; cursor: pointer; }
+.cg-it summary::-webkit-details-marker { display: none; }
+.cg-p { display: flex; gap: 10px; align-items: center; min-width: 0; }
+.cg-p > span { display: grid; min-width: 0; }
+.cg-bar { height: 10px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.cg-bar span { display: block; height: 100%; border-radius: 999px; }
+.cg-nv { font-weight: 600; font-size: 13px; }
+.cg-chips { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 13px; color: var(--muted); }
+.cg-chips .atraso { color: var(--danger); font-weight: 600; }
+.cg-det { list-style: none; margin: 0; padding: 0 14px 12px 58px; display: grid; gap: 4px; font-size: 13.5px; }
+.cg-det .lnk { background: none; border: 0; padding: 0; font: inherit; text-align: left; cursor: pointer; color: var(--ink); }
+@media (max-width: 640px) { .cg-it summary { grid-template-columns: 1fr auto; } .cg-bar { grid-column: 1 / -1; grid-row: 2; } .cg-det { padding-left: 14px; } }
 .tf-modo { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
 .tf-modo button { border: 0; background: var(--surface); color: var(--muted); padding: 7px 12px; font: inherit; font-size: 13px; cursor: pointer; }
 .tf-modo button[aria-pressed="true"] { background: var(--primary); color: var(--primary-ink); }
@@ -554,6 +609,8 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 .papel-sel { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 5px 8px; font-size: 13px; }
 .empty { border: 1px dashed var(--line); border-radius: 14px; padding: 36px 20px; text-align: center; color: var(--muted); display: grid; gap: 12px; justify-items: center; }
 .empty strong { font-family: var(--f-display); font-weight: 400; font-size: 26px; color: var(--ink); }
+.g-btn { display: flex; justify-content: center; padding-top: 6px; border-top: 1px solid var(--line); margin-top: 4px; min-height: 44px; }
+.toast-desf { margin-left: 12px; background: transparent; color: var(--bg); border: 1px solid currentColor; border-radius: 999px; padding: 3px 10px; font: inherit; font-weight: 600; cursor: pointer; }
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 999px; font-weight: 500; z-index: 50; box-shadow: var(--shadow); }
 @media (prefers-reduced-motion: no-preference) { .chip, .card, .tile, .btn { transition: background .15s, border-color .15s, filter .15s; } }
 /* ---------- Stories ---------- */
@@ -978,6 +1035,8 @@ tr.reg-alerta td:first-child { box-shadow: inset 3px 0 0 var(--pr-alta); }
 <dialog id="cfDlg"><form id="cfForm" method="dialog"></form></dialog>
 <dialog id="imDlg"><form id="imForm" method="dialog"></form></dialog>
 <dialog id="lxDlg"><form id="lxForm" method="dialog"></form></dialog>
+<dialog id="mkDlg"><form id="mkForm" method="dialog"></form></dialog>
+<dialog id="mdDlg"><form id="mdForm" method="dialog" onsubmit="event.preventDefault()"></form></dialog>
 <dialog id="buDlg"><form id="buForm" method="dialog" onsubmit="event.preventDefault()"></form></dialog>
 <div id="apres" hidden role="dialog" aria-label="Apresentação"></div>
 <div class="toast" id="toast" hidden></div>
@@ -1068,9 +1127,14 @@ const prodsDe = t => String(t || "").split(/\s+\+\s+/).map(x => x.trim()).filter
 const prodCurto = p => { const l = prodsDe(p.produto); return l.length > 1 ? `${l[0]} +${l.length - 1}` : (l[0] || ""); };
 const nm = p => prodCurto(p) ? `${prodCurto(p)}: ${p.postagem || "sem título"}` : (p.postagem || "sem título");
 
-function toast(msg) {
+function toast(msg, desfazer) {
   const t = $("#toast"); t.textContent = msg; t.hidden = false;
-  clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 2200);
+  if (desfazer) {
+    const b = document.createElement("button"); b.type = "button"; b.className = "toast-desf"; b.textContent = "Desfazer";
+    b.onclick = async () => { t.hidden = true; clearTimeout(toast.h); try { await desfazer(); } catch (e) { writeFail(e); } };
+    t.appendChild(b);
+  }
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, desfazer ? 7000 : 2200);
 }
 
 const ehAdmin = () => S.eu?.papel === "admin";
@@ -1116,7 +1180,7 @@ function setMonth(ym) {
 /* ---------- Vistas ---------- */
 const view = () => {
   const h = location.hash.replace("#", "");
-  return ["calendario", "stories", "ideias", "resultados", "painel", "empresas", "empresa", "registro", "agenda", "horas", "mural", "financeiro", "marca-midias", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-acessos", "marca-config", "marca-plano", "aprovacoes", "equipe", "equipe-atividade", "conta", "tarefas"].includes(h) ? h : "calendario";
+  return ["calendario", "stories", "ideias", "resultados", "painel", "empresas", "empresa", "registro", "agenda", "horas", "mural", "financeiro", "marca-midias", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-acessos", "marca-config", "marca-plano", "aprovacoes", "equipe", "equipe-atividade", "equipe-carga", "conta", "tarefas"].includes(h) ? h : "calendario";
 };
 
 function render() {
@@ -1151,8 +1215,8 @@ function render() {
   if (!S.token) { app.innerHTML = S.esqueci ? vEsqueci() : vLogin(); (S.esqueci ? $("#esLogin") : $("#lgLogin"))?.focus(); return; }
   if (!S.loadedM || !S.loadedP) return;
   const v0 = view();
-  if (v0 === "equipe" || v0 === "equipe-atividade" || v0 === "conta" || v0 === "aprovacoes" || v0 === "tarefas" || v0 === "agenda" || v0 === "horas" || v0 === "mural" || v0 === "financeiro" || v0 === "painel" || v0 === "empresas" || v0 === "empresa" || v0 === "registro") {
-    app.innerHTML = avisoVersao() + faixaAvisos() + (v0 === "equipe" ? vEquipe : v0 === "equipe-atividade" ? vAtividade : v0 === "conta" ? vConta : v0 === "tarefas" ? vTarefas : v0 === "agenda" ? vAgenda : v0 === "horas" ? vHoras : v0 === "mural" ? vMural : v0 === "financeiro" ? vFinanceiro : v0 === "painel" ? vPainel : v0 === "empresas" ? vEmpresas : v0 === "empresa" ? vEmpresa : v0 === "registro" ? vRegistro : vAprovacoes)();
+  if (v0 === "equipe" || v0 === "equipe-atividade" || v0 === "equipe-carga" || v0 === "conta" || v0 === "aprovacoes" || v0 === "tarefas" || v0 === "agenda" || v0 === "horas" || v0 === "mural" || v0 === "financeiro" || v0 === "painel" || v0 === "empresas" || v0 === "empresa" || v0 === "registro") {
+    app.innerHTML = avisoVersao() + faixaAvisos() + (v0 === "equipe" ? vEquipe : v0 === "equipe-atividade" ? vAtividade : v0 === "equipe-carga" ? vCarga : v0 === "conta" ? vConta : v0 === "tarefas" ? vTarefas : v0 === "agenda" ? vAgenda : v0 === "horas" ? vHoras : v0 === "mural" ? vMural : v0 === "financeiro" ? vFinanceiro : v0 === "painel" ? vPainel : v0 === "empresas" ? vEmpresas : v0 === "empresa" ? vEmpresa : v0 === "registro" ? vRegistro : vAprovacoes)();
     if (v0 === "tarefas" && S.tf.modo === "quadro") wireQuadroTarefas();
     return;
   }
@@ -1243,7 +1307,7 @@ function vCal() {
   const n = postsMes().length;
   const redesUsadas = [...new Set(postsMarca().flatMap(p => redesDe(p.rede)))];
   const ferramentas = `<select class="rede-sel" aria-label="Filtrar por rede" onchange="S.calRede=this.value;render()"><option value="">Todas as redes</option>${redesUsadas.map(x => `<option${S.calRede === x ? " selected" : ""}>${esc(x)}</option>`).join("")}</select>
-    <button class="btn" type="button" onclick="abrirApresentacao()">▶ Apresentar</button>${S.canWrite ? `<button class="btn" type="button" onclick="abrirImportar()">Importar documento</button><button class="btn" type="button" onclick="copiarMesAnterior()">Copiar mês anterior</button>` : ""}`;
+    <button class="btn" type="button" onclick="abrirApresentacao()">▶ Apresentar</button>${S.canWrite ? `<button class="btn" type="button" onclick="abrirImportar()">Importar documento</button><button class="btn" type="button" onclick="copiarMesAnterior()">Copiar mês anterior</button><button class="btn" type="button" onclick="abrirModelos()">📐 Modelos de mês</button>` : ""}`;
   return headM(m.nome, "Calendário", monthNav() + addBtn()) + `<div class="cal-tools">${ferramentas}</div>` + pacoteHtml(m, S.month) + legendaHtml(postsMes()) +
     `<div class="cal">${cells}</div>
     <p class="muted" style="margin-top:12px">${n} ${n === 1 ? "publicação" : "publicações"} em ${esc(monthLabel(S.month))}. A bolinha no canto de cada post mostra a fase (veja a legenda em cima; clique numa fase para destacar só ela). Clique num post para abrir o detalhamento${S.canWrite ? " ou arraste para outro dia para mudar a data" : ""}. Ideias sem data ficam na aba Ideias.${S.canWrite ? ` <button type="button" class="lg-limpar" onclick="abrirLixeira()">🗑 Lixeira</button>` : ""} <label style="display:inline-flex;gap:5px;align-items:center;margin-left:6px"><input type="checkbox"${verDatas ? " checked" : ""} onchange="store('datas', this.checked ? '1' : '0');render()"> Mostrar datas comemorativas</label></p>`;
@@ -1294,7 +1358,7 @@ async function setStatus(id, st) {
   const p = S.posts.find(x => x.id === id);
   const antes = p && p.status;
   if (p) { p.status = st; render(); }
-  try { await api("acao", { id, acao: "definir", status: st }); await carregar(); toast(`Status: ${st}`); }
+  try { await api("acao", { id, acao: "definir", status: st }); await carregar(); toast(`Status: ${st}`, antes && antes !== st && !desfazendo.on ? () => comDesfazer(() => setStatus(id, antes)) : null); }
   catch (e) { if (p) { p.status = antes; render(); } writeFail(e); }
 }
 
@@ -1352,7 +1416,7 @@ async function moverPostagem(id, dia) {
   p.data = dia; render(); // muda na hora; volta se a planilha recusar
   try {
     await api("salvarPauta", { pauta: { id, data: dia } });
-    toast(`Movida para ${brFull(dia)} (${wd(dia).toLowerCase()})${p.agData && p.agData !== dia ? ". O agendamento continua em " + brFull(p.agData) : ""}`);
+    toast(`Movida para ${brFull(dia)} (${wd(dia).toLowerCase()})${p.agData && p.agData !== dia ? ". O agendamento continua em " + brFull(p.agData) : ""}`, desfazendo.on ? null : () => comDesfazer(() => moverPostagem(id, antes)));
     await carregar();
   } catch (e) { p.data = antes; render(); writeFail(e); }
 }
@@ -1540,6 +1604,7 @@ function relatorioHtml() {
       ${kpi("Tempo até aprovar", r.tempoMedio != null ? `${r.tempoMedio < 1 ? "<1" : Math.round(r.tempoMedio)}<small>${r.tempoMedio < 1.5 ? "dia" : "dias"}</small>` : "—", "Média da criação da postagem até a aprovação do conteúdo")}
     </div>
     <div class="rel-grid">
+      ${comparativoHtml(ps, todas)}
       <section><h3>Andamento das postagens</h3>${rbars(Object.fromEntries(Object.entries(r.etapas).filter(e => e[1])), n, true)}</section>
       <section><h3>Postagens por semana</h3>
         <div class="lgd"><span><i style="background:var(--r-bar)"></i>Postadas</span><span><i style="background:var(--r-bar2)"></i>Ainda não postadas</span></div>
@@ -2657,7 +2722,7 @@ function tfHtml(t, h) {
   return `<div class="tf${t.status === "Feita" ? " feita" : ""}" style="--pc:${COR_PRIO[t.prioridade] || "var(--line)"}">
     <input type="checkbox" aria-label="Marcar como feita"${t.status === "Feita" ? " checked" : ""}${podeMexerTarefa(t) ? "" : " disabled"} onchange="concluirTarefa(${js(t.id)}, this.checked)">
     <div class="corpo" onclick="abrirTarefa(${js(t.id)})">
-      <div class="tt">${esc(t.titulo)}${t.status === "Fazendo" ? ` <span class="tf-st">Fazendo</span>` : ""}</div>
+      <div class="tt">${esc(t.titulo)}${t.status === "Fazendo" ? ` <span class="tf-st">Fazendo</span>` : ""}${seloTarefa(t)}</div>
       ${t.descricao ? `<div class="ds">${esc(t.descricao)}</div>` : ""}
       <div class="meta">
         ${t.marcaId ? `<span>${esc(nomeMarca(t.marcaId))}</span>` : ""}
@@ -2694,6 +2759,10 @@ function vTarefas() {
     ${grupos.map(([g, titulo]) => { const l = pend.filter(t => grupoTarefa(t, h) === g).sort(ord); return l.length ? `<section class="tf-grupo ${g}"><h2>${titulo}<span class="n">${l.length}</span></h2><div class="tf-lista">${l.map(t => tfHtml(t, h)).join("")}</div></section>` : ""; }).join("")}
     ${f.feitas && feitas.length ? `<section class="tf-grupo"><h2>Feitas<span class="n">${feitas.length}</span></h2><div class="tf-lista">${feitas.slice(0, 50).map(t => tfHtml(t, h)).join("")}</div></section>` : ""}`}`;
 }
+function seloTarefa(t) {
+  const l = t.checklist || [], f = l.filter(i => i.ok).length, c = (t.comentarios || []).length, a = (t.anexos || []).length;
+  return [l.length ? `<span class="tf-sel${f === l.length ? " cheio" : ""}" title="Checklist">☑ ${f}/${l.length}</span>` : "", c ? `<span class="tf-sel" title="Comentários">💬 ${c}</span>` : "", a ? `<span class="tf-sel" title="Links">📎 ${a}</span>` : "", t.repetir ? `<span class="tf-sel" title="Repete">🔁</span>` : ""].join("");
+}
 /* quadro (kanban) das tarefas: A fazer, Fazendo, Feita */
 const COLS_TAREFA = [["Pendente", "A fazer"], ["Fazendo", "Fazendo"], ["Feita", "Feita"]];
 function quadroTarefas(lista, h, ord) {
@@ -2712,7 +2781,7 @@ function tfCard(t, h, ci) {
   const mover = d => `<button type="button" aria-label="${d < 0 ? "Voltar para " + COLS_TAREFA[ci - 1][1] : "Passar para " + COLS_TAREFA[ci + 1][1]}" onclick="event.stopPropagation();mudarTarefa(${js(t.id)},${js(COLS_TAREFA[ci + d][0])})">${d < 0 ? "◀" : "▶"}</button>`;
   return `<article class="card tf-card${atrasada ? " atrasada" : ""}${t.status === "Feita" ? " feita" : ""}" style="--pc:${COR_PRIO[t.prioridade] || "var(--line)"}" draggable="${pode}" data-id="${esc(t.id)}" onclick="abrirTarefa(${js(t.id)})">
     <div class="meta"><span>${esc(t.prioridade || "Média")}</span>${t.marcaId ? `<span>${esc(nomeMarca(t.marcaId))}</span>` : ""}</div>
-    <div class="t">${esc(t.titulo)}</div>
+    <div class="t">${esc(t.titulo)}</div>${seloTarefa(t) ? `<div class="meta">${seloTarefa(t)}</div>` : ""}
     <div class="meta"><span>👤 ${esc(quem)}</span>${t.prazo ? `<span class="${atrasada ? "atraso" : ""}">⏳ ${esc(br(t.prazo))}${atrasada ? " · atrasada" : ""}</span>` : t.data ? `<span>📅 ${esc(br(t.data))}</span>` : ""}${t.status === "Feita" && t.concluidoPor ? `<span>✓ ${esc(t.concluidoPor)}</span>` : ""}</div>
     ${pode ? `<div class="mv">${ci > 0 ? mover(-1) : ""}${ci < COLS_TAREFA.length - 1 ? mover(1) : ""}</div>` : ""}
   </article>`;
@@ -2734,7 +2803,7 @@ let TF = null;
 function abrirTarefa(id) {
   const t = id ? S.tarefas.find(x => x.id === id) : null;
   if (id && !t) return;
-  TF = t ? { ...t } : { prioridade: "Média", responsavelId: S.eu.id, marcaId: view().startsWith("marca") || ["calendario", "pautas", "fluxo", "grade", "resumo"].includes(view()) ? S.marcaId : "", data: hojeIso() };
+  TF = t ? { ...t, checklist: (t.checklist || []).map(i => ({ ...i })), anexos: (t.anexos || []).map(a => ({ ...a })) } : { checklist: [], anexos: [], prioridade: "Média", responsavelId: S.eu.id, marcaId: view().startsWith("marca") || ["calendario", "pautas", "fluxo", "grade", "resumo"].includes(view()) ? S.marcaId : "", data: hojeIso() };
   const pode = !t || podeMexerTarefa(t), ro = pode ? "" : " disabled";
   const excluir = t && (["admin", "diretor", "gestor"].includes(S.eu.papel) || t.criadoPorId === S.eu.id);
   const opt = (arr, cur) => arr.map(([v, l]) => `<option value="${esc(v)}"${v === cur ? " selected" : ""}>${esc(l)}</option>`).join("");
@@ -2750,6 +2819,12 @@ function abrirTarefa(id) {
       <label class="field"><span>Data (quando fazer)</span><input id="tData" type="date" value="${esc(TF.data || "")}"${ro}></label>
       <label class="field"><span>Prazo máximo</span><input id="tPrazo" type="date" value="${esc(TF.prazo || "")}"${ro}></label>
       <label class="field full"><span>Marca (opcional)</span><select id="tMarca"${ro}>${opt([["", "Sem marca"]].concat(S.marcas.map(m => [m.id, m.nome])), TF.marcaId || "")}</select></label>
+      <label class="field"><span>Repetir</span><select id="tRep"${ro}>${opt([["", "Não se repete"], ["semana", "Toda semana"], ["quinzena", "A cada 15 dias"], ["mes", "Todo mês"]], TF.repetir || "")}</select></label>
+      <p class="muted tf-dica">Para rotinas (relatório, reunião, fechamento): ao concluir, a próxima já é criada com as datas puladas.</p>
+      <div class="field full"><span>Checklist <small id="tCkN" class="muted"></small></span><div id="tCheck" class="ck-lista"></div>
+        ${pode ? `<div class="ck-novo"><input id="tCkNovo" placeholder="Novo item (Enter para adicionar)" maxlength="200" onkeydown="if(event.key==='Enter'){event.preventDefault();addItemTarefa()}"><button class="btn sm" type="button" onclick="addItemTarefa()">+ Item</button></div>` : ""}</div>
+      <div class="field full"><span>Links e anexos</span><div id="tAnexos" class="an-lista"></div>${pode ? `<button class="btn sm" type="button" style="justify-self:start" onclick="addAnexoTarefa()">+ Link (Drive, Canva, referência…)</button>` : ""}</div>
+      ${t ? `<div class="field full"><span>Comentários</span><div id="tComs"></div></div>` : ""}
       ${t && t.status === "Feita" ? `<div class="full muted" style="font-size:13px">✓ Feita por ${esc(t.concluidoPor || "")} ${esc(quando(t.concluidoEm))}</div>` : ""}
     </div>
     <div class="dlg-foot">
@@ -2759,25 +2834,78 @@ function abrirTarefa(id) {
       <button class="btn" type="button" onclick="$('#tfDlg').close()">${pode ? "Cancelar" : "Fechar"}</button>
       ${pode ? `<button class="btn primary" type="submit" id="tSalvar">${t ? "Salvar" : "Criar tarefa"}</button>` : ""}
     </div>`;
+  TF.pode = pode; desenharCheck(); desenharAnexos(); if (t) desenharComsTarefa();
   if (!$("#tfDlg").open) $("#tfDlg").showModal();
   if (!t) $("#tTitulo").focus();
 }
+function desenharCheck() {
+  const box = $("#tCheck"); if (!box) return;
+  const l = TF.checklist, feitos = l.filter(i => i.ok).length, ro = TF.pode ? "" : " disabled";
+  $("#tCkN").textContent = l.length ? `${feitos} de ${l.length}` : "";
+  box.innerHTML = l.length ? l.map((i, n) => `<div class="ck-it${i.ok ? " ok" : ""}"><input type="checkbox" aria-label="Feito"${i.ok ? " checked" : ""}${ro} onchange="marcarItem(${n},this.checked)">
+    <input class="ck-t" value="${esc(i.t)}" maxlength="200" aria-label="Item ${n + 1}"${TF.pode ? "" : " readonly"} oninput="TF.checklist[${n}].t=this.value">
+    ${TF.pode ? `<button type="button" class="com-x" aria-label="Tirar item" onclick="TF.checklist.splice(${n},1);desenharCheck()">×</button>` : ""}</div>`).join("")
+    : `<span class="muted" style="font-size:13px">${TF.pode ? "Quebre a tarefa em passos (ex.: roteiro, gravar, editar)." : "Sem itens."}</span>`;
+}
+function addItemTarefa() {
+  const i = $("#tCkNovo"), t = i.value.trim(); if (!t) return;
+  const a = new Uint8Array(5); crypto.getRandomValues(a);
+  TF.checklist.push({ id: "n" + [...a].map(x => x.toString(16).padStart(2, "0")).join(""), t, ok: false, novo: true });
+  i.value = ""; desenharCheck(); i.focus();
+}
+async function marcarItem(n, ok) {
+  const i = TF.checklist[n]; i.ok = ok; desenharCheck();
+  if (!TF.id || i.novo) return; // item ainda não salvo: vai junto com o "Salvar"
+  try {
+    await api("itemTarefa", { id: TF.id, item: i.id, ok });
+    const t = S.tarefas.find(x => x.id === TF.id), j = t && (t.checklist || []).find(x => x.id === i.id); if (j) j.ok = ok;
+  } catch (e) { i.ok = !ok; desenharCheck(); writeFail(e); }
+}
+function desenharAnexos() {
+  const box = $("#tAnexos"); if (!box) return;
+  box.innerHTML = TF.anexos.length ? TF.anexos.map((a, n) => TF.pode
+    ? `<div class="an-it"><input value="${esc(a.nome || "")}" placeholder="Nome" maxlength="120" oninput="TF.anexos[${n}].nome=this.value" aria-label="Nome do link"><input value="${esc(a.url || "")}" placeholder="https://…" type="url" oninput="TF.anexos[${n}].url=this.value" aria-label="Endereço">${urlOk(a.url) ? `<a class="btn sm" href="${esc(urlOk(a.url))}" target="_blank" rel="noopener">Abrir</a>` : "<span></span>"}<button type="button" class="com-x" aria-label="Tirar link" onclick="TF.anexos.splice(${n},1);desenharAnexos()">×</button></div>`
+    : `<a class="lnk" href="${esc(urlOk(a.url))}" target="_blank" rel="noopener">📎 ${esc(a.nome || a.url)}</a>`).join("")
+    : `<span class="muted" style="font-size:13px">Nenhum link.</span>`;
+}
+function addAnexoTarefa() { TF.anexos.push({ nome: "", url: "" }); desenharAnexos(); const l = document.querySelectorAll("#tAnexos .an-it input"); if (l.length) l[l.length - 2].focus(); }
+function desenharComsTarefa() {
+  const box = $("#tComs"); if (!box) return;
+  const t = S.tarefas.find(x => x.id === TF.id) || TF, l = t.comentarios || [];
+  const quem = c => S.equipe.find(u => u.id === c.uid) || { nome: c.por };
+  box.innerHTML = `<div class="com-lista">${l.map(c => `<div class="com${c.uid === S.eu.id ? " meu" : ""}">${avatarHtml(quem(c), 24)}<div><div class="com-h"><b>${esc(c.por)}</b><span>${esc(quando(c.em))}</span>${c.uid === S.eu.id || ["admin", "diretor", "gestor"].includes(S.eu.papel) ? `<button type="button" class="com-x" aria-label="Apagar comentário" onclick="apagarComTarefa(${js(c.id)})">×</button>` : ""}</div><div class="com-t">${esc(c.texto)}</div></div></div>`).join("") || `<p class="muted" style="font-size:13px;margin:0">Combine detalhes aqui, sem perder no WhatsApp.</p>`}</div>
+    <div class="com-novo"><textarea id="tComTxt" rows="2" placeholder="Escreva um comentário…" onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();comentarTarefaUI()}"></textarea><div class="com-acts"><button class="btn sm primary" type="button" onclick="comentarTarefaUI()">Comentar</button></div></div>`;
+}
+async function comentarTarefaUI() {
+  const ta = $("#tComTxt"), texto = ta.value.trim(); if (!texto) return toast("Escreva o comentário.");
+  ta.disabled = true;
+  try { const r = await api("comentarTarefa", { id: TF.id, texto }); const t = S.tarefas.find(x => x.id === TF.id); if (t) t.comentarios = (t.comentarios || []).concat([r.comentario]); desenharComsTarefa(); toast("Comentário enviado"); }
+  catch (e) { ta.disabled = false; writeFail(e); }
+}
+async function apagarComTarefa(cid) {
+  try { await api("apagarComentarioTarefa", { id: TF.id, cid }); const t = S.tarefas.find(x => x.id === TF.id); if (t) t.comentarios = (t.comentarios || []).filter(c => c.id !== cid); desenharComsTarefa(); } catch (e) { writeFail(e); }
+}
 $("#tfForm").addEventListener("submit", async e => {
   e.preventDefault();
-  const tarefa = { id: TF.id || "", titulo: $("#tTitulo").value.trim(), descricao: $("#tDesc").value.trim(), prioridade: $("#tPrio").value, responsavelId: $("#tResp").value, data: $("#tData").value, prazo: $("#tPrazo").value, marcaId: $("#tMarca").value };
+  const tarefa = { id: TF.id || "", titulo: $("#tTitulo").value.trim(), descricao: $("#tDesc").value.trim(), prioridade: $("#tPrio").value, responsavelId: $("#tResp").value, data: $("#tData").value, prazo: $("#tPrazo").value, marcaId: $("#tMarca").value,
+    repetir: $("#tRep").value, checklist: TF.checklist.filter(i => i.t.trim()).map(i => ({ id: i.id, t: i.t.trim(), ok: !!i.ok })), anexos: TF.anexos.filter(a => (a.url || "").trim()).map(a => ({ nome: (a.nome || "").trim(), url: a.url.trim() })) };
+  if (tarefa.anexos.some(a => !urlOk(a.url))) return toast("Os links precisam começar com https://");
   if (!tarefa.titulo) return toast("Escreva o que precisa ser feito.");
   if (tarefa.data && tarefa.prazo && tarefa.prazo < tarefa.data) return toast("O prazo máximo não pode ser antes da data.");
   const b = $("#tSalvar"); b.disabled = true; b.textContent = "Salvando…";
   try { await api("salvarTarefa", { tarefa }); $("#tfDlg").close(); await carregar(); toast(tarefa.id ? "Tarefa salva" : (tarefa.responsavelId && tarefa.responsavelId !== S.eu.id ? `Tarefa enviada para ${nomePessoa(tarefa.responsavelId)}` : "Tarefa criada")); }
   catch (err) { b.disabled = false; b.textContent = "Salvar"; writeFail(err); }
 });
+// "Desfazer": roda a ação contrária sem oferecer outro desfazer
+const desfazendo = { on: false };
+async function comDesfazer(fn) { desfazendo.on = true; try { await fn(); } finally { desfazendo.on = false; } }
 function concluirTarefa(id, feita) { return mudarTarefa(id, feita ? "Feita" : "Pendente"); }
 async function mudarTarefa(id, status) {
   const t = S.tarefas.find(x => x.id === id); if (!t) return;
   const antes = { status: t.status, concluidoPor: t.concluidoPor, concluidoEm: t.concluidoEm };
   Object.assign(t, status === "Feita" ? { status, concluidoPor: S.eu.nome, concluidoEm: Date.now() } : { status, concluidoPor: "", concluidoEm: 0 });
   render();
-  try { await api("concluirTarefa", { id, status, feita: status === "Feita" }); toast(status === "Feita" ? "Tarefa feita ✓" : status === "Fazendo" ? "Tarefa em andamento" : antes.status === "Feita" ? "Tarefa reaberta" : "Tarefa voltou para A fazer"); await carregar(); }
+  try { await api("concluirTarefa", { id, status, feita: status === "Feita" }); toast(status === "Feita" ? "Tarefa feita ✓" : status === "Fazendo" ? "Tarefa em andamento" : antes.status === "Feita" ? "Tarefa reaberta" : "Tarefa voltou para A fazer", desfazendo.on ? null : () => comDesfazer(() => mudarTarefa(id, antes.status || "Pendente"))); await carregar(); }
   catch (e) { Object.assign(t, antes); render(); writeFail(e); }
 }
 async function excluirTarefa() {
@@ -2884,7 +3012,53 @@ document.addEventListener("click", e => { if (!$("#notifPop").hidden && !e.targe
 document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#notifPop").hidden) fecharNotif(); });
 
 /* ---------- Login, conta e equipe ---------- */
+// cada navegador ganha um código próprio, usado para "confiar neste aparelho"
+function dispositivo() {
+  let d = store("disp");
+  if (!/^[a-f0-9]{32}$/.test(d || "")) { const a = new Uint8Array(16); crypto.getRandomValues(a); d = [...a].map(x => x.toString(16).padStart(2, "0")).join(""); store("disp", d); }
+  return d;
+}
+function vCodigo() {
+  return `<form class="login panel" onsubmit="event.preventDefault();confirmarCodigo()">
+    <h1>Código de acesso</h1>
+    <span class="muted">Este é um aparelho novo para a sua conta. Mandamos um código de 6 números para <b>${esc(S.codigo.email)}</b>. Ele vale por 10 minutos.</span>
+    <label class="field"><span>Código</span><input id="cdCod" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required style="font-size:22px;letter-spacing:.3em"></label>
+    <label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" id="cdConfiar" checked> Confiar neste aparelho por 60 dias</label>
+    <span class="err" id="lgErr"></span>
+    <button class="btn primary" type="submit" id="cdBtn">Entrar</button>
+    <button class="link-esq" type="button" onclick="S.codigo=null;render()">Voltar e pedir outro código</button>
+  </form>`;
+}
+async function confirmarCodigo() {
+  const b = $("#cdBtn"); b.disabled = true; b.textContent = "Conferindo…"; $("#lgErr").textContent = "";
+  try { const r = await api("confirmarCodigo", { desafio: S.codigo.desafio, codigo: $("#cdCod").value.trim(), confiar: $("#cdConfiar").checked, dispositivo: dispositivo() }); S.codigo = null; await entrou(r.token); }
+  catch (e) { b.disabled = false; b.textContent = "Entrar"; $("#lgErr").textContent = e.message || "Não consegui conferir o código."; if (/venceu|várias/.test(e.message || "")) setTimeout(() => { S.codigo = null; render(); }, 2500); }
+}
+async function entrou(token) {
+  S.token = token; store("token", token); S.esqueci = false;
+  limparTela();
+  S.loadedM = S.loadedP = false;
+  $("#app").innerHTML = `<div class="empty"><strong>Carregando o planejamento…</strong></div>`;
+  await carregar();
+}
+/* Entrar com o Google (só aparece se a dona ligar em Empresas) */
+async function prepararGoogle() {
+  if (!API || S.googleId === undefined && prepararGoogle.pedindo) return;
+  if (S.googleId === undefined) { prepararGoogle.pedindo = true; try { S.googleId = (await api("configPublica")).googleClientId || ""; } catch (e) { S.googleId = ""; } prepararGoogle.pedindo = false; }
+  const box = $("#gBtn"); if (!S.googleId || !box) return;
+  try {
+    await carregarLib("https://accounts.google.com/gsi/client");
+    google.accounts.id.initialize({ client_id: S.googleId, callback: async r => {
+      $("#lgErr").textContent = "";
+      try { const x = await api("loginGoogle", { credencial: r.credential }); await entrou(x.token); } catch (e) { $("#lgErr").textContent = e.message || "Não consegui entrar com o Google."; }
+    } });
+    box.hidden = false; box.innerHTML = "";
+    google.accounts.id.renderButton(box, { theme: temaAtual() === "dark" ? "filled_black" : "outline", size: "large", text: "signin_with", locale: "pt-BR", width: Math.min(320, box.clientWidth || 320) });
+  } catch (e) { box.hidden = true; }
+}
 function vLogin() {
+  if (S.codigo) return vCodigo();
+  setTimeout(prepararGoogle, 0);
   return `<form class="login panel" onsubmit="event.preventDefault();entrar()">
     <h1>Entrar</h1>
     <span class="muted">Use o login e a senha que o administrador cadastrou para você.</span>
@@ -2893,17 +3067,15 @@ function vLogin() {
     <span class="err" id="lgErr">${esc(S.loginErro || "")}</span>
     <button class="btn primary" type="submit" id="lgBtn">Entrar</button>
     <button class="link-esq" type="button" onclick="S.esqLogin=$('#lgLogin').value;S.esqueci=true;render()">Esqueci minha senha</button>
+    <div id="gBtn" class="g-btn" hidden></div>
   </form>`;
 }
 async function entrar() {
   const btn = $("#lgBtn"); btn.disabled = true; btn.textContent = "Entrando…"; $("#lgErr").textContent = ""; S.loginErro = "";
   try {
-    const r = await api("login", { login: $("#lgLogin").value, senha: $("#lgSenha").value });
-    S.token = r.token; store("token", r.token); S.esqueci = false;
-    limparTela();
-    S.loadedM = S.loadedP = false;
-    $("#app").innerHTML = `<div class="empty"><strong>Carregando o planejamento…</strong></div>`;
-    await carregar();
+    const r = await api("login", { login: $("#lgLogin").value, senha: $("#lgSenha").value, dispositivo: dispositivo() });
+    if (r.precisaCodigo) { S.codigo = { desafio: r.desafio, email: r.email }; render(); setTimeout(() => $("#cdCod") && $("#cdCod").focus(), 50); return; }
+    await entrou(r.token);
   } catch (e) {
     btn.disabled = false; btn.textContent = "Entrar";
     $("#lgErr").textContent = e.code === "login" ? (/tentativas|bloque|espere/i.test(e.message || "") ? e.message : "Login ou senha incorretos.") : /tentativas|espere/i.test(e.message || "") ? e.message : "Não consegui falar com a planilha. Tente de novo.";
@@ -2922,7 +3094,14 @@ function limparTela() {
   if ($("#tfDlg").open) $("#tfDlg").close();
   fecharNotif();
 }
+// o app do celular (service worker) usa o login para buscar o texto do aviso
+function authParaAvisos(token) {
+  if (!("caches" in window)) return;
+  caches.open("plan-auth").then(c => token ? c.put("plan-auth-token", new Response(JSON.stringify({ api: API, token }))) : c.delete("plan-auth-token")).catch(() => {});
+}
 async function sair() {
+  try { const sub = SWREG && SWREG.pushManager && await SWREG.pushManager.getSubscription(); if (sub) { await api("pushSair", { endpoint: sub.endpoint }).catch(() => {}); await sub.unsubscribe(); } } catch (e) {}
+  authParaAvisos("");
   try { await api("sair"); } catch (e) {}
   S.token = ""; store("token", ""); S.eu = null; S.marcas = []; S.posts = []; S.loadedM = S.loadedP = false;
   limparTela();
@@ -3016,7 +3195,7 @@ async function trocarSenha() {
 function equipeNav() {
   if (!podeGerir()) return "";
   const v = view();
-  return `<nav class="subnav"><a href="#equipe"${v === "equipe" ? ' aria-current="page"' : ""}>Pessoas</a><a href="#equipe-atividade"${v === "equipe-atividade" ? ' aria-current="page"' : ""}>Atividade</a></nav>`;
+  return `<nav class="subnav"><a href="#equipe"${v === "equipe" ? ' aria-current="page"' : ""}>Pessoas</a><a href="#equipe-atividade"${v === "equipe-atividade" ? ' aria-current="page"' : ""}>Atividade</a><a href="#equipe-carga"${v === "equipe-carga" ? ' aria-current="page"' : ""}>Carga</a></nav>`;
 }
 function vEquipe() {
   if (ehGestor()) return vAtividade();
@@ -3209,7 +3388,7 @@ function boasVindasHtml() {
   </div>`;
 }
 async function excluirPost() {
-  try { await api("excluirPauta", { id: EDIT.id }); $("#dlg").close(); await carregar(); toast("Postagem excluída"); } catch (e) { writeFail(e); }
+  try { const r = await api("excluirPauta", { id: EDIT.id }); $("#dlg").close(); await carregar(); toast("Postagem excluída", r.lixeira ? async () => { await api("restaurar", { id: r.lixeira }); await carregar(); toast("Postagem recuperada"); } : null); } catch (e) { writeFail(e); }
 }
 function duplicar() {
   const body = gather();
@@ -3516,11 +3695,11 @@ function comentariosHtml(p, ctx) {
   const fmt = em => new Date(em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
   const quem = c => S.equipe.find(u => u.id === c.uid) || { nome: c.por };
   return `<details class="coms"${ctx === "editor" || l.length ? " open" : ""}><summary>💬 Comentários${l.length ? ` (${l.length})` : ""}</summary>
-    <div class="com-lista">${l.length ? l.map(c => `<div class="com${c.uid === S.eu.id ? " meu" : ""}">${avatarHtml(quem(c), 26)}<div><div class="com-h"><b>${esc(c.por)}</b>${c.papel === "cliente" ? ` <span class="tag-cli">cliente</span>` : ""}<span>${fmt(c.em)}</span>${c.arte ? `<span class="tag-arte">arte ${c.arte}</span>` : ""}
+    <div class="com-lista">${l.length ? l.map(c => `<div class="com${c.uid === S.eu.id ? " meu" : ""}">${avatarHtml(quem(c), 26)}<div><div class="com-h"><b>${esc(c.por)}</b>${c.papel === "cliente" ? ` <span class="tag-cli">cliente</span>` : ""}<span>${fmt(c.em)}</span>${c.x != null ? `<button type="button" class="tag-arte mk-tag" onclick="abrirMarcador(${js(p.id)},${Number(c.arte) || 1},${js(c.id)})">📍 ver na arte ${c.arte || 1}</button>` : c.arte ? `<span class="tag-arte">arte ${c.arte}</span>` : ""}
         ${c.uid === S.eu.id || TODAS_MARCAS.includes(S.eu.papel) ? `<button type="button" class="com-x" aria-label="Apagar comentário" onclick="apagarComentario(${js(p.id)},${js(c.id)},'${ctx}')">×</button>` : ""}</div><div class="com-t">${esc(c.texto)}</div></div></div>`).join("") : `<p class="muted" style="font-size:13px;margin:4px 0">Nenhum comentário ainda. Use para combinar ajustes sem perder no WhatsApp.</p>`}</div>
     ${pode ? `<div class="com-novo"><textarea id="com-${ctx}-${esc(p.id)}" rows="2" placeholder="Escreva um comentário…" onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();comentar(${js(p.id)},'${ctx}')}"></textarea>
       <div class="com-acts">${n > 1 ? `<select id="coma-${ctx}-${esc(p.id)}" aria-label="Sobre qual arte"><option value="">Sobre o post todo</option>${Array.from({ length: n }, (_, i) => `<option value="${i + 1}">Sobre a arte ${i + 1}</option>`).join("")}</select>` : ""}
-      <button class="btn sm primary" type="button" onclick="comentar(${js(p.id)},'${ctx}')">Comentar</button></div></div>` : ""}
+      ${artesDe(p).length ? `<button class="btn sm" type="button" onclick="abrirMarcador(${js(p.id)},1)">📍 Marcar na arte</button>` : ""}<button class="btn sm primary" type="button" onclick="comentar(${js(p.id)},'${ctx}')">Comentar</button></div></div>` : ""}
   </details>`;
 }
 function redesenharComentarios(id, ctx) {
@@ -3665,6 +3844,155 @@ function clientesHtml() {
   if (!pessoas.length) return "";
   return `<div class="panel" style="margin-bottom:14px;display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap"><b style="font-size:14px">Mandar o link de aprovação (sem senha):</b>
     ${pessoas.map(u => `<button class="btn sm" type="button" onclick="linkCliente(${js(u.id)})">${avatarHtml(u, 20)} ${esc(u.nome)}</button>`).join("")}</div>`;
+}
+
+/* ---------- Ajuste marcado na arte ---------- */
+let MK = null;
+function artesDe(p) {
+  const l = (p.midias || []).map(x => `https://drive.google.com/thumbnail?id=${encodeURIComponent(x.id)}&sz=w1080`);
+  if (!l.length) { const s = blobSrc(p); if (s) l.push(s); }
+  return l;
+}
+function abrirMarcador(id, arte, foco) {
+  const p = S.posts.find(x => x.id === id); if (!p || !artesDe(p).length) return;
+  MK = { id, arte: arte || 1, foco: foco || null, ponto: null };
+  desenharMarcador();
+  if (!$("#mkDlg").open) $("#mkDlg").showModal();
+}
+function desenharMarcador() {
+  const p = S.posts.find(x => x.id === MK.id), artes = artesDe(p), n = artes.length;
+  const a = MK.arte = Math.min(Math.max(1, MK.arte), n), pode = temAcesso(p.marcaId);
+  const pinsDe = k => (p.comentarios || []).filter(c => c.x != null && (Number(c.arte) || 1) === k);
+  const pins = pinsDe(a);
+  $("#mkForm").innerHTML = `<div class="dlg-head"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600">Ajustes marcados na arte</div><h2>${esc(nm(p))}</h2></div>
+      <button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#mkDlg').close()">×</button></div>
+    <div class="mk-corpo">
+      ${n > 1 ? `<div class="mk-tabs" role="group" aria-label="Arte">${artes.map((_, i) => `<button type="button" aria-pressed="${i + 1 === a}" onclick="MK.arte=${i + 1};MK.ponto=null;MK.foco=null;desenharMarcador()">Arte ${i + 1}${pinsDe(i + 1).length ? ` · ${pinsDe(i + 1).length}📍` : ""}</button>`).join("")}</div>` : ""}
+      <div class="mk-img${pode ? " pode" : ""}" ${pode ? `onclick="pontoArte(event)"` : ""}><img src="${esc(artes[a - 1])}" alt="Arte ${a}" draggable="false">
+        ${pins.map((c, i) => `<button type="button" class="mk-pin${MK.foco === c.id ? " foco" : ""}" style="left:${Number(c.x)}%;top:${Number(c.y)}%" onclick="event.stopPropagation();MK.foco=${js(c.id)};desenharMarcador()" title="${esc(c.texto)}">${i + 1}</button>`).join("")}
+        ${MK.ponto ? `<span class="mk-pin novo" style="left:${MK.ponto.x}%;top:${MK.ponto.y}%">+</span>` : ""}</div>
+      ${pode ? `<p class="muted" style="margin:0;font-size:13px">${MK.ponto ? "Escreva o ajuste para esse ponto:" : "Toque no lugar da arte que precisa mudar e escreva o ajuste."}</p>` : ""}
+      ${MK.ponto ? `<div class="com-novo"><textarea id="mkTxt" rows="2" placeholder="Ex.: trocar essa cor por um tom mais claro" onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();enviarPonto()}"></textarea>
+        <div class="com-acts"><button class="btn sm" type="button" onclick="MK.ponto=null;desenharMarcador()">Cancelar</button><button class="btn sm primary" type="button" id="mkBtn" onclick="enviarPonto()">Marcar ajuste</button></div></div>` : ""}
+      ${pins.length ? `<ol class="mk-lista">${pins.map((c, i) => `<li class="${MK.foco === c.id ? "foco" : ""}" onclick="MK.foco=${js(c.id)};desenharMarcador()"><span class="mk-n">${i + 1}</span><span>${esc(c.texto)}<small class="muted"> · ${esc(c.por)}, ${esc(quando(c.em))}</small></span></li>`).join("")}</ol>` : ""}
+    </div>`;
+  if (MK.ponto) setTimeout(() => { const t = $("#mkTxt"); if (t) t.focus(); }, 30);
+}
+function pontoArte(e) {
+  const img = e.currentTarget.querySelector("img"), r = img.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width * 100, y = (e.clientY - r.top) / r.height * 100;
+  if (x < 0 || x > 100 || y < 0 || y > 100) return;
+  MK.ponto = { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 }; MK.foco = null; desenharMarcador();
+}
+async function enviarPonto() {
+  const t = $("#mkTxt"), texto = (t.value || "").trim(); if (!texto) return toast("Escreva o que mudar nesse ponto.");
+  const b = $("#mkBtn"); b.disabled = true; b.textContent = "Enviando…";
+  try {
+    const r = await api("comentar", { id: MK.id, texto, arte: MK.arte, x: MK.ponto.x, y: MK.ponto.y });
+    const p = S.posts.find(x => x.id === MK.id); if (p) p.comentarios = (p.comentarios || []).concat([r.comentario]);
+    MK.ponto = null; MK.foco = r.comentario.id; desenharMarcador(); toast("Ajuste marcado na arte");
+  } catch (e) { b.disabled = false; b.textContent = "Marcar ajuste"; writeFail(e); }
+}
+$("#mkDlg").addEventListener("click", e => { if (e.target === $("#mkDlg")) $("#mkDlg").close(); });
+$("#mkDlg").addEventListener("close", () => { const id = MK && MK.id; MK = null; if (!id) return; if ($("#dlg").open) redesenharComentarios(id, "editor"); else render(); });
+
+/* ---------- Modelos de mês ---------- */
+function abrirModelos() { S.mdCom = S.mdCom !== false; desenharModelos(); if (!$("#mdDlg").open) $("#mdDlg").showModal(); }
+function desenharModelos() {
+  const l = (S.modelos || []).slice().sort((a, b) => b.criado - a.criado), m = marca(), n = S.posts.filter(p => p.marcaId === S.marcaId && (p.data || "").startsWith(S.month)).length;
+  const fmts = it => Object.entries(it.reduce((o, x) => { const f = x.formato || "Sem formato"; o[f] = (o[f] || 0) + 1; return o; }, {})).map(([f, q]) => `${q} ${f}`).join(" · ");
+  const podeApagar = x => x.uid === S.eu.id || TODAS_MARCAS.includes(S.eu.papel);
+  $("#mdForm").innerHTML = `<div class="dlg-head"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600">${esc(m ? m.nome : "")} · ${esc(monthLabel(S.month))}</div><h2>Modelos de mês</h2></div>
+      <button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#mdDlg').close()">×</button></div>
+    <div class="dlg-body" style="grid-template-columns:1fr">
+      <div class="panel" style="display:grid;gap:8px;background:var(--surface-2)"><b>Salvar ${esc(monthLabel(S.month))} como modelo</b>
+        ${n ? `<span class="muted" style="font-size:13px">${n} postagens: guarda o dia da semana (ex.: 2ª terça), o formato, a fase, o produto, a rede e o horário. Dá para aplicar em qualquer mês e em qualquer marca.</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="mdNome" maxlength="80" placeholder="Ex.: Mês padrão loja de roupa" style="flex:1;min-width:200px"><button class="btn primary" type="button" id="mdSalvar" onclick="salvarModelo()">Salvar modelo</button></div>
+        <label style="display:flex;gap:8px;align-items:center;font-size:13.5px"><input type="checkbox" id="mdTemas"> Guardar também os temas (títulos) das postagens</label>`
+        : `<span class="muted" style="font-size:13px">Este mês ainda não tem postagens. Monte um mês e salve como modelo para reaproveitar.</span>`}</div>
+      ${l.length ? `<label style="display:flex;gap:8px;align-items:center;font-size:13.5px"><input type="checkbox"${S.mdCom ? " checked" : ""} onchange="S.mdCom=this.checked"> Ao aplicar, trazer os temas que estiverem no modelo</label>
+      <div class="md-lista">${l.map(x => `<div class="md-it"><div><b>${esc(x.nome)}</b><span class="muted">${x.itens.length} postagens · ${esc(fmts(x.itens))}</span><span class="muted" style="font-size:12px">por ${esc(x.por)} ${esc(quando(x.criado))}</span></div>
+        <div class="md-acts">${S.canWrite ? `<button class="btn sm primary" type="button" onclick="aplicarModelo(${js(x.id)},this)">Aplicar em ${esc(monthLabel(S.month).split(" ")[0])}</button>` : ""}${podeApagar(x) ? (S.mdDel === x.id ? `<button class="btn sm danger" type="button" onclick="apagarModelo(${js(x.id)})">Apagar?</button>` : `<button class="btn sm" type="button" aria-label="Apagar modelo" onclick="S.mdDel=${js(x.id)};desenharModelos()">×</button>`) : ""}</div></div>`).join("")}</div>`
+        : `<p class="muted" style="margin:0">Nenhum modelo salvo ainda.</p>`}
+    </div>`;
+}
+async function salvarModelo() {
+  const nome = $("#mdNome").value.trim(); if (!nome) return toast("Dê um nome ao modelo.");
+  const b = $("#mdSalvar"); b.disabled = true; b.textContent = "Salvando…";
+  try { await api("modeloSalvar", { marcaId: S.marcaId, mes: S.month, nome, comTemas: $("#mdTemas").checked }); S.carimbo = ""; await carregar(); desenharModelos(); toast("Modelo salvo"); }
+  catch (e) { b.disabled = false; b.textContent = "Salvar modelo"; writeFail(e); }
+}
+async function aplicarModelo(id, b) {
+  const x = (S.modelos || []).find(m => m.id === id); if (!x) return;
+  const ja = S.posts.filter(p => p.marcaId === S.marcaId && (p.data || "").startsWith(S.month)).length;
+  if (ja && !confirm(`${monthLabel(S.month)} já tem ${ja} postagens. Aplicar o modelo vai criar mais ${x.itens.length}. Continuar?`)) return;
+  b.disabled = true; b.textContent = "Criando…";
+  try { const r = await api("modeloAplicar", { id, marcaId: S.marcaId, mes: S.month, comTemas: !!S.mdCom }); $("#mdDlg").close(); await carregar(); toast(`${r.n} postagens criadas em ${monthLabel(S.month)}`); }
+  catch (e) { b.disabled = false; writeFail(e); }
+}
+async function apagarModelo(id) {
+  try { await api("modeloExcluir", { id }); S.mdDel = null; S.carimbo = ""; await carregar(); desenharModelos(); toast("Modelo apagado"); } catch (e) { writeFail(e); }
+}
+$("#mdDlg").addEventListener("click", e => { if (e.target === $("#mdDlg")) $("#mdDlg").close(); });
+
+/* ---------- Comparativo com o mês anterior (vai no relatório) ---------- */
+function comparativoHtml(ps, todas) {
+  const ant = shiftMonth(S.month, -1), psA = S.posts.filter(p => (todas || p.marcaId === S.marcaId) && (p.data || "").startsWith(ant));
+  if (!ps.length && !psA.length) return "";
+  const a = calcResumo(psA), b = calcResumo(ps), m = marca();
+  const linhas = [["Postagens planejadas", a.n, b.n], ["Postadas", a.postadas, b.postadas],
+    ["Aprovadas de primeira", a.aprovadas ? Math.round(a.deprimeira / a.aprovadas * 100) : null, b.aprovadas ? Math.round(b.deprimeira / b.aprovadas * 100) : null, "%"],
+    ["Dias até aprovar", a.tempoMedio != null ? Math.round(a.tempoMedio * 10) / 10 : null, b.tempoMedio != null ? Math.round(b.tempoMedio * 10) / 10 : null, "", true]];
+  // resultados do Instagram, quando a marca está conectada
+  if (!todas && m && instaOk(m.id)) {
+    [S.month, ant].forEach(mes => { if (!S.met[m.id + "|" + mes]) carregarMetricas(m.id, mes); });
+    const soma = (mes, c) => { const r = S.met[m.id + "|" + mes]; return r && r.itens ? r.itens.reduce((t, x) => t + (Number(x[c]) || 0), 0) : null; };
+    [["Curtidas", "curtidas"], ["Comentários", "comentarios"], ["Alcance", "alcance"], ["Salvamentos", "salvos"], ["Compartilhamentos", "compart"]].forEach(([l, c]) => linhas.push([l, soma(ant, c), soma(S.month, c)]));
+  }
+  const f = (v, u) => v == null ? "—" : Number(v).toLocaleString("pt-BR") + (u || "");
+  const delta = (x, y, u, menorMelhor) => {
+    if (x == null || y == null) return "";
+    if (x === y) return `<span class="cmp-d">=</span>`;
+    const sobe = y > x, bom = menorMelhor ? !sobe : sobe;
+    const txt = u === "%" ? `${y - x > 0 ? "+" : ""}${y - x} pts` : x ? `${sobe ? "+" : ""}${Math.round((y - x) / x * 100)}%` : `+${f(y)}`;
+    return `<span class="cmp-d ${bom ? "bom" : "ruim"}">${sobe ? "▲" : "▼"} ${txt}</span>`;
+  };
+  return `<section class="full"><h3>Comparado com ${esc(monthLabel(ant).split(" ")[0].toLowerCase())}</h3><div style="overflow-x:auto"><table class="rtab cmp"><thead><tr><th></th><th class="n">${esc(monthLabel(ant).split(" ")[0])}</th><th class="n">${esc(monthLabel(S.month).split(" ")[0])}</th><th class="n">Variação</th></tr></thead><tbody>
+    ${linhas.map(([l, x, y, u, menor]) => `<tr><td>${l}</td><td class="n">${f(x, u)}</td><td class="n"><b>${f(y, u)}</b></td><td class="n">${delta(x, y, u, menor)}</td></tr>`).join("")}</tbody></table></div></section>`;
+}
+
+/* ---------- Carga da equipe ---------- */
+function vCarga() {
+  const off = S.cargaSem || 0, h = hojeIso(), seg = parse(h);
+  seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7) + off * 7);
+  const fimD = new Date(seg); fimD.setDate(fimD.getDate() + 6);
+  const ini = iso(seg), fim = iso(fimD), naSemana = d => !!d && d >= ini && d <= fim;
+  const linhas = S.equipe.filter(u => u.papel !== "cliente").map(u => {
+    const ms = u.marcas || [], dela = id => ms.includes("*") || ms.includes(id) || TODAS_MARCAS.includes(u.papel);
+    const tf = S.tarefas.filter(t => t.responsavelId === u.id && t.status !== "Feita");
+    const tfSem = tf.filter(t => naSemana(t.data) || naSemana(t.prazo)), tfAtr = tf.filter(t => t.prazo && t.prazo < h && !naSemana(t.prazo));
+    const prod = u.papel === "social" ? S.posts.filter(p => dela(p.marcaId) && ["Ideia", "Ideia reprovada", "Em produção", "Ajustes solicitados"].includes(p.status) && naSemana(p.prazoArte || p.data)) : [];
+    const aprov = ["gestor", "aprovador"].includes(u.papel) ? S.posts.filter(p => dela(p.marcaId) && ["Em validação", "Em aprovação"].includes(p.status)) : [];
+    const reun = (S.agenda || []).filter(x => naSemana(x.data) && !["recusada", "cancelada"].includes(x.status) && ((x.participantes || []).includes(u.id) || x.criadoPorId === u.id));
+    const min = reun.reduce((t, x) => t + (Number(x.duracao) || 60), 0);
+    return { u, tfSem, tfAtr, prod, aprov, reun, min, pts: tfSem.length + tfAtr.length * 1.5 + prod.length + aprov.length * 0.5 + min / 60 };
+  }).sort((a, b) => b.pts - a.pts);
+  const max = Math.max(14, ...linhas.map(l => l.pts));
+  const nivel = x => x >= 12 ? ["Sobrecarregada", "var(--danger)"] : x >= 7 ? ["Cheia", "var(--pr-alta)"] : x >= 1 ? ["Tranquila", "var(--st-postado)"] : ["Livre", "var(--muted)"];
+  const item = (txt, onclick, cls) => `<li><button type="button" class="lnk${cls ? " " + cls : ""}" onclick="${onclick}">${txt}</button></li>`;
+  const titulo = off === 0 ? "Esta semana" : off === 1 ? "Próxima semana" : off === -1 ? "Semana passada" : `${brFull(ini)} a ${brFull(fim)}`;
+  return head(ehAdmin() ? "Administração" : "Equipe", "Carga da equipe", `<div class="month-nav"><button class="icon-btn" type="button" aria-label="Semana anterior" onclick="S.cargaSem=(S.cargaSem||0)-1;render()">‹</button><span style="min-width:150px;text-align:center"><b>${titulo}</b><br><small class="muted">${br(ini)} a ${br(fim)}</small></span><button class="icon-btn" type="button" aria-label="Próxima semana" onclick="S.cargaSem=(S.cargaSem||0)+1;render()">›</button></div>`) + equipeNav() +
+    `<p class="muted" style="margin:-4px 0 14px">Quanto cada pessoa tem na semana: tarefas com data ou prazo na semana, tarefas atrasadas, posts para produzir (social media), posts esperando aprovação (gestor e aprovador) e horas em reuniões. Use antes de passar trabalho novo.</p>
+    <div class="cg-lista">${linhas.map(l => { const [nv, cor] = nivel(l.pts); return `<details class="cg-it panel"><summary>
+      <span class="cg-p">${avatarHtml(l.u, 34)}<span><b>${esc(l.u.nome)}</b><small class="muted">${esc(PAPEIS[l.u.papel] || l.u.papel)}</small></span></span>
+      <span class="cg-bar"><span style="width:${Math.min(100, l.pts / max * 100).toFixed(0)}%;background:${cor}"></span></span>
+      <span class="cg-nv" style="color:${cor}">${nv}</span>
+      <span class="cg-chips">${l.tfSem.length ? `<span>☐ ${l.tfSem.length} tarefa${l.tfSem.length > 1 ? "s" : ""}</span>` : ""}${l.tfAtr.length ? `<span class="atraso">⚠ ${l.tfAtr.length} atrasada${l.tfAtr.length > 1 ? "s" : ""}</span>` : ""}${l.prod.length ? `<span>🎨 ${l.prod.length} para produzir</span>` : ""}${l.aprov.length ? `<span>✅ ${l.aprov.length} para aprovar</span>` : ""}${l.min ? `<span>🗓 ${hm(l.min)} em reuniões</span>` : ""}${!l.pts ? `<span class="muted">nada na semana</span>` : ""}</span></summary>
+      <ul class="cg-det">${l.tfAtr.map(t => item(`⚠ ${esc(t.titulo)} <small class="atraso">prazo ${br(t.prazo)}</small>`, `abrirTarefa(${js(t.id)})`)).join("")}${l.tfSem.map(t => item(`☐ ${esc(t.titulo)} <small class="muted">${t.prazo ? "até " + br(t.prazo) : br(t.data)}</small>`, `abrirTarefa(${js(t.id)})`)).join("")}
+        ${l.prod.map(p => item(`🎨 ${esc(nm(p))} <small class="muted">${esc(nomeMarca(p.marcaId))} · ${esc(p.status)}${p.prazoArte ? " · arte até " + br(p.prazoArte) : ""}</small>`, `S.marcaId=${js(p.marcaId)};openEditor(${js(p.id)})`)).join("")}
+        ${l.aprov.map(p => item(`✅ ${esc(nm(p))} <small class="muted">${esc(nomeMarca(p.marcaId))} · ${esc(p.status)}</small>`, `S.marcaId=${js(p.marcaId)};openEditor(${js(p.id)})`)).join("")}
+        ${l.reun.map(x => item(`🗓 ${esc(x.titulo)} <small class="muted">${br(x.data)} ${esc(x.hora)} · ${durTxt(x.duracao)}</small>`, `location.hash='#agenda';setTimeout(()=>abrirEvento(${js(x.id)}),80)`)).join("")}
+        ${!l.pts ? `<li class="muted">Nada marcado para esta semana.</li>` : ""}</ul></details>`; }).join("")}</div>`;
 }
 
 /* ---------- Datas comemorativas ---------- */
@@ -3919,14 +4247,35 @@ function sugestaoHorarioHtml(mid) {
 let SWREG = null;
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").then(r => { SWREG = r; }).catch(() => {});
 const avisosLigados = () => store("avisos." + (S.eu?.id || "")) === "1" && "Notification" in window && Notification.permission === "granted";
+const pushOk = () => "serviceWorker" in navigator && "PushManager" in window && !!S.pushChave;
+function chaveBytes(b64) { const p = "=".repeat((4 - b64.length % 4) % 4), r = atob((b64 + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from([...r].map(c => c.charCodeAt(0))); }
 async function ligarAvisos(ligar) {
   if (!("Notification" in window)) return toast("Este navegador não mostra avisos.");
+  let celular = false;
   if (ligar) {
     const p = await Notification.requestPermission();
     if (p !== "granted") { toast("O navegador bloqueou os avisos. Libere nas configurações do site."); render(); return; }
     store("avisosVisto." + S.eu.id, String(Date.now()));
+    // avisos mesmo com o app fechado
+    if (pushOk()) {
+      try {
+        const reg = SWREG || await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: chaveBytes(S.pushChave) });
+        await api("pushInscrever", { endpoint: sub.endpoint }); authParaAvisos(S.token); celular = true;
+        S.pushAparelhos = (S.pushAparelhos || []).concat([sub.endpoint]);
+      } catch (e) { console.warn(e); }
+    }
+  } else if (pushOk()) {
+    try { const reg = SWREG || await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription(); if (sub) { await api("pushSair", { endpoint: sub.endpoint }); await sub.unsubscribe(); S.pushAparelhos = (S.pushAparelhos || []).filter(x => x !== sub.endpoint); } } catch (e) {}
   }
-  store("avisos." + S.eu.id, ligar ? "1" : "0"); render(); toast(ligar ? "Avisos ligados neste aparelho" : "Avisos desligados");
+  store("avisos." + S.eu.id, ligar ? "1" : "0"); render();
+  toast(ligar ? (celular ? "Avisos ligados: chegam mesmo com o app fechado" : "Avisos ligados neste aparelho (com o site aberto)") : "Avisos desligados");
+}
+async function testarAviso(b) {
+  b.disabled = true;
+  try { const r = await api("pushTeste"); toast(r.enviados ? "Aviso enviado. Ele chega em alguns segundos." : "Nenhum aparelho com avisos ligados. Ligue a caixinha acima primeiro."); }
+  catch (e) { writeFail(e); }
+  b.disabled = false;
 }
 function avisarNovidades() {
   if (!S.eu || !avisosLigados()) return;
@@ -3943,7 +4292,9 @@ function avisosContaHtml() {
   const sup = "Notification" in window, lig = avisosLigados();
   return `<div class="panel" style="display:grid;gap:10px"><h2 style="margin:0">App no celular e avisos</h2>
     <p class="muted" style="margin:0;font-size:13.5px"><b>Instalar como app:</b> no celular, abra o site e toque em <b>Compartilhar → Adicionar à Tela de Início</b> (iPhone) ou no menu <b>⋮ → Instalar app</b> (Android). Ele abre em tela cheia, como um aplicativo.</p>
-    ${sup ? `<label style="display:flex;gap:8px;align-items:flex-start;font-size:14px"><input type="checkbox"${lig ? " checked" : ""} onchange="ligarAvisos(this.checked)" style="margin-top:3px"> <span><b>Avisar neste aparelho</b> quando chegar algo para você (aprovação, devolução, comentário, tarefa). Funciona com o app ou o site aberto, mesmo em segundo plano.</span></label>` : `<span class="muted" style="font-size:13px">Este navegador não mostra avisos.</span>`}
+    ${sup ? `<label style="display:flex;gap:8px;align-items:flex-start;font-size:14px"><input type="checkbox"${lig ? " checked" : ""} onchange="ligarAvisos(this.checked)" style="margin-top:3px"> <span><b>Avisar neste aparelho</b> quando chegar algo para você (aprovação, devolução, comentário, tarefa). ${pushOk() ? " Chega <b>mesmo com o app fechado</b>, como uma mensagem." : " Funciona com o app ou o site aberto, mesmo em segundo plano."}</span></label>
+      ${lig && pushOk() ? `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn sm" type="button" onclick="testarAviso(this)">🔔 Mandar um aviso de teste</button><span class="muted" style="font-size:12.5px">${(S.pushAparelhos || []).length} aparelho(s) recebendo</span></div>` : ""}
+      ${/iPhone|iPad/.test(navigator.userAgent) && !matchMedia("(display-mode: standalone)").matches ? `<span class="muted" style="font-size:12.5px">No iPhone, os avisos só funcionam pelo app: primeiro <b>Compartilhar → Adicionar à Tela de Início</b>, abra por lá e ligue aqui.</span>` : ""}` : `<span class="muted" style="font-size:13px">Este navegador não mostra avisos.</span>`}
   </div>`;
 }
 
@@ -4980,7 +5331,7 @@ function menuGrupos() {
   ];
   if (!cli) {
     g.push({ id: "marca", l: "Marca", ic: "🏷️", itens: [["marca", "Visão geral"], ["marca-sobre", "Sobre"], ["marca-publico", "Público-alvo"], ["marca-produtos", "Produtos"], ["marca-redes", "Redes"], ["marca-arquivos", "Arquivos e identidade"], ["marca-midias", "Biblioteca"], ["marca-notas", "Observações"], ["marca-acessos", "Acessos"], ["marca-plano", "Pacote e legendas"], ["marca-config", "Configurações"]].map(([v, l]) => it(v, l)) });
-    g.push({ id: "equipe", l: "Equipe", ic: "👥", itens: [it("agenda", "Agenda", "🗓️"), it("tarefas", "Tarefas", "☐"), it("horas", "Horas" + (cronAtual() ? " ⏱" : ""), "⏱"), it("mural", "Mural", "📌"), ...(chefe ? [it("equipe", "Pessoas", "👤"), it("equipe-atividade", "Atividade", "📈")] : [])] });
+    g.push({ id: "equipe", l: "Equipe", ic: "👥", itens: [it("agenda", "Agenda", "🗓️"), it("tarefas", "Tarefas", "☐"), it("horas", "Horas" + (cronAtual() ? " ⏱" : ""), "⏱"), it("mural", "Mural", "📌"), ...(chefe ? [it("equipe", "Pessoas", "👤"), it("equipe-atividade", "Atividade", "📈"), it("equipe-carga", "Carga da equipe", "⚖️")] : [])] });
     const gest = [...(dir ? [it("financeiro", "Financeiro", "💰")] : []), ...((S.eu.papel === "admin" || dono) && S.empresaInfo ? [it("empresa", "Minha empresa", "🏷️")] : []), ...(dir || dono ? [it("registro", "Registro", "📜")] : []), ...(dono ? [it("empresas", "Empresas", "🏢")] : [])];
     if (gest.length) g.push({ id: "gestao", l: "Gestão", ic: "💼", itens: gest });
   }
@@ -5042,9 +5393,30 @@ function vEmpresas() {
       <div style="display:flex;gap:8px"><button class="btn primary" type="submit">Salvar</button><button class="btn" type="button" onclick="S.empEdit=null;render()">Cancelar</button></div></form>` : ""}
     <div class="table-wrap"><table style="min-width:560px"><thead><tr><th>Empresa</th><th>Situação</th><th>Criada</th><th></th></tr></thead><tbody>
     ${l.map(e => `<tr><td><b>${esc(e.nome)}</b>${e.obs ? `<div class="muted" style="font-size:12px">${esc(e.obs)}</div>` : ""}</td><td>${e.ativo ? "Ativa" : `<span class="atraso">Desativada</span>`}</td><td>${e.criado ? brFull(iso(new Date(e.criado))) : ""}</td>
-      <td style="white-space:nowrap"><button class="btn sm" type="button" onclick="trocarEmpresa(${js(e.id)});location.hash='#calendario'">Entrar nela</button> <button class="btn sm" type="button" onclick="S.empEdit=JSON.parse(JSON.stringify(S.empresas.find(x=>x.id===${js(e.id)})));render()">Editar</button></td></tr>`).join("")}</tbody></table></div>` + `<div class="panel" style="margin-top:16px;max-width:640px;display:grid;gap:8px"><h2 style="margin:0">🔒 Endereço oficial do site</h2>
+      <td style="white-space:nowrap"><button class="btn sm" type="button" onclick="trocarEmpresa(${js(e.id)});location.hash='#calendario'">Entrar nela</button> <button class="btn sm" type="button" onclick="S.empEdit=JSON.parse(JSON.stringify(S.empresas.find(x=>x.id===${js(e.id)})));render()">Editar</button>${e.id !== S.empresaDona ? ` <button class="btn sm danger" type="button" onclick="S.empDel=${js(e.id)};render()">Apagar</button>` : ""}</td></tr>
+      ${S.empDel === e.id ? `<tr><td colspan="4"><div class="emp-del"><b>⚠️ Apagar "${esc(e.nome)}" de vez?</b><span>Some tudo dessa empresa: marcas, postagens, stories, pessoas (perdem o acesso), tarefas, agenda, horas, financeiro, propostas, mural e registro. Antes de apagar, o sistema guarda uma <b>cópia completa (JSON)</b> no seu Drive, na pasta "Planejamento de Conteúdo - Cópias de segurança". As artes no Drive não são apagadas. Se for só uma pausa, prefira <b>Editar → desmarcar "Empresa ativa"</b>.</span>
+        <label class="field"><span>Para confirmar, digite o nome da empresa: <b>${esc(e.nome)}</b></span><input id="empDelNome" autocomplete="off" oninput="$('#empDelBtn').disabled=this.value.trim().toLowerCase()!==${js(String(e.nome).trim().toLowerCase())}"></label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn danger" type="button" id="empDelBtn" disabled onclick="excluirEmpresa(${js(e.id)})">Apagar a empresa</button><button class="btn" type="button" onclick="S.empDel=null;render()">Cancelar</button></div></div></td></tr>` : ""}`).join("")}</tbody></table></div>` + `<div class="panel" style="margin-top:16px;max-width:640px;display:grid;gap:8px"><h2 style="margin:0">🔒 Endereço oficial do site</h2>
     <span class="muted" style="font-size:13px">Todos os links dos e-mails (aprovação, senha, briefing, propostas) usam só este endereço. Mude apenas se o site for para outro lugar.</span>
-    <form style="display:flex;gap:8px;flex-wrap:wrap" onsubmit="event.preventDefault();definirSite()"><input id="siteOf" style="flex:1;min-width:220px" value="${esc(S.siteOficial || "")}" placeholder="https://…/"><button class="btn" type="submit">Salvar endereço</button></form></div>`;
+    <form style="display:flex;gap:8px;flex-wrap:wrap" onsubmit="event.preventDefault();definirSite()"><input id="siteOf" style="flex:1 1 220px;min-width:0;width:auto" value="${esc(S.siteOficial || "")}" placeholder="https://…/"><button class="btn" type="submit">Salvar endereço</button></form></div>` + googleCfgHtml();
+}
+function googleCfgHtml() {
+  return `<div class="panel" style="margin-top:16px;max-width:640px;display:grid;gap:8px"><h2 style="margin:0">🔑 Entrar com o Google</h2>
+    <span class="muted" style="font-size:13px">Com isso ligado, a tela de login ganha o botão "Fazer login com o Google". A pessoa entra com a conta Google do mesmo e-mail cadastrado aqui, sem senha. Veja no LEIAME como criar o ID do cliente (leva 5 minutos).</span>
+    <form style="display:flex;gap:8px;flex-wrap:wrap" onsubmit="event.preventDefault();definirGoogle()"><input id="gCli" style="flex:1 1 220px;min-width:0;width:auto" value="${esc(S.googleCfg || "")}" placeholder="123…apps.googleusercontent.com"><button class="btn" type="submit">${S.googleCfg ? "Salvar" : "Ligar"}</button>${S.googleCfg ? `<button class="btn" type="button" onclick="$('#gCli').value='';definirGoogle()">Desligar</button>` : ""}</form></div>`;
+}
+async function excluirEmpresa(id) {
+  const b = $("#empDelBtn"); b.disabled = true; b.textContent = "Guardando cópia e apagando…";
+  try {
+    const r = await api("excluirEmpresa", { id, confirmacao: $("#empDelNome").value });
+    S.empDel = null; if (S.empresa === id) { S.empresa = ""; try { localStorage.removeItem("plan.empresa"); } catch (e) {} }
+    S.carimbo = ""; await carregar(); render();
+    toast(`Empresa apagada (${r.marcas} marca(s), ${r.pessoas} pessoa(s)). A cópia ficou no seu Drive.`);
+  } catch (e) { b.disabled = false; b.textContent = "Apagar a empresa"; writeFail(e); }
+}
+async function definirGoogle() {
+  const c = $("#gCli").value.trim();
+  try { await api("definirGoogle", { clientId: c }); S.googleCfg = c; S.googleId = undefined; render(); toast(c ? "Login com Google ligado" : "Login com Google desligado"); } catch (e) { writeFail(e); }
 }
 async function definirSite() {
   const u = $("#siteOf").value.trim();
@@ -5087,7 +5459,7 @@ const TELAS = [
   ["registro", "Registro", "Quem fez o quê: entradas, exclusões, senhas abertas, permissões e pagamentos.", "admin diretor", "admin diretor"],
   ["empresa", "Minha empresa", "Perfil, logo, cores, permissões e exportar os dados.", "admin", "admin"]
 ].map(([v, nome, desc, pode, padrao]) => ({ v, nome, desc, pode: pode.split(" "), padrao: padrao.split(" ") }));
-const telaDe = v => v === "marca-acessos" ? "marca-acessos" : v.startsWith("marca") ? "marca" : v === "equipe-atividade" ? "equipe-atividade" : v;
+const telaDe = v => v === "marca-acessos" ? "marca-acessos" : v.startsWith("marca") ? "marca" : v === "equipe-atividade" || v === "equipe-carga" ? "equipe-atividade" : v;
 function permitido(v, papel, perm) {
   const t = TELAS.find(x => x.v === telaDe(v)); if (!t) return true;
   if (!t.pode.includes(papel)) return false;
@@ -5376,7 +5748,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-11.1"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-12.1"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",
@@ -5395,9 +5767,10 @@ async function carregar() {
     if (j.igual) { S.versao = j.versao || S.versao; return; }
     S.carimbo = j.carimbo || "";
     S.stories = j.stories || []; S.agenda = j.agenda || []; S.horas = j.horas || []; S.mural = j.mural || []; S.avaliacoes = j.avaliacoes || []; S.pagamentos = j.pagamentos || []; S.temTrends = !!j.temTrends; S.temIA = !!j.temIA; S.gcal = !!j.gcal; S.propostas = j.propostas || [];
-    S.eu = j.eu;
+    S.eu = j.eu; S.pushChave = j.pushChave || ""; S.pushAparelhos = j.pushAparelhos || []; S.modelos = j.modelos || []; if (j.googleClientId !== undefined) S.googleCfg = j.googleClientId;
+    if (S.eu && authParaAvisos.feito !== S.token) { authParaAvisos.feito = S.token; authParaAvisos(S.token); }
     S.empresaInfo = j.empresa || null;
-    if (j.eu && j.eu.dono) { S.empresas = j.empresas || []; S.siteOficial = j.siteOficial || ""; if (S.empresa == null) S.empresa = j.empresa ? j.empresa.id : ""; } else { S.empresa = null; S.empresas = []; } S.usuarios = j.usuarios || []; S.tarefas = j.tarefas || []; S.equipe = j.equipe || [];
+    if (j.eu && j.eu.dono) { S.empresas = j.empresas || []; S.siteOficial = j.siteOficial || ""; S.empresaDona = j.empresaDona || ""; if (S.empresa == null) S.empresa = j.empresa ? j.empresa.id : ""; } else { S.empresa = null; S.empresas = []; } S.usuarios = j.usuarios || []; S.tarefas = j.tarefas || []; S.equipe = j.equipe || [];
     S.versao = j.versao || "antiga";
     S.marcas = (j.marcas || []).sort((a, b) => (a.criado || 0) - (b.criado || 0) || String(a.nome).localeCompare(b.nome));
     S.posts = (j.pautas || []).map(p => ({ ...p, status: normStatus(p.status) }));

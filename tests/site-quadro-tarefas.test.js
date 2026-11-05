@@ -1,0 +1,53 @@
+const G = require('./simulador-google.js');
+const { chromium } = require('playwright'); const fs = require('fs'), path = require('path');
+const dir = require('path').join(__dirname, '..');
+const P = o => G.post(JSON.stringify(o));
+G.configurar(); const senha = G.logs[0].match(/Senha provisória: (\S+)/)[1];
+const ta = P({ action: 'login', login: 'ana@agencia.com', senha }).token;
+const liso = P({ action: 'salvarMarca', token: ta, marca: { nome: 'Liso' } }).id;
+P({ action: 'salvarUsuario', token: ta, usuario: { nome: 'Sofi', login: 'sofi@x.com', papel: 'social', marcas: [liso], senha: 'Teste#2026' } });
+P({ action: 'salvarUsuario', token: ta, usuario: { nome: 'Bia', login: 'bia@x.com', papel: 'social', marcas: [liso], senha: 'Teste#2026' } });
+const eq = P({ action: 'listar', token: ta }).usuarios; const sofi = eq.find(u => u.nome === 'Sofi').id;
+const mk = (titulo, extra) => P({ action: 'salvarTarefa', token: ta, tarefa: Object.assign({ titulo, marcaId: liso, prioridade: 'Alta', responsavelId: sofi, prazo: '2026-11-20' }, extra) }).id;
+const t1 = mk('Pedir fotos do lançamento'), t2 = mk('Roteiro do reels', { prioridade: 'Urgente', prazo: '2026-11-01' }), t3 = mk('Revisar legendas', { prioridade: 'Baixa' });
+P({ action: 'concluirTarefa', token: ta, id: t3, feita: true });
+// servidor
+const tb = P({ action: 'login', login: 'bia@x.com', senha: 'Teste#2026' }).token;
+console.log('status inválido (falha):', P({ action: 'concluirTarefa', token: ta, id: t1, status: 'Hackeado' }).error);
+console.log('Bia mexe em tarefa da Sofi (falha):', P({ action: 'concluirTarefa', token: tb, id: t1, status: 'Fazendo' }).error);
+console.log('chamada antiga (feita:false) volta para Pendente:', P({ action: 'concluirTarefa', token: ta, id: t3, feita: false }).ok, P({ action: 'listar', token: ta }).tarefas.find(t => t.id === t3).status);
+P({ action: 'concluirTarefa', token: ta, id: t3, feita: true });
+(async () => {
+  const b = await chromium.launch();
+  const abrir = async (vp) => {
+    const pg = await b.newPage({ viewport: vp }); const erros = []; pg.on('pageerror', e => erros.push(e.message)); pg.erros = erros;
+    await pg.route('http://site.test/**', r => { const u = new URL(r.request().url()); const f = path.join(dir, u.pathname === '/' ? 'index.html' : u.pathname); if (!fs.existsSync(f)) return r.fulfill({ status: 404, body: '' }); let body = fs.readFileSync(f); if (f.endsWith('index.html')) body = body.toString().replace("connect-src 'self'", "connect-src 'self' https://api.test"); if (f.endsWith('config.js')) body = body.toString().replace(/API_URL: "[^"]*"/, 'API_URL: "https://api.test/exec"'); r.fulfill({ body, contentType: f.endsWith('.js') ? 'text/javascript' : 'text/html' }); });
+    await pg.route('https://api.test/**', r => r.fulfill({ contentType: 'application/json', body: JSON.stringify(G.post(r.request().postData())) }));
+    await pg.route(/fonts|drive/, r => r.abort());
+    return pg;
+  };
+  const pg = await abrir({ width: 1280, height: 900 });
+  await pg.goto('http://site.test/#tarefas'); await pg.waitForTimeout(300); await pg.fill('#lgLogin', 'sofi@x.com'); await pg.fill('#lgSenha', 'Teste#2026'); await pg.click('#lgBtn'); await pg.waitForTimeout(800);
+  await pg.goto('http://site.test/#tarefas'); await pg.waitForTimeout(400);
+  await pg.click('.tf-modo button:has-text("Quadro")'); await pg.waitForTimeout(300);
+  const cols = async () => pg.$$eval('.tf-board .col', x => x.map(c => c.dataset.st + '=' + [...c.querySelectorAll('.card .t')].map(e => e.textContent).join('/')).join(' | '));
+  console.log('quadro:', await cols());
+  // arrastar
+  await pg.dragAndDrop('.tf-board .card:has-text("Pedir fotos")', '.tf-board .col[data-st="Fazendo"]'); await pg.waitForTimeout(500);
+  console.log('depois de arrastar:', await cols(), '| servidor:', P({ action: 'listar', token: ta }).tarefas.find(t => t.id === t1).status);
+  await pg.click('.tf-board .card:has-text("Pedir fotos") button[aria-label^="Passar"]'); await pg.waitForTimeout(500);
+  console.log('botão ▶:', await cols(), '| servidor:', P({ action: 'listar', token: ta }).tarefas.find(t => t.id === t1).status, '| concluída por:', P({ action: 'listar', token: ta }).tarefas.find(t => t.id === t1).concluidoPor);
+  console.log('atrasada marcada:', await pg.$$eval('.tf-card.atrasada .t', x => x.map(e => e.textContent).join()));
+  await pg.screenshot({ path: require('path').join(__dirname, 'capturas', 'tf-quadro.png') });
+  await pg.reload(); await pg.waitForTimeout(700); console.log('lembra o modo quadro:', await pg.isVisible('.tf-board'));
+  await pg.click('.tf-board .card:has-text("Roteiro") button[aria-label^="Passar"]'); await pg.waitForTimeout(400);
+  await pg.click('.tf-modo button:has-text("Lista")'); await pg.waitForTimeout(300);
+  console.log('lista mostra selo Fazendo:', await pg.$$eval('.tf .tf-st', x => x.length));
+  const pm = await abrir({ width: 390, height: 800 });
+  await pm.goto('http://site.test/#tarefas'); await pm.waitForTimeout(300); await pm.fill('#lgLogin', 'sofi@x.com'); await pm.fill('#lgSenha', 'Teste#2026'); await pm.click('#lgBtn'); await pm.waitForTimeout(800);
+  await pm.goto('http://site.test/#tarefas'); await pm.waitForTimeout(300); await pm.click('.tf-modo button:has-text("Quadro")'); await pm.waitForTimeout(300);
+  console.log('celular sem rolagem lateral:', await pm.evaluate(() => document.documentElement.scrollWidth), '| tema escuro ok');
+  await pm.screenshot({ path: require('path').join(__dirname, 'capturas', 'tf-quadro-m.png'), fullPage: true });
+  console.log('erros:', pg.erros, pm.erros);
+  await b.close();
+})();

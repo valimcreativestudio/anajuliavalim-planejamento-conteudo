@@ -161,12 +161,52 @@ Ao rodar **configurar**, o script cria quatro rotinas (a quarta é o relatório 
 - **Cópia de segurança** toda segunda de madrugada, na pasta "Planejamento de Conteúdo - Cópias de segurança" do seu Drive (guarda as 8 últimas).
 - **Publicação automática**: confere a cada 15 minutos se há post ou story para publicar.
 
+## Novidades de novembro (tarefas, carga, arte, modelos, avisos e acesso)
+
+**Tarefas mais completas.** Dentro de cada tarefa:
+- **Checklist**: quebre em passos ("roteiro", "gravar", "editar"). Marcar um item salva na hora. O cartão mostra ☑ 2/5.
+- **Links e anexos**: Drive, Canva, referência. Só aceita links `https://`.
+- **Comentários**: quem é responsável e quem criou recebem aviso.
+- **Repetir** (toda semana, a cada 15 dias, todo mês): ao concluir, a próxima já é criada com as datas puladas e o checklist zerado.
+
+**Carga da equipe** (Equipe → Carga): mostra quanto cada pessoa tem na semana (tarefas, atrasadas, posts para produzir, posts para aprovar e horas em reunião), com a barra Livre / Tranquila / Cheia / Sobrecarregada. Clique na pessoa para ver a lista. Use as setas para ver outras semanas.
+
+**Ajuste marcado na arte.** No post (editor ou aprovação), **📍 Marcar na arte**: toque no ponto da arte que precisa mudar e escreva. O ponto fica numerado em cima da imagem e aparece nos comentários como "📍 ver na arte". Funciona em carrossel (escolha a arte).
+
+**Modelos de mês** (Calendário → 📐 Modelos de mês): salve a estrutura de um mês (dia da semana, formato, fase, produto, rede, horário; os temas são opcionais) e aplique em qualquer mês e em qualquer marca da empresa.
+
+**Desfazer.** Depois de mudar o status no fluxo, mover um post no calendário, mover uma tarefa ou apagar uma postagem, aparece **Desfazer** por 7 segundos.
+
+**Comparativo no relatório.** O relatório do mês (Resultados) mostra o mês atual contra o anterior: postagens, postadas, aprovadas de primeira, dias até aprovar e, com o Instagram conectado, curtidas, comentários, alcance, salvamentos e compartilhamentos. Vai junto no PDF.
+
+**Avisos no celular, mesmo com o app fechado.** Em **Minha conta → Avisar neste aparelho**. Use **Mandar um aviso de teste** para conferir. Chega aviso de post para aprovar ou devolvido, tarefa nova, comentário em tarefa e reunião.
+- No iPhone, só funciona pelo app: Safari → Compartilhar → **Adicionar à Tela de Início**, abra por lá e ligue.
+- O aviso sai sem conteúdo do servidor; o app busca o texto com o seu login. Ao sair da conta, o aparelho deixa de receber.
+
+**Código por e-mail para administração e direção.** Quem é administrador, diretor ou a dona da plataforma, ao entrar num **aparelho novo**, recebe um código de 6 números por e-mail (vale 10 minutos). Dá para marcar "Confiar neste aparelho por 60 dias".
+
+**Entrar com o Google.** A pessoa entra com a conta Google do mesmo e-mail cadastrado, sem senha. Para ligar (só a dona, uma vez):
+1. Abra https://console.cloud.google.com/ com a sua conta e crie um projeto (ex.: "Planeja Aê").
+2. Vá em **APIs e serviços → Tela de consentimento OAuth**: tipo **Externo**, nome do app "Planeja Aê", seu e-mail; salve e **publique**.
+3. Vá em **APIs e serviços → Credenciais → Criar credenciais → ID do cliente OAuth** → tipo **Aplicativo da Web**.
+4. Em **Origens JavaScript autorizadas**, coloque o endereço do site sem a pasta, ex.: `https://valimcreativestudio.github.io`.
+5. Copie o **ID do cliente** (termina com `.apps.googleusercontent.com`) e cole em **Empresas → Entrar com o Google → Ligar**.
+
+**Apagar uma empresa** (só a dona, em Empresas): o botão **Apagar** pede para digitar o nome da empresa. Antes de apagar, o sistema guarda uma **cópia completa em JSON** no seu Drive ("Planejamento de Conteúdo - Cópias de segurança"). Some tudo da empresa (marcas, posts, pessoas, tarefas, agenda, financeiro, registro…); as artes no Drive ficam. A sua própria empresa não pode ser apagada. Para só pausar, desmarque "Empresa ativa".
+
+## Testes automáticos
+
+A pasta `tests/` tem testes que simulam a planilha e abrem o site num navegador: segurança (empresas separadas, permissões, código malicioso), login com código e com Google, tarefas, quadro, marcar na arte, modelos, desfazer, apagar pessoa e empresa.
+- No GitHub, eles rodam sozinhos a cada mudança (aba **Actions**). Se algo quebrar, aparece um ✗ vermelho e o GitHub manda e-mail.
+- No computador: `npm install --no-save playwright && npx playwright install chromium && node tests/rodar.js`.
+
 ## Segurança (revisão de novembro de 2026)
 
 O que o sistema faz para se proteger:
 
 - **Permissões conferidas no servidor**: cada ação confere empresa, marca, papel e a tabela "quem vê o quê". Mexer no site pelo navegador não libera nada.
 - **Empresas separadas**: ninguém lê, altera ou apaga dados de outra empresa, nem mesmo sabendo o código (ID) do item.
+- **Código por e-mail** para administração, direção e dona em aparelho novo; **Entrar com o Google** opcional.
 - **Senhas**: no mínimo 8 caracteres, sem senhas óbvias, guardadas embaralhadas com proteção reforçada. As senhas antigas são reforçadas sozinhas no próximo login. Depois de **5 tentativas erradas** a conta fica bloqueada por 15 minutos e a pessoa recebe um e-mail. Trocar ou redefinir a senha derruba os logins dos outros aparelhos.
 - **Links dos e-mails** (aprovação, senha, briefing, propostas) usam só o **endereço oficial do site**, que só a dona da plataforma muda (em **Empresas**). Ninguém consegue fazer os e-mails apontarem para um site falso.
 - **Link sem senha do cliente**: só por e-mail, uso único, 14 dias.
@@ -183,7 +223,7 @@ O que **depende de você** (não dá para resolver só com código):
 1. **Conta Google da dona**: ative a **verificação em duas etapas** (myaccount.google.com → Segurança). Quem entra nessa conta tem tudo: planilha, script, chaves e Drive.
 2. **Quem edita a planilha e o script**: deixe só você como editora. Qualquer editor do Apps Script consegue ver as chaves guardadas (Instagram, IA, Google Agenda) e todos os dados.
 3. **Chaves**: se desconfiar que alguém viu uma chave (IA, Instagram), gere outra no painel do serviço e cadastre de novo no sistema.
-4. **Mudou o endereço do site?** Atualize em **Empresas → Endereço oficial do site** e, se a planilha mudar de endereço, ajuste o `connect-src` da linha `Content-Security-Policy` no topo do `index.html`.
+4. **Mudou o endereço do site?** Atualize em **Empresas → Endereço oficial do site** e, se a planilha mudar de endereço, ajuste o `connect-src` da linha `Content-Security-Policy` no topo do `index.html`. Com o login com Google ligado, coloque o endereço novo também nas "Origens JavaScript autorizadas" do Google Cloud.
 5. Antes de vender para muitas agências, vale um **teste de invasão** feito por outra pessoa e testar em Safari e Firefox.
 
 ## Desempenho e segurança
