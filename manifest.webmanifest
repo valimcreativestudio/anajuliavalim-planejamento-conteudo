@@ -1,6 +1,6 @@
 {
-  "name": "Planejamento de Conteúdo",
-  "short_name": "Planejamento",
+  "name": "Planeja AI",
+  "short_name": "Planeja AI",
   "start_url": "./#calendario",
   "scope": "./",
   "display": "standalone",

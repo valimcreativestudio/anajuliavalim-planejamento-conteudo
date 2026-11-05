@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Planejamento de Conteúdo</title>
+<title>Planeja AI</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icone-192.png">
 <link rel="apple-touch-icon" href="icone-180.png">
@@ -11,7 +11,7 @@
 <script>try { const t = localStorage.getItem("plan.tema"); if (t === "dark" || t === "light") document.documentElement.dataset.theme = t; } catch (e) {}</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Planejamento">
+<meta name="apple-mobile-web-app-title" content="Planeja AI">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Figtree:wght@400;500;600;700&display=swap">
 <style>
@@ -75,7 +75,8 @@ header.top { background: var(--vinho); color: var(--vinho-ink); position: sticky
 header.top .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding-block: 12px 0; }
 .brand { font-family: var(--f-display); font-size: 26px; line-height: 1; letter-spacing: .01em; white-space: nowrap; }
 .brand em { color: color-mix(in srgb, var(--vinho-ink) 62%, transparent); }
-.marca-pick { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.marca-pick { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; min-width: 0; }
+@media (max-width: 520px) { #empSel { max-width: 46vw; } .marca-pick select { max-width: 44vw; } }
 .marca-pick select { background: transparent; border: 1px solid color-mix(in srgb, var(--vinho-ink) 40%, transparent); color: var(--vinho-ink); border-radius: 999px; padding: 6px 12px; max-width: 220px; }
 .marca-pick select option { color: #1D1D1F; background: #fff; }
 .ghost-light { background: transparent; border: 1px solid color-mix(in srgb, var(--vinho-ink) 40%, transparent); color: var(--vinho-ink); border-radius: 999px; padding: 6px 12px; }
@@ -766,7 +767,6 @@ td.n.atraso { color: var(--danger); font-weight: 600; }
 .cron-t { font: 400 40px/1 var(--f-display); }
 .hr-lista { display: grid; gap: 4px; }
 .hr-it { display: grid; grid-template-columns: 56px 1fr auto 24px; gap: 10px; align-items: center; padding: 7px 4px; border-bottom: 1px solid var(--line); font-size: 14px; }
-#tabHoras.cron-on::after { content: " ⏱"; }
 .mural { display: grid; gap: 12px; max-width: 760px; }
 .aviso { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: grid; gap: 8px; }
 .aviso.imp { border-left: 4px solid var(--s-cliente); }
@@ -872,13 +872,33 @@ table.fin td.n input { text-align: right; }
 .painel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-top: 16px; }
 .carga { display: grid; grid-template-columns: 110px 1fr 28px; gap: 8px; align-items: center; font-size: 13.5px; margin: 6px 0; } .carga span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cg-bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--surface-2); } .cg-bar i.p { background: var(--s-producao); } .cg-bar i.t { background: var(--s-validacao); } .cg-bar i.r { background: var(--s-aprovacao); }
+nav.tabs { gap: 4px; align-items: center; padding-bottom: 8px; }
+nav.tabs .mn-a { display: inline-flex; align-items: center; gap: 6px; color: color-mix(in srgb, var(--vinho-ink) 78%, transparent); text-decoration: none; padding: 8px 14px; border-radius: 99px; white-space: nowrap; font-weight: 500; font-size: 14.5px; background: none; border: 0; cursor: pointer; font-family: inherit; }
+nav.tabs .mn-a:hover { color: var(--vinho-ink); background: color-mix(in srgb, var(--vinho-ink) 10%, transparent); }
+nav.tabs .mn-a[aria-current="page"] { background: var(--bg); color: var(--ink); border-radius: 99px; }
+nav.tabs .mn-a[aria-expanded="true"] { background: color-mix(in srgb, var(--vinho-ink) 16%, transparent); color: var(--vinho-ink); }
+nav.tabs .mn-a[aria-current="page"][aria-expanded="true"] { background: var(--bg); color: var(--ink); }
+nav.tabs .seta { width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg) translateY(-2px); opacity: .7; margin-left: 2px; transition: transform .15s; }
+nav.tabs [aria-expanded="true"] .seta { transform: rotate(-135deg) translateY(-1px); }
+nav.tabs .badge { margin-left: 0; }
+.badge.suave { background: var(--surface-2) !important; color: var(--ink) !important; }
+#menuPop { position: fixed; z-index: 60; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 6px; display: grid; gap: 2px; max-height: 70vh; overflow-y: auto; }
+#menuPop a { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 9px; color: var(--ink); text-decoration: none; font-size: 14.5px; }
+#menuPop a:hover, #menuPop a:focus { background: var(--surface-2); outline: none; }
+#menuPop a[aria-current="page"] { background: var(--surface-2); font-weight: 600; }
+#menuPop .ic { width: 20px; text-align: center; opacity: .8; }
+#menuPop .badge { margin-left: auto; }
+#empSel { border: 1px solid color-mix(in srgb, var(--vinho-ink) 30%, transparent); background: transparent; color: var(--vinho-ink); border-radius: 99px; padding: 6px 10px; font: inherit; font-size: 13.5px; max-width: 200px; }
+#empSel option { color: #111; }
+.marca-pick .emp-nome { font-size: 12.5px; opacity: .75; white-space: nowrap; }
 </style>
 </head>
 <body>
 <header class="top">
   <div class="wrap">
-    <div class="brand">Planejamento <em>de conteúdo</em></div>
+    <div class="brand">Planeja <em>AI</em></div>
     <div class="marca-pick">
+      <span id="empBox"></span>
       <label for="marcaSel" class="muted" style="color:inherit;opacity:.75;font-size:13px">Marca</label>
       <select id="marcaSel"></select>
       <button class="ghost-light" id="novaMarca" type="button">+ Nova marca</button>
@@ -887,27 +907,10 @@ table.fin td.n input { text-align: right; }
     </div>
     <div class="me" id="me" hidden></div>
     <div class="notif-pop" id="notifPop" hidden role="dialog" aria-label="Notificações"></div>
-    <nav class="tabs" id="tabs">
-      <a href="#calendario">Calendário</a>
-      <a href="#stories">Stories</a>
-      <a href="#ideias">Ideias<span class="badge" id="ideiaBadge" hidden></span></a>
-      <a href="#pautas">Postagens</a>
-      <a href="#fluxo">Fluxo de produção</a>
-      <a href="#grade">Grade do Insta</a>
-      <a href="#resumo">Resumo do mês</a>
-      <a href="#marca">Marca</a>
-      <a href="#aprovacoes">Aprovações<span class="badge" id="apvBadge" hidden></span></a>
-      <a href="#tarefas">Tarefas<span class="badge" id="tfBadge" hidden></span></a>
-      <a href="#agenda" id="tabAgenda">Agenda<span class="badge" id="agBadge" hidden></span></a>
-      <a href="#horas" id="tabHoras">Horas</a>
-      <a href="#mural" id="tabMural">Mural<span class="badge" id="muBadge" hidden></span></a>
-      <a href="#financeiro" id="tabFin" hidden>Financeiro</a>
-      <a href="#painel" id="tabPainel" hidden>Painel</a>
-      <a href="#resultados" id="tabRes" hidden>Resultados</a>
-      <a href="#equipe" id="tabEquipe" hidden>Equipe</a>
-    </nav>
+    <nav class="tabs" id="tabs" aria-label="Menu"></nav>
   </div>
 </header>
+<div id="menuPop" hidden role="menu"></div>
 <main class="wrap" id="app">
   <div class="empty"><strong>Carregando o planejamento…</strong><span>As marcas e postagens aparecem aqui assim que a planilha responder.</span></div>
 </main>
@@ -980,7 +983,7 @@ const DEFAULT_FASES = [
 ];
 
 const S = {
-  canWrite: false, insta: {}, agenda: [], horas: [], mural: [], calSt: "", stories: [], met: {}, mh: {}, carimbo: "", desde: "", acessos: {}, tarefas: [], equipe: [], tf: { quem: "minhas", marca: "", feitas: false }, eu: null, usuarios: [], token: store("token") || "", rej: null, uEdit: null,
+  canWrite: false, empresa: store("empresa"), empresas: [], insta: {}, agenda: [], horas: [], mural: [], calSt: "", stories: [], met: {}, mh: {}, carimbo: "", desde: "", acessos: {}, tarefas: [], equipe: [], tf: { quem: "minhas", marca: "", feitas: false }, eu: null, usuarios: [], token: store("token") || "", rej: null, uEdit: null,
   marcas: [], posts: [], loadedM: false, loadedP: false, failed: false,
   marcaId: store("marca"), month: null,
   f: { status: "", formato: "", produto: "", q: "" },
@@ -1057,7 +1060,7 @@ function setMonth(ym) {
 /* ---------- Vistas ---------- */
 const view = () => {
   const h = location.hash.replace("#", "");
-  return ["calendario", "stories", "ideias", "resultados", "painel", "agenda", "horas", "mural", "financeiro", "marca-midias", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-acessos", "marca-config", "marca-plano", "aprovacoes", "equipe", "equipe-atividade", "conta", "tarefas"].includes(h) ? h : "calendario";
+  return ["calendario", "stories", "ideias", "resultados", "painel", "empresas", "agenda", "horas", "mural", "financeiro", "marca-midias", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-acessos", "marca-config", "marca-plano", "aprovacoes", "equipe", "equipe-atividade", "conta", "tarefas"].includes(h) ? h : "calendario";
 };
 
 function render() {
@@ -1065,34 +1068,19 @@ function render() {
   if (location.hash.startsWith("#proposta=")) { vPropostaPublica(location.hash.slice(10).replace(/\W/g, "")); return; }
   if (location.hash.startsWith("#briefing=")) { vBriefingPublico(location.hash.slice(10).replace(/\W/g, "")); return; }
   document.body.classList.remove("publico");
-  document.querySelectorAll("#tabs a").forEach(a => a.setAttribute("aria-current", view().split("-")[0] === a.getAttribute("href").slice(1) ? "page" : "false"));
   const sel = $("#marcaSel");
   sel.innerHTML = S.marcas.map(m => `<option value="${esc(m.id)}"${m.id === S.marcaId ? " selected" : ""}>${esc(m.nome)}</option>`).join("") || `<option>—</option>`;
   const app = $("#app");
   S.canWrite = podeEditar(S.marcaId);
   $("#novaMarca").hidden = !podeGerir();
-  $("#tabEquipe").hidden = !TODAS.includes(S.eu?.papel);
-  $("#tabFin").hidden = !TODAS_MARCAS.includes(S.eu?.papel);
-  $("#tabPainel").hidden = !TODAS.includes(S.eu?.papel);
-  $("#tabRes").hidden = !ehCliente();
   $("#buBtn").hidden = !S.eu;
   $("#me").hidden = !S.eu;
   if (S.eu) $("#me").innerHTML = sinoHtml() + avatarHtml(S.eu, 30) + `<span class="who">Olá, <b>${esc(S.eu.nome)}</b></span><span class="papel">${esc(PAPEIS[S.eu.papel] || "")}</span><a href="#conta">Minha conta</a><button class="ghost-light" type="button" onclick="sair()">Sair</button>`;
   if (S.eu && !$("#notifPop").hidden) desenharNotif();
-  const LIBERADAS_CLIENTE = ["#calendario", "#stories", "#grade", "#aprovacoes", "#resultados"];
-  document.querySelectorAll("#tabs a").forEach(a => { if (!["tabEquipe", "tabFin", "tabPainel", "tabRes"].includes(a.id)) a.hidden = ehCliente() && !LIBERADAS_CLIENTE.includes(a.getAttribute("href")); });
   if (ehCliente() && !["calendario", "stories", "grade", "aprovacoes", "conta", "resultados"].includes(view())) { location.replace("#aprovacoes"); return; }
-  const pend = pendencias().length, bd = $("#apvBadge");
-  bd.hidden = !pend; bd.textContent = pend;
-  const ni = S.marcaId ? ideiasMarca().length : 0, ib = $("#ideiaBadge");
-  ib.hidden = !ni; ib.textContent = ni; ib.style.background = "var(--surface-2)"; ib.style.color = "var(--ink)";
   desenharTemaBtn();
-  const nag = S.eu ? pedidosParaMim().length + convitesSemResposta().length : 0, ab = $("#agBadge");
-  ab.hidden = !nag; ab.textContent = nag;
-  const nmu = S.eu ? avisosNaoLidos().length : 0, mb = $("#muBadge"); mb.hidden = !nmu || view() === "mural"; mb.textContent = nmu;
-  $("#tabHoras").classList.toggle("cron-on", !!(S.eu && cronAtual()));
-  const urg = minhasUrgentes(), tb = $("#tfBadge");
-  tb.hidden = !urg; tb.textContent = urg;
+  $("#empBox").innerHTML = empresaSelHtml();
+  desenharMenu();
   if (!API) {
     app.innerHTML = `<div class="empty"><strong>Falta conectar a planilha</strong><span>Abra o arquivo <b>config.js</b> e cole em API_URL o endereço do App da Web do Google Apps Script. O passo a passo está no LEIAME.</span></div>`;
     return;
@@ -1104,8 +1092,8 @@ function render() {
   if (!S.token) { app.innerHTML = vLogin(); $("#lgLogin")?.focus(); return; }
   if (!S.loadedM || !S.loadedP) return;
   const v0 = view();
-  if (v0 === "equipe" || v0 === "equipe-atividade" || v0 === "conta" || v0 === "aprovacoes" || v0 === "tarefas" || v0 === "agenda" || v0 === "horas" || v0 === "mural" || v0 === "financeiro" || v0 === "painel") {
-    app.innerHTML = avisoVersao() + faixaAvisos() + (v0 === "equipe" ? vEquipe : v0 === "equipe-atividade" ? vAtividade : v0 === "conta" ? vConta : v0 === "tarefas" ? vTarefas : v0 === "agenda" ? vAgenda : v0 === "horas" ? vHoras : v0 === "mural" ? vMural : v0 === "financeiro" ? vFinanceiro : v0 === "painel" ? vPainel : vAprovacoes)();
+  if (v0 === "equipe" || v0 === "equipe-atividade" || v0 === "conta" || v0 === "aprovacoes" || v0 === "tarefas" || v0 === "agenda" || v0 === "horas" || v0 === "mural" || v0 === "financeiro" || v0 === "painel" || v0 === "empresas") {
+    app.innerHTML = avisoVersao() + faixaAvisos() + (v0 === "equipe" ? vEquipe : v0 === "equipe-atividade" ? vAtividade : v0 === "conta" ? vConta : v0 === "tarefas" ? vTarefas : v0 === "agenda" ? vAgenda : v0 === "horas" ? vHoras : v0 === "mural" ? vMural : v0 === "financeiro" ? vFinanceiro : v0 === "painel" ? vPainel : v0 === "empresas" ? vEmpresas : vAprovacoes)();
     return;
   }
   if (!marca()) {
@@ -2744,7 +2732,7 @@ function avatarHtml(u, tam = 28) {
 }
 function sinoHtml() {
   const novas = notificacoes().filter(n => n.em > vistoEm()).length;
-  document.title = (novas ? `(${novas}) ` : "") + "Planejamento de Conteúdo";
+  document.title = (novas ? `(${novas}) ` : "") + "Planeja AI";
   const aberto = !$("#notifPop").hidden;
   return `<button class="sino" type="button" id="sinoBtn" aria-label="Notificações${novas ? `: ${novas} novas` : ""}" aria-expanded="${aberto}" onclick="abrirNotif(event)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
@@ -2774,7 +2762,7 @@ function abrirNotif(e) {
   store(chaveNotif(), String(Date.now()));
   $("#me").innerHTML = $("#me").innerHTML.replace(/<span class="badge">[^<]*<\/span>/, "");
   $("#sinoBtn")?.setAttribute("aria-expanded", "true");
-  document.title = "Planejamento de Conteúdo";
+  document.title = "Planeja AI";
 }
 function fecharNotif() {
   $("#notifPop").hidden = true; S.notifBase = null;
@@ -2812,7 +2800,8 @@ async function entrar() {
 function limparTela() {
   S.dirty = false; S.rej = null; S.uEdit = null; S.boasVindas = null; S.confirmDel = false; S.delArq = null;
   S.acessos = {}; S.insta = {}; // senhas e chaves não passam de uma pessoa para outra no mesmo navegador
-  S.carimbo = ""; S.met = {}; S.stories = []; S.agenda = [];
+  S.carimbo = ""; S.met = {}; S.stories = []; S.agenda = []; S.empresa = null; S.empresas = [];
+  try { localStorage.removeItem("plan.empresa"); } catch (e) {}
   store("cores", "{}"); aplicarCores({});
   ["stDlg", "seDlg", "lkDlg", "evDlg"].forEach(d => { if ($("#" + d).open) $("#" + d).close(); });
   if ($("#dlg").open) $("#dlg").close();
@@ -4255,14 +4244,14 @@ async function lancarHora() {
   try { await api("salvarHora", { hora: { data: $("#hrData").value, minutos: min, marcaId: $("#hrMarca").value, descricao: $("#hrDesc").value.trim() } }); S.dirty = false; await carregar(); toast(hm(min) + " lançadas"); } catch (e) { writeFail(e); }
 }
 async function apagarHora(id) { try { await api("excluirHora", { id }); await carregar(); } catch (e) { writeFail(e); } }
-setInterval(() => { const t = $("#cronT"), c = cronAtual(); if (t && c) t.textContent = hm((Date.now() - c.inicio) / 60000); const tab = $("#tabHoras"); if (tab) tab.classList.toggle("cron-on", !!c); }, 15000);
+setInterval(() => { const t = $("#cronT"), c = cronAtual(); if (t && c) t.textContent = hm((Date.now() - c.inicio) / 60000); }, 15000);
 
 /* ---------- Mural de avisos ---------- */
 const avisosNaoLidos = () => (S.mural || []).filter(a => !(a.lidos || []).includes(S.eu?.id));
 function vMural() {
   if (ehCliente()) return `<div class="empty"><strong>Área da equipe</strong></div>`;
   const l = (S.mural || []).slice().sort((a, b) => (b.fixado - a.fixado) || b.criado - a.criado), nl = avisosNaoLidos().map(a => a.id);
-  if (nl.length) setTimeout(() => api("lerAviso", { ids: nl }).then(() => { (S.mural || []).forEach(a => { if (nl.includes(a.id)) a.lidos = (a.lidos || []).concat([S.eu.id]); }); const b = $("#muBadge"); if (b) b.hidden = true; }).catch(() => {}), 1500);
+  if (nl.length) setTimeout(() => api("lerAviso", { ids: nl }).then(() => { (S.mural || []).forEach(a => { if (nl.includes(a.id)) a.lidos = (a.lidos || []).concat([S.eu.id]); }); desenharMenu(); }).catch(() => {}), 1500);
   const f = S.avEdit;
   return head("Equipe", "Mural de avisos", ehChefe() && !f ? `<button class="btn primary" type="button" onclick="S.avEdit={};render()">+ Aviso</button>` : "") +
     (f ? `<form class="panel" style="display:grid;gap:10px;margin-bottom:16px;max-width:720px" onsubmit="event.preventDefault();salvarAviso()"><h2 style="margin:0">${f.id ? "Editar aviso" : "Novo aviso"}</h2>
@@ -4514,7 +4503,7 @@ function abrirApresentacao() {
   const m = marca(), ps = postsMes().filter(p => p.data), sts = storiesMarca().filter(x => (x.data || "").startsWith(S.month));
   const comem = datasComemorativas(m), datas = Object.entries(comem).filter(([k]) => k.startsWith(S.month)).sort();
   const slides = [];
-  slides.push(`<div class="ap-capa"><small>Planejamento de conteúdo</small><h1>${esc(m.nome)}</h1><h2>${esc(monthLabel(S.month))}</h2></div>`);
+  slides.push(`<div class="ap-capa"><small>Planejamento de conteúdo · ${esc(monthLabel(S.month))}</small><h1>${esc(m.nome)}</h1><h2>${esc(monthLabel(S.month))}</h2></div>`);
   const porFmt = FORMATOS.map(f => [f, ps.filter(p => p.formato === f).length]).filter(x => x[1]);
   slides.push(`<div class="ap-num"><h2>O mês em números</h2><div class="ap-kpis"><div><b>${ps.length}</b><span>posts no feed</span></div>${porFmt.map(([f, n]) => `<div><b>${n}</b><span>${f.toLowerCase()}${n > 1 ? "s" : ""}</span></div>`).join("")}<div><b>${sts.length}</b><span>stories</span></div></div>
     ${fasesDe(m).length ? `<div class="ap-fases">${fasesDe(m).map(f => { const n = ps.filter(p => p.fase === f.nome).length; return n ? `<span style="--c:${esc(f.cor)}"><i></i>${esc(f.nome)} · ${n}</span>` : ""; }).join("")}</div>` : ""}</div>`);
@@ -4854,6 +4843,99 @@ function vPainel() {
     </div>`;
 }
 
+/* ---------- Menu do topo com submenus ---------- */
+function menuGrupos() {
+  if (!S.eu) return [];
+  const cli = ehCliente(), chefe = TODAS.includes(S.eu.papel), dir = TODAS_MARCAS.includes(S.eu.papel), dono = !!S.eu.dono;
+  const n = f => { try { return f(); } catch (e) { return 0; } };
+  const badge = {
+    aprovacoes: n(() => pendencias().length), ideias: n(() => S.marcaId ? ideiasMarca().length : 0), tarefas: n(minhasUrgentes),
+    agenda: n(() => pedidosParaMim().length + convitesSemResposta().length), mural: n(() => view() === "mural" ? 0 : avisosNaoLidos().length)
+  };
+  const it = (v, l, ic) => ({ v, l, ic, b: badge[v] || 0 });
+  const g = [
+    { id: "plan", l: "Planejamento", ic: "📅", itens: cli ? [it("calendario", "Calendário", "📅"), it("stories", "Stories", "◯"), it("grade", "Grade do Insta", "▦")]
+      : [it("calendario", "Calendário", "📅"), it("stories", "Stories", "◯"), it("ideias", "Banco de ideias", "💡"), it("pautas", "Postagens", "☰"), it("fluxo", "Fluxo de produção", "⇄"), it("grade", "Grade do Insta", "▦")] },
+    { id: "apv", l: "Aprovações", ic: "✓", itens: [it("aprovacoes", "Aprovações", "✓")] },
+    { id: "res", l: "Resultados", ic: "📊", itens: cli ? [it("resultados", "Resultados", "📊")] : [it("resumo", "Resumo do mês", "📊"), ...(chefe ? [it("painel", "Painel da agência", "🧭")] : [])] }
+  ];
+  if (!cli) {
+    g.push({ id: "marca", l: "Marca", ic: "🏷️", itens: [["marca", "Visão geral"], ["marca-sobre", "Sobre"], ["marca-publico", "Público-alvo"], ["marca-produtos", "Produtos"], ["marca-redes", "Redes"], ["marca-arquivos", "Arquivos e identidade"], ["marca-midias", "Biblioteca"], ["marca-notas", "Observações"], ["marca-acessos", "Acessos"], ["marca-plano", "Pacote e legendas"], ["marca-config", "Configurações"]].map(([v, l]) => it(v, l)) });
+    g.push({ id: "equipe", l: "Equipe", ic: "👥", itens: [it("agenda", "Agenda", "🗓️"), it("tarefas", "Tarefas", "☐"), it("horas", "Horas" + (cronAtual() ? " ⏱" : ""), "⏱"), it("mural", "Mural", "📌"), ...(chefe ? [it("equipe", "Pessoas", "👤"), it("equipe-atividade", "Atividade", "📈")] : [])] });
+    const gest = [...(dir ? [it("financeiro", "Financeiro", "💰")] : []), ...(dono ? [it("empresas", "Empresas", "🏢")] : [])];
+    if (gest.length) g.push({ id: "gestao", l: "Gestão", ic: "💼", itens: gest });
+  }
+  return g;
+}
+function desenharMenu() {
+  const nav = $("#tabs"); if (!nav) return;
+  const v = view(), grupos = menuGrupos();
+  nav.innerHTML = grupos.map(gr => {
+    const ativo = gr.itens.some(x => x.v === v), soma = gr.itens.reduce((s, x) => s + x.b, 0);
+    const bd = soma ? `<span class="badge${gr.id === "plan" ? " suave" : ""}">${soma}</span>` : "";
+    if (gr.itens.length === 1) return `<a href="#${gr.itens[0].v}" class="mn-a" aria-current="${ativo ? "page" : "false"}">${esc(gr.l)}${bd}</a>`;
+    return `<button type="button" class="mn-a mn-g" aria-current="${ativo ? "page" : "false"}" aria-haspopup="true" aria-expanded="${S.menuAberto === gr.id}" onclick="abrirMenu('${gr.id}', this)">${esc(gr.l)}${bd}<i class="seta"></i></button>`;
+  }).join("");
+  if (S.menuAberto) { const b = nav.querySelector(`[onclick*="'${S.menuAberto}'"]`); if (b) posicionarMenu(S.menuAberto, b); else fecharMenu(); }
+}
+function abrirMenu(id, btn) {
+  if (S.menuAberto === id) return fecharMenu();
+  S.menuAberto = id; desenharMenu();
+}
+function posicionarMenu(id, btn) {
+  const gr = menuGrupos().find(x => x.id === id), pop = $("#menuPop"), v = view();
+  if (!gr) return fecharMenu();
+  pop.innerHTML = gr.itens.map(x => `<a href="#${x.v}" role="menuitem"${x.v === v ? ' aria-current="page"' : ""} onclick="fecharMenu()">${x.ic ? `<span class="ic">${x.ic}</span>` : ""}<span>${esc(x.l)}</span>${x.b ? `<span class="badge">${x.b}</span>` : ""}</a>`).join("");
+  pop.hidden = false;
+  const r = btn.getBoundingClientRect(), w = Math.max(220, r.width);
+  pop.style.minWidth = w + "px";
+  pop.style.left = Math.max(8, Math.min(r.left, innerWidth - pop.offsetWidth - 8)) + "px";
+  pop.style.top = (r.bottom + 6) + "px";
+}
+function fecharMenu() { S.menuAberto = null; const p = $("#menuPop"); if (p) p.hidden = true; document.querySelectorAll("#tabs [aria-expanded=true]").forEach(b => b.setAttribute("aria-expanded", "false")); }
+document.addEventListener("click", e => { if (S.menuAberto && !e.target.closest("#menuPop") && !e.target.closest(".mn-g")) fecharMenu(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && S.menuAberto) fecharMenu(); });
+addEventListener("resize", () => { if (S.menuAberto) fecharMenu(); });
+addEventListener("scroll", () => { if (S.menuAberto) fecharMenu(); });
+
+/* ---------- Empresas (dona da plataforma) ---------- */
+function empresaSelHtml() {
+  if (!S.eu || !S.eu.dono) return "";
+  return `<select id="empSel" aria-label="Empresa" onchange="trocarEmpresa(this.value)"><option value=""${S.empresa === "" ? " selected" : ""}>Todas as empresas</option>${(S.empresas || []).map(e => `<option value="${esc(e.id)}"${e.id === S.empresa ? " selected" : ""}>${esc(e.nome)}${e.ativo ? "" : " (desativada)"}</option>`).join("")}</select>`;
+}
+function trocarEmpresa(id) {
+  S.empresa = id; store("empresa", id); S.carimbo = ""; S.marcaId = null; S.month = null;
+  S.insta = {}; S.acessos = {}; S.met = {}; S.mh = {}; S.trends = null; S.boasVindas = null; S.empEdit = null; S.empMsg = null; S.dirty = false;
+  carregar().then(() => { render(); toast(id ? "Empresa: " + ((S.empresas || []).find(e => e.id === id) || {}).nome : "Mostrando todas as empresas"); });
+}
+function vEmpresas() {
+  if (!S.eu.dono) return `<div class="empty"><strong>Só a dona da plataforma vê as empresas</strong></div>`;
+  const l = S.empresas || [], f = S.empEdit;
+  return head("Plataforma", "Empresas", f ? "" : `<button class="btn primary" type="button" onclick="S.empEdit={ativo:true};render()">+ Empresa</button>`) +
+    `${S.empMsg ? `<div class="panel" style="margin-bottom:16px;display:grid;gap:8px;max-width:640px"><b>✅ Empresa criada. Mande o acesso para o administrador dela:</b><textarea rows="7" readonly style="width:100%">${esc(S.empMsg.msg)}</textarea><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" type="button" onclick="copiarTexto(S.empMsg.msg,'Copiado')">Copiar</button><a class="btn sm" href="https://wa.me/?text=${encodeURIComponent(S.empMsg.msg)}" target="_blank" rel="noopener">Mandar no WhatsApp</a><button class="btn sm" type="button" onclick="S.empMsg=null;render()">Fechar</button></div></div>` : ""}<p class="sec-intro">Cada empresa (agência) tem a própria equipe, marcas, financeiro, mural e e-mails. Ninguém de uma empresa vê nada da outra. Você, como dona da plataforma, escolhe no topo qual empresa está olhando.</p>
+    ${f ? `<form class="panel" style="display:grid;gap:10px;max-width:640px;margin-bottom:16px" onsubmit="event.preventDefault();salvarEmpresa()"><h2 style="margin:0">${f.id ? "Editar empresa" : "Nova empresa"}</h2>
+      <label class="field"><span>Nome da empresa</span><input id="emNome" required value="${esc(f.nome || "")}" placeholder="Ex.: Belkit"></label>
+      ${f.id ? `<label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" id="emAtivo"${f.ativo ? " checked" : ""}> Empresa ativa (desativada: ninguém dela consegue entrar)</label>`
+        : `<div class="field"><span>Primeiro administrador da empresa</span><span class="muted" style="font-size:13px">Ele cadastra a equipe e as marcas da empresa.</span></div>
+        <div class="pf-grid"><label class="field"><span>Nome</span><input id="emAdmNome" placeholder="Ex.: Diretora da Belkit"></label><label class="field"><span>E-mail (login)</span><input id="emAdmLogin" type="email" required></label>
+        <label class="field"><span>Senha provisória</span><span class="prod-pick"><input id="emAdmSenha" required minlength="6" value="${esc(gerarSenha())}" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px"></span></label></div>`}
+      <label class="field"><span>Observação</span><input id="emObs" value="${esc(f.obs || "")}" placeholder="Plano, contato, contrato…"></label>
+      <div style="display:flex;gap:8px"><button class="btn primary" type="submit">Salvar</button><button class="btn" type="button" onclick="S.empEdit=null;render()">Cancelar</button></div></form>` : ""}
+    <div class="table-wrap"><table style="min-width:560px"><thead><tr><th>Empresa</th><th>Situação</th><th>Criada</th><th></th></tr></thead><tbody>
+    ${l.map(e => `<tr><td><b>${esc(e.nome)}</b>${e.obs ? `<div class="muted" style="font-size:12px">${esc(e.obs)}</div>` : ""}</td><td>${e.ativo ? "Ativa" : `<span class="atraso">Desativada</span>`}</td><td>${e.criado ? brFull(iso(new Date(e.criado))) : ""}</td>
+      <td style="white-space:nowrap"><button class="btn sm" type="button" onclick="trocarEmpresa('${esc(e.id)}');location.hash='#calendario'">Entrar nela</button> <button class="btn sm" type="button" onclick="S.empEdit=JSON.parse(JSON.stringify(S.empresas.find(x=>x.id==='${esc(e.id)}')));render()">Editar</button></td></tr>`).join("")}</tbody></table></div>`;
+}
+async function salvarEmpresa() {
+  const f = S.empEdit, d = { id: f.id || "", nome: $("#emNome").value.trim(), obs: $("#emObs").value.trim(), ativo: f.id ? $("#emAtivo").checked : true };
+  if (!f.id) d.admin = { nome: $("#emAdmNome").value.trim(), login: $("#emAdmLogin").value.trim(), senha: $("#emAdmSenha").value.trim() };
+  try {
+    await api("salvarEmpresa", { empresaDados: d }); S.empEdit = null; S.dirty = false; S.carimbo = ""; await carregar();
+    if (d.admin) { S.empMsg = { msg: `Olá, ${d.admin.nome || ""}! Seu acesso ao Planeja AI da ${d.nome} está pronto.\n\nEndereço: ${location.origin + location.pathname}\nLogin: ${d.admin.login}\nSenha provisória: ${d.admin.senha}\n\nNo primeiro acesso, troque a senha em "Minha conta".` }; copiarTexto(S.empMsg.msg, "Empresa criada. Mensagem de acesso copiada"); }
+    else toast("Salvo");
+    render();
+  } catch (e) { writeFail(e); }
+}
+
 /* ---------- Eventos ---------- */
 $("#marcaSel").addEventListener("change", e => { S.marcaId = e.target.value; store("marca", S.marcaId); S.month = null; S.f = { status: "", formato: "", produto: "", q: "" }; S.confirmDel = false; S.dirty = false; render(); });
 $("#novaMarca").addEventListener("click", novaMarca);
@@ -4869,12 +4951,12 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-06.2"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-07.1"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({ action, token: S.token, site: location.origin + location.pathname, ...payload })
+    body: JSON.stringify({ action, token: S.token, site: location.origin + location.pathname, ...(S.empresa != null ? { empresa: S.empresa } : {}), ...payload })
   });
   const j = await r.json();
   if (!j.ok) throw { code: j.code || "server", message: j.error || "" };
@@ -4888,7 +4970,8 @@ async function carregar() {
     if (j.igual) { S.versao = j.versao || S.versao; return; }
     S.carimbo = j.carimbo || "";
     S.stories = j.stories || []; S.agenda = j.agenda || []; S.horas = j.horas || []; S.mural = j.mural || []; S.avaliacoes = j.avaliacoes || []; S.pagamentos = j.pagamentos || []; S.temTrends = !!j.temTrends; S.temIA = !!j.temIA; S.gcal = !!j.gcal; S.propostas = j.propostas || [];
-    S.eu = j.eu; S.usuarios = j.usuarios || []; S.tarefas = j.tarefas || []; S.equipe = j.equipe || [];
+    S.eu = j.eu;
+    if (j.eu && j.eu.dono) { S.empresas = j.empresas || []; if (S.empresa == null) S.empresa = j.empresa ? j.empresa.id : ""; } else { S.empresa = null; S.empresas = []; } S.usuarios = j.usuarios || []; S.tarefas = j.tarefas || []; S.equipe = j.equipe || [];
     S.versao = j.versao || "antiga";
     S.marcas = (j.marcas || []).sort((a, b) => (a.criado || 0) - (b.criado || 0) || String(a.nome).localeCompare(b.nome));
     S.posts = (j.pautas || []).map(p => ({ ...p, status: normStatus(p.status) }));

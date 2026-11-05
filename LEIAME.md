@@ -1,4 +1,4 @@
-# Planejamento de Conteúdo
+# Planeja AI
 
 Sistema de planejamento de Instagram por marca: calendário, postagens, fluxo de produção, grade do feed e resumo do mês.
 
@@ -193,6 +193,28 @@ Aba **Agenda** (para toda a equipe; o cliente não vê):
 - **Pedir reunião** (social media e aprovador): o pedido vai para a gestão, que **aceita** (pode mudar dia e hora) ou **recusa** com o motivo. Só depois de aceito entra na agenda de todos.
 - Avisa quando o horário bate com outro compromisso seu.
 - O sino e o número na aba mostram pedidos para responder e reuniões esperando a sua resposta. As reuniões do dia entram no resumo diário por e-mail.
+
+## Empresas (várias agências no mesmo sistema)
+
+O sistema separa tudo por **empresa** (agência). Cada empresa tem a própria equipe, marcas, posts, stories, tarefas, agenda, horas, mural, financeiro, propostas, integrações (IA, Google Agenda, trends) e e-mails. **Ninguém de uma empresa vê, edita ou recebe e-mail de outra.**
+
+- Na atualização, tudo o que já existia vai para a empresa **Valim Creative Studio**, e a sua conta vira **dona da plataforma**.
+- Como dona, você vê no topo o seletor de empresa: escolha qual está olhando ou "Todas as empresas" (para cadastrar marca, pessoa, reunião etc., escolha uma empresa).
+- **Gestão → Empresas**: crie uma empresa (ex.: Belkit) já com o primeiro administrador dela (nome, e-mail e senha provisória). O sistema monta a mensagem de acesso para mandar no WhatsApp. Esse administrador cadastra o diretor, gestores, social medias e marcas da empresa dele.
+- Dá para **desativar** uma empresa: ninguém dela consegue entrar até reativar.
+- Os papéis continuam os mesmos dentro de cada empresa: administrador e diretor veem tudo **da empresa deles**; gestor, social media e aprovadores veem as marcas liberadas.
+
+## Menu
+
+O menu do topo agora é agrupado (toque para abrir o submenu):
+- **Planejamento**: Calendário, Stories, Banco de ideias, Postagens, Fluxo de produção, Grade do Insta
+- **Aprovações**
+- **Resultados**: Resumo do mês, Painel da agência (cliente: Resultados)
+- **Marca**: todas as seções da marca
+- **Equipe**: Agenda, Tarefas, Horas, Mural, Pessoas, Atividade
+- **Gestão**: Financeiro e Empresas
+
+Os números (aprovações, tarefas, pedidos de reunião, avisos) aparecem no grupo e dentro do submenu.
 
 ## Conferência, IA, Google Agenda, Canva, resultados, propostas e painel
 
