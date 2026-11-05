@@ -231,6 +231,14 @@ O sistema separa tudo por **empresa** (agência). Cada empresa tem a própria eq
 - Dá para **desativar** uma empresa: ninguém dela consegue entrar até reativar.
 - Os papéis continuam os mesmos dentro de cada empresa: administrador e diretor veem tudo **da empresa deles**; gestor, social media e aprovadores veem as marcas liberadas.
 
+## Apagar uma pessoa da equipe
+
+Em **Equipe**, clique na pessoa e use **Excluir pessoa** (embaixo do formulário). Ela perde o acesso na hora e some da equipe; posts, comentários e tarefas que ela fez continuam com o nome dela. Fica anotado no **Registro**.
+
+- Apagam: o administrador (qualquer pessoa) e o diretor (gestores, social medias e aprovadores).
+- Não dá para apagar a própria conta, a conta da dona da plataforma nem o único administrador da empresa.
+- Se for só uma pausa, desmarque **Acesso ativo** em vez de apagar.
+
 ## Senha, tour, ajuda, registro e exportação
 
 - **Esqueci minha senha:** na tela de entrar, "Esqueci minha senha" manda um link por e-mail (vale 1 hora) para criar uma senha nova. Ao criar, as sessões abertas em outros aparelhos são encerradas. Para evitar abuso, são no máximo 5 pedidos por hora.

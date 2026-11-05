@@ -19,7 +19,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-10.1';
+const VERSAO = '2026-11-11.1';
 // Endereço oficial do site. Os links dos e-mails SEMPRE usam este endereço (nunca o que vem do pedido).
 // A dona da plataforma pode trocar em Gestão → Empresas → Endereço do sistema.
 const SITE_PADRAO = 'https://valimcreativestudio.github.io/anajuliavalim-planejamento-conteudo/';
@@ -198,7 +198,7 @@ const TELA_DA_ACAO = {
   salvarEvento: 'agenda', responderEvento: 'agenda', excluirEvento: 'agenda', salvarAta: 'agenda', horariosLivres: 'agenda',
   salvarTarefa: 'tarefas', concluirTarefa: 'tarefas', excluirTarefa: 'tarefas',
   salvarHora: 'horas', excluirHora: 'horas', salvarAviso: 'mural', excluirAviso: 'mural', lerAviso: 'mural',
-  salvarUsuario: 'equipe', pagamento: 'financeiro', salvarProposta: 'financeiro', excluirProposta: 'financeiro',
+  salvarUsuario: 'equipe', excluirUsuario: 'equipe', pagamento: 'financeiro', salvarProposta: 'financeiro', excluirProposta: 'financeiro',
   auditoria: 'registro', perfilEmpresa: 'empresa', exportar: 'empresa', acessosListar: 'marca-acessos', acessosSalvar: 'marca-acessos',
   trends: 'ideias', trendsConfig: 'ideias'
 };
@@ -221,6 +221,7 @@ function rodarAcao_(eu, req) {
         case 'salvarMarca': return json_({ ok: true, id: salvarMarca_(eu, req.marca || {}) });
         case 'excluirMarca': soAdmin_(eu); if (!acesso_(eu, req.id)) throw erro_('permissao', 'Sem acesso a esta marca.'); excluirMarca_(req.id); return json_({ ok: true });
         case 'salvarUsuario': gerencia_(eu); return json_({ ok: true, id: salvarUsuario_(eu, req.usuario || {}) });
+        case 'excluirUsuario': gerencia_(eu); excluirUsuario_(eu, req.id); return json_({ ok: true });
         case 'trocarSenha': eu.token = req.token; trocarSenha_(eu, req.atual, req.nova); return json_({ ok: true });
         case 'salvarTarefa': return json_({ ok: true, id: salvarTarefa_(eu, req.tarefa || {}, req.site) });
         case 'concluirTarefa': concluirTarefa_(eu, req.id, req.status || (req.feita !== false ? 'Feita' : 'Pendente')); return json_({ ok: true });
@@ -1054,6 +1055,22 @@ function salvarUsuario_(eu, u) {
     visual: atual ? atual.visual : '',
     foto: atual ? atual.foto : ''
   });
+}
+
+// apaga a pessoa de vez (o que ela fez continua no sistema com o nome dela)
+function excluirUsuario_(eu, id) {
+  const todos = ler_(ABA_USUARIOS, CAMPOS_USUARIO);
+  const alvo = todos.filter(x => x.id === String(id || ''))[0];
+  if (!alvo) throw erro_('server', 'Pessoa não encontrada. Atualize a página.');
+  if (!mesmaEmp_(eu, alvo.empresaId)) throw erro_('permissao', 'Esta pessoa é de outra empresa.');
+  if (alvo.id === eu.id) throw erro_('server', 'Você não pode apagar a sua própria conta.');
+  if (alvo.dono === 'sim') throw erro_('permissao', 'A conta da dona da plataforma não pode ser apagada.');
+  if (eu.papel === 'diretor' && ['admin', 'diretor'].indexOf(alvo.papel) >= 0) throw erro_('permissao', 'Só o administrador apaga administradores e diretores.');
+  if (alvo.papel === 'admin' && !todos.some(x => x.id !== alvo.id && x.papel === 'admin' && x.ativo === 'sim' && x.empresaId === alvo.empresaId))
+    throw erro_('server', 'Esta é a única pessoa administradora da empresa. Cadastre outra antes de apagar.');
+  derrubarSessoes_(alvo.id);
+  if (alvo.foto) { try { DriveApp.getFileById(alvo.foto).setTrashed(true); } catch (e) { /* já não existe */ } }
+  excluirLinha_(ABA_USUARIOS, CAMPOS_USUARIO, alvo.id);
 }
 
 // foto de perfil: fica numa pasta "Equipe" no Drive, visível para quem tem o link
@@ -2844,6 +2861,7 @@ function antesDoRegistro_(eu, req) {
       const mud = atual ? [atual.papel !== u.papel && 'papel: ' + atual.papel + ' → ' + u.papel, (atual.ativo === 'sim') !== (u.ativo !== false) && (u.ativo === false ? 'desativou o acesso' : 'reativou o acesso'), u.senha && 'senha nova', String(atual.marcas) !== (u.marcas || []).join(',') && 'mudou as marcas'].filter(Boolean).join('; ') : 'papel: ' + u.papel;
       return [atual ? 'Alterou a pessoa' : 'Cadastrou a pessoa', (u.nome || u.login || '') + ' (' + (PAPEIS.indexOf(u.papel) >= 0 ? u.papel : '') + ')', mud];
     }
+    case 'excluirUsuario': { const x = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(u => u.id === String(req.id))[0]; return x ? ['Apagou a pessoa', x.nome + ' (' + x.login + ')', x.papel, x.empresaId] : null; }
     case 'excluirPauta': { const t = titPost(req.id); return ['Apagou a postagem', t[0], 'foi para a lixeira', t[1]]; }
     case 'excluirStory': { const x = ler_(ABA_STORIES, CAMPOS_STORY).filter(s => s.id === String(req.id))[0]; return x ? ['Apagou um story', (x.titulo || x.tipo || 'Story') + ' · ' + nomeDaMarca_(x.marcaId), 'foi para a lixeira', empresaDe_(x.marcaId)] : null; }
     case 'excluirMarca': return ['Excluiu a marca', nomeDaMarca_(req.id), 'com todas as postagens', empresaDe_(req.id)];

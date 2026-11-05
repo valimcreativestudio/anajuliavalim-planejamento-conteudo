@@ -3027,7 +3027,7 @@ function vEquipe() {
   const u = S.uEdit;
   const marcasTxt = x => TODAS_MARCAS.includes(x.papel) || x.marcas.includes("*") ? "Todas" : x.marcas.map(nomeMarca).filter(Boolean).join(", ") || "Nenhuma";
   const marcasCel = x => TODAS_MARCAS.includes(x.papel) ? `<span class="muted">Todas (sempre)</span>` : editavel(x) && x.id !== S.eu.id ? marcasSel(x) : esc(marcasTxt(x));
-  const linhas = S.usuarios.slice().sort((a, b) => a.nome.localeCompare(b.nome)).map(x => `<tr${editavel(x) ? ` onclick="S.uEdit=S.usuarios.find(y=>y.id===${js(x.id)});render()"` : ' style="cursor:default" title="Só o administrador altera este acesso"'}>
+  const linhas = S.usuarios.slice().sort((a, b) => a.nome.localeCompare(b.nome)).map(x => `<tr${editavel(x) ? ` onclick="S.delU=false;S.uEdit=S.usuarios.find(y=>y.id===${js(x.id)});render()"` : ' style="cursor:default" title="Só o administrador altera este acesso"'}>
     <td><div class="pessoa">${avatarHtml(x, 34)}<div><b>${esc(x.nome)}</b><div class="muted">${esc(x.login)}${x.whatsapp ? " · " + esc(fmtTel(x.whatsapp)) : ""}</div></div></div></td>
     <td onclick="event.stopPropagation()">${editavel(x) && x.id !== S.eu.id ? `<select class="papel-sel" aria-label="Papel de ${esc(x.nome)}" onchange="trocarPapel(${js(x.id)}, this.value)">${Object.entries(PAPEIS).filter(([k]) => papeisPermitidos.includes(k) || k === x.papel).map(([k, l]) => `<option value="${k}"${k === x.papel ? " selected" : ""}>${l}</option>`).join("")}</select>` : esc(PAPEIS[x.papel] || x.papel)}</td><td onclick="event.stopPropagation()">${marcasCel(x)}</td><td onclick="event.stopPropagation()">${x.ativo ? "Ativo" : `<span class="muted">Desativado</span>`}${x.papel === "cliente" && x.ativo ? `<br><button class="btn sm" type="button" style="margin-top:4px" onclick="linkCliente(${js(x.id)})">🔗 Link sem senha</button>` : ""}</td></tr>`).join("");
   const form = u ? `<form class="panel" style="display:grid;gap:12px;margin-top:16px" onsubmit="event.preventDefault();salvarUsuario()">
@@ -3045,7 +3045,10 @@ function vEquipe() {
             ${S.marcas.map(m => `<label><input type="checkbox" value="${esc(m.id)}"${(u.marcas || []).includes(m.id) ? " checked" : ""}> ${esc(m.nome)}</label>`).join("")}</div></div>`}
         <label class="field full" style="display:flex;gap:8px;align-items:center"><input id="uAtivo" type="checkbox"${u.ativo !== false ? " checked" : ""}> Acesso ativo</label>
       </div>
-      <div style="display:flex;gap:8px"><button class="btn primary" type="submit">Salvar</button><button class="btn" type="button" onclick="S.uEdit=null;S.dirty=false;render()">Cancelar</button></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn primary" type="submit">Salvar</button><button class="btn" type="button" onclick="S.uEdit=null;S.dirty=false;S.delU=false;render()">Cancelar</button>
+        ${u.id && u.id !== S.eu.id && !u.dono ? (S.delU ? `<span class="confirm" style="margin-left:auto">Apagar ${esc(u.nome)} de vez? <button class="btn sm danger" type="button" id="uDelBtn" onclick="excluirUsuario()">Apagar</button><button class="btn sm" type="button" onclick="lerFormU();S.delU=false;render()">Não</button></span>`
+          : `<button class="btn danger" type="button" style="margin-left:auto" onclick="lerFormU();S.delU=true;render()">Excluir pessoa</button>`) : ""}</div>
+      ${S.delU ? `<p class="muted" style="font-size:12.5px;margin:0">A pessoa perde o acesso na hora e some da equipe. Posts, comentários e tarefas que ela fez continuam com o nome dela. Se for só uma pausa, prefira desmarcar "Acesso ativo".</p>` : ""}
     </form>` : "";
   return head(ehAdmin() ? "Administração" : "Direção", "Equipe", `<button class="btn primary" type="button" onclick="S.uEdit={papel:'social',marcas:[],ativo:true};render()">+ Pessoa</button>`) + equipeNav() +
     `<p class="sec-intro"><b>Social media</b> vê e alimenta só as marcas liberadas para ele (inclusive nome, fases e configurações) e envia ideias e conteúdos para aprovação. <b>Aprovador (gestor)</b> valida ideias e aprova conteúdos das marcas liberadas. <b>Aprovador (cliente)</b> aprova ideias e posts depois da equipe, vendo como vão ficar no Instagram, e só enxerga as aprovações, o calendário e a grade das marcas dele. <b>Gestor</b> vê as marcas liberadas para ele, acompanha a atividade da equipe, alimenta (inclusive as configurações das marcas), valida e aprova, mas não mexe na equipe. <b>Diretor</b> faz tudo o que o gestor faz e também cadastra gestores, social medias e aprovadores, cria marcas e ajusta as configurações; não exclui marcas nem mexe em administradores e diretores. <b>Administrador</b> vê e faz tudo. Não há limite de pessoas nem de marcas por pessoa.</p>
@@ -3097,6 +3100,12 @@ function lerFormU() {
   Object.assign(S.uEdit, { nome: $("#uNome").value, login: $("#uLogin").value, whatsapp: soDigitos($("#uTel").value), aniversario: $("#uAni").value.trim(), senhaTemp: $("#uSenha").value, papel: $("#uPapel").value, ativo: $("#uAtivo").checked, marcas: lerMarcasU() });
 }
 function lerMarcasU() { return [...document.querySelectorAll("#uMarcas input:checked")].map(i => i.value); }
+async function excluirUsuario() {
+  const id = S.uEdit && S.uEdit.id, nome = S.uEdit.nome, b = $("#uDelBtn"); if (!id) return;
+  if (b) { b.disabled = true; b.textContent = "Apagando…"; }
+  try { await api("excluirUsuario", { id }); S.uEdit = null; S.delU = false; S.dirty = false; S.carimbo = ""; await carregar(); render(); toast(`${nome} foi apagado(a) da equipe`); }
+  catch (e) { if (b) { b.disabled = false; b.textContent = "Apagar"; } writeFail(e); }
+}
 async function salvarUsuario() {
   const u = { id: S.uEdit.id || "", nome: $("#uNome").value.trim(), login: $("#uLogin").value.trim(), whatsapp: soDigitos($("#uTel").value), aniversario: $("#uAni").value.trim(), papel: $("#uPapel").value, senha: $("#uSenha").value.trim(), ativo: $("#uAtivo").checked, marcas: TODAS_MARCAS.includes($("#uPapel").value) ? ["*"] : lerMarcasU() };
   try {
@@ -5367,7 +5376,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-10.1"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-11.1"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",
