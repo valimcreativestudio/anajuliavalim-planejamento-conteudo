@@ -2,6 +2,9 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; frame-src https://drive.google.com https://docs.google.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<script>if (window.top !== window.self) { try { window.top.location = window.self.location; } catch (e) { document.documentElement.style.display = "none"; } }</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Planeja Aê</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -1023,6 +1026,10 @@ function store(k, v) {
 }
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+// texto que começa com = + - @ vira fórmula no Excel: põe um apóstrofo na frente
+function semFormula(v) { const t = String(v ?? ""); return /^[=+\-@\t\r]/.test(t) && !/^-?\d+([.,]\d+)?$/.test(t) ? "'" + t : t; }
+function js(v) { return esc(JSON.stringify(String(v == null ? "" : v))); }
+function urlOk(u) { u = String(u || "").trim(); return /^https?:\/\/[^\s"'<>]+$/i.test(u) ? u : ""; }
 const pad = n => String(n).padStart(2, "0");
 const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const parse = s => { const [y, m, d] = (s || "").split("-").map(Number); return new Date(y, (m || 1) - 1, d || 1); };
@@ -1201,7 +1208,7 @@ function vCal() {
       ${S.canWrite ? `<button class="add-day" type="button" aria-label="Nova postagem em ${br(k)}" onclick="openEditor(null,'${k}')">+</button>` : ""}</div>
       ${!out && aniversariosDia(k, m.id).length ? `<div class="ani">🎂 ${esc(aniTxt(aniversariosDia(k, m.id)))}</div>` : ""}
       ${comem[k] && !out ? `<div class="comem" title="${esc(comem[k].join(" · "))}">🎉 ${esc(comem[k].join(" · "))}</div>` : ""}
-      ${ps.map(p => `<button class="chip${S.calSt && grupoSt(p.status)[0] !== S.calSt ? " apagado" : ""}" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="openEditor('${esc(p.id)}')"${S.canWrite ? ` draggable="true" data-id="${esc(p.id)}"` : ""}>
+      ${ps.map(p => `<button class="chip${S.calSt && grupoSt(p.status)[0] !== S.calSt ? " apagado" : ""}" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="openEditor(${js(p.id)})"${S.canWrite ? ` draggable="true" data-id="${esc(p.id)}"` : ""}>
         <span class="st-bola" style="background:${stColor(p.status)}" title="${esc(grupoSt(p.status)[0])}"></span>
         ${blobSrc(p) ? `<span class="prev"><img src="${esc(blobSrc(p))}" alt="" loading="lazy" onerror="this.parentNode.remove()"></span>` : ""}
         <span class="meta"><span class="fmt">${FMT_ICON[p.formato] || ""} ${esc(p.formato || "")}</span>${REPROVADOS.includes(p.status) ? `<span class="flag">${p.status === "Ideia reprovada" ? "Reprovada" : "Ajustes"}</span>` : ""}${COM_CLIENTE.includes(p.status) ? `<span style="color:var(--pr-alta)">Com o cliente</span>` : ""}${atrasoDe(p) ? `<span class="atr" title="${esc(atrasoDe(p).txt)}">⚠ Atrasado</span>` : ""}${(p.comentarios || []).length ? `<span title="Comentários">💬 ${p.comentarios.length}</span>` : ""}${p.status === "Agendado" && p.agHora ? `<span title="Agendado">⏰ ${esc(p.agHora)}${p.agData && p.agData !== p.data ? " " + br(p.agData) : ""}</span>` : ""}</span>
@@ -1230,9 +1237,9 @@ function setF(k, v) { S.f[k] = v; render(); }
 function vPautas() {
   const m = marca(), ps = filtered();
   const opt = (arr, cur, all) => `<option value="">${all}</option>` + arr.map(x => `<option${x === cur ? " selected" : ""}>${esc(x)}</option>`).join("");
-  const rows = ps.map(p => `<tr onclick="openEditor('${esc(p.id)}')">
+  const rows = ps.map(p => `<tr onclick="openEditor(${js(p.id)})">
     <td onclick="event.stopPropagation()">${podeGerir()
-      ? `<select class="st-sel" aria-label="Status" style="color:${stColor(p.status)}" onchange="setStatus('${esc(p.id)}',this.value)">${STATUS.map(s => `<option${s === p.status ? " selected" : ""}>${s}</option>`).join("")}</select>`
+      ? `<select class="st-sel" aria-label="Status" style="color:${stColor(p.status)}" onchange="setStatus(${js(p.id)},this.value)">${STATUS.map(s => `<option${s === p.status ? " selected" : ""}>${s}</option>`).join("")}</select>`
       : `<span class="pill" style="--c:${stColor(p.status)}"><span class="dot"></span>${esc(p.status)}</span>`}
       ${p.motivo ? `<div class="muted" style="font-size:12px;max-width:22ch;margin-top:4px" title="${esc(p.motivo)}">Motivo: ${esc(p.motivo.length > 60 ? p.motivo.slice(0, 60) + "…" : p.motivo)}</div>` : ""}</td>
     <td class="num">${brFull(p.data)}<div class="muted">${wd(p.data)}</div></td>
@@ -1243,7 +1250,7 @@ function vPautas() {
     <td>${esc(p.objetivo)}</td>
     <td>${esc(p.cta)}</td>
     <td>${esc(p.rede)}</td>
-    <td onclick="event.stopPropagation()">${/^https?:\/\//.test(p.criativo || "") ? `<a class="lnk" href="${esc(p.criativo)}" target="_blank" rel="noopener">Abrir</a>` : `<span class="muted">—</span>`}</td>
+    <td onclick="event.stopPropagation()">${/^https?:\/\//.test(p.criativo || "") ? `<a class="lnk" href="${esc(urlOk(p.criativo))}" target="_blank" rel="noopener">Abrir</a>` : `<span class="muted">—</span>`}</td>
   </tr>`).join("");
   return headM(m.nome, "Postagens do mês", monthNav() + `<button class="btn" type="button" onclick="copiarTabela()">Copiar para planilha</button>` + addBtn()) +
     `<div class="filters">
@@ -1290,7 +1297,7 @@ function vFluxo() {
     const items = ps.filter(p => sts.includes(p.status));
     return `<section class="col" data-st="${titulo}">
       <h3><span class="dot" style="background:${stColor(titulo)}"></span>${titulo}<span class="n">${items.length}</span></h3>
-      ${items.map(p => `<article class="card" draggable="${adm}" data-id="${esc(p.id)}" onclick="openEditor('${esc(p.id)}')" style="border-left:4px solid ${esc(faseCor(m, p.fase))}">
+      ${items.map(p => `<article class="card" draggable="${adm}" data-id="${esc(p.id)}" onclick="openEditor(${js(p.id)})" style="border-left:4px solid ${esc(faseCor(m, p.fase))}">
         <div class="meta"><span>${br(p.data)} · ${wd(p.data).slice(0, 3)}</span><span>${FMT_ICON[p.formato] || ""} ${esc(p.formato)}</span></div>
         <div class="t">${esc(nm(p))}</div>
         ${REPROVADOS.includes(p.status) ? `<div class="flag">${esc(p.status)}</div>${p.motivo ? `<div class="muted" style="font-size:12px">${esc(p.motivo)}</div>` : ""}` : ""}
@@ -1374,13 +1381,13 @@ function gradeBox(m, mes, destaque) {
   const tiles = itens.map(it => {
     if (it.t === "ig") {
       const x = it.x;
-      return `<a class="tile ig has-img" href="${esc(x.link)}" target="_blank" rel="noopener" title="${esc(x.legenda || "Post do Instagram")}">
+      return `<a class="tile ig has-img" href="${esc(urlOk(x.link))}" target="_blank" rel="noopener" title="${esc(x.legenda || "Post do Instagram")}">
         ${x.img ? `<img src="${esc(x.img)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ""}
         ${x.tipo === "VIDEO" ? `<span class="fic">▶</span>` : x.tipo === "CAROUSEL_ALBUM" ? `<span class="fic">▤</span>` : ""}${ponto}</a>`;
     }
     const p = it.p, src = blobSrc(p);
     const cls = p.id === destaque ? " destaque" : (destaque && AGUARDA.includes(p.status) ? " aguarda" : "");
-    return `<button class="tile${src ? " has-img" : ""}${cls}" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="${destaque ? "$('#grDlg').close();" : ""}openEditor('${esc(p.id)}')" title="${esc(nm(p))} · ${esc(p.status)}">
+    return `<button class="tile${src ? " has-img" : ""}${cls}" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="${destaque ? "$('#grDlg').close();" : ""}openEditor(${js(p.id)})" title="${esc(nm(p))} · ${esc(p.status)}">
       ${src ? `<img src="${esc(src)}" alt="${esc(nm(p))}" loading="lazy" onerror="this.parentNode.classList.remove('has-img');this.remove()">` : ""}
       <span class="fic">${FMT_ICON[p.formato] || ""}</span>
       <span class="tt">${esc(nm(p))}</span>
@@ -1533,8 +1540,10 @@ function vResumo() {
 
 /* downloads: as bibliotecas só carregam quando alguém clica */
 const LIBS = {
-  html2canvas: "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
-  jspdf: "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+  // ficam no próprio site (pasta vendor/): nada de código de terceiros carregado na hora
+  html2canvas: "vendor/html2canvas-1.4.1.min.js",
+  jspdf: "vendor/jspdf-4.2.1.umd.min.js",
+  xlsx: "vendor/xlsx-0.18.5.full.min.js"
 };
 function carregarLib(url) {
   return new Promise((ok, erro) => {
@@ -1596,7 +1605,7 @@ async function baixarRelatorio(tipo) {
 function baixarCsv() {
   const { ps, todas } = dadosResumo();
   const cols = [["Marca", p => nomeMarca(p.marcaId)], ["Data", p => brFull(p.data)], ["Dia", p => wd(p.data)], ["Status", p => p.status], ["Título", p => p.postagem], ["Nome", p => p.pauta], ["Formato", p => p.formato], ["Produto", p => p.produto], ["Fase", p => p.fase], ["Objetivo", p => p.objetivo], ["Rede", p => p.rede], ["Agendado como", p => p.agTipo], ["Agendado para", p => p.agData ? brFull(p.agData) + " " + (p.agHora || "") : ""], ["Link da publicação", p => p.criativo], ["Imagem de prévia", p => p.capa], ["Link do post", p => p.postLink], ["Devoluções", p => (p.historico || []).filter(h => h.motivo).length], ["Último motivo", p => p.motivo]];
-  const cel = v => { const t = String(v ?? ""); return /[";\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
+  const cel = v => { const t = semFormula(v); return /[";\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
   const linhas = [cols.map(c => c[0]).join(";")].concat(ps.map(p => cols.map(c => cel(c[1](p))).join(";")));
   baixarBlob(new Blob(["﻿" + linhas.join("\r\n")], { type: "text/csv;charset=utf-8" }), nomeArquivo("csv"));
   toast(todas ? "Planilha de todas as marcas baixada" : "Planilha baixada");
@@ -1810,9 +1819,9 @@ function arquivoCard(a) {
     <div class="prev">${ext(a) || esc((a.tipo || "").slice(0, 3).toUpperCase())}${did ? `<img src="https://drive.google.com/thumbnail?id=${esc(did)}&sz=w400" alt="" loading="lazy" onerror="this.remove()">` : ""}</div>
     <div class="info"><b>${esc(a.nome || "Sem nome")}</b><span class="muted" style="font-size:12px">${esc(a.tipo || "")}${a.data ? " · " + esc(brFull(a.data)) : ""}</span>${a.nota ? `<span style="font-size:12.5px">${esc(a.nota)}</span>` : ""}</div>
     <div class="acts">
-      ${/^https?:\/\//.test(a.url || "") ? `<a class="btn sm" href="${esc(a.url)}" target="_blank" rel="noopener">Abrir</a><button class="btn sm" type="button" onclick="copiarTexto('${esc(a.url)}','Link copiado')">Copiar link</button>` : ""}
-      ${S.canWrite ? (conf ? `<span class="confirm" style="font-size:12.5px">Remover? <button class="btn sm danger" type="button" onclick="removerArquivo('${esc(a.id)}')">Sim</button><button class="btn sm" type="button" onclick="S.delArq=null;render()">Não</button></span>`
-        : `<button class="btn sm danger" type="button" onclick="S.delArq='${esc(a.id)}';render()">Remover</button>`) : ""}
+      ${/^https?:\/\//.test(a.url || "") ? `<a class="btn sm" href="${esc(urlOk(a.url))}" target="_blank" rel="noopener">Abrir</a><button class="btn sm" type="button" onclick="copiarTexto(${js(a.url)},'Link copiado')">Copiar link</button>` : ""}
+      ${S.canWrite ? (conf ? `<span class="confirm" style="font-size:12.5px">Remover? <button class="btn sm danger" type="button" onclick="removerArquivo(${js(a.id)})">Sim</button><button class="btn sm" type="button" onclick="S.delArq=null;render()">Não</button></span>`
+        : `<button class="btn sm danger" type="button" onclick="S.delArq=${js(a.id)};render()">Remover</button>`) : ""}
     </div></div>`;
 }
 function vArquivos() {
@@ -2188,7 +2197,7 @@ function drawEditor() {
       <div class="full" id="iaBox" hidden></div>
       <label class="field full"><span>Link da publicação (pasta ou arquivo no Drive, ou Canva)</span><span class="prod-pick"><input id="eCriativo" value="${esc(p.criativo || "")}" placeholder="https://drive.google.com/drive/folders/…" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px"${ro}>${S.canWrite ? `<button class="btn sm" type="button" id="btPasta" onclick="puxarPasta()">Puxar da pasta</button>` : ""}</span>
         <small>Com o link de uma pasta, "Puxar da pasta" traz as artes na ordem do número no fim do nome (P2-1, P2-2, P2-3…) e a legenda do documento (sem a linha de cabeçalho "P2 · título · data").</small></label>
-      <label class="field full"><span>Link do design no Canva</span><span class="prod-pick"><input id="eCanva" value="${esc(p.canva || "")}" placeholder="https://www.canva.com/design/…" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px"${ro}>${/canva\.com/.test(p.canva || "") ? `<a class="btn sm" href="${esc(p.canva)}" target="_blank" rel="noopener">Abrir no Canva</a>` : ""}</span>
+      <label class="field full"><span>Link do design no Canva</span><span class="prod-pick"><input id="eCanva" value="${esc(p.canva || "")}" placeholder="https://www.canva.com/design/…" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px"${ro}>${/canva\.com/.test(p.canva || "") ? `<a class="btn sm" href="${esc(urlOk(p.canva))}" target="_blank" rel="noopener">Abrir no Canva</a>` : ""}</span>
         <small>Para trazer a arte: no Canva, Compartilhar → Baixar ou "Salvar no Google Drive" dentro da pasta da publicação; depois clique em "Puxar da pasta".</small></label>
       <div class="field full" id="eMidiasBox"${(p.midias || []).length ? "" : " hidden"}><span>Artes da publicação (${(p.midias || []).length})</span><div class="midias" id="eMidias">${midiasHtml(p.midias)}</div>
         ${S.canWrite ? `<button class="btn sm" type="button" style="justify-self:start;margin-top:6px" onclick="EDIT.midias=[];$('#eMidiasBox').hidden=true">Limpar artes</button>` : ""}</div>
@@ -2199,7 +2208,7 @@ function drawEditor() {
         <small>Abra a imagem no Drive, clique em Compartilhar → Copiar link. Ela precisa estar como "Qualquer pessoa com o link".</small></label>
       <div class="field full"><span>Prévia</span>
         <div class="thumb" id="eThumb">${previaHtml(src)}
-          ${/^https?:\/\//.test(p.criativo || "") ? `<a class="lnk" href="${esc(p.criativo)}" target="_blank" rel="noopener">Abrir a publicação</a>` : ""}
+          ${/^https?:\/\//.test(p.criativo || "") ? `<a class="lnk" href="${esc(urlOk(p.criativo))}" target="_blank" rel="noopener">Abrir a publicação</a>` : ""}
         </div></div>
     </div>
     <div class="dlg-foot">
@@ -2314,7 +2323,7 @@ function fluxoHtml(p) {
     <div class="row"><span class="pill" style="--c:${stColor(p.status)}"><span class="dot"></span>${esc(p.status)}</span>
       <div class="steps">${ETP.map((e, i) => `<span class="${i === at ? "on" : i < at ? "done" : ""}">${i < at ? "✓ " : ""}${e}</span>`).join("")}</div></div>
     ${p.motivo ? `<div class="motivo"><b>${p.status === "Ideia reprovada" ? "Ideia reprovada" : "Ajustes pedidos"}</b>${esc(p.motivo)}</div>` : ""}
-    ${p.agTipo && ["Agendado", "Postado"].includes(p.status) ? `<div class="kv" style="font-size:13.5px">⏰ <b>${esc(p.agTipo)}</b> agendado para ${esc(brFull(p.agData))} às ${esc(p.agHora)}${p.postLink ? ` · <a class="lnk" href="${esc(p.postLink)}" target="_blank" rel="noopener">Ver post publicado</a>` : ""}</div>` : ""}
+    ${p.agTipo && ["Agendado", "Postado"].includes(p.status) ? `<div class="kv" style="font-size:13.5px">⏰ <b>${esc(p.agTipo)}</b> agendado para ${esc(brFull(p.agData))} às ${esc(p.agHora)}${p.postLink ? ` · <a class="lnk" href="${esc(urlOk(p.postLink))}" target="_blank" rel="noopener">Ver post publicado</a>` : ""}</div>` : ""}
     ${rej ? `<div class="rej"><label class="field"><span>${/eprovar/.test(rej) ? "Por que a ideia não foi aprovada?" : "Por que o conteúdo não foi aprovado? O que precisa mudar?"}</span><textarea id="rejMotivo" placeholder="Escreva o motivo para a social media ajustar"></textarea></label>
         <div class="row"><button class="btn danger" type="button" onclick="acaoEditor('${rej}')">Confirmar</button><button class="btn" type="button" onclick="S.rejDlg=null;drawEditor()">Cancelar</button></div></div>`
       : acoes.length ? `<div class="row">${acoes.map(k => {
@@ -2323,7 +2332,7 @@ function fluxoHtml(p) {
             : `<button class="btn ${a.tipo === "ok" ? "ok" : "primary"}" type="button" onclick="acaoEditor('${k}')">${esc(rotulo(k, p))}</button>`;
         }).join("")}</div>` : `<span class="muted" style="font-size:13px">${COM_CLIENTE.includes(p.status) ? "Aguardando a aprovação do cliente." : p.status === "Em validação" || p.status === "Em aprovação" ? "Aguardando o aprovador." : p.status === "Postado" ? "Conteúdo publicado." : "Nenhuma ação sua nesta etapa."}</span>`}
     ${pubHtml(p)}
-    ${p.id ? `<div class="row"><button class="btn sm" type="button" onclick="verNaGrade('${esc(p.id)}')">Ver na grade</button></div>` : ""}
+    ${p.id ? `<div class="row"><button class="btn sm" type="button" onclick="verNaGrade(${js(p.id)})">Ver na grade</button></div>` : ""}
     ${hist.length ? `<details><summary class="muted" style="cursor:pointer;font-size:13px">Histórico (${hist.length})</summary><ul class="hist">${hist.map(h => `<li>${new Date(h.em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })} · <b>${esc(h.por)}</b> ${esc((h.acao || "").toLowerCase())}${h.motivo ? `: "${esc(h.motivo)}"` : ""}</li>`).join("")}</ul></details>` : ""}
     ${p.id ? comentariosHtml(p, "editor") : ""}
   </div>`;
@@ -2399,9 +2408,9 @@ function abrirAgenda(id, k) {
       ${instaOk(p.marcaId) ? `<label style="display:flex;gap:8px;align-items:flex-start;font-size:14px;background:var(--surface-2);border-radius:12px;padding:10px 12px"><input id="agAuto" type="checkbox"${p.autoPub === "sim" ? " checked" : ""} style="margin-top:3px"> <span><b>Publicar sozinho pelo sistema</b> no dia e na hora acima, com as artes e a legenda desta postagem. Aí não precisa agendar no Meta.</span></label>` : ""}
       <h4 style="margin:6px 0 0">${instaOk(p.marcaId) ? "Ou agende" : "Agende"} no Meta Business Suite</h4>
       <ol class="passos">
-        <li><div><b>Pegue o criativo</b>${did ? `<div class="acts"><a class="btn sm" href="https://drive.google.com/uc?export=download&id=${esc(did)}" target="_blank" rel="noopener">Baixar arquivo</a><a class="btn sm" href="${esc(p.criativo)}" target="_blank" rel="noopener">Abrir no Drive</a></div>`
-          : /^https?:\/\//.test(p.criativo || "") ? `<div class="acts"><a class="btn sm" href="${esc(p.criativo)}" target="_blank" rel="noopener">Abrir criativo</a></div>` : `<div class="muted" style="font-size:13px">Esta postagem ainda não tem link do criativo.</div>`}</div></li>
-        <li><div><b>Copie a legenda</b>${cheio(p.legenda) ? `<div class="acts"><button class="btn sm" type="button" onclick="copiarTexto(S.posts.find(x=>x.id==='${esc(p.id)}').legenda,'Legenda copiada')">Copiar legenda</button></div>` : `<div class="muted" style="font-size:13px">Sem legenda cadastrada.</div>`}
+        <li><div><b>Pegue o criativo</b>${did ? `<div class="acts"><a class="btn sm" href="https://drive.google.com/uc?export=download&id=${esc(did)}" target="_blank" rel="noopener">Baixar arquivo</a><a class="btn sm" href="${esc(urlOk(p.criativo))}" target="_blank" rel="noopener">Abrir no Drive</a></div>`
+          : /^https?:\/\//.test(p.criativo || "") ? `<div class="acts"><a class="btn sm" href="${esc(urlOk(p.criativo))}" target="_blank" rel="noopener">Abrir criativo</a></div>` : `<div class="muted" style="font-size:13px">Esta postagem ainda não tem link do criativo.</div>`}</div></li>
+        <li><div><b>Copie a legenda</b>${cheio(p.legenda) ? `<div class="acts"><button class="btn sm" type="button" onclick="copiarTexto(S.posts.find(x=>x.id===${js(p.id)}).legenda,'Legenda copiada')">Copiar legenda</button></div>` : `<div class="muted" style="font-size:13px">Sem legenda cadastrada.</div>`}
           <div class="muted" style="font-size:12.5px;margin-top:4px">Story não usa legenda; figurinhas, link e música entram direto no app.</div></div></li>
         <li><div><b>Agende lá</b> com a conta ${insta ? `<b>${esc(insta)}</b>` : "da marca"}, no dia e na hora escolhidos acima.<div class="acts"><a class="btn sm primary" href="${META_PLANNER}" target="_blank" rel="noopener">Abrir Meta Business Suite</a></div></div></li>
         <li><div><b>Confirme aqui</b> para a postagem ir para <b>Agendado</b> com o dia e a hora no calendário.</div></li>
@@ -2535,18 +2544,18 @@ function apvCard(p, k1, k2) {
       </dl>
       ${cheio(p.legenda) ? `<div><div class="kv" style="margin-bottom:4px"><b>Legenda</b></div><div class="leg leg-toda">${esc(p.legenda)}</div></div>` : `<div class="kv muted">Sem legenda ainda.</div>`}
       <div style="display:flex;flex-wrap:wrap;gap:6px 14px">
-        ${/^https?:\/\//.test(p.criativo || "") ? `<a class="lnk" href="${esc(p.criativo)}" target="_blank" rel="noopener">Abrir a publicação</a>` : ""}
-        ${/^https?:\/\//.test(p.postLink || "") ? `<a class="lnk" href="${esc(p.postLink)}" target="_blank" rel="noopener">Ver post publicado</a>` : ""}
+        ${/^https?:\/\//.test(p.criativo || "") ? `<a class="lnk" href="${esc(urlOk(p.criativo))}" target="_blank" rel="noopener">Abrir a publicação</a>` : ""}
+        ${/^https?:\/\//.test(p.postLink || "") ? `<a class="lnk" href="${esc(urlOk(p.postLink))}" target="_blank" rel="noopener">Ver post publicado</a>` : ""}
       </div>
     </div>`}
     <div class="bd" style="padding-top:0">${versoesHtml(p, true)}${comentariosHtml(p, "apv")}</div>
     <div class="acts">
       ${rej ? `<div class="rej"><textarea id="rej-${esc(p.id)}" placeholder="${/eprovar/.test(S.rej.k) ? "Por que a ideia não foi aprovada?" : "Por que não foi aprovado? O que precisa mudar?"}"></textarea>
-          <div style="display:flex;gap:8px"><button class="btn danger" type="button" onclick="confirmarRej('${esc(p.id)}')">Confirmar</button><button class="btn" type="button" onclick="S.rej=null;render()">Cancelar</button></div></div>`
-        : `${k1 && podeAcao(p, k1) ? `<button class="btn ok" type="button" onclick="${ACOES[k1].painel ? `abrirAgenda('${esc(p.id)}','${k1}')` : `acao('${esc(p.id)}','${k1}')`}">${esc(rotulo(k1, p))}</button>` : ""}
-           ${k2 && podeAcao(p, k2) ? `<button class="btn danger" type="button" onclick="S.rej={id:'${esc(p.id)}',k:'${k2}'};render();$('#rej-${esc(p.id)}').focus()">${k2 === "pedirAjustes" || k2 === "clienteAjustes" ? "Não aprovar" : "Reprovar"}</button>` : ""}
-           <button class="btn" type="button" onclick="verNaGrade('${esc(p.id)}')">Ver na grade</button>
-           <button class="btn" type="button" onclick="openEditor('${esc(p.id)}')">Abrir postagem</button>`}
+          <div style="display:flex;gap:8px"><button class="btn danger" type="button" onclick="confirmarRej(${js(p.id)})">Confirmar</button><button class="btn" type="button" onclick="S.rej=null;render()">Cancelar</button></div></div>`
+        : `${k1 && podeAcao(p, k1) ? `<button class="btn ok" type="button" onclick="${ACOES[k1].painel ? `abrirAgenda(${js(p.id)},'${k1}')` : `acao(${js(p.id)},'${k1}')`}">${esc(rotulo(k1, p))}</button>` : ""}
+           ${k2 && podeAcao(p, k2) ? `<button class="btn danger" type="button" onclick="S.rej={id:${js(p.id)},k:'${k2}'};render();$('#rej-${esc(p.id)}').focus()">${k2 === "pedirAjustes" || k2 === "clienteAjustes" ? "Não aprovar" : "Reprovar"}</button>` : ""}
+           <button class="btn" type="button" onclick="verNaGrade(${js(p.id)})">Ver na grade</button>
+           <button class="btn" type="button" onclick="openEditor(${js(p.id)})">Abrir postagem</button>`}
     </div>
   </article>`;
 }
@@ -2611,8 +2620,8 @@ function tfHtml(t, h) {
   const atrasada = t.status !== "Feita" && t.prazo && t.prazo < h;
   const quem = t.responsavelId ? (t.responsavelId === S.eu.id ? "Você" : nomePessoa(t.responsavelId) || t.responsavel) : "Sem responsável";
   return `<div class="tf${t.status === "Feita" ? " feita" : ""}" style="--pc:${COR_PRIO[t.prioridade] || "var(--line)"}">
-    <input type="checkbox" aria-label="Marcar como feita"${t.status === "Feita" ? " checked" : ""}${podeMexerTarefa(t) ? "" : " disabled"} onchange="concluirTarefa('${esc(t.id)}', this.checked)">
-    <div class="corpo" onclick="abrirTarefa('${esc(t.id)}')">
+    <input type="checkbox" aria-label="Marcar como feita"${t.status === "Feita" ? " checked" : ""}${podeMexerTarefa(t) ? "" : " disabled"} onchange="concluirTarefa(${js(t.id)}, this.checked)">
+    <div class="corpo" onclick="abrirTarefa(${js(t.id)})">
       <div class="tt">${esc(t.titulo)}</div>
       ${t.descricao ? `<div class="ds">${esc(t.descricao)}</div>` : ""}
       <div class="meta">
@@ -2671,8 +2680,8 @@ function abrirTarefa(id) {
       ${t && t.status === "Feita" ? `<div class="full muted" style="font-size:13px">✓ Feita por ${esc(t.concluidoPor || "")} ${esc(quando(t.concluidoEm))}</div>` : ""}
     </div>
     <div class="dlg-foot">
-      ${excluir ? (S.delTarefa ? `<span class="confirm">Excluir esta tarefa? <button class="btn sm danger" type="button" onclick="excluirTarefa()">Excluir</button><button class="btn sm" type="button" onclick="S.delTarefa=false;abrirTarefa('${esc(t.id)}')">Cancelar</button></span>`
-        : `<button class="btn danger" type="button" onclick="S.delTarefa=true;abrirTarefa('${esc(t.id)}')">Excluir</button>`) : ""}
+      ${excluir ? (S.delTarefa ? `<span class="confirm">Excluir esta tarefa? <button class="btn sm danger" type="button" onclick="excluirTarefa()">Excluir</button><button class="btn sm" type="button" onclick="S.delTarefa=false;abrirTarefa(${js(t.id)})">Cancelar</button></span>`
+        : `<button class="btn danger" type="button" onclick="S.delTarefa=true;abrirTarefa(${js(t.id)})">Excluir</button>`) : ""}
       <span class="sp"></span>
       <button class="btn" type="button" onclick="$('#tfDlg').close()">${pode ? "Cancelar" : "Fechar"}</button>
       ${pode ? `<button class="btn primary" type="submit" id="tSalvar">${t ? "Salvar" : "Criar tarefa"}</button>` : ""}
@@ -2722,7 +2731,7 @@ function notificacoes() {
     // social media: o que voltou ou foi liberado nas marcas dela; aprovador: o que chegou para ele; chefia: tudo
     const serve = chefia || (papel === "cliente" ? COM_CLIENTE.includes(h.para) && temAcesso(p.marcaId)
       : t[3] === "aprovar" ? podeAprovar(p.marcaId) && papel === "aprovador" : t[3] === "editar" ? podeEditar(p.marcaId) && papel === "social" : false);
-    if (serve) lista.push({ em: h.em, por: h.por, acao: h.acao, motivo: h.motivo, titulo: nm(p), marcaId: p.marcaId, ic: t[1], cls: t[2], abrir: `openEditor('${esc(p.id)}')` });
+    if (serve) lista.push({ em: h.em, por: h.por, acao: h.acao, motivo: h.motivo, titulo: nm(p), marcaId: p.marcaId, ic: t[1], cls: t[2], abrir: `openEditor(${js(p.id)})` });
   }));
   // aniversários de hoje e mural
   if (!ehCliente()) {
@@ -2733,7 +2742,7 @@ function notificacoes() {
   // agenda: reunião marcada comigo, pedido para eu responder, resposta ao meu pedido
   (S.agenda || []).forEach(x => {
     if (x.tipo !== "reuniao" || x.atualizado < desde) return;
-    const abrir = `location.hash='#agenda';setTimeout(()=>abrirEvento('${esc(x.id)}'),50)`;
+    const abrir = `location.hash='#agenda';setTimeout(()=>abrirEvento(${js(x.id)}),50)`;
     if (x.criadoPorId === S.eu.id) { if (["confirmada", "recusada"].includes(x.status) && x.decididoPor && x.decididoPor !== S.eu.nome) lista.push({ em: x.atualizado, por: x.decididoPor, acao: x.status === "recusada" ? "Recusou o seu pedido de reunião" : "Confirmou a reunião", motivo: x.motivo, titulo: x.titulo, ic: x.status === "recusada" ? "✗" : "📅", cls: x.status === "recusada" ? "danger" : "ok", abrir }); return; }
     if (x.status === "solicitada" && ehChefe()) lista.push({ em: x.criado, por: x.criadoPor, acao: "Pediu uma reunião", titulo: `${x.titulo} · ${br(x.data)} ${x.hora}`, ic: "🙋", cls: "", abrir });
     else if (x.status === "confirmada" && (x.participantes || []).includes(S.eu.id)) lista.push({ em: x.criado, por: x.criadoPor, acao: "Marcou uma reunião com você", titulo: `${x.titulo} · ${br(x.data)} ${x.hora}`, ic: "📅", cls: "", abrir });
@@ -2741,14 +2750,14 @@ function notificacoes() {
   // comentários de outras pessoas nas postagens que eu vejo
   S.posts.forEach(p => (p.comentarios || []).forEach(c => {
     if (c.em < desde || c.uid === S.eu.id || !temAcesso(p.marcaId)) return;
-    lista.push({ em: c.em, por: c.por, acao: "Comentou" + (c.arte ? ` na arte ${c.arte}` : ""), motivo: c.texto, titulo: nm(p), marcaId: p.marcaId, ic: "💬", cls: "", abrir: `openEditor('${esc(p.id)}')` });
+    lista.push({ em: c.em, por: c.por, acao: "Comentou" + (c.arte ? ` na arte ${c.arte}` : ""), motivo: c.texto, titulo: nm(p), marcaId: p.marcaId, ic: "💬", cls: "", abrir: `openEditor(${js(p.id)})` });
   }));
   // tarefas: o que passaram para mim e o que concluíram das que eu criei
   S.tarefas.forEach(t => {
     if (t.responsavelId === S.eu.id && t.criadoPorId !== S.eu.id && t.criado >= desde)
-      lista.push({ em: t.criado, por: t.criadoPor, acao: "Te passou uma tarefa" + (t.prazo ? ` (até ${br(t.prazo)})` : ""), titulo: t.titulo, marcaId: t.marcaId, ic: "☐", cls: "", abrir: `abrirTarefa('${esc(t.id)}')` });
+      lista.push({ em: t.criado, por: t.criadoPor, acao: "Te passou uma tarefa" + (t.prazo ? ` (até ${br(t.prazo)})` : ""), titulo: t.titulo, marcaId: t.marcaId, ic: "☐", cls: "", abrir: `abrirTarefa(${js(t.id)})` });
     if (t.criadoPorId === S.eu.id && t.status === "Feita" && t.concluidoPor && t.concluidoPor !== S.eu.nome && t.concluidoEm >= desde)
-      lista.push({ em: t.concluidoEm, por: t.concluidoPor, acao: "Concluiu a tarefa", titulo: t.titulo, marcaId: t.marcaId, ic: "✓", cls: "ok", abrir: `abrirTarefa('${esc(t.id)}')` });
+      lista.push({ em: t.concluidoEm, por: t.concluidoPor, acao: "Concluiu a tarefa", titulo: t.titulo, marcaId: t.marcaId, ic: "✓", cls: "ok", abrir: `abrirTarefa(${js(t.id)})` });
   });
   return lista.sort((a, b) => b.em - a.em).slice(0, 40);
 }
@@ -2807,13 +2816,13 @@ function vLogin() {
     <span class="muted">Use o login e a senha que o administrador cadastrou para você.</span>
     <label class="field"><span>Login (e-mail)</span><input id="lgLogin" type="text" autocomplete="username" required></label>
     <label class="field"><span>Senha</span><input id="lgSenha" type="password" autocomplete="current-password" required></label>
-    <span class="err" id="lgErr"></span>
+    <span class="err" id="lgErr">${esc(S.loginErro || "")}</span>
     <button class="btn primary" type="submit" id="lgBtn">Entrar</button>
     <button class="link-esq" type="button" onclick="S.esqLogin=$('#lgLogin').value;S.esqueci=true;render()">Esqueci minha senha</button>
   </form>`;
 }
 async function entrar() {
-  const btn = $("#lgBtn"); btn.disabled = true; btn.textContent = "Entrando…"; $("#lgErr").textContent = "";
+  const btn = $("#lgBtn"); btn.disabled = true; btn.textContent = "Entrando…"; $("#lgErr").textContent = ""; S.loginErro = "";
   try {
     const r = await api("login", { login: $("#lgLogin").value, senha: $("#lgSenha").value });
     S.token = r.token; store("token", r.token); S.esqueci = false;
@@ -2823,7 +2832,7 @@ async function entrar() {
     await carregar();
   } catch (e) {
     btn.disabled = false; btn.textContent = "Entrar";
-    $("#lgErr").textContent = e.code === "login" ? "Login ou senha incorretos." : "Não consegui falar com a planilha. Tente de novo.";
+    $("#lgErr").textContent = e.code === "login" ? (/tentativas|bloque|espere/i.test(e.message || "") ? e.message : "Login ou senha incorretos.") : /tentativas|espere/i.test(e.message || "") ? e.message : "Não consegui falar com a planilha. Tente de novo.";
   }
 }
 // estado de tela que não pode passar de uma pessoa para outra
@@ -2882,8 +2891,8 @@ function vConta() {
   <form class="panel" style="max-width:460px;display:grid;gap:12px" onsubmit="event.preventDefault();trocarSenha()">
     <h2>Trocar senha</h2>
     <label class="field"><span>Senha atual</span><input id="cAtual" type="password" autocomplete="current-password" required></label>
-    <label class="field"><span>Nova senha (mínimo 6 caracteres)</span><input id="cNova" type="password" autocomplete="new-password" minlength="6" required></label>
-    <label class="field"><span>Repita a nova senha</span><input id="cNova2" type="password" autocomplete="new-password" minlength="6" required></label>
+    <label class="field"><span>Nova senha (mínimo 8 caracteres)</span><input id="cNova" type="password" autocomplete="new-password" minlength="8" required></label>
+    <label class="field"><span>Repita a nova senha</span><input id="cNova2" type="password" autocomplete="new-password" minlength="8" required></label>
     <button class="btn primary" type="submit" style="justify-self:start">Trocar senha</button>
   </form>`;
 }
@@ -2944,9 +2953,9 @@ function vEquipe() {
   const u = S.uEdit;
   const marcasTxt = x => TODAS_MARCAS.includes(x.papel) || x.marcas.includes("*") ? "Todas" : x.marcas.map(nomeMarca).filter(Boolean).join(", ") || "Nenhuma";
   const marcasCel = x => TODAS_MARCAS.includes(x.papel) ? `<span class="muted">Todas (sempre)</span>` : editavel(x) && x.id !== S.eu.id ? marcasSel(x) : esc(marcasTxt(x));
-  const linhas = S.usuarios.slice().sort((a, b) => a.nome.localeCompare(b.nome)).map(x => `<tr${editavel(x) ? ` onclick="S.uEdit=S.usuarios.find(y=>y.id==='${esc(x.id)}');render()"` : ' style="cursor:default" title="Só o administrador altera este acesso"'}>
+  const linhas = S.usuarios.slice().sort((a, b) => a.nome.localeCompare(b.nome)).map(x => `<tr${editavel(x) ? ` onclick="S.uEdit=S.usuarios.find(y=>y.id===${js(x.id)});render()"` : ' style="cursor:default" title="Só o administrador altera este acesso"'}>
     <td><div class="pessoa">${avatarHtml(x, 34)}<div><b>${esc(x.nome)}</b><div class="muted">${esc(x.login)}${x.whatsapp ? " · " + esc(fmtTel(x.whatsapp)) : ""}</div></div></div></td>
-    <td onclick="event.stopPropagation()">${editavel(x) && x.id !== S.eu.id ? `<select class="papel-sel" aria-label="Papel de ${esc(x.nome)}" onchange="trocarPapel('${esc(x.id)}', this.value)">${Object.entries(PAPEIS).filter(([k]) => papeisPermitidos.includes(k) || k === x.papel).map(([k, l]) => `<option value="${k}"${k === x.papel ? " selected" : ""}>${l}</option>`).join("")}</select>` : esc(PAPEIS[x.papel] || x.papel)}</td><td onclick="event.stopPropagation()">${marcasCel(x)}</td><td onclick="event.stopPropagation()">${x.ativo ? "Ativo" : `<span class="muted">Desativado</span>`}${x.papel === "cliente" && x.ativo ? `<br><button class="btn sm" type="button" style="margin-top:4px" onclick="linkCliente('${esc(x.id)}')">🔗 Link sem senha</button>` : ""}</td></tr>`).join("");
+    <td onclick="event.stopPropagation()">${editavel(x) && x.id !== S.eu.id ? `<select class="papel-sel" aria-label="Papel de ${esc(x.nome)}" onchange="trocarPapel(${js(x.id)}, this.value)">${Object.entries(PAPEIS).filter(([k]) => papeisPermitidos.includes(k) || k === x.papel).map(([k, l]) => `<option value="${k}"${k === x.papel ? " selected" : ""}>${l}</option>`).join("")}</select>` : esc(PAPEIS[x.papel] || x.papel)}</td><td onclick="event.stopPropagation()">${marcasCel(x)}</td><td onclick="event.stopPropagation()">${x.ativo ? "Ativo" : `<span class="muted">Desativado</span>`}${x.papel === "cliente" && x.ativo ? `<br><button class="btn sm" type="button" style="margin-top:4px" onclick="linkCliente(${js(x.id)})">🔗 Link sem senha</button>` : ""}</td></tr>`).join("");
   const form = u ? `<form class="panel" style="display:grid;gap:12px;margin-top:16px" onsubmit="event.preventDefault();salvarUsuario()">
       <h2>${u.id ? "Editar " + esc(u.nome) : "Nova pessoa"}</h2>
       <div class="pf-grid">
@@ -2955,7 +2964,7 @@ function vEquipe() {
         <label class="field"><span>Aniversário (dd/mm)</span><input id="uAni" value="${esc(u.aniversario || "")}" placeholder="dd/mm" maxlength="5"></label>
         <label class="field"><span>WhatsApp (com DDD)</span><input id="uTel" type="tel" inputmode="tel" placeholder="(11) 98765-4321" value="${esc(u.whatsapp ? fmtTel(u.whatsapp) : "")}"></label>
         <label class="field"><span>Papel</span><select id="uPapel" onchange="lerFormU();render()">${Object.entries(PAPEIS).filter(([k]) => papeisPermitidos.includes(k)).map(([k, l]) => `<option value="${k}"${u.papel === k ? " selected" : ""}>${l}</option>`).join("")}</select></label>
-        <label class="field"><span>${u.id ? "Nova senha (deixe em branco para manter)" : "Senha provisória"}</span><span class="prod-pick"><input id="uSenha" type="text" autocomplete="off" ${u.id ? "" : "required"} minlength="6" value="${esc(u.senhaTemp || "")}" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px"><button class="btn sm" type="button" onclick="$('#uSenha').value=gerarSenha();S.dirty=true">Gerar senha</button></span></label>
+        <label class="field"><span>${u.id ? "Nova senha (deixe em branco para manter)" : "Senha provisória"}</span><span class="prod-pick"><input id="uSenha" type="text" autocomplete="off" ${u.id ? "" : "required"} minlength="8" value="${esc(u.senhaTemp || "")}" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px"><button class="btn sm" type="button" onclick="$('#uSenha').value=gerarSenha();S.dirty=true">Gerar senha</button></span></label>
         ${TODAS_MARCAS.includes(u.papel) ? `<div class="field full"><span>Marcas</span><span class="muted">${{ admin: "O administrador", diretor: "O diretor" }[u.papel]} vê todas as marcas.</span></div>`
           : `<div class="field full"><span>Marcas que ${u.papel === "gestor" ? "gerencia" : u.papel === "aprovador" || u.papel === "cliente" ? "aprova" : "alimenta"}</span><div class="chk-list" id="uMarcas">
             <label><input type="checkbox" value="*"${(u.marcas || []).includes("*") ? " checked" : ""}> <b>Todas as marcas</b></label>
@@ -2981,7 +2990,7 @@ function trocarPapel(id, papel) {
 // caixa de marcas na lista da equipe: marca/desmarca e salva sozinho
 function marcasSel(x) {
   const todas = x.marcas.includes("*"), id = "um_" + x.id;
-  const op = (v, nome, on) => `<label class="msel-op"><input type="checkbox" value="${esc(v)}"${on ? " checked" : ""} onchange="marcaU('${esc(x.id)}', this)"><span class="ck"></span><span class="nm">${v === "*" ? "<b>Todas as marcas</b>" : esc(nome)}</span></label>`;
+  const op = (v, nome, on) => `<label class="msel-op"><input type="checkbox" value="${esc(v)}"${on ? " checked" : ""} onchange="marcaU(${js(x.id)}, this)"><span class="ck"></span><span class="nm">${v === "*" ? "<b>Todas as marcas</b>" : esc(nome)}</span></label>`;
   return `<div class="msel um-sel" id="${id}" data-vazio="Nenhuma marca">
     <button type="button" class="msel-btn" onclick="abrirMsel('${id}')" aria-haspopup="listbox" aria-label="Marcas de ${esc(x.nome)}">${mselTexto(todas ? ["Todas as marcas"] : x.marcas.map(nomeMarca).filter(Boolean), "Nenhuma marca")}</button>
     <div class="msel-pop" hidden role="listbox" aria-multiselectable="true">
@@ -3033,7 +3042,7 @@ function fmtTel(t) {
 }
 function gerarSenha() {
   const c = "abcdefghjkmnpqrstuvwxyz23456789";
-  const a = new Uint32Array(8); crypto.getRandomValues(a);
+  const a = new Uint32Array(10); crypto.getRandomValues(a);
   return [...a].map(n => c[n % c.length]).join("");
 }
 function listaMarcas(u, artigo) {
@@ -3094,7 +3103,7 @@ function vAtividade() {
       <td class="num">${pend ? `<span class="pill" style="--c:var(--danger)"><span class="dot"></span>${pend}</span>` : "0"}</td>
     </tr>`;
   }).join("");
-  const feed = eventos.slice(0, 40).map(e => `<li><span class="muted">${new Date(e.em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span> · <b>${esc(e.por)}</b> ${esc((e.acao || "").toLowerCase())} <a class="lnk" href="javascript:void 0" onclick="openEditor('${esc(e.post.id)}')">${esc(nm(e.post))}</a> <span class="muted">(${esc(nomeMarca(e.post.marcaId))})</span>${e.motivo ? `: "${esc(e.motivo)}"` : ""}</li>`).join("");
+  const feed = eventos.slice(0, 40).map(e => `<li><span class="muted">${new Date(e.em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span> · <b>${esc(e.por)}</b> ${esc((e.acao || "").toLowerCase())} <a class="lnk" href="javascript:void 0" onclick="openEditor(${js(e.post.id)})">${esc(nm(e.post))}</a> <span class="muted">(${esc(nomeMarca(e.post.marcaId))})</span>${e.motivo ? `: "${esc(e.motivo)}"` : ""}</li>`).join("");
   return head(ehAdmin() ? "Administração" : ehDiretor() ? "Direção" : "Gestão", "Atividade da equipe", `<select id="ativDias" class="st-sel" aria-label="Período" onchange="S.ativDias=+this.value;render()">${[[1, "Hoje e ontem"], [7, "Últimos 7 dias"], [30, "Últimos 30 dias"]].map(([d, l]) => `<option value="${d}"${d === dias ? " selected" : ""}>${l}</option>`).join("")}</select>`) + equipeNav() +
     `<p class="sec-intro">O que cada pessoa fez no período. "Último sinal" é o último acesso ou a última ação no sistema; fica em vermelho depois de 3 dias sem nada. "Pendências" são postagens devolvidas esperando a social media, ou ideias e conteúdos esperando o aprovador.</p>
     ${pessoas.length ? `<div class="table-wrap"><table style="min-width:760px"><thead><tr><th>Pessoa</th><th>Último sinal</th><th>Criou</th><th>Editou</th><th>Enviou</th><th>Validou / aprovou</th><th>Reprovou / pediu ajustes</th><th>Pendências</th></tr></thead><tbody>${linhas}</tbody></table></div>`
@@ -3109,7 +3118,7 @@ function boasVindasHtml() {
     <h2>${b.novo ? "Envie o acesso para " : "Envie a nova senha para "}${esc(b.nome)}</h2>
     <label class="field"><span>Mensagem (dá para editar antes de enviar)</span><textarea id="bvMsg" rows="7" oninput="S.boasVindas.msg=this.value;const a=$('#bvWa');if(a)a.href='https://wa.me/${esc(telWa(b.tel))}?text='+encodeURIComponent(this.value)">${esc(b.msg)}</textarea></label>
     <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-      ${link ? `<a class="btn ok" id="bvWa" href="${esc(link)}" target="_blank" rel="noopener">Enviar pelo WhatsApp</a>` : `<span class="muted">Cadastre o WhatsApp da pessoa para enviar direto. Por enquanto, copie a mensagem.</span>`}
+      ${link ? `<a class="btn ok" id="bvWa" href="${esc(urlOk(link))}" target="_blank" rel="noopener">Enviar pelo WhatsApp</a>` : `<span class="muted">Cadastre o WhatsApp da pessoa para enviar direto. Por enquanto, copie a mensagem.</span>`}
       <button class="btn" type="button" onclick="copiarTexto($('#bvMsg').value,'Mensagem copiada')">Copiar mensagem</button>
       <button class="btn" type="button" onclick="S.boasVindas=null;render()">Fechar</button>
     </div>
@@ -3280,20 +3289,20 @@ function desenharSV() {
         <div class="sv-lista">${l.map((s, j) => `<div class="sv-item${j === SV.i ? " on" : ""}" onclick="SV.i=${j};SV.t=0;desenharSV()">
             ${miniStory(s, "", 'tabindex="-1"')}
             <div><div class="tt">${j + 1}. ${esc(s.titulo || s.tipo || "Story")}</div><div class="mt">${esc([s.hora, s.tipo, s.sticker, s.status].filter(Boolean).join(" · "))}</div></div>
-            ${pode ? `<div class="ord" onclick="event.stopPropagation()"><button type="button" aria-label="Subir" onclick="moverStory('${esc(s.id)}',-1)" ${j === 0 ? "disabled" : ""}>▲</button><button type="button" aria-label="Descer" onclick="moverStory('${esc(s.id)}',1)" ${j === l.length - 1 ? "disabled" : ""}>▼</button></div>` : "<span></span>"}
+            ${pode ? `<div class="ord" onclick="event.stopPropagation()"><button type="button" aria-label="Subir" onclick="moverStory(${js(s.id)},-1)" ${j === 0 ? "disabled" : ""}>▲</button><button type="button" aria-label="Descer" onclick="moverStory(${js(s.id)},1)" ${j === l.length - 1 ? "disabled" : ""}>▼</button></div>` : "<span></span>"}
           </div>`).join("")}</div>
         <div class="sv-det">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="pill" style="--c:${stColorS(x.status)}"><span class="dot"></span>${esc(x.status)}</span>${x.hora ? `<span class="muted">⏰ ${esc(x.hora)}</span>` : ""}${x.criadoPor ? `<span class="muted" style="font-size:12.5px">por ${esc(x.criadoPor)}</span>` : ""}</div>
           ${cheio(x.roteiro) ? `<div><b>Roteiro / o que falar</b><div class="rot">${esc(x.roteiro)}</div></div>` : ""}
-          ${cheio(x.link) ? `<div><b>Link:</b> <a class="lnk" href="${esc(x.link)}" target="_blank" rel="noopener">${esc(x.link)}</a></div>` : ""}
+          ${cheio(x.link) ? `<div><b>Link:</b> <a class="lnk" href="${esc(urlOk(x.link))}" target="_blank" rel="noopener">${esc(x.link)}</a></div>` : ""}
           ${cheio(x.obs) ? `<div><b>Observação:</b> ${esc(x.obs)}</div>` : ""}
           ${x.pubInfo ? `<div class="muted" style="font-size:13px">📲 ${esc(x.pubInfo)}</div>` : ""}
-          ${x.midia ? `<div><a class="lnk" href="${esc(/^https?:/.test(x.midia) ? x.midia : "https://drive.google.com/file/d/" + x.midia + "/view")}" target="_blank" rel="noopener">Abrir o arquivo no Drive</a></div>` : ""}
+          ${x.midia ? `<div><a class="lnk" href="${esc(urlOk(/^https?:/.test(x.midia) ? x.midia : "https://drive.google.com/file/d/" + x.midia + "/view"))}" target="_blank" rel="noopener">Abrir o arquivo no Drive</a></div>` : ""}
           ${pode ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
-            <button class="btn primary" type="button" onclick="editarStory('${esc(x.id)}')">Editar</button>
-            ${x.status !== "Postado" ? `<button class="btn ok" type="button" onclick="statusStory('${esc(x.id)}','Postado')">Marcar como postado</button>` : ""}
-            ${conectado && storyMidiaId(x) && x.status !== "Postado" ? `<button class="btn" type="button" id="svPub" onclick="publicarStory('${esc(x.id)}')">Publicar agora no Instagram</button>` : ""}
-            <button class="btn" type="button" onclick="novoStory('${esc(SV.dia)}')">+ Story neste dia</button></div>` : ""}
+            <button class="btn primary" type="button" onclick="editarStory(${js(x.id)})">Editar</button>
+            ${x.status !== "Postado" ? `<button class="btn ok" type="button" onclick="statusStory(${js(x.id)},'Postado')">Marcar como postado</button>` : ""}
+            ${conectado && storyMidiaId(x) && x.status !== "Postado" ? `<button class="btn" type="button" id="svPub" onclick="publicarStory(${js(x.id)})">Publicar agora no Instagram</button>` : ""}
+            <button class="btn" type="button" onclick="novoStory(${js(SV.dia)})">+ Story neste dia</button></div>` : ""}
         </div>
       </div>
     </div>`;
@@ -3425,10 +3434,10 @@ function comentariosHtml(p, ctx) {
   const quem = c => S.equipe.find(u => u.id === c.uid) || { nome: c.por };
   return `<details class="coms"${ctx === "editor" || l.length ? " open" : ""}><summary>💬 Comentários${l.length ? ` (${l.length})` : ""}</summary>
     <div class="com-lista">${l.length ? l.map(c => `<div class="com${c.uid === S.eu.id ? " meu" : ""}">${avatarHtml(quem(c), 26)}<div><div class="com-h"><b>${esc(c.por)}</b>${c.papel === "cliente" ? ` <span class="tag-cli">cliente</span>` : ""}<span>${fmt(c.em)}</span>${c.arte ? `<span class="tag-arte">arte ${c.arte}</span>` : ""}
-        ${c.uid === S.eu.id || TODAS_MARCAS.includes(S.eu.papel) ? `<button type="button" class="com-x" aria-label="Apagar comentário" onclick="apagarComentario('${esc(p.id)}','${esc(c.id)}','${ctx}')">×</button>` : ""}</div><div class="com-t">${esc(c.texto)}</div></div></div>`).join("") : `<p class="muted" style="font-size:13px;margin:4px 0">Nenhum comentário ainda. Use para combinar ajustes sem perder no WhatsApp.</p>`}</div>
-    ${pode ? `<div class="com-novo"><textarea id="com-${ctx}-${esc(p.id)}" rows="2" placeholder="Escreva um comentário…" onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();comentar('${esc(p.id)}','${ctx}')}"></textarea>
+        ${c.uid === S.eu.id || TODAS_MARCAS.includes(S.eu.papel) ? `<button type="button" class="com-x" aria-label="Apagar comentário" onclick="apagarComentario(${js(p.id)},${js(c.id)},'${ctx}')">×</button>` : ""}</div><div class="com-t">${esc(c.texto)}</div></div></div>`).join("") : `<p class="muted" style="font-size:13px;margin:4px 0">Nenhum comentário ainda. Use para combinar ajustes sem perder no WhatsApp.</p>`}</div>
+    ${pode ? `<div class="com-novo"><textarea id="com-${ctx}-${esc(p.id)}" rows="2" placeholder="Escreva um comentário…" onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();comentar(${js(p.id)},'${ctx}')}"></textarea>
       <div class="com-acts">${n > 1 ? `<select id="coma-${ctx}-${esc(p.id)}" aria-label="Sobre qual arte"><option value="">Sobre o post todo</option>${Array.from({ length: n }, (_, i) => `<option value="${i + 1}">Sobre a arte ${i + 1}</option>`).join("")}</select>` : ""}
-      <button class="btn sm primary" type="button" onclick="comentar('${esc(p.id)}','${ctx}')">Comentar</button></div></div>` : ""}
+      <button class="btn sm primary" type="button" onclick="comentar(${js(p.id)},'${ctx}')">Comentar</button></div></div>` : ""}
   </details>`;
 }
 function redesenharComentarios(id, ctx) {
@@ -3472,7 +3481,7 @@ function atrasadosHtml() {
   const h = hojeIso();
   const l = S.posts.filter(p => podeEditar(p.marcaId) && atrasoDe(p, h) && p.data >= prazoPadrao(h, 30)).sort((a, b) => (a.data || "").localeCompare(b.data || ""));
   if (!l.length) return "";
-  return `<section class="tf-grupo atrasadas"><h2>Postagens atrasadas<span class="n">${l.length}</span></h2><div class="tf-lista">${l.slice(0, 30).map(p => { const a = atrasoDe(p, h); return `<div class="tf" style="--pc:var(--danger)"><span></span><div class="corpo" onclick="openEditor('${esc(p.id)}')"><div class="tt">${esc(nm(p))}</div>
+  return `<section class="tf-grupo atrasadas"><h2>Postagens atrasadas<span class="n">${l.length}</span></h2><div class="tf-lista">${l.slice(0, 30).map(p => { const a = atrasoDe(p, h); return `<div class="tf" style="--pc:var(--danger)"><span></span><div class="corpo" onclick="openEditor(${js(p.id)})"><div class="tt">${esc(nm(p))}</div>
       <div class="meta"><span>${esc(nomeMarca(p.marcaId))}</span><span>📅 post ${esc(br(p.data))}</span><span class="atraso">${esc(a.txt)} · ${a.dias} dia(s)</span><span>${esc(p.status)}</span></div></div><span class="prio">${esc(a.tipo === "arte" ? "Arte" : a.tipo === "aprov" ? "Aprovação" : "Post")}</span></div>`; }).join("")}</div></section>`;
 }
 
@@ -3501,8 +3510,8 @@ function pubHtml(p) {
   const info = p.pubInfo ? `<div class="kv" style="font-size:13px">📲 ${esc(p.pubInfo)}${p.autoPub === "sim" ? " · publica sozinho no horário" : ""}</div>` : "";
   if (p.status === "Postado" || !pode || !ok) return info;
   return `${info}<div class="row">
-    ${p.status === "Agendado" ? `<label style="display:flex;gap:6px;align-items:center;font-size:13.5px"><input type="checkbox"${p.autoPub === "sim" ? " checked" : ""} onchange="autoPub('${esc(p.id)}',this.checked)"> Publicar sozinho no horário agendado</label>` : ""}
-    <button class="btn sm" type="button" id="pubAgora" onclick="publicarAgora('${esc(p.id)}')">Publicar agora no Instagram</button></div>`;
+    ${p.status === "Agendado" ? `<label style="display:flex;gap:6px;align-items:center;font-size:13.5px"><input type="checkbox"${p.autoPub === "sim" ? " checked" : ""} onchange="autoPub(${js(p.id)},this.checked)"> Publicar sozinho no horário agendado</label>` : ""}
+    <button class="btn sm" type="button" id="pubAgora" onclick="publicarAgora(${js(p.id)})">Publicar agora no Instagram</button></div>`;
 }
 async function autoPub(id, ligar) {
   try { await api("autoPub", { id, tipo: "post", ligar }); await carregar(); const p = S.posts.find(x => x.id === id); if (p && $("#dlg").open && EDIT.id === id) { EDIT = { ...p }; drawEditor(); } toast(ligar ? "Vai publicar sozinho no horário" : "Publicação automática desligada"); }
@@ -3543,27 +3552,23 @@ function metricasHtml() {
     corpo = `<div class="met-kpis">${[["Curtidas", soma("curtidas")], ["Comentários", soma("comentarios")], ["Alcance", soma("alcance")], ["Salvamentos", soma("salvos")], ["Compartilhamentos", soma("compart")]].map(([l, v]) => `<div><b>${fmt(v)}</b><span>${l}</span></div>`).join("")}</div>
       ${melhor ? `<p style="margin:10px 0">⭐ Melhor post do mês: <b>${esc(nm(melhor.p))}</b> (${fmt(melhor.curtidas)} curtidas, ${fmt(melhor.salvos)} salvamentos)</p>` : ""}
       <div class="table-wrap"><table style="min-width:640px"><thead><tr><th>Post</th><th class="n">Curtidas</th><th class="n">Coment.</th><th class="n">Alcance</th><th class="n">Salvos</th><th class="n">Compart.</th><th class="n">Engaj.</th></tr></thead><tbody>
-      ${linhas.map(x => `<tr><td><a class="lnk" href="${esc(x.link)}" target="_blank" rel="noopener">${esc(br(x.p.data))} · ${esc(nm(x.p))}</a></td><td class="n">${fmt(x.curtidas)}</td><td class="n">${fmt(x.comentarios)}</td><td class="n">${fmt(x.alcance)}</td><td class="n">${fmt(x.salvos)}</td><td class="n">${fmt(x.compart)}</td><td class="n">${eng(x)}</td></tr>`).join("")}</tbody></table></div>`;
+      ${linhas.map(x => `<tr><td><a class="lnk" href="${esc(urlOk(x.link))}" target="_blank" rel="noopener">${esc(br(x.p.data))} · ${esc(nm(x.p))}</a></td><td class="n">${fmt(x.curtidas)}</td><td class="n">${fmt(x.comentarios)}</td><td class="n">${fmt(x.alcance)}</td><td class="n">${fmt(x.salvos)}</td><td class="n">${fmt(x.compart)}</td><td class="n">${eng(x)}</td></tr>`).join("")}</tbody></table></div>`;
   }
   return `<div class="panel" style="margin-top:16px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">Resultados dos posts</h2>${r && !r.carregando ? `<button class="btn sm" type="button" onclick="carregarMetricas(S.marcaId,S.month,true);render()">Atualizar</button>` : ""}</div>
     ${corpo}${r && r.semLink ? `<p class="muted" style="font-size:12.5px;margin-top:8px">${r.semLink} post(s) postado(s) sem o link do Instagram: abra a postagem e cole o link em "Marcar como postado" para entrar aqui.</p>` : ""}</div>`;
 }
 
 /* ---------- Link de aprovação sem senha (aprovador do cliente) ---------- */
-async function linkCliente(uid, enviar) {
+async function linkCliente(uid) {
   try {
-    const r = await api("linkCliente", { usuarioId: uid, enviar: !!enviar });
-    const msg = `Olá, ${r.nome.split(" ")[0]}! Aqui está o seu acesso para ver e aprovar os posts, sem senha: ${r.url}\n\nO link vale por 14 dias.`;
+    const r = await api("linkCliente", { usuarioId: uid, enviar: true });
     $("#lkForm").innerHTML = `<div class="dlg-head"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600">Aprovação sem senha</div><h2>Link de ${esc(r.nome)}</h2></div>
       <button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#lkDlg').close()">×</button></div>
       <div class="dlg-body" style="grid-template-columns:1fr">
-        ${r.enviado ? `<div class="motivo" style="border-left-color:var(--st-postado);background:var(--surface-2)"><b style="color:var(--ink)">E-mail enviado</b>O link foi para o e-mail de ${esc(r.nome)}.</div>` : ""}
-        <label class="field"><span>Link (vale 14 dias e entra direto na conta, sem senha)</span><input readonly value="${esc(r.url)}" onclick="this.select()"></label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn primary" type="button" onclick="copiarTexto(${esc(JSON.stringify(r.url))},'Link copiado')">Copiar link</button>
-          <a class="btn" href="https://wa.me/${esc(r.whatsapp ? telWa(r.whatsapp) : "")}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Mandar no WhatsApp</a>
-          ${r.enviado ? "" : `<button class="btn" type="button" onclick="linkCliente('${esc(uid)}',true)">Enviar por e-mail</button>`}</div>
-        <p class="muted" style="font-size:12.5px;margin:0">Quem tiver o link entra como ${esc(r.nome)}: só vê as aprovações, o calendário, os stories e a grade das marcas dele. Não encaminhe para outras pessoas. Os e-mails de "post para aprovar" já vão com esse link.</p>
+        ${r.enviado ? `<div class="motivo" style="border-left-color:var(--st-postado);background:var(--surface-2)"><b style="color:var(--ink)">Link enviado para o e-mail</b>Mandamos o acesso para <b>${esc(r.email || "o e-mail cadastrado")}</b>. Ele vale por 14 dias e só funciona uma vez.</div>`
+          : `<div class="motivo"><b style="color:var(--ink)">Não deu para enviar agora</b>O limite diário de e-mails do Google acabou. Tente de novo amanhã.</div>`}
+        <p class="muted" style="font-size:12.5px;margin:0">Por segurança, o link sem senha só vai por e-mail, direto para a pessoa, e não aparece aqui. Assim ninguém consegue encaminhar ou copiar o acesso de outro cliente. Peça para ${esc(r.nome.split(" ")[0])} olhar a caixa de entrada (e o spam).</p>
+        <div style="display:flex;gap:8px"><button class="btn primary" type="button" onclick="$('#lkDlg').close()">Entendi</button></div>
       </div>`;
     if (!$("#lkDlg").open) $("#lkDlg").showModal();
   } catch (e) { writeFail(e); }
@@ -3576,7 +3581,7 @@ function clientesHtml() {
   const pessoas = S.equipe.filter(u => u.papel === "cliente" && (u.marcas || []).some(m => mids.includes(m)));
   if (!pessoas.length) return "";
   return `<div class="panel" style="margin-bottom:14px;display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap"><b style="font-size:14px">Mandar o link de aprovação (sem senha):</b>
-    ${pessoas.map(u => `<button class="btn sm" type="button" onclick="linkCliente('${esc(u.id)}')">${avatarHtml(u, 20)} ${esc(u.nome)}</button>`).join("")}</div>`;
+    ${pessoas.map(u => `<button class="btn sm" type="button" onclick="linkCliente(${js(u.id)})">${avatarHtml(u, 20)} ${esc(u.nome)}</button>`).join("")}</div>`;
 }
 
 /* ---------- Datas comemorativas ---------- */
@@ -3692,10 +3697,10 @@ function vIdeias() {
     `<p class="sec-intro">Guarde aqui as ideias que ainda não têm dia. Quando decidir, escolha a data e ela vai para o calendário${pode ? "" : "."}.</p>
     ${pode ? `<form class="banco-add" onsubmit="event.preventDefault();novaIdeia()"><input id="ideiaNova" placeholder="Nova ideia (ex.: Bastidores da produção)" autocomplete="off"><button class="btn primary" type="submit">Guardar ideia</button></form>` : ""}${iaIdeiasHtml()}
     ${l.length ? `<div class="ideias">${l.map(p => `<article class="ideia-card">
-        <button type="button" class="ic-corpo" onclick="openEditor('${esc(p.id)}')">
+        <button type="button" class="ic-corpo" onclick="openEditor(${js(p.id)})">
           <span class="muted" style="font-size:12px">${FMT_ICON[p.formato] || ""} ${esc(p.formato || "")}${p.criado ? " · guardada " + esc(quando(p.criado)) : ""}${(p.comentarios || []).length ? " · 💬 " + p.comentarios.length : ""}</span>
           <b>${esc(nm(p))}</b>${cheio(p.observacao) ? `<span class="muted" style="font-size:13px">${esc(p.observacao.slice(0, 140))}</span>` : ""}</button>
-        ${pode ? `<div class="ic-acts"><input type="date" aria-label="Dia para ${esc(nm(p))}" id="dia-${esc(p.id)}"><button class="btn sm primary" type="button" onclick="agendarIdeia('${esc(p.id)}')">Colocar no calendário</button></div>` : ""}
+        ${pode ? `<div class="ic-acts"><input type="date" aria-label="Dia para ${esc(nm(p))}" id="dia-${esc(p.id)}"><button class="btn sm primary" type="button" onclick="agendarIdeia(${js(p.id)})">Colocar no calendário</button></div>` : ""}
       </article>`).join("")}</div>`
       : `<div class="empty"><strong>Nenhuma ideia guardada</strong><span>Escreva acima e clique em Guardar ideia.</span></div>`}` + trendsHtml();
 }
@@ -3972,8 +3977,8 @@ function vAgenda() {
     <button class="btn primary" type="button" onclick="novoEvento('reuniao')">${ehChefe() ? "+ Reunião" : "Pedir reunião"}</button>`;
   let topo = "";
   if (pedidos.length) topo += `<section class="ag-sec"><h2>🙋 Pedidos de reunião para responder<span class="n">${pedidos.length}</span></h2>${pedidos.map(pedidoHtml).join("")}</section>`;
-  if (convites.length) topo += `<section class="ag-sec"><h2>📩 Reuniões esperando sua resposta<span class="n">${convites.length}</span></h2><div class="ag-conv">${convites.map(x => `<div class="ag-card" style="--c:${corEvento(x)}"><div><b>${esc(x.titulo)}</b><div class="muted">${esc(wd(x.data))}, ${br(x.data)} às ${esc(x.hora)} · ${durTxt(x.duracao)} · com ${esc(x.criadoPor)}</div></div><div class="ag-acts">${rsvpBtns(x)}<button class="btn sm" type="button" onclick="abrirEvento('${esc(x.id)}')">Detalhes</button></div></div>`).join("")}</div></section>`;
-  if (meus.length) topo += `<section class="ag-sec"><h2>Seus pedidos</h2>${meus.map(x => `<div class="ag-card" style="--c:${corEvento(x)}"><div><b>${esc(x.titulo)}</b><div class="muted">${br(x.data)} às ${esc(x.hora)} · ${x.status === "solicitada" ? "⏳ esperando resposta" : `❌ recusado por ${esc(x.decididoPor)}: "${esc(x.motivo)}"`}</div></div><div class="ag-acts"><button class="btn sm" type="button" onclick="abrirEvento('${esc(x.id)}')">${x.status === "recusada" ? "Pedir de novo" : "Ver"}</button></div></div>`).join("")}</section>`;
+  if (convites.length) topo += `<section class="ag-sec"><h2>📩 Reuniões esperando sua resposta<span class="n">${convites.length}</span></h2><div class="ag-conv">${convites.map(x => `<div class="ag-card" style="--c:${corEvento(x)}"><div><b>${esc(x.titulo)}</b><div class="muted">${esc(wd(x.data))}, ${br(x.data)} às ${esc(x.hora)} · ${durTxt(x.duracao)} · com ${esc(x.criadoPor)}</div></div><div class="ag-acts">${rsvpBtns(x)}<button class="btn sm" type="button" onclick="abrirEvento(${js(x.id)})">Detalhes</button></div></div>`).join("")}</div></section>`;
+  if (meus.length) topo += `<section class="ag-sec"><h2>Seus pedidos</h2>${meus.map(x => `<div class="ag-card" style="--c:${corEvento(x)}"><div><b>${esc(x.titulo)}</b><div class="muted">${br(x.data)} às ${esc(x.hora)} · ${x.status === "solicitada" ? "⏳ esperando resposta" : `❌ recusado por ${esc(x.decididoPor)}: "${esc(x.motivo)}"`}</div></div><div class="ag-acts"><button class="btn sm" type="button" onclick="abrirEvento(${js(x.id)})">${x.status === "recusada" ? "Pedir de novo" : "Ver"}</button></div></div>`).join("")}</section>`;
   const corpo = modo === "mes" ? agMesHtml() : modo === "lista" ? agListaHtml(dias) : agSemanaHtml(dias);
   return head("Sua agenda", "Agenda", tools) + topo + corpo +
     `<div class="ag-leg"><span><i style="background:var(--s-reuniao)"></i>Reunião</span><span><i style="background:var(--s-atividade)"></i>Atividade sua</span><span><i class="tr"></i>Pedido (esperando resposta)</span><label><input type="checkbox"${store("agTarefas") !== "0" ? " checked" : ""} onchange="store('agTarefas', this.checked ? '1' : '0');render()"> Mostrar minhas tarefas</label></div>`;
@@ -3988,7 +3993,7 @@ function agMover(n) {
 const tarefasDia = k => store("agTarefas") === "0" ? [] : S.tarefas.filter(t => t.status !== "Feita" && t.responsavelId === S.eu.id && (t.data === k || (!t.data && t.prazo === k)));
 function blocoEvento(x, estilo = "") {
   const pend = x.status === "solicitada", resp = (x.respostas || {})[S.eu.id];
-  return `<button type="button" class="ev${/--curto/.test(estilo) ? " curto" : ""}${pend ? " pend" : ""}${x.tipo === "atividade" ? " atv" : ""}" style="--c:${corEvento(x)};${estilo}" onclick="event.stopPropagation();abrirEvento('${esc(x.id)}')" title="${esc(x.hora + " · " + x.titulo + " (" + durTxt(x.duracao) + ")")}">
+  return `<button type="button" class="ev${/--curto/.test(estilo) ? " curto" : ""}${pend ? " pend" : ""}${x.tipo === "atividade" ? " atv" : ""}" style="--c:${corEvento(x)};${estilo}" onclick="event.stopPropagation();abrirEvento(${js(x.id)})" title="${esc(x.hora + " · " + x.titulo + " (" + durTxt(x.duracao) + ")")}">
     <b>${esc(x.titulo)}</b><span>${esc(x.hora)}–${horaDe(minDe(x.hora) + (+x.duracao || 60))}${x.tipo === "reuniao" ? ` · ${(x.participantes || []).length + 1} pessoas` : ""}${pend ? " · pedido" : ""}${resp === "nao" ? " · não vou" : resp === "talvez" ? " · talvez" : ""}</span></button>`;
 }
 function agSemanaHtml(dias) {
@@ -4008,7 +4013,7 @@ function agSemanaHtml(dias) {
   };
   return `<div class="wk-wrap"><div class="agw" style="--h:${60 * PX}px">
     <div class="wk-h"></div>${dias.map(k => `<div class="wk-h${k === hoje ? " hoje" : ""}"><span>${WD[parse(k).getDay()].slice(0, 3)}</span><b>${parse(k).getDate()}</b></div>`).join("")}
-    <div class="wk-h tf"></div>${dias.map(k => `<div class="wk-dia">${aniChips(k)}${tarefasDia(k).map(t => `<button type="button" class="ev-tf" onclick="abrirTarefa('${esc(t.id)}')">☐ ${esc(t.titulo)}</button>`).join("")}</div>`).join("")}
+    <div class="wk-h tf"></div>${dias.map(k => `<div class="wk-dia">${aniChips(k)}${tarefasDia(k).map(t => `<button type="button" class="ev-tf" onclick="abrirTarefa(${js(t.id)})">☐ ${esc(t.titulo)}</button>`).join("")}</div>`).join("")}
     <div class="wk-horas" style="height:${h}px">${horas.map(m => `<span style="top:${(m - ini) * PX}px">${pad(m / 60)}h</span>`).join("")}</div>
     ${dias.map(col).join("")}
   </div></div><p class="muted" style="font-size:12.5px;margin-top:8px">Clique num horário vazio para criar uma atividade ali.</p>`;
@@ -4025,26 +4030,26 @@ function agMesHtml() {
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
     const k = iso(d), l = eventosDia(k), t = tarefasDia(k);
     cells += `<div class="day${d.getMonth() !== first.getMonth() ? " out" : ""}${k === hoje ? " today" : ""}" onclick="if(!event.target.closest('button'))novoEvento('atividade','${k}')"><div class="dhead"><span class="dnum"><b>${d.getDate()}</b></span></div>
-      ${aniChips(k)}${l.map(x => blocoEvento(x)).join("")}${t.map(x => `<button type="button" class="ev-tf" onclick="abrirTarefa('${esc(x.id)}')">☐ ${esc(x.titulo)}</button>`).join("")}</div>`;
+      ${aniChips(k)}${l.map(x => blocoEvento(x)).join("")}${t.map(x => `<button type="button" class="ev-tf" onclick="abrirTarefa(${js(x.id)})">☐ ${esc(x.titulo)}</button>`).join("")}</div>`;
   }
   return `<div class="cal ag-mes">${cells}</div>`;
 }
 function agListaHtml(dias) {
   const hoje = hojeIso();
   return `<div class="ag-lista">${dias.map(k => { const l = eventosDia(k), t = tarefasDia(k); return `<section class="ag-dia${k === hoje ? " hoje" : ""}"><h3>${esc(WD[parse(k).getDay()])}, ${br(k)}${k === hoje ? " · hoje" : ""}<button class="btn sm" type="button" onclick="novoEvento('atividade','${k}')">+</button></h3>
-    ${aniChips(k)}${l.length || t.length || aniversariosDia(k).length ? l.map(x => blocoEvento(x)).join("") + t.map(x => `<button type="button" class="ev-tf" onclick="abrirTarefa('${esc(x.id)}')">☐ ${esc(x.titulo)}</button>`).join("") : `<span class="muted" style="font-size:13px">Livre</span>`}</section>`; }).join("")}</div>`;
+    ${aniChips(k)}${l.length || t.length || aniversariosDia(k).length ? l.map(x => blocoEvento(x)).join("") + t.map(x => `<button type="button" class="ev-tf" onclick="abrirTarefa(${js(x.id)})">☐ ${esc(x.titulo)}</button>`).join("") : `<span class="muted" style="font-size:13px">Livre</span>`}</section>`; }).join("")}</div>`;
 }
 function rsvpBtns(x) {
   const r = (x.respostas || {})[S.eu.id];
-  return [["sim", "Vou"], ["talvez", "Talvez"], ["nao", "Não vou"]].map(([k, l]) => `<button class="btn sm${r === k ? (k === "sim" ? " ok" : k === "nao" ? " danger" : " primary") : ""}" type="button" onclick="responderEvento('${esc(x.id)}','${k}')">${l}</button>`).join("");
+  return [["sim", "Vou"], ["talvez", "Talvez"], ["nao", "Não vou"]].map(([k, l]) => `<button class="btn sm${r === k ? (k === "sim" ? " ok" : k === "nao" ? " danger" : " primary") : ""}" type="button" onclick="responderEvento(${js(x.id)},'${k}')">${l}</button>`).join("");
 }
 function pedidoHtml(x) {
   const rej = S.agRej === x.id, conf = conflitos(x);
   return `<div class="ag-card" style="--c:${corEvento(x)}"><div><b>${esc(x.titulo)}</b><div class="muted">${esc(x.criadoPor)} pediu para ${esc(wd(x.data)).toLowerCase()}, ${br(x.data)} às ${esc(x.hora)} · ${durTxt(x.duracao)}${(x.participantes || []).length > 1 ? ` · com ${esc(x.participantes.map(nomePessoa).filter(Boolean).join(", "))}` : ""}</div>
     ${x.descricao ? `<div style="font-size:13.5px;margin-top:4px">${esc(x.descricao)}</div>` : ""}${conf.length ? `<div class="atraso" style="font-size:12.5px;margin-top:4px">⚠ Você já tem ${esc(conf.map(y => y.titulo).join(", "))} neste horário</div>` : ""}</div>
-    <div class="ag-acts">${rej ? `<input id="agRejTxt" placeholder="Motivo ou outro horário sugerido" style="min-width:200px"><button class="btn sm danger" type="button" onclick="responderEvento('${esc(x.id)}','recusar')">Recusar</button><button class="btn sm" type="button" onclick="S.agRej=null;render()">Voltar</button>`
-      : S.agAce === x.id ? `<input id="agAceData" type="date" value="${esc(x.data)}"><input id="agAceHora" type="time" value="${esc(x.hora)}"><button class="btn sm ok" type="button" onclick="responderEvento('${esc(x.id)}','aceitar')">Confirmar</button><button class="btn sm" type="button" onclick="S.agAce=null;render()">Voltar</button>`
-      : `<button class="btn sm ok" type="button" onclick="responderEvento('${esc(x.id)}','aceitar')">Aceitar</button><button class="btn sm" type="button" onclick="S.agAce='${esc(x.id)}';render()">Aceitar em outro horário</button><button class="btn sm danger" type="button" onclick="S.agRej='${esc(x.id)}';render();$('#agRejTxt').focus()">Recusar</button>`}</div></div>`;
+    <div class="ag-acts">${rej ? `<input id="agRejTxt" placeholder="Motivo ou outro horário sugerido" style="min-width:200px"><button class="btn sm danger" type="button" onclick="responderEvento(${js(x.id)},'recusar')">Recusar</button><button class="btn sm" type="button" onclick="S.agRej=null;render()">Voltar</button>`
+      : S.agAce === x.id ? `<input id="agAceData" type="date" value="${esc(x.data)}"><input id="agAceHora" type="time" value="${esc(x.hora)}"><button class="btn sm ok" type="button" onclick="responderEvento(${js(x.id)},'aceitar')">Confirmar</button><button class="btn sm" type="button" onclick="S.agAce=null;render()">Voltar</button>`
+      : `<button class="btn sm ok" type="button" onclick="responderEvento(${js(x.id)},'aceitar')">Aceitar</button><button class="btn sm" type="button" onclick="S.agAce=${js(x.id)};render()">Aceitar em outro horário</button><button class="btn sm danger" type="button" onclick="S.agRej=${js(x.id)};render();$('#agRejTxt').focus()">Recusar</button>`}</div></div>`;
 }
 async function responderEvento(id, resposta) {
   const dados = {}; let motivo = "";
@@ -4114,12 +4119,12 @@ function desenharEvento(x, editar, podeEditarEv) {
     <h2>${esc(x.titulo)}</h2></div><button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#evDlg').close()">×</button></div>
     <div class="dlg-body" style="grid-template-columns:1fr">
       <div class="ev-info" style="--c:${corEvento(x)}"><div>📅 <b>${esc(wd(x.data))}, ${brFull(x.data)}</b> · ${esc(x.hora)}–${horaDe(minDe(x.hora) + (+x.duracao || 60))} (${durTxt(x.duracao)})</div>
-        ${x.local ? `<div>📍 ${/^https?:/.test(x.local) ? `<a class="lnk" href="${esc(x.local)}" target="_blank" rel="noopener">${esc(x.local)}</a>` : esc(x.local)}</div>` : ""}
+        ${x.local ? `<div>📍 ${/^https?:/.test(x.local) ? `<a class="lnk" href="${esc(urlOk(x.local))}" target="_blank" rel="noopener">${esc(x.local)}</a>` : esc(x.local)}</div>` : ""}
         ${x.status === "recusada" ? `<div class="motivo"><b>Recusado por ${esc(x.decididoPor)}</b>${esc(x.motivo)}</div>` : ""}
         ${x.descricao ? `<div class="rot" style="white-space:pre-wrap;background:var(--surface-2);border-radius:10px;padding:10px 12px">${esc(x.descricao)}</div>` : ""}</div>
       ${reun ? `<div><b style="font-size:14px">Participantes</b><ul class="ev-lista">${partes.map(p => { const u = S.equipe.find(e => e.id === p.id) || p; return `<li>${avatarHtml(u, 26)}<span>${esc(p.nome)}${p.org ? ` <small class="muted">· marcou</small>` : ""}</span><small class="${resp[p.id] === "nao" ? "atraso" : "muted"}">${p.org ? "" : esc(ROT[resp[p.id]] || "sem resposta")}</small></li>`; }).join("")}</ul></div>` : ""}
       ${reun && x.status === "confirmada" && (x.participantes || []).includes(S.eu.id) && x.criadoPorId !== S.eu.id ? `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><b style="font-size:14px">Você vai?</b>${rsvpBtns(x)}</div>` : ""}
-      ${reun && x.status === "solicitada" && ehChefe() && x.criadoPorId !== S.eu.id ? `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ok" type="button" onclick="responderEvento('${esc(x.id)}','aceitar')">Aceitar pedido</button><button class="btn" type="button" onclick="$('#evDlg').close();location.hash='#agenda'">Responder na agenda</button></div>` : ""}
+      ${reun && x.status === "solicitada" && ehChefe() && x.criadoPorId !== S.eu.id ? `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ok" type="button" onclick="responderEvento(${js(x.id)},'aceitar')">Aceitar pedido</button><button class="btn" type="button" onclick="$('#evDlg').close();location.hash='#agenda'">Responder na agenda</button></div>` : ""}
       ${x.marcaId && nomeMarca(x.marcaId) ? `<div style="font-size:13.5px">🏷️ ${esc(nomeMarca(x.marcaId))}</div>` : ""}
       ${ataHtml(x)}
       ${x.status === "confirmada" ? `<a class="lnk" href="${esc(linkGoogleAgenda(x))}" target="_blank" rel="noopener" style="font-size:13.5px">Adicionar ao meu Google Agenda</a>` : ""}
@@ -4187,7 +4192,7 @@ function ataHtml(x) {
     <div id="ataTfs" style="display:grid;gap:6px">${[0].map(() => ataTfRow(opc)).join("")}</div>
     <button class="btn sm" type="button" style="justify-self:start" onclick="$('#ataTfs').insertAdjacentHTML('beforeend', ataTfRow(${esc(JSON.stringify(opc))}))">+ Tarefa</button>
     <label style="display:flex;gap:6px;align-items:center;font-size:13.5px"><input type="checkbox" id="ataEnviar" checked> Mandar a ata por e-mail para os participantes</label>
-    <div style="display:flex;gap:8px"><button class="btn primary" type="button" id="ataBtn" onclick="salvarAta('${esc(x.id)}')">Salvar ata</button><button class="btn" type="button" onclick="S.ataEdit=false;desenharEvento(EV,false,true)">Cancelar</button></div></div>`;
+    <div style="display:flex;gap:8px"><button class="btn primary" type="button" id="ataBtn" onclick="salvarAta(${js(x.id)})">Salvar ata</button><button class="btn" type="button" onclick="S.ataEdit=false;desenharEvento(EV,false,true)">Cancelar</button></div></div>`;
 }
 const ataTfRow = opc => `<div class="ata-tf" data-atf><input data-t="titulo" placeholder="O que fazer"><select data-t="resp"><option value="">Responsável</option>${opc}</select><input data-t="prazo" type="date" aria-label="Prazo"></div>`;
 async function salvarAta(id) {
@@ -4202,8 +4207,8 @@ async function salvarAta(id) {
 }
 function reunioesMarcaHtml(m) {
   const l = (S.agenda || []).filter(x => x.tipo === "reuniao" && x.marcaId === m.id && x.status !== "recusada").sort((a, b) => (b.data + b.hora).localeCompare(a.data + a.hora));
-  return `<div class="panel" style="margin-top:16px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="margin:0">Reuniões da marca</h2>${ehCliente() ? "" : `<button class="btn sm" type="button" onclick="novoEvento('reuniao');EV.marcaId='${esc(m.id)}';desenharEvento(EV,true)">${ehChefe() ? "+ Reunião" : "Pedir reunião"}</button>`}</div>
-    ${l.length ? `<div class="ag-lista" style="margin-top:10px">${l.slice(0, 20).map(x => `<button type="button" class="reu-it" onclick="abrirEvento('${esc(x.id)}')"><b>${brFull(x.data)} · ${esc(x.hora)}</b><span>${esc(x.titulo)}${x.status === "solicitada" ? " · pedido" : ""}</span>${x.ata ? `<small>📝 ${esc(x.ata.slice(0, 140))}${x.ata.length > 140 ? "…" : ""}</small>` : x.data < hojeIso() ? `<small class="muted">Sem ata</small>` : ""}</button>`).join("")}</div>` : `<p class="muted" style="margin:8px 0 0">Nenhuma reunião ligada a esta marca ainda. Ao marcar uma reunião, escolha a marca.</p>`}</div>`;
+  return `<div class="panel" style="margin-top:16px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="margin:0">Reuniões da marca</h2>${ehCliente() ? "" : `<button class="btn sm" type="button" onclick="novoEvento('reuniao');EV.marcaId=${js(m.id)};desenharEvento(EV,true)">${ehChefe() ? "+ Reunião" : "Pedir reunião"}</button>`}</div>
+    ${l.length ? `<div class="ag-lista" style="margin-top:10px">${l.slice(0, 20).map(x => `<button type="button" class="reu-it" onclick="abrirEvento(${js(x.id)})"><b>${brFull(x.data)} · ${esc(x.hora)}</b><span>${esc(x.titulo)}${x.status === "solicitada" ? " · pedido" : ""}</span>${x.ata ? `<small>📝 ${esc(x.ata.slice(0, 140))}${x.ata.length > 140 ? "…" : ""}</small>` : x.data < hojeIso() ? `<small class="muted">Sem ata</small>` : ""}</button>`).join("")}</div>` : `<p class="muted" style="margin:8px 0 0">Nenhuma reunião ligada a esta marca ainda. Ao marcar uma reunião, escolha a marca.</p>`}</div>`;
 }
 
 /* ---------- Horários livres ---------- */
@@ -4245,7 +4250,7 @@ function vHoras() {
     gestao = `<div class="panel" style="margin-top:16px"><h2>Horas da equipe por marca</h2>
       ${linhas.length ? `<div class="table-wrap"><table style="min-width:560px"><thead><tr><th>Marca</th><th class="n">Horas</th><th>Quem</th><th class="n">Contrato</th><th class="n">Valor por hora</th></tr></thead><tbody>
       ${linhas.map(([k, o]) => { const m = S.marcas.find(x => x.id === k), val = m ? +perfilDe(m).valorMensal || 0 : 0, ph = val && o.min ? val / (o.min / 60) : 0;
-        return `<tr><td>${esc(m ? m.nome : "Interno / sem marca")}</td><td class="n">${hm(o.min)}</td><td style="font-size:12.5px">${Object.entries(o.pessoas).map(([n, v]) => `${esc(n)} ${hm(v)}`).join(" · ")}</td><td class="n">${val ? brl(val) : `<a class="lnk" href="#marca-plano" onclick="${m ? `S.marcaId='${esc(m.id)}';store('marca','${esc(m.id)}')` : ""}" style="font-size:12px">${m ? "cadastrar" : ""}</a>`}</td><td class="n${ph && ph < 50 ? " atraso" : ""}"><b>${ph ? brl(ph) : "—"}</b></td></tr>`; }).join("")}</tbody></table></div>
+        return `<tr><td>${esc(m ? m.nome : "Interno / sem marca")}</td><td class="n">${hm(o.min)}</td><td style="font-size:12.5px">${Object.entries(o.pessoas).map(([n, v]) => `${esc(n)} ${hm(v)}`).join(" · ")}</td><td class="n">${val ? brl(val) : `<a class="lnk" href="#marca-plano" onclick="${m ? `S.marcaId=${js(m.id)};store('marca',${js(m.id)})` : ""}" style="font-size:12px">${m ? "cadastrar" : ""}</a>`}</td><td class="n${ph && ph < 50 ? " atraso" : ""}"><b>${ph ? brl(ph) : "—"}</b></td></tr>`; }).join("")}</tbody></table></div>
       <p class="muted" style="font-size:12.5px;margin:8px 0 0">Valor por hora = valor mensal do contrato ÷ horas trabalhadas no mês. Quanto menor, menos o cliente está pagando por cada hora da equipe (em vermelho abaixo de R$ 50). O valor do contrato fica em Marca → Pacote e legendas.</p>
       <p style="font-size:13px;margin:8px 0 0">Por pessoa: ${Object.entries(porPessoa).sort((a, b) => b[1] - a[1]).map(([n, v]) => `<b>${esc(n)}</b> ${hm(v)}`).join(" · ")}</p>` : `<p class="muted">Ninguém lançou horas neste mês ainda.</p>`}</div>`;
   }
@@ -4260,7 +4265,7 @@ function vHoras() {
         <select id="hrMarca">${opM(S.marcaId)}</select><input id="hrDesc" placeholder="O que fez"><button class="btn" type="submit">Salvar</button></form>
     </div>
     <div class="panel" style="margin-top:16px"><h2>Suas horas em ${esc(monthLabel(S.hMes))}: ${hm(total(minhas))}</h2>
-      ${minhas.length ? `<div class="hr-lista">${minhas.map(h => `<div class="hr-it"><b>${br(h.data)}</b><span>${esc(h.marcaId ? nomeMarca(h.marcaId) || h.marca : "Sem marca")}${h.descricao ? " · " + esc(h.descricao) : ""}</span><b>${hm(h.minutos)}</b><button type="button" class="com-x" aria-label="Apagar" onclick="apagarHora('${esc(h.id)}')">×</button></div>`).join("")}</div>` : `<p class="muted">Nada lançado neste mês.</p>`}</div>` + gestao;
+      ${minhas.length ? `<div class="hr-lista">${minhas.map(h => `<div class="hr-it"><b>${br(h.data)}</b><span>${esc(h.marcaId ? nomeMarca(h.marcaId) || h.marca : "Sem marca")}${h.descricao ? " · " + esc(h.descricao) : ""}</span><b>${hm(h.minutos)}</b><button type="button" class="com-x" aria-label="Apagar" onclick="apagarHora(${js(h.id)})">×</button></div>`).join("")}</div>` : `<p class="muted">Nada lançado neste mês.</p>`}</div>` + gestao;
 }
 function iniciarCron() { store(cronKey(), JSON.stringify({ inicio: Date.now(), marcaId: $("#crMarca").value, descricao: $("#crDesc").value.trim() })); render(); toast("Cronômetro começou"); }
 async function pararCron() {
@@ -4295,7 +4300,7 @@ function vMural() {
       ${a.texto ? `<div class="av-t">${esc(a.texto)}</div>` : ""}
       <div class="av-f">${avatarHtml(S.equipe.find(u => u.id === a.uid) || { nome: a.por }, 22)}<span>${esc(a.por)} · ${esc(quando(a.criado))}${a.ate ? ` · até ${br(a.ate)}` : ""}</span>
         ${ehChefe() ? `<span class="muted" title="${esc(S.equipe.filter(u => (a.lidos || []).includes(u.id)).map(u => u.nome).join(", "))}">👁 ${(a.lidos || []).length}/${S.equipe.filter(u => u.papel !== "cliente").length}</span>` : ""}
-        ${a.uid === S.eu.id || TODAS_MARCAS.includes(S.eu.papel) ? `<button class="btn sm" type="button" onclick="S.avEdit=S.mural.find(x=>x.id==='${esc(a.id)}');render()">Editar</button><button class="btn sm danger" type="button" onclick="apagarAviso('${esc(a.id)}')">Apagar</button>` : ""}</div></article>`).join("")}</div>`
+        ${a.uid === S.eu.id || TODAS_MARCAS.includes(S.eu.papel) ? `<button class="btn sm" type="button" onclick="S.avEdit=S.mural.find(x=>x.id===${js(a.id)});render()">Editar</button><button class="btn sm danger" type="button" onclick="apagarAviso(${js(a.id)})">Apagar</button>` : ""}</div></article>`).join("")}</div>`
       : `<div class="empty"><strong>Nenhum aviso</strong><span>${ehChefe() ? "Publique recados para a equipe toda: feriados, cliente novo, mudanças no processo." : "Os recados da gestão aparecem aqui."}</span></div>`);
 }
 async function salvarAviso() {
@@ -4398,7 +4403,7 @@ function trendsHtml() {
   const t = S.trends; if (!t) carregarTrends();
   const corpo = !t || t.carregando ? `<p class="muted">Carregando as trends…</p>` : t.erro ? `<p class="muted">${esc(t.erro)}</p>` : !(t.itens || []).length ? `<p class="muted">A planilha ainda não tem trends.</p>`
     : `<div class="trends">${t.itens.slice(0, 18).map((x, i) => `<article class="trend"><div class="muted" style="font-size:11.5px">${esc([x.rede, x.data].filter(Boolean).join(" · "))}</div><b>${esc(x.nome)}</b>${x.porque ? `<span style="font-size:13px">${esc(x.porque)}</span>` : ""}
-        <div style="display:flex;gap:6px;margin-top:auto">${/^https?:/.test(x.link) ? `<a class="btn sm" href="${esc(x.link)}" target="_blank" rel="noopener">Ver vídeo</a>` : ""}${S.canWrite ? `<button class="btn sm primary" type="button" onclick="trendIdeia(${i})">Virar ideia</button>` : ""}</div></article>`).join("")}</div>`;
+        <div style="display:flex;gap:6px;margin-top:auto">${/^https?:/.test(x.link) ? `<a class="btn sm" href="${esc(urlOk(x.link))}" target="_blank" rel="noopener">Ver vídeo</a>` : ""}${S.canWrite ? `<button class="btn sm primary" type="button" onclick="trendIdeia(${i})">Virar ideia</button>` : ""}</div></article>`).join("")}</div>`;
   return `<div style="margin-top:22px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 style="margin:0;font-size:18px">🔥 Trends da semana</h2>${t && !t.carregando ? `<button class="btn sm" type="button" onclick="carregarTrends();render()">Atualizar</button>` : ""}</div>${corpo}</div>`;
 }
 async function ligarTrends() { try { await api("trendsConfig", { link: $("#trLink").value.trim() }); S.temTrends = true; S.trends = null; render(); toast("Planilha de trends conectada"); } catch (e) { writeFail(e); } }
@@ -4423,12 +4428,12 @@ function desenharBusca() {
   const tem = (...t) => t.join(" ").toLowerCase().includes(q), grupos = [];
   const add = (titulo, itens) => { if (itens.length) grupos.push(`<h3>${titulo} <span class="muted">${itens.length}</span></h3>` + itens.slice(0, 12).join("")); };
   const it = (onclick, t, sub) => `<button type="button" class="bu-it" onclick="$('#buDlg').close();${onclick}"><b>${esc(t)}</b><span>${esc(sub)}</span></button>`;
-  add("Postagens", S.posts.filter(p => tem(p.postagem, p.pauta, p.legenda, p.produto, p.observacao)).map(p => it(`S.marcaId='${esc(p.marcaId)}';store('marca','${esc(p.marcaId)}');openEditor('${esc(p.id)}')`, nm(p), `${nomeMarca(p.marcaId)} · ${p.data ? brFull(p.data) : "sem data"} · ${p.status}`)));
-  add("Stories", (S.stories || []).filter(x => tem(x.titulo, x.texto, x.roteiro)).map(x => it(`S.marcaId='${esc(x.marcaId)}';location.hash='#stories';setTimeout(()=>abrirStories('${esc(x.data)}',0),80)`, x.titulo || x.tipo || "Story", `${nomeMarca(x.marcaId)} · ${brFull(x.data)}`)));
-  add("Tarefas", S.tarefas.filter(t => tem(t.titulo, t.descricao)).map(t => it(`abrirTarefa('${esc(t.id)}')`, t.titulo, `${t.status}${t.prazo ? " · até " + br(t.prazo) : ""}`)));
-  add("Reuniões e atividades", (S.agenda || []).filter(x => tem(x.titulo, x.descricao, x.ata)).map(x => it(`location.hash='#agenda';setTimeout(()=>abrirEvento('${esc(x.id)}'),80)`, x.titulo, `${brFull(x.data)} ${x.hora}`)));
-  add("Arquivos das marcas", S.marcas.flatMap(m => arquivosDe(m).filter(a => tem(a.nome, a.nota, a.tipo)).map(a => `<a class="bu-it" href="${esc(a.url)}" target="_blank" rel="noopener"><b>${esc(a.nome)}</b><span>${esc(m.nome)} · ${esc(a.tipo || "")}</span></a>`)));
-  add("Marcas", S.marcas.filter(m => tem(m.nome, JSON.stringify(perfilDe(m)))).map(m => it(`S.marcaId='${esc(m.id)}';store('marca','${esc(m.id)}');S.month=null;location.hash='#marca';render()`, m.nome, "Abrir a marca")));
+  add("Postagens", S.posts.filter(p => tem(p.postagem, p.pauta, p.legenda, p.produto, p.observacao)).map(p => it(`S.marcaId=${js(p.marcaId)};store('marca',${js(p.marcaId)});openEditor(${js(p.id)})`, nm(p), `${nomeMarca(p.marcaId)} · ${p.data ? brFull(p.data) : "sem data"} · ${p.status}`)));
+  add("Stories", (S.stories || []).filter(x => tem(x.titulo, x.texto, x.roteiro)).map(x => it(`S.marcaId=${js(x.marcaId)};location.hash='#stories';setTimeout(()=>abrirStories(${js(x.data)},0),80)`, x.titulo || x.tipo || "Story", `${nomeMarca(x.marcaId)} · ${brFull(x.data)}`)));
+  add("Tarefas", S.tarefas.filter(t => tem(t.titulo, t.descricao)).map(t => it(`abrirTarefa(${js(t.id)})`, t.titulo, `${t.status}${t.prazo ? " · até " + br(t.prazo) : ""}`)));
+  add("Reuniões e atividades", (S.agenda || []).filter(x => tem(x.titulo, x.descricao, x.ata)).map(x => it(`location.hash='#agenda';setTimeout(()=>abrirEvento(${js(x.id)}),80)`, x.titulo, `${brFull(x.data)} ${x.hora}`)));
+  add("Arquivos das marcas", S.marcas.flatMap(m => arquivosDe(m).filter(a => tem(a.nome, a.nota, a.tipo)).map(a => `<a class="bu-it" href="${esc(urlOk(a.url))}" target="_blank" rel="noopener"><b>${esc(a.nome)}</b><span>${esc(m.nome)} · ${esc(a.tipo || "")}</span></a>`)));
+  add("Marcas", S.marcas.filter(m => tem(m.nome, JSON.stringify(perfilDe(m)))).map(m => it(`S.marcaId=${js(m.id)};store('marca',${js(m.id)});S.month=null;location.hash='#marca';render()`, m.nome, "Abrir a marca")));
   box.innerHTML = grupos.join("") || `<p class="muted">Nada encontrado para "${esc(q)}".</p>`;
 }
 document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k" && S.eu) { e.preventDefault(); abrirBusca(); } });
@@ -4439,7 +4444,7 @@ async function abrirLixeira() {
   $("#lxDlg").showModal();
   try {
     const r = await api("lixeira");
-    $("#lxForm .dlg-body").innerHTML = `<p class="muted" style="margin:0;font-size:13px">Postagens e stories apagados ficam aqui por 30 dias.</p>` + (r.itens.length ? r.itens.map(x => `<div class="lx-it"><div><b>${esc(x.titulo || "(sem título)")}</b><div class="muted" style="font-size:12.5px">${x.tipo === "story" ? "Story" : "Postagem"} · ${esc(nomeMarca(x.marcaId))}${x.data ? " · " + brFull(x.data) : ""} · apagado por ${esc(x.por)} ${esc(quando(x.em))}</div></div><button class="btn sm" type="button" onclick="restaurarItem('${esc(x.id)}', this)">Recuperar</button></div>`).join("") : `<p class="muted">A lixeira está vazia.</p>`);
+    $("#lxForm .dlg-body").innerHTML = `<p class="muted" style="margin:0;font-size:13px">Postagens e stories apagados ficam aqui por 30 dias.</p>` + (r.itens.length ? r.itens.map(x => `<div class="lx-it"><div><b>${esc(x.titulo || "(sem título)")}</b><div class="muted" style="font-size:12.5px">${x.tipo === "story" ? "Story" : "Postagem"} · ${esc(nomeMarca(x.marcaId))}${x.data ? " · " + brFull(x.data) : ""} · apagado por ${esc(x.por)} ${esc(quando(x.em))}</div></div><button class="btn sm" type="button" onclick="restaurarItem(${js(x.id)}, this)">Recuperar</button></div>`).join("") : `<p class="muted">A lixeira está vazia.</p>`);
   } catch (e) { writeFail(e); }
 }
 async function restaurarItem(id, b) { b.disabled = true; try { await api("restaurar", { id }); b.closest(".lx-it").remove(); await carregar(); toast("Recuperado"); } catch (e) { b.disabled = false; writeFail(e); } }
@@ -4567,7 +4572,7 @@ function avaliacaoClienteHtml() {
     <span class="muted" style="font-size:13.5px">De 0 a 10, quanto você ficou satisfeito(a)?</span>
     <div class="notas">${Array.from({ length: 11 }, (_, n) => `<label><input type="radio" name="nota-${esc(m.id)}" value="${n}"><span>${n}</span></label>`).join("")}</div>
     <textarea id="avc-${esc(m.id)}" rows="2" placeholder="Quer comentar algo? (opcional)"></textarea>
-    <button class="btn primary" type="button" style="justify-self:start" onclick="enviarAvaliacao('${esc(m.id)}','${mes}')">Enviar</button></div>`).join("");
+    <button class="btn primary" type="button" style="justify-self:start" onclick="enviarAvaliacao(${js(m.id)},'${mes}')">Enviar</button></div>`).join("");
 }
 async function enviarAvaliacao(mid, mes) {
   const n = ($(`input[name="nota-${mid}"]:checked`) || {}).value;
@@ -4607,12 +4612,12 @@ function vFinanceiro() {
     ${renovar.length ? `<div class="faixa-aviso" style="cursor:default">📄 Contrato perto de renovar: ${renovar.map(x => `<b>${esc(x.m.nome)}</b> (${brFull(x.fin.renovacao)})`).join(", ")}</div>` : ""}
     <div class="table-wrap"><table class="fin" style="min-width:860px"><thead><tr><th>Marca</th><th class="n">Valor mensal</th><th>Vence dia</th><th>Início</th><th>Renovação</th><th>Situação</th><th></th></tr></thead><tbody>
     ${linhas.map(x => `<tr data-fin="${esc(x.m.id)}"><td><b>${esc(x.m.nome)}</b></td>
-      <td class="n"><input type="number" min="0" step="0.01" data-f="valor" value="${esc(x.valor || "")}" placeholder="0,00" onchange="salvarFin('${esc(x.m.id)}')"></td>
-      <td><input type="number" min="1" max="31" data-f="vencimento" value="${esc(x.fin.vencimento || "")}" placeholder="dia" style="width:64px" onchange="salvarFin('${esc(x.m.id)}')"></td>
-      <td><input type="date" data-f="inicio" value="${esc(x.fin.inicio || "")}" onchange="salvarFin('${esc(x.m.id)}')"></td>
-      <td><input type="date" data-f="renovacao" value="${esc(x.fin.renovacao || "")}" onchange="salvarFin('${esc(x.m.id)}')"></td>
+      <td class="n"><input type="number" min="0" step="0.01" data-f="valor" value="${esc(x.valor || "")}" placeholder="0,00" onchange="salvarFin(${js(x.m.id)})"></td>
+      <td><input type="number" min="1" max="31" data-f="vencimento" value="${esc(x.fin.vencimento || "")}" placeholder="dia" style="width:64px" onchange="salvarFin(${js(x.m.id)})"></td>
+      <td><input type="date" data-f="inicio" value="${esc(x.fin.inicio || "")}" onchange="salvarFin(${js(x.m.id)})"></td>
+      <td><input type="date" data-f="renovacao" value="${esc(x.fin.renovacao || "")}" onchange="salvarFin(${js(x.m.id)})"></td>
       <td><span class="fin-st" style="--c:${ST[x.st][1]}">${ST[x.st][0]}</span>${x.pag ? `<div class="muted" style="font-size:11.5px">${brFull(x.pag.pagoEm)} · ${esc(x.pag.por)}</div>` : x.vence && x.st !== "—" ? `<div class="muted" style="font-size:11.5px">vence ${brFull(x.vence)}</div>` : ""}</td>
-      <td>${x.st === "—" ? "" : x.pag ? `<button class="btn sm" type="button" onclick="marcarPago('${esc(x.m.id)}',false)">Desfazer</button>` : `<button class="btn sm ok" type="button" onclick="marcarPago('${esc(x.m.id)}',true)">Marcar pago</button>`}</td></tr>`).join("")}</tbody></table></div>
+      <td>${x.st === "—" ? "" : x.pag ? `<button class="btn sm" type="button" onclick="marcarPago(${js(x.m.id)},false)">Desfazer</button>` : `<button class="btn sm ok" type="button" onclick="marcarPago(${js(x.m.id)},true)">Marcar pago</button>`}</td></tr>`).join("")}</tbody></table></div>
     <p class="muted" style="font-size:12.5px;margin-top:8px">O valor mensal também é usado em Horas (valor por hora). Cobranças vencidas aparecem no seu e-mail das 8h. Só o administrador e o diretor veem esta aba.</p>` + propostasHtml();
 }
 async function salvarFin(mid) {
@@ -4633,9 +4638,9 @@ function vBiblioteca() {
   return headM(m.nome, "Biblioteca de mídia") + subnav() +
     `<p class="sec-intro">Fotos de produto, depoimentos, vídeos brutos… guardados aqui com etiquetas para reaproveitar nos posts (no editor da postagem, "Da biblioteca").</p>
     ${S.canWrite ? `<div class="panel" style="display:grid;gap:8px;margin-bottom:14px"><div style="display:flex;gap:8px;flex-wrap:wrap"><input id="bibLink" placeholder="Link de uma pasta ou arquivo do Drive" style="flex:1;min-width:220px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px;color:var(--ink)"><input id="bibTags" placeholder="Etiquetas (ex.: produto, shampoo)" style="flex:1;min-width:180px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px;color:var(--ink)"><button class="btn primary" type="button" id="bibBtn" onclick="addBiblioteca()">Adicionar</button></div><small class="muted">Com o link de uma pasta, entram todas as fotos e vídeos dela.</small></div>` : ""}
-    ${tags.length ? `<div class="legenda"><button type="button" class="lg-it${f ? "" : " on"}" onclick="S.bibTag='';render()">Todas <b>${l.length}</b></button>${tags.map(t => `<button type="button" class="lg-it${f === t ? " on" : ""}" onclick="S.bibTag='${esc(t)}';render()">${esc(t)} <b>${l.filter(x => (x.tags || []).includes(t)).length}</b></button>`).join("")}</div>` : ""}
+    ${tags.length ? `<div class="legenda"><button type="button" class="lg-it${f ? "" : " on"}" onclick="S.bibTag='';render()">Todas <b>${l.length}</b></button>${tags.map(t => `<button type="button" class="lg-it${f === t ? " on" : ""}" onclick="S.bibTag=${js(t)};render()">${esc(t)} <b>${l.filter(x => (x.tags || []).includes(t)).length}</b></button>`).join("")}</div>` : ""}
     ${vis.length ? `<div class="bib">${vis.map(x => `<figure class="bib-it"><a href="https://drive.google.com/file/d/${esc(x.id)}/view" target="_blank" rel="noopener"><img src="https://drive.google.com/thumbnail?id=${esc(x.id)}&sz=w400" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${x.tipo === "video" ? "▶" : "🖼"}'}))">${x.tipo === "video" ? `<span class="bib-v">▶</span>` : ""}</a>
-      <figcaption><span title="${esc(x.nome)}">${esc(x.nome)}</span>${S.canWrite ? `<input value="${esc((x.tags || []).join(", "))}" placeholder="etiquetas" onchange="tagsBiblioteca('${esc(x.id)}', this.value)"><button type="button" class="com-x" aria-label="Remover" onclick="tirarBiblioteca('${esc(x.id)}')">×</button>` : `<small>${esc((x.tags || []).join(", "))}</small>`}</figcaption></figure>`).join("")}</div>` : `<div class="empty"><strong>Biblioteca vazia</strong><span>Adicione uma pasta do Drive com as fotos e vídeos da marca.</span></div>`}`;
+      <figcaption><span title="${esc(x.nome)}">${esc(x.nome)}</span>${S.canWrite ? `<input value="${esc((x.tags || []).join(", "))}" placeholder="etiquetas" onchange="tagsBiblioteca(${js(x.id)}, this.value)"><button type="button" class="com-x" aria-label="Remover" onclick="tirarBiblioteca(${js(x.id)})">×</button>` : `<small>${esc((x.tags || []).join(", "))}</small>`}</figcaption></figure>`).join("")}</div>` : `<div class="empty"><strong>Biblioteca vazia</strong><span>Adicione uma pasta do Drive com as fotos e vídeos da marca.</span></div>`}`;
 }
 async function salvarBiblioteca(l) { const m = marca(); await api("salvarMarca", { marca: { ...m, perfil: { ...perfilDe(m), biblioteca: l.slice(0, 400) } } }); await carregar(); }
 async function addBiblioteca() {
@@ -4655,7 +4660,7 @@ async function tagsBiblioteca(id, v) { const l = bibliotecaDe(marca()).map(x => 
 async function tirarBiblioteca(id) { try { await salvarBiblioteca(bibliotecaDe(marca()).filter(x => x.id !== id)); } catch (e) { writeFail(e); } }
 function bibPickerHtml() {
   const l = bibliotecaDe(marca()); if (!l.length) return `<span class="muted" style="font-size:13px">A biblioteca desta marca está vazia (Marca → Biblioteca).</span>`;
-  return `<div class="bib-pick">${l.slice(0, 120).map(x => `<button type="button" title="${esc(x.nome + " · " + (x.tags || []).join(", "))}" onclick="usarDaBiblioteca('${esc(x.id)}')"><img src="https://drive.google.com/thumbnail?id=${esc(x.id)}&sz=w200" alt="" loading="lazy">${x.tipo === "video" ? "<span>▶</span>" : ""}</button>`).join("")}</div>`;
+  return `<div class="bib-pick">${l.slice(0, 120).map(x => `<button type="button" title="${esc(x.nome + " · " + (x.tags || []).join(", "))}" onclick="usarDaBiblioteca(${js(x.id)})"><img src="https://drive.google.com/thumbnail?id=${esc(x.id)}&sz=w200" alt="" loading="lazy">${x.tipo === "video" ? "<span>▶</span>" : ""}</button>`).join("")}</div>`;
 }
 function usarDaBiblioteca(id) {
   const x = bibliotecaDe(marca()).find(a => a.id === id); if (!x) return;
@@ -4705,7 +4710,7 @@ function mostrarConferencia(p, seguir) {
   $("#cfForm").innerHTML = `<div class="dlg-head"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600">Antes de enviar</div><h2>Conferência: ${esc(nm(p))}</h2></div><button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#cfDlg').close()">×</button></div>
     <div class="dlg-body" style="grid-template-columns:1fr"><ul class="conf">${l.map(x => `<li class="${x.nivel}"><b>${ic[x.nivel]}</b>${esc(x.txt)}</li>`).join("")}</ul>
     ${erros ? `<p class="atraso" style="margin:0;font-size:13.5px">Corrija os itens em vermelho: o Instagram não publica assim.</p>` : `<p class="muted" style="margin:0;font-size:13.5px">São só avisos. Pode corrigir ou enviar mesmo assim.</p>`}</div>
-    <div class="dlg-foot"><span class="sp"></span><button class="btn" type="button" onclick="$('#cfDlg').close();if(!$('#dlg').open)openEditor('${esc(p.id)}')">Corrigir</button>${erros ? "" : `<button class="btn primary" type="button" onclick="$('#cfDlg').close();CONF&&CONF()">Enviar mesmo assim</button>`}</div>`;
+    <div class="dlg-foot"><span class="sp"></span><button class="btn" type="button" onclick="$('#cfDlg').close();if(!$('#dlg').open)openEditor(${js(p.id)})">Corrigir</button>${erros ? "" : `<button class="btn primary" type="button" onclick="$('#cfDlg').close();CONF&&CONF()">Enviar mesmo assim</button>`}</div>`;
   $("#cfDlg").showModal();
 }
 
@@ -4787,7 +4792,7 @@ function vResultados() {
   return headM(m.nome, "Resultados", monthNav() + `<button class="btn" type="button" onclick="abrirApresentacao()">▶ Apresentação do mês</button>`) +
     `<div class="met-kpis" style="margin-bottom:6px"><div><b>${ps.length}</b><span>posts planejados</span></div><div><b>${pub.length}</b><span>publicados</span></div><div><b>${ps.filter(p => ["Aprovado", "Agendado", "Postado"].includes(p.status)).length}</b><span>aprovados</span></div><div><b>${sts.filter(x => x.status === "Postado").length}/${sts.length}</b><span>stories publicados</span></div></div>
     ${metricasHtml()}
-    ${pub.length ? `<div class="panel" style="margin-top:16px"><h2>Publicados no mês</h2><div class="res-grid">${pub.map(p => `<a class="res-it" ${p.postLink ? `href="${esc(p.postLink)}" target="_blank" rel="noopener"` : `onclick="openEditor('${esc(p.id)}')"`}>${blobSrc(p) ? `<img src="${esc(blobSrc(p))}" alt="" loading="lazy" onerror="this.remove()">` : `<span class="muted">${FMT_ICON[p.formato] || ""}</span>`}<small>${br(p.data)} · ${esc(p.postagem || "")}</small></a>`).join("")}</div></div>` : ""}
+    ${pub.length ? `<div class="panel" style="margin-top:16px"><h2>Publicados no mês</h2><div class="res-grid">${pub.map(p => `<a class="res-it" ${p.postLink ? `href="${esc(urlOk(p.postLink))}" target="_blank" rel="noopener"` : `onclick="openEditor(${js(p.id)})"`}>${blobSrc(p) ? `<img src="${esc(blobSrc(p))}" alt="" loading="lazy" onerror="this.remove()">` : `<span class="muted">${FMT_ICON[p.formato] || ""}</span>`}<small>${br(p.data)} · ${esc(p.postagem || "")}</small></a>`).join("")}</div></div>` : ""}
     ${av.length ? `<div class="panel" style="margin-top:16px"><h2>Suas avaliações</h2><div class="aval-l">${av.map(a => `<div><span class="nota-b" style="--c:${a.nota >= 9 ? "var(--st-postado)" : a.nota >= 7 ? "var(--s-validacao)" : "var(--danger)"}">${a.nota}</span><div><b>${esc(monthLabel(a.mes))}</b>${a.comentario ? `<div style="font-size:13.5px">"${esc(a.comentario)}"</div>` : ""}</div></div>`).join("")}</div></div>` : ""}`;
 }
 
@@ -4808,7 +4813,7 @@ function propostasHtml() {
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="button" onclick="salvarProposta(false)">Salvar rascunho</button><button class="btn primary" type="button" onclick="salvarProposta(true)">Salvar e enviar por e-mail</button><button class="btn" type="button" onclick="S.prEdit=null;render()">Cancelar</button></div></form>` : ""}
     ${l.length ? `<div class="table-wrap" style="margin-top:10px"><table style="min-width:700px"><thead><tr><th>Cliente</th><th class="n">Valor</th><th>Pacote</th><th>Situação</th><th></th></tr></thead><tbody>${l.map(p => `<tr><td><b>${esc(p.cliente)}</b><div class="muted" style="font-size:12px">${esc(p.dados.contato || "")} · por ${esc(p.por)} ${esc(quando(p.criado))}</div></td><td class="n">${brl(p.dados.valor)}/mês</td><td style="font-size:13px">${[p.dados.feed && p.dados.feed + " feed", p.dados.reels && p.dados.reels + " reels", p.dados.stories && p.dados.stories + " stories"].filter(Boolean).join(" · ")} · ${p.dados.meses} meses</td>
       <td><span class="fin-st" style="--c:${(ST[p.status] || ST.rascunho)[1]}">${(ST[p.status] || ST.rascunho)[0]}</span>${p.respondido ? `<div class="muted" style="font-size:11.5px">${brFull(iso(new Date(p.respondido)))}</div>` : ""}</td>
-      <td style="white-space:nowrap"><button class="btn sm" type="button" onclick="copiarTexto(location.origin+location.pathname+'#proposta=${esc(p.chave)}','Link copiado')">Copiar link</button> <a class="btn sm" href="#proposta=${esc(p.chave)}" target="_blank" rel="noopener">Ver</a>${p.status !== "aceita" ? ` <button class="btn sm" type="button" onclick="S.prEdit=JSON.parse(JSON.stringify(S.propostas.find(x=>x.id==='${esc(p.id)}')));render()">Editar</button> <button class="btn sm danger" type="button" onclick="excluirProposta('${esc(p.id)}')">Apagar</button>` : ` <button class="btn sm" type="button" onclick="S.marcaId='${esc(p.marcaId)}';store('marca','${esc(p.marcaId)}');S.month=null;location.hash='#marca'">Ver marca</button>`}</td></tr>`).join("")}</tbody></table></div>` : f ? "" : `<p class="muted">Nenhuma proposta ainda. Quando o cliente aceita pelo link, a marca é criada sozinha com o pacote, o valor, o financeiro e o checklist.</p>`}</div>`;
+      <td style="white-space:nowrap"><button class="btn sm" type="button" onclick="copiarTexto(location.origin+location.pathname+'#proposta=${esc(p.chave)}','Link copiado')">Copiar link</button> <a class="btn sm" href="#proposta=${esc(p.chave)}" target="_blank" rel="noopener">Ver</a>${p.status !== "aceita" ? ` <button class="btn sm" type="button" onclick="S.prEdit=JSON.parse(JSON.stringify(S.propostas.find(x=>x.id===${js(p.id)})));render()">Editar</button> <button class="btn sm danger" type="button" onclick="excluirProposta(${js(p.id)})">Apagar</button>` : ` <button class="btn sm" type="button" onclick="S.marcaId=${js(p.marcaId)};store('marca',${js(p.marcaId)});S.month=null;location.hash='#marca'">Ver marca</button>`}</td></tr>`).join("")}</tbody></table></div>` : f ? "" : `<p class="muted">Nenhuma proposta ainda. Quando o cliente aceita pelo link, a marca é criada sozinha com o pacote, o valor, o financeiro e o checklist.</p>`}</div>`;
 }
 async function salvarProposta(enviar) {
   const g = id => $("#" + id).value;
@@ -4866,8 +4871,8 @@ function vPainel() {
       ${fin ? `<div><b>${brl(fin.rec)}</b><span>recebido de ${brl(fin.prev)}</span></div>` : ""}<div><b>${hm(Object.values(horas).reduce((s, v) => s + v, 0))}</b><span>horas lançadas no mês</span></div></div>
     <div class="painel-grid">
       <div class="panel"><h2>Carga da semana</h2>${Object.keys(carga).length ? Object.entries(carga).sort((a, b) => (b[1].posts + b[1].tarefas + b[1].reunioes) - (a[1].posts + a[1].tarefas + a[1].reunioes)).map(([n, c]) => { const t = c.posts + c.tarefas + c.reunioes; return `<div class="carga"><span>${esc(n)}</span><div class="cg-bar"><i class="p" style="width:${c.posts / maxCarga * 100}%"></i><i class="t" style="width:${c.tarefas / maxCarga * 100}%"></i><i class="r" style="width:${c.reunioes / maxCarga * 100}%"></i></div><b>${t}</b></div>`; }).join("") + `<div class="ag-leg"><span><i style="background:var(--s-producao)"></i>posts</span><span><i style="background:var(--s-validacao)"></i>tarefas</span><span><i style="background:var(--s-aprovacao)"></i>reuniões</span></div>` : `<p class="muted">Semana livre.</p>`}</div>
-      <div class="panel"><h2>Atrasados por pessoa</h2>${Object.keys(porPessoa).length ? Object.entries(porPessoa).sort((a, b) => b[1].length - a[1].length).map(([n, l]) => `<details><summary><b>${esc(n)}</b> · ${l.length}</summary><ul class="hist">${l.map(p => `<li><a class="lnk" href="#" onclick="event.preventDefault();openEditor('${esc(p.id)}')">${esc(nm(p))}</a> · ${esc(nomeMarca(p.marcaId))} · ${esc(atrasoDe(p, h).txt)}</li>`).join("")}</ul></details>`).join("") : `<p class="muted">Nada atrasado. 🎉</p>`}</div>
-      <div class="panel"><h2>Aprovações paradas</h2>${parados.length ? `<ul class="hist">${parados.slice(0, 12).map(x => `<li><b>${x.dias} dias</b> · <a class="lnk" href="#" onclick="event.preventDefault();openEditor('${esc(x.p.id)}')">${esc(nm(x.p))}</a> · ${esc(nomeMarca(x.p.marcaId))} · ${esc(x.p.status)}</li>`).join("")}</ul>` : `<p class="muted">Nada parado.</p>`}</div>
+      <div class="panel"><h2>Atrasados por pessoa</h2>${Object.keys(porPessoa).length ? Object.entries(porPessoa).sort((a, b) => b[1].length - a[1].length).map(([n, l]) => `<details><summary><b>${esc(n)}</b> · ${l.length}</summary><ul class="hist">${l.map(p => `<li><a class="lnk" href="#" onclick="event.preventDefault();openEditor(${js(p.id)})">${esc(nm(p))}</a> · ${esc(nomeMarca(p.marcaId))} · ${esc(atrasoDe(p, h).txt)}</li>`).join("")}</ul></details>`).join("") : `<p class="muted">Nada atrasado. 🎉</p>`}</div>
+      <div class="panel"><h2>Aprovações paradas</h2>${parados.length ? `<ul class="hist">${parados.slice(0, 12).map(x => `<li><b>${x.dias} dias</b> · <a class="lnk" href="#" onclick="event.preventDefault();openEditor(${js(x.p.id)})">${esc(nm(x.p))}</a> · ${esc(nomeMarca(x.p.marcaId))} · ${esc(x.p.status)}</li>`).join("")}</ul>` : `<p class="muted">Nada parado.</p>`}</div>
       <div class="panel"><h2>Pacotes incompletos no mês</h2>${pacotes.length ? `<ul class="hist">${pacotes.map(x => `<li><b>${esc(x.m.nome)}</b>: faltam ${x.falta} conteúdo(s) para fechar o pacote</li>`).join("")}</ul>` : `<p class="muted">Todos os pacotes planejados.</p>`}</div>
       <div class="panel"><h2>Horas por cliente no mês</h2>${Object.keys(horas).length ? `<ul class="hist">${Object.entries(horas).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<li><b>${esc(nomeMarca(k) || "Interno")}</b> · ${hm(v)}</li>`).join("")}</ul>` : `<p class="muted">Ninguém lançou horas.</p>`}</div>
       <div class="panel"><h2>Satisfação</h2>${av.length ? `<ul class="hist">${av.sort((a, b) => a.nota - b.nota).slice(0, 8).map(a => `<li><b>${a.nota}</b> · ${esc(nomeMarca(a.marcaId))} · ${esc(monthLabel(a.mes))}${a.comentario ? ` · "${esc(a.comentario.slice(0, 80))}"` : ""}</li>`).join("")}</ul>` : `<p class="muted">Nenhuma avaliação nos últimos meses.</p>`}</div>
@@ -4949,12 +4954,18 @@ function vEmpresas() {
       ${f.id ? `<label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" id="emAtivo"${f.ativo ? " checked" : ""}> Empresa ativa (desativada: ninguém dela consegue entrar)</label>`
         : `<div class="field"><span>Primeiro administrador da empresa</span><span class="muted" style="font-size:13px">Ele cadastra a equipe e as marcas da empresa.</span></div>
         <div class="pf-grid"><label class="field"><span>Nome</span><input id="emAdmNome" placeholder="Ex.: Diretora da Belkit"></label><label class="field"><span>E-mail (login)</span><input id="emAdmLogin" type="email" required></label>
-        <label class="field"><span>Senha provisória</span><span class="prod-pick"><input id="emAdmSenha" required minlength="6" value="${esc(gerarSenha())}" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px"></span></label></div>`}
+        <label class="field"><span>Senha provisória</span><span class="prod-pick"><input id="emAdmSenha" required minlength="8" value="${esc(gerarSenha())}" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px"></span></label></div>`}
       <label class="field"><span>Observação</span><input id="emObs" value="${esc(f.obs || "")}" placeholder="Plano, contato, contrato…"></label>
       <div style="display:flex;gap:8px"><button class="btn primary" type="submit">Salvar</button><button class="btn" type="button" onclick="S.empEdit=null;render()">Cancelar</button></div></form>` : ""}
     <div class="table-wrap"><table style="min-width:560px"><thead><tr><th>Empresa</th><th>Situação</th><th>Criada</th><th></th></tr></thead><tbody>
     ${l.map(e => `<tr><td><b>${esc(e.nome)}</b>${e.obs ? `<div class="muted" style="font-size:12px">${esc(e.obs)}</div>` : ""}</td><td>${e.ativo ? "Ativa" : `<span class="atraso">Desativada</span>`}</td><td>${e.criado ? brFull(iso(new Date(e.criado))) : ""}</td>
-      <td style="white-space:nowrap"><button class="btn sm" type="button" onclick="trocarEmpresa('${esc(e.id)}');location.hash='#calendario'">Entrar nela</button> <button class="btn sm" type="button" onclick="S.empEdit=JSON.parse(JSON.stringify(S.empresas.find(x=>x.id==='${esc(e.id)}')));render()">Editar</button></td></tr>`).join("")}</tbody></table></div>`;
+      <td style="white-space:nowrap"><button class="btn sm" type="button" onclick="trocarEmpresa(${js(e.id)});location.hash='#calendario'">Entrar nela</button> <button class="btn sm" type="button" onclick="S.empEdit=JSON.parse(JSON.stringify(S.empresas.find(x=>x.id===${js(e.id)})));render()">Editar</button></td></tr>`).join("")}</tbody></table></div>` + `<div class="panel" style="margin-top:16px;max-width:640px;display:grid;gap:8px"><h2 style="margin:0">🔒 Endereço oficial do site</h2>
+    <span class="muted" style="font-size:13px">Todos os links dos e-mails (aprovação, senha, briefing, propostas) usam só este endereço. Mude apenas se o site for para outro lugar.</span>
+    <form style="display:flex;gap:8px;flex-wrap:wrap" onsubmit="event.preventDefault();definirSite()"><input id="siteOf" style="flex:1;min-width:220px" value="${esc(S.siteOficial || "")}" placeholder="https://…/"><button class="btn" type="submit">Salvar endereço</button></form></div>`;
+}
+async function definirSite() {
+  const u = $("#siteOf").value.trim();
+  try { await api("definirSite", { url: u }); S.siteOficial = u; toast("Endereço salvo"); } catch (e) { writeFail(e); }
 }
 async function salvarEmpresa() {
   const f = S.empEdit, d = { id: f.id || "", nome: $("#emNome").value.trim(), obs: $("#emObs").value.trim(), ativo: f.id ? $("#emAtivo").checked : true };
@@ -5104,10 +5115,10 @@ async function pedirSenhaNova() {
 }
 function vRedefinir(chave) {
   document.body.classList.add("publico");
-  $("#app").innerHTML = `<form class="login panel" onsubmit="event.preventDefault();criarSenhaNova('${esc(chave)}')">
-    <h1>Criar senha nova</h1><span class="muted">Escolha uma senha com pelo menos 6 caracteres.</span>
-    <label class="field"><span>Senha nova</span><input id="rdS1" type="password" autocomplete="new-password" minlength="6" required></label>
-    <label class="field"><span>Repita a senha</span><input id="rdS2" type="password" autocomplete="new-password" minlength="6" required></label>
+  $("#app").innerHTML = `<form class="login panel" onsubmit="event.preventDefault();criarSenhaNova(${js(chave)})">
+    <h1>Criar senha nova</h1><span class="muted">Escolha uma senha com pelo menos 8 caracteres.</span>
+    <label class="field"><span>Senha nova</span><input id="rdS1" type="password" autocomplete="new-password" minlength="8" required></label>
+    <label class="field"><span>Repita a senha</span><input id="rdS2" type="password" autocomplete="new-password" minlength="8" required></label>
     <span class="err" id="rdErr"></span><button class="btn primary" type="submit" id="rdBtn">Salvar senha</button></form>`;
 }
 async function criarSenhaNova(chave) {
@@ -5245,7 +5256,7 @@ function vRegistro() {
     ${l.length > 500 ? `<p class="muted" style="font-size:12.5px">Mostrando 500 de ${l.length}. Use os filtros ou baixe o CSV.</p>` : ""}`;
 }
 function baixarRegistro() {
-  const l = (S.reg && S.reg.itens) || [], q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const l = (S.reg && S.reg.itens) || [], q = v => `"${semFormula(v).replace(/"/g, '""')}"`;
   const csv = "﻿" + ["Quando;Quem;O que fez;Em quê;Detalhe"].concat(l.map(x => [new Date(x.em).toLocaleString("pt-BR"), x.nome, x.acao, x.alvo, x.detalhe].map(q).join(";"))).join("\n");
   baixarBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), "registro.csv");
 }
@@ -5257,9 +5268,9 @@ async function exportarDados(tipo) {
     const r = await api("exportar"), nome = "dados-" + String(r.empresa || "empresa").toLowerCase().normalize("NFD").replace(/[^\w]+/g, "-") + "-" + hojeIso();
     if (tipo === "json") baixarBlob(new Blob([JSON.stringify(r, null, 1)], { type: "application/json" }), nome + ".json");
     else {
-      await carregarLib("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js");
+      await carregarLib(LIBS.xlsx);
       const wb = XLSX.utils.book_new();
-      Object.entries(r.tabelas).forEach(([aba, linhas]) => XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(linhas.length ? linhas : [{ vazio: "" }]), aba.slice(0, 31)));
+      Object.entries(r.tabelas).forEach(([aba, linhas]) => XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(linhas.length ? linhas.map(o => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, typeof v === "string" ? semFormula(v) : v && typeof v === "object" ? semFormula(JSON.stringify(v)) : v]))) : [{ vazio: "" }]), aba.slice(0, 31)));
       XLSX.writeFile(wb, nome + ".xlsx");
     }
     toast("Arquivo baixado");
@@ -5282,7 +5293,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-08.1"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-09.1"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",
@@ -5303,7 +5314,7 @@ async function carregar() {
     S.stories = j.stories || []; S.agenda = j.agenda || []; S.horas = j.horas || []; S.mural = j.mural || []; S.avaliacoes = j.avaliacoes || []; S.pagamentos = j.pagamentos || []; S.temTrends = !!j.temTrends; S.temIA = !!j.temIA; S.gcal = !!j.gcal; S.propostas = j.propostas || [];
     S.eu = j.eu;
     S.empresaInfo = j.empresa || null;
-    if (j.eu && j.eu.dono) { S.empresas = j.empresas || []; if (S.empresa == null) S.empresa = j.empresa ? j.empresa.id : ""; } else { S.empresa = null; S.empresas = []; } S.usuarios = j.usuarios || []; S.tarefas = j.tarefas || []; S.equipe = j.equipe || [];
+    if (j.eu && j.eu.dono) { S.empresas = j.empresas || []; S.siteOficial = j.siteOficial || ""; if (S.empresa == null) S.empresa = j.empresa ? j.empresa.id : ""; } else { S.empresa = null; S.empresas = []; } S.usuarios = j.usuarios || []; S.tarefas = j.tarefas || []; S.equipe = j.equipe || [];
     S.versao = j.versao || "antiga";
     S.marcas = (j.marcas || []).sort((a, b) => (a.criado || 0) - (b.criado || 0) || String(a.nome).localeCompare(b.nome));
     S.posts = (j.pautas || []).map(p => ({ ...p, status: normStatus(p.status) }));
@@ -5318,16 +5329,18 @@ async function carregar() {
   }
   if (!$("#dlg").open && !$("#agDlg").open && !$("#tfDlg").open && !S.dirty && !S.rej && !S.uEdit && !S.boasVindas && !document.querySelector(".msel-pop:not([hidden])")) render();
 }
-// link do cliente: #entrar=<chave> já entra na conta, sem senha
-if (location.hash.startsWith("#entrar=")) {
-  const t = location.hash.slice(8).replace(/[^\w]/g, "");
-  if (t) { S.token = t; store("token", t); }
-  history.replaceState(null, "", location.pathname + location.search + "#aprovacoes");
+// link do cliente: #entrar=<chave> é trocado (uma vez só) por uma sessão no servidor
+const CHAVE_LINK = location.hash.startsWith("#entrar=") ? location.hash.slice(8).replace(/[^\w]/g, "") : "";
+if (location.hash.startsWith("#entrar=")) history.replaceState(null, "", location.pathname + location.search + "#aprovacoes");
+async function entrarPeloLink() {
+  if (!CHAVE_LINK || !API) return;
+  try { const r = await api("entrarComLink", { chave: CHAVE_LINK }); S.token = r.token; store("token", r.token); }
+  catch (e) { if (!S.token) S.loginErro = e.message || "Este link já foi usado ou venceu. Peça um novo para a agência."; }
 }
 setInterval(() => { if (API && S.token && document.visibilityState === "visible" && !$("#dlg").open && !$("#agDlg").open && !$("#tfDlg").open) carregar(); }, 30000);
 aplicarCores();
-carregar();
 render();
+entrarPeloLink().then(carregar);
 </script>
 </body>
 </html>

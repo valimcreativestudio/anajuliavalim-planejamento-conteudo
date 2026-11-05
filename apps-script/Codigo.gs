@@ -19,7 +19,10 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-08.1';
+const VERSAO = '2026-11-09.1';
+// Endereço oficial do site. Os links dos e-mails SEMPRE usam este endereço (nunca o que vem do pedido).
+// A dona da plataforma pode trocar em Gestão → Empresas → Endereço do sistema.
+const SITE_PADRAO = 'https://valimcreativestudio.github.io/anajuliavalim-planejamento-conteudo/';
 const NOME_APP = 'Planeja Aê';
 
 const ABA_PAUTAS = 'POSTAGENS';
@@ -137,6 +140,7 @@ function doPost(e) {
   try { req = JSON.parse(e.postData.contents); } catch (err) { return json_({ ok: false, error: 'Pedido inválido.' }); }
   try {
     if (req.action === 'login') return json_(login_(req.login, req.senha));
+    if (req.action === 'entrarComLink') return json_(Object.assign({ ok: true }, entrarComLink_(req.chave)));
     if (req.action === 'esqueciSenha') return json_(Object.assign({ ok: true }, esqueciSenha_(req.login, req.site)));
     if (req.action === 'redefinirSenha') { const lk = LockService.getScriptLock(); lk.waitLock(20000); try { return json_(Object.assign({ ok: true }, redefinirSenha_(req.chave, req.nova))); } finally { lk.releaseLock(); } }
     if (req.action === 'propostaVer') return json_(Object.assign({ ok: true }, propostaVer_(req.chave)));
@@ -164,6 +168,7 @@ function doPost(e) {
     if (req.action === 'melhorHorario') return json_(Object.assign({ ok: true }, melhorHorario_(eu, req.marcaId, req.forcar)));
     if (req.action === 'enviarRelatorio') return json_(Object.assign({ ok: true }, enviarRelatorio_(eu, req.marcaId, req.mes, req.site)));
     if (req.action === 'publicarAgora') return json_(Object.assign({ ok: true }, publicarAgora_(eu, req.id, req.tipo)));
+    if (TELA_DA_ACAO[req.action] && ['acessosListar', 'acessosSalvar', 'trends'].indexOf(req.action) >= 0) exigeTela_(eu, TELA_DA_ACAO[req.action]);
     if (req.action === 'acessosListar') return json_(Object.assign({ ok: true }, acessosListar_(eu, req.marcaId)));
     if (req.action === 'acessosSalvar') return json_(Object.assign({ ok: true }, acessosSalvar_(eu, req.marcaId, req.acessos)));
 
@@ -178,11 +183,27 @@ function doPost(e) {
       lock.releaseLock();
     }
   } catch (err) {
-    return json_({ ok: false, code: err.code || 'server', error: String(err.message || err) });
+    return json_(erroParaSite_(err));
   }
 }
+// só as mensagens escritas pelo sistema chegam ao usuário; erros internos ficam no registro de execução
+function erroParaSite_(err) {
+  if (err && err.code) return { ok: false, code: err.code, error: String(err.message || '') };
+  Logger.log('Erro interno: ' + (err && err.stack || err));
+  return { ok: false, code: 'server', error: 'Algo deu errado do nosso lado. Tente de novo em instantes.' };
+}
 
+const TELA_DA_ACAO = {
+  salvarStory: 'stories', excluirStory: 'stories', ordenarStories: 'stories',
+  salvarEvento: 'agenda', responderEvento: 'agenda', excluirEvento: 'agenda', salvarAta: 'agenda', horariosLivres: 'agenda',
+  salvarTarefa: 'tarefas', concluirTarefa: 'tarefas', excluirTarefa: 'tarefas',
+  salvarHora: 'horas', excluirHora: 'horas', salvarAviso: 'mural', excluirAviso: 'mural', lerAviso: 'mural',
+  salvarUsuario: 'equipe', pagamento: 'financeiro', salvarProposta: 'financeiro', excluirProposta: 'financeiro',
+  auditoria: 'registro', perfilEmpresa: 'empresa', exportar: 'empresa', acessosListar: 'marca-acessos', acessosSalvar: 'marca-acessos',
+  trends: 'ideias', trendsConfig: 'ideias'
+};
 function rodarAcao_(eu, req) {
+      if (TELA_DA_ACAO[req.action]) exigeTela_(eu, TELA_DA_ACAO[req.action]);
       switch (req.action) {
         case 'listar': guardarSite_(req.site); return json_(listar_(eu, req.desde, req.se));
         case 'comentar': return json_(Object.assign({ ok: true }, comentar_(eu, req.id, req.texto, req.arte)));
@@ -200,7 +221,7 @@ function rodarAcao_(eu, req) {
         case 'salvarMarca': return json_({ ok: true, id: salvarMarca_(eu, req.marca || {}) });
         case 'excluirMarca': soAdmin_(eu); if (!acesso_(eu, req.id)) throw erro_('permissao', 'Sem acesso a esta marca.'); excluirMarca_(req.id); return json_({ ok: true });
         case 'salvarUsuario': gerencia_(eu); return json_({ ok: true, id: salvarUsuario_(eu, req.usuario || {}) });
-        case 'trocarSenha': trocarSenha_(eu, req.atual, req.nova); return json_({ ok: true });
+        case 'trocarSenha': eu.token = req.token; trocarSenha_(eu, req.atual, req.nova); return json_({ ok: true });
         case 'salvarTarefa': return json_({ ok: true, id: salvarTarefa_(eu, req.tarefa || {}, req.site) });
         case 'concluirTarefa': concluirTarefa_(eu, req.id, req.feita !== false); return json_({ ok: true });
         case 'excluirTarefa': excluirTarefa_(eu, req.id); return json_({ ok: true });
@@ -222,6 +243,7 @@ function rodarAcao_(eu, req) {
         case 'salvarProposta': return json_(Object.assign({ ok: true }, salvarProposta_(eu, req.proposta || {}, req.site)));
         case 'excluirProposta': excluirProposta_(eu, req.id); return json_({ ok: true });
         case 'perfilEmpresa': salvarPerfilEmpresa_(eu, req.perfil, req.permissoes, req.nome); return json_({ ok: true });
+        case 'definirSite': if (!eu.dono) throw erro_('permissao', 'Só a dona da plataforma muda o endereço.'); if (!/^https:\/\/[^\s#?]+\/$/.test(String(req.url || ''))) throw erro_('server', 'Use o endereço completo, começando com https:// e terminando com /'); PropertiesService.getScriptProperties().setProperty('SITE_URL', req.url); return json_({ ok: true });
         case 'salvarEmpresa': return json_(Object.assign({ ok: true }, salvarEmpresa_(eu, req.empresaDados || {})));
         case 'copiarMes': return json_({ ok: true, n: copiarMes_(eu, req.marcaId, req.de, req.para) });
         case 'importarPostagens': return json_({ ok: true, ids: importarPostagens_(eu, req.marcaId, req.posts || []) });
@@ -242,13 +264,29 @@ function rodarAcao_(eu, req) {
 
 /* ---------- Login e permissões ---------- */
 
+const MAX_TENTATIVAS = 5, BLOQUEIO_MIN = 15;
 function login_(login, senha) {
-  const u = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(x => x.login === normLogin_(login))[0];
-  if (u && u.ativo === 'sim' && u.hash !== hash_(senha, u.sal)) { try { auditar_(publicoUsuario_(u), 'Tentou entrar com a senha errada', '', '', u.empresaId); } catch (e) {} }
-  if (!u || u.ativo !== 'sim' || u.hash !== hash_(senha, u.sal) || !empresaAtiva_(u)) {
+  const lg = normLogin_(login), cache = CacheService.getScriptCache(), kf = 'lgf_' + lg;
+  // bloqueio depois de 5 erros seguidos (vale 15 minutos), e um teto geral contra ataques em massa
+  const falhas = Number(cache.get(kf) || 0);
+  if (falhas >= MAX_TENTATIVAS) { Utilities.sleep(500); throw erro_('login', 'Muitas tentativas erradas. Espere ' + BLOQUEIO_MIN + ' minutos e tente de novo, ou use "Esqueci minha senha".'); }
+  const kg = 'lgg_' + Math.floor(Date.now() / 600000), geral = Number(cache.get(kg) || 0);
+  if (geral > 300) { Utilities.sleep(500); throw erro_('login', 'O sistema recebeu tentativas demais agora. Tente de novo em alguns minutos.'); }
+  const u = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(x => x.login === lg)[0];
+  const ok = u && u.ativo === 'sim' && conferirSenha_(senha, u) && empresaAtiva_(u);
+  if (!ok) {
+    cache.put(kf, String(falhas + 1), BLOQUEIO_MIN * 60);
+    cache.put(kg, String(geral + 1), 900);
+    if (u && u.ativo === 'sim') {
+      try { auditar_(publicoUsuario_(u), falhas + 1 >= MAX_TENTATIVAS ? 'Conta bloqueada por 15 min (senha errada várias vezes)' : 'Tentou entrar com a senha errada', '', '', u.empresaId); } catch (e) {}
+      if (falhas + 1 === MAX_TENTATIVAS) avisarBloqueio_(u);
+    }
     Utilities.sleep(800);
     throw erro_('login', 'Login ou senha incorretos.');
   }
+  cache.remove(kf);
+  // senhas antigas (hash simples) viram o hash forte no primeiro login
+  if (String(u.hash).indexOf('p2$') !== 0) { u.sal = Utilities.getUuid(); u.hash = hash_(senha, u.sal); gravar_(ABA_USUARIOS, CAMPOS_USUARIO, u); }
   const props = PropertiesService.getScriptProperties();
   const agora = Date.now();
   // limpa sessões vencidas
@@ -314,6 +352,12 @@ function gerencia_(eu) {
 function soAdmin_(eu) {
   if (eu.papel !== 'admin') throw erro_('permissao', 'Só o administrador pode fazer isso.');
 }
+// conta usos numa janela de tempo (CacheService) e barra quando passa do limite
+function limite_(chave, max, segundos, msg) {
+  const c = CacheService.getScriptCache(), k = 'lim_' + chave, n = Number(c.get(k) || 0);
+  if (n >= max) throw erro_('server', msg || 'Muitos pedidos seguidos. Tente de novo mais tarde.');
+  c.put(k, String(n + 1), segundos);
+}
 function erro_(code, msg) {
   const e = new Error(msg); e.code = code; return e;
 }
@@ -350,14 +394,21 @@ function listar_(eu, desde, se) {
   r.temIA = eu.papel !== 'cliente' && !!pp.getProperty('ANTHROPIC_KEY_' + eu.empresaId);
   r.gcal = pp.getProperty('gcal_' + eu.empresaId) === 'sim';
   r.propostas = TODAS_MARCAS.indexOf(eu.papel) >= 0 ? ler_(ABA_PROPOSTAS, CAMPOS_PROPOSTA).filter(x => mesmaEmp_(eu, x.empresaId)).map(x => ({ id: x.id, cliente: x.cliente, status: x.status, dados: parseJSON_(x.dados, {}), chave: x.chave, marcaId: x.marcaId, por: x.por, criado: Number(x.criado) || 0, respondido: Number(x.respondido) || 0 })) : [];
-  r.mural = eu.papel === 'cliente' ? [] : ler_(ABA_MURAL, CAMPOS_AVISO).filter(a => mesmaEmp_(eu, a.empresaId)).map(avisoParaSite_).filter(a => !a.ate || a.ate >= Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd') || a.fixado);
+  r.mural = eu.papel === 'cliente' || !podeTela_(eu, 'mural') ? [] : ler_(ABA_MURAL, CAMPOS_AVISO).filter(a => mesmaEmp_(eu, a.empresaId)).map(avisoParaSite_).filter(a => !a.ate || a.ate >= Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd') || a.fixado);
   r.agenda = ler_(ABA_AGENDA, CAMPOS_AGENDA).filter(x => veEvento_(eu, x) && noPeriodo(x.data)).map(eventoParaSite_);
   r.stories = ler_(ABA_STORIES, CAMPOS_STORY).filter(x => acesso_(eu, x.marcaId) && noPeriodo(x.data)).map(storyParaSite_);
   r.tarefas = ler_(ABA_TAREFAS, CAMPOS_TAREFA).filter(t => veTarefa_(eu, t)).map(tarefaParaSite_);
+  if (!podeTela_(eu, 'agenda')) r.agenda = [];
+  if (!podeTela_(eu, 'stories')) r.stories = [];
+  if (!podeTela_(eu, 'horas')) r.horas = [];
+  if (!podeTela_(eu, 'tarefas')) r.tarefas = [];
+  if (!podeTela_(eu, 'financeiro')) { r.pagamentos = []; r.propostas = []; }
   // nomes da equipe (sem dados sensíveis) para escolher o responsável de uma tarefa
   r.equipe = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(u => u.ativo === 'sim' && mesmaEmp_(eu, u.empresaId)).map(u => Object.assign({ id: u.id, nome: u.nome, papel: u.papel, foto: u.foto || '', aniversario: /^\d{2}\/\d{2}$/.test(u.aniversario || '') ? u.aniversario : '' }, u.papel === 'cliente' ? { marcas: publicoUsuario_(u).marcas, temEmail: /@/.test(u.login), whatsapp: u.whatsapp || '' } : {}));
-  if (VEEM_TODAS.indexOf(eu.papel) >= 0) r.usuarios = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(u => mesmaEmp_(eu, u.empresaId)).map(publicoUsuario_);
-  if (eu.dono) r.empresas = empresas_();
+  // o cliente só vê nome, papel e foto da equipe (e a si mesmo); nunca os outros clientes
+  if (eu.papel === 'cliente') r.equipe = r.equipe.filter(u => u.papel !== 'cliente' || u.id === eu.id).map(u => ({ id: u.id, nome: u.nome, papel: u.papel, foto: u.foto }));
+  if (VEEM_TODAS.indexOf(eu.papel) >= 0 && (podeTela_(eu, 'equipe') || podeTela_(eu, 'equipe-atividade'))) r.usuarios = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(u => mesmaEmp_(eu, u.empresaId)).map(publicoUsuario_);
+  if (eu.dono) { r.empresas = empresas_(); r.siteOficial = site_(); }
   r.empresa = eu.empresaId ? (empresas_().filter(e => e.id === eu.empresaId)[0] || null) : null;
   return r;
 }
@@ -434,6 +485,8 @@ function salvarPauta_(eu, p) {
   const base = atual ? Object.assign({}, atual, { agQuando: atual.agData ? paraBR_(atual.agData) + ' ' + atual.agHora : '', comentarios: JSON.stringify(atual.comentarios || []), versoes: JSON.stringify(atual.versoes || []) }) : {};
   const novos = {};
   Object.keys(p).forEach(k => { if (PROTEGIDOS.indexOf(k) < 0) novos[k] = p[k]; });
+  ['criativo', 'capa', 'canva'].forEach(k => { if (k in novos) novos[k] = urlSegura_(novos[k]); });
+  if (Array.isArray(novos.midias)) novos.midias = novos.midias.filter(x => x && idSeguro_(x.id));
   if (Array.isArray(novos.midias)) novos.midias = JSON.stringify(novos.midias.slice(0, 20).map(x => ({ id: String(x.id || ''), nome: String(x.nome || '').slice(0, 120), tipo: x.tipo === 'video' ? 'video' : 'imagem' })));
   if (atual && Array.isArray(base.midias)) base.midias = JSON.stringify(base.midias);
   const dataNova = 'data' in novos ? novos.data : ((atual && atual.data) || '');
@@ -482,6 +535,7 @@ function acaoPauta_(eu, id, acao, motivo, status, dados, site, coletor) {
   let para, texto;
   if (acao === 'definir') {
     gerencia_(eu);
+    if (!acesso_(eu, p.marcaId)) throw erro_('permissao', 'Sem acesso a esta marca.');
     if (STATUS.indexOf(status) < 0) throw erro_('server', 'Status inválido.');
     para = status; texto = 'Mudou o status para ' + status;
   } else {
@@ -503,7 +557,7 @@ function acaoPauta_(eu, id, acao, motivo, status, dados, site, coletor) {
   const historico = p.historico.concat([{ em: Date.now(), por: eu.nome, uid: eu.id, acao: texto, de: p.status, para: para, motivo: motivo }]);
   const aba = aba_(ABA_PAUTAS, CAMPOS_PAUTA);
   const r = linhaDoId_(aba, id);
-  const set = (k, v) => aba.getRange(r, colunaDe_(CAMPOS_PAUTA, k)).setValue(v);
+  const set = (k, v) => aba.getRange(r, colunaDe_(CAMPOS_PAUTA, k)).setNumberFormat('@').setValue(v);
   set('status', para);
   set('motivo', (para === 'Ideia reprovada' || para === 'Ajustes solicitados') ? motivo : '');
   set('historico', JSON.stringify(historico));
@@ -512,7 +566,7 @@ function acaoPauta_(eu, id, acao, motivo, status, dados, site, coletor) {
     set('agTipo', dados.agTipo);
     set('agQuando', paraBR_(dados.agData) + ' ' + dados.agHora);
   }
-  if (acao === 'postar' && dados.postLink) set('postLink', String(dados.postLink).trim());
+  if (acao === 'postar' && dados.postLink) set('postLink', urlSegura_(dados.postLink));
   if (ACOES[acao] && ACOES[acao].agenda) { set('autoPub', dados.autoPub ? 'sim' : ''); set('pubInfo', dados.autoPub ? 'Aguardando o horário' : ''); }
   if (para !== 'Agendado' && p.autoPub) { set('autoPub', ''); }
   mexeu_();
@@ -540,6 +594,7 @@ const AVISO_CLIENTE = {
 };
 
 function notificar_(eu, p, acao, motivo, historico, site, paraStatus, coletor) {
+  site = site_(); // endereço oficial; o do pedido é ignorado
   let av = AVISOS[acao];
   if (AVISO_CLIENTE[paraStatus]) av = Object.assign({ para: 'cliente' }, AVISO_CLIENTE[paraStatus]);
   if (!av) return;
@@ -568,7 +623,7 @@ function notificar_(eu, p, acao, motivo, historico, site, paraStatus, coletor) {
   if (MailApp.getRemainingDailyQuota() < dest.length) return;
   const link = /^https:\/\//.test(String(site || '')) ? String(site).split('#')[0] + '#aprovacoes' : '';
   // o cliente recebe um link que já entra, sem senha (vale 14 dias)
-  const linkDe = u => link && u.papel === 'cliente' ? String(site).split('#')[0] + '#entrar=' + criarSessao_(u.id, 14, true) : link;
+  const linkDe = u => link && u.papel === 'cliente' ? String(site).split('#')[0] + '#entrar=' + criarLink_(u.id) : link;
   const assunto = av.titulo + ': ' + titulo + ' (' + marca + ')';
   const linha = (k, v) => v ? '<tr><td style="padding:4px 12px 4px 0;color:#6b6b70">' + k + '</td><td style="padding:4px 0">' + escH_(v) + '</td></tr>' : '';
   const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#1d1d1f;max-width:560px">' +
@@ -594,7 +649,7 @@ function tarefaParaSite_(t) {
 // o gestor só chefia as tarefas sem marca ou das marcas dele
 const chefia_ = (eu, t) => TODAS_MARCAS.indexOf(eu.papel) >= 0 || (eu.papel === 'gestor' && (!t || !t.marcaId || acesso_(eu, t.marcaId)));
 function veTarefa_(eu, t) {
-  if (!mesmaEmp_(eu, t.empresaId)) return false;
+  if (!mesmaEmp_(eu, t.empresaId) || eu.papel === 'cliente') return false;
   return chefia_(eu, t) || t.responsavelId === eu.id || t.criadoPorId === eu.id || (t.marcaId && acesso_(eu, t.marcaId));
 }
 function podeMexerTarefa_(eu, t) {
@@ -606,6 +661,7 @@ function tarefaPorId_(id) {
 }
 
 function salvarTarefa_(eu, t, site) {
+  site = site_(); // endereço oficial; o do pedido é ignorado
   const atual = t.id ? tarefaPorId_(t.id) : null;
   if (t.id && !atual) throw erro_('server', 'Tarefa não encontrada. Atualize a página.');
   if (atual && !podeMexerTarefa_(eu, atual)) throw erro_('permissao', 'Só quem criou, o responsável ou a gestão pode editar esta tarefa.');
@@ -656,6 +712,7 @@ function excluirTarefa_(eu, id) {
 }
 
 function avisarTarefa_(eu, t, u, site) {
+  site = site_(); // endereço oficial; o do pedido é ignorado
   if (!u.notificar || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(u.login) || MailApp.getRemainingDailyQuota() < 1) return;
   const link = /^https:\/\//.test(String(site || '')) ? String(site).split('#')[0] + '#tarefas' : '';
   const linha = (k, v) => v ? '<tr><td style="padding:4px 12px 4px 0;color:#6b6b70">' + k + '</td><td style="padding:4px 0">' + escH_(v) + '</td></tr>' : '';
@@ -680,14 +737,15 @@ function lerPasta_(eu, link) {
   if (!m) throw erro_('server', 'Cole o link de uma pasta do Drive (drive.google.com/drive/folders/…).');
   let pasta;
   try { pasta = DriveApp.getFolderById(m[1]); pasta.getName(); }
-  catch (e) { throw erro_('server', 'Não consegui abrir essa pasta. Confira se a conta dona da planilha tem acesso a ela.'); }
+  catch (e) { throw erro_('server', 'Não consegui abrir essa pasta. Confira se ela está compartilhada como "Qualquer pessoa com o link".'); }
+  // só pastas que já estão abertas por link: assim ninguém usa o acesso da dona do sistema para ler pastas particulares
+  if (!publicoPorLink_(pasta)) throw erro_('permissao', 'Essa pasta é particular. No Drive, compartilhe como "Qualquer pessoa com o link" e tente de novo.');
   const midias = [], docs = [];
   const it = pasta.getFiles();
   while (it.hasNext()) {
     const f = it.next(), mt = f.getMimeType(), nome = f.getName();
     if (/^image\//.test(mt) || /^video\//.test(mt)) {
       midias.push({ id: f.getId(), nome: nome, tipo: /^video\//.test(mt) ? 'video' : 'imagem' });
-      try { f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) { /* domínio pode bloquear */ }
     } else if (mt === MimeType.GOOGLE_DOCS) docs.push(f);
   }
   // ordem pelo último número do nome: "1.png", "slide 2.jpg", "Carrossel P2 - 3.png"
@@ -767,8 +825,8 @@ function salvarMarca_(eu, m) {
     fases: JSON.stringify(m.fases && m.fases.length ? m.fases : FASES_PADRAO),
     observacoes: m.observacoes || '',
     criado: m.criado || Date.now(),
-    perfil: JSON.stringify(m.perfil || {}),
-    arquivos: JSON.stringify(m.arquivos || []),
+    perfil: JSON.stringify(limparPerfilMarca_(eu, m.perfil || {}, nova ? {} : parseJSON_((ler_(ABA_MARCAS, CAMPOS_MARCA).filter(x => x.id === id)[0] || {}).perfil, {}))),
+    arquivos: JSON.stringify(limparArquivos_(m.arquivos || [])),
     empresaId: nova ? eu.empresaId : empresaDe_(id)
   });
   EMP_CACHE = null;
@@ -934,10 +992,11 @@ function excluirMarca_(id) {
 
 function enviarArquivo_(eu, req) {
   if (!podeEditar_(eu, req.marcaId)) throw erro_('permissao', 'Você não pode enviar arquivos para esta marca.');
-  if (!req.base64) throw new Error('Arquivo vazio.');
+  limite_('up_' + eu.id, 60, 3600, 'Muitos arquivos enviados agora. Tente de novo em uma hora.');
+  const a = arquivoSeguro_(req.base64, 25, false);
   const raiz = pasta_(DriveApp.getRootFolder(), PASTA_ARQUIVOS);
   const pasta = pasta_(raiz, nomeDaMarca_(req.marcaId) || 'Sem marca');
-  const blob = Utilities.newBlob(Utilities.base64Decode(req.base64), req.mime || 'application/octet-stream', req.nome || 'arquivo');
+  const blob = Utilities.newBlob(a.bytes, a.mime, nomeArquivo_(req.nome));
   const arquivo = pasta.createFile(blob);
   try { arquivo.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) { /* domínio pode bloquear link público */ }
   return { url: arquivo.getUrl(), driveId: arquivo.getId() };
@@ -970,7 +1029,8 @@ function salvarUsuario_(eu, u) {
   }
   if (atual && atual.id === eu.id && (u.papel !== 'admin' || u.ativo === false)) throw erro_('server', 'Você não pode tirar o seu próprio acesso de administrador.');
   if (!atual && !u.senha) throw erro_('server', 'Defina uma senha provisória.');
-  if (u.senha && String(u.senha).length < 6) throw erro_('server', 'A senha precisa ter pelo menos 6 caracteres.');
+  if (u.senha) senhaValida_(u.senha);
+  if (atual && (u.senha || u.ativo === false)) derrubarSessoes_(atual.id);
   const sal = u.senha ? Utilities.getUuid() : atual.sal;
   gravar_(ABA_USUARIOS, CAMPOS_USUARIO, {
     id: atual ? atual.id : Utilities.getUuid().slice(0, 13),
@@ -997,7 +1057,7 @@ function salvarMinhaFoto_(eu, base64, remover) {
   const u = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(x => x.id === eu.id)[0];
   if (u.foto) { try { DriveApp.getFileById(u.foto).setTrashed(true); } catch (e) { /* já não existe */ } }
   if (remover) { u.foto = ''; gravar_(ABA_USUARIOS, CAMPOS_USUARIO, u); return { foto: '' }; }
-  if (!base64 || base64.length > 3000000) throw erro_('server', 'Escolha uma imagem de até 2 MB.');
+  if (!remover) arquivoSeguro_(base64, 2, true);
   const pasta = pasta_(pasta_(DriveApp.getRootFolder(), PASTA_ARQUIVOS), 'Equipe');
   const arq = pasta.createFile(Utilities.newBlob(Utilities.base64Decode(base64), 'image/jpeg', 'foto-' + eu.id + '.jpg'));
   try { arq.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
@@ -1022,16 +1082,43 @@ function salvarMeuNome_(eu, nome) {
 
 function trocarSenha_(eu, atual, nova) {
   const u = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(x => x.id === eu.id)[0];
-  if (!u || u.hash !== hash_(atual, u.sal)) throw erro_('server', 'A senha atual está incorreta.');
-  if (!nova || String(nova).length < 6) throw erro_('server', 'A nova senha precisa ter pelo menos 6 caracteres.');
+  if (!u || !conferirSenha_(atual, u)) throw erro_('server', 'A senha atual está incorreta.');
+  senhaValida_(nova);
   const sal = Utilities.getUuid();
   u.sal = sal; u.hash = hash_(nova, sal);
   gravar_(ABA_USUARIOS, CAMPOS_USUARIO, u);
+  derrubarSessoes_(u.id, eu.token);
 }
 
+// hash forte: HMAC-SHA256 repetido (estilo PBKDF2), com sal por pessoa
+const HASH_VOLTAS = 400;
 function hash_(senha, sal) {
-  const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(sal) + '|' + String(senha), Utilities.Charset.UTF_8);
-  return Utilities.base64Encode(bytes);
+  let h = Utilities.computeHmacSha256Signature(String(senha), String(sal));
+  for (let i = 1; i < HASH_VOLTAS; i++) h = Utilities.computeHmacSha256Signature(h, Utilities.newBlob(String(sal) + '|' + String(senha)).getBytes());
+  return 'p2$' + HASH_VOLTAS + '$' + Utilities.base64Encode(h);
+}
+function hashAntigo_(senha, sal) {
+  return Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(sal) + '|' + String(senha), Utilities.Charset.UTF_8));
+}
+function conferirSenha_(senha, u) {
+  const h = String(u.hash || '');
+  return h.indexOf('p2$') === 0 ? h === hash_(senha, u.sal) : (!!h && h === hashAntigo_(senha, u.sal));
+}
+function senhaValida_(s) {
+  s = String(s || '');
+  if (s.length < 8) throw erro_('server', 'A senha precisa ter pelo menos 8 caracteres.');
+  if (/^(\d)\1+$|^12345678|^senha|^password|^qwerty/i.test(s)) throw erro_('server', 'Essa senha é fácil demais de adivinhar. Escolha outra.');
+}
+function avisarBloqueio_(u) {
+  try {
+    if (/@/.test(u.login) && MailApp.getRemainingDailyQuota() > 0) MailApp.sendEmail({ to: u.login, name: NOME_APP, subject: '⚠️ Muitas tentativas de entrar na sua conta',
+      htmlBody: '<p style="font-family:Arial,sans-serif;font-size:15px">Alguém errou a senha da sua conta no ' + NOME_APP + ' ' + MAX_TENTATIVAS + ' vezes seguidas. Por segurança, ela ficou bloqueada por ' + BLOQUEIO_MIN + ' minutos.<br><br>Se não foi você, troque a senha usando "Esqueci minha senha" e avise a gestão.</p>' });
+  } catch (e) {}
+}
+// encerra todas as sessões de uma pessoa (menos a atual, se informada)
+function derrubarSessoes_(uid, exceto) {
+  const props = PropertiesService.getScriptProperties(), todas = props.getProperties();
+  Object.keys(todas).forEach(k => { if (k.indexOf('tok_') === 0 && k !== 'tok_' + exceto) { const s = parseJSON_(todas[k], {}); if (s.uid === uid) props.deleteProperty(k); } });
 }
 
 function normLogin_(s) {
@@ -1044,8 +1131,9 @@ function gravar_(nome, campos, obj) {
   const aba = aba_(nome, campos);
   const valores = [campos.map(c => obj[c[0]] == null ? '' : String(obj[c[0]]))];
   const r = linhaDoId_(aba, obj.id);
-  if (r) aba.getRange(r, 1, 1, campos.length).setValues(valores);
-  else aba.getRange(aba.getLastRow() + 1, 1, 1, campos.length).setValues(valores);
+  // formato texto antes de escrever: um título "=IMPORTXML(...)" fica como texto e não vira fórmula
+  if (r) aba.getRange(r, 1, 1, campos.length).setNumberFormat('@').setValues(valores);
+  else aba.getRange(aba.getLastRow() + 1, 1, 1, campos.length).setNumberFormat('@').setValues(valores);
   mexeu_();
 }
 
@@ -1158,7 +1246,8 @@ function configurar() {
       id: Utilities.getUuid().slice(0, 13), nome: 'Administrador', login: login, papel: 'admin',
       marcas: '*', ativo: 'sim', hash: hash_(senha, sal), sal: sal, criado: String(Date.now())
     });
-    Logger.log('Administrador criado. Login: ' + login + '  |  Senha provisória: ' + senha + '  (troque em "Minha conta" depois de entrar)');
+    try { MailApp.sendEmail({ to: login, name: NOME_APP, subject: 'Seu acesso de administrador', body: 'Login: ' + login + '\nSenha provisória: ' + senha + '\n\nTroque em "Minha conta" depois de entrar.' }); Logger.log('Administrador criado. Login: ' + login + '. A senha provisória foi enviada para o seu e-mail.'); }
+    catch (e) { Logger.log('Administrador criado. Login: ' + login + '  |  Senha provisória: ' + senha + '  (não consegui mandar por e-mail; troque assim que entrar)'); }
   }
   migrarEmpresas_();
 
@@ -1252,14 +1341,30 @@ function mexeu_() {
   PropertiesService.getScriptProperties().setProperty('mod', String(Date.now()) + Math.floor(Math.random() * 1000));
 }
 // endereço do site, para os e-mails automáticos (resumo diário) saberem para onde apontar
-function guardarSite_(site) {
-  site = String(site || '').split('#')[0];
-  if (!/^https:\/\//.test(site)) return;
-  const props = PropertiesService.getScriptProperties();
-  if (props.getProperty('site') !== site) props.setProperty('site', site);
+// o endereço do site não é mais aprendido dos pedidos (podia ser envenenado)
+function guardarSite_() {}
+function site_() {
+  const v = PropertiesService.getScriptProperties().getProperty('SITE_URL');
+  return /^https:\/\/[^\s#?]+\/$/.test(v || '') ? v : SITE_PADRAO;
 }
 
 /* ---------- Sessões (login normal e link do cliente) ---------- */
+// convite de login por e-mail: vale até 14 dias, mas só pode ser usado UMA vez (vira uma sessão normal)
+function criarLink_(uid) {
+  const chave = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
+  PropertiesService.getScriptProperties().setProperty('lnk_' + chave, JSON.stringify({ uid: uid, exp: Date.now() + 14 * 864e5 }));
+  return chave;
+}
+function entrarComLink_(chave) {
+  const props = PropertiesService.getScriptProperties(), k = 'lnk_' + String(chave || '').replace(/\W/g, '');
+  const d = parseJSON_(props.getProperty(k), null);
+  if (!d || d.exp < Date.now()) throw erro_('login', 'Este link já foi usado ou venceu. Peça um novo para a agência.');
+  props.deleteProperty(k);
+  const u = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(x => x.id === d.uid)[0];
+  if (!u || u.ativo !== 'sim' || u.papel !== 'cliente' || !empresaAtiva_(u)) throw erro_('login', 'Este acesso não está mais ativo.');
+  try { auditar_(publicoUsuario_(u), 'Entrou pelo link do e-mail', '', '', u.empresaId); } catch (e) {}
+  return { token: criarSessao_(u.id, 14, true) };
+}
 function criarSessao_(uid, dias, porLink) {
   const token = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
   PropertiesService.getScriptProperties().setProperty('tok_' + token, JSON.stringify({ uid: uid, exp: Date.now() + dias * 864e5, link: !!porLink }));
@@ -1268,6 +1373,7 @@ function criarSessao_(uid, dias, porLink) {
 
 // link que já entra na conta do aprovador do cliente, sem senha (vale 14 dias)
 function linkCliente_(eu, usuarioId, site, enviar) {
+  site = site_(); // endereço oficial; o do pedido é ignorado
   const alvo = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(u => u.id === String(usuarioId))[0];
   if (!alvo || alvo.ativo !== 'sim') throw erro_('server', 'Pessoa não encontrada ou desativada.');
   if (alvo.papel !== 'cliente') throw erro_('server', 'O link sem senha é só para o aprovador do cliente.');
@@ -1276,11 +1382,11 @@ function linkCliente_(eu, usuarioId, site, enviar) {
   const pode = TODAS_MARCAS.indexOf(eu.papel) >= 0 ||
     (pub.marcas.indexOf('*') < 0 && pub.marcas.some(m => podeEditar_(eu, m) || podeAprovar_(eu, m)));
   if (!pode) throw erro_('permissao', 'Você não cuida das marcas deste cliente.');
-  site = String(site || PropertiesService.getScriptProperties().getProperty('site') || '').split('#')[0];
-  if (!/^https?:\/\//.test(site)) throw erro_('server', 'Abra o sistema pelo endereço do site para gerar o link.');
-  const url = site + '#entrar=' + criarSessao_(alvo.id, 14, true);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(alvo.login)) throw erro_('server', 'O login deste cliente não é um e-mail. Cadastre o e-mail dele para mandar o acesso.');
+  limite_('link_' + eu.id, 20, 3600, 'Você mandou muitos links agora. Tente de novo em uma hora.');
+  const url = site + '#entrar=' + criarLink_(alvo.id);
   let enviado = false;
-  if (enviar && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(alvo.login) && MailApp.getRemainingDailyQuota() > 0) {
+  if (MailApp.getRemainingDailyQuota() > 0) {
     const marcas = pub.marcas.map(nomeDaMarca_).filter(String).join(', ');
     MailApp.sendEmail({
       to: alvo.login, name: NOME_APP,
@@ -1293,7 +1399,9 @@ function linkCliente_(eu, usuarioId, site, enviar) {
     });
     enviado = true;
   }
-  return { url: url, enviado: enviado, nome: alvo.nome, whatsapp: alvo.whatsapp || '' };
+  if (!enviado) throw erro_('server', 'A cota diária de e-mails acabou. Tente amanhã.');
+  // o link nunca volta para quem pediu: só o cliente recebe, no e-mail dele
+  return { enviado: true, nome: alvo.nome, email: alvo.login.replace(/^(.).*(@.*)$/, '$1•••$2') };
 }
 
 /* ---------- Comentários na postagem ---------- */
@@ -1301,7 +1409,7 @@ function setPauta_(id, campos) {
   const aba = aba_(ABA_PAUTAS, CAMPOS_PAUTA);
   const r = linhaDoId_(aba, id);
   if (!r) throw erro_('server', 'Postagem não encontrada. Atualize a página.');
-  Object.keys(campos).forEach(k => aba.getRange(r, colunaDe_(CAMPOS_PAUTA, k)).setValue(campos[k]));
+  Object.keys(campos).forEach(k => aba.getRange(r, colunaDe_(CAMPOS_PAUTA, k)).setNumberFormat('@').setValue(campos[k]));
   mexeu_();
 }
 function comentar_(eu, id, texto, arte) {
@@ -1384,7 +1492,7 @@ function salvarStory_(eu, st) {
     id: id, marcaId: marcaId, marca: nomeDaMarca_(marcaId), data: paraBR_(data),
     hora: /^\d{1,2}:\d{2}$/.test(st.hora || '') ? st.hora : (st.hora === '' ? '' : (atual ? atual.hora : '')),
     ordem: ordem, tipo: txt('tipo', 40), titulo: txt('titulo', 200), texto: txt('texto', 1000), roteiro: txt('roteiro', 3000),
-    sticker: txt('sticker', 40), stickerTexto: txt('stickerTexto', 300), link: txt('link', 1000), midia: txt('midia', 1000),
+    sticker: txt('sticker', 40), stickerTexto: txt('stickerTexto', 300), link: urlSegura_(txt('link', 1000)), midia: (idSeguro_(txt('midia', 100)) || urlSegura_(txt('midia', 1000))),
     cor: /^#[0-9a-fA-F]{6}$/.test(st.cor || '') ? st.cor : (atual ? atual.cor : ''), status: status, obs: txt('obs', 2000),
     criadoPor: atual ? atual.criadoPor : eu.nome, criado: atual ? atual.criado : Date.now(), atualizado: Date.now(),
     autoPub: status === 'Postado' ? '' : auto,
@@ -1431,8 +1539,14 @@ function igPost_(url, params) {
   if (j.error) throw new Error(j.error.code === 190 ? 'A chave do Instagram expirou. Conecte de novo.' : (j.error.error_user_msg || j.error.message));
   return j;
 }
+// para publicar, o arquivo já precisa estar aberto por link (o sistema não abre arquivos particulares de ninguém)
 function liberarArquivo_(id) {
-  try { DriveApp.getFileById(id).setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) { /* já está liberado ou sem acesso */ }
+  let f;
+  try { f = DriveApp.getFileById(id); } catch (e) { throw new Error('Não consegui abrir uma das artes no Drive.'); }
+  if (!publicoPorLink_(f)) throw new Error('Uma das artes está particular no Drive. Compartilhe como "Qualquer pessoa com o link".');
+}
+function publicoPorLink_(item) {
+  try { const a = item.getSharingAccess(); return a === DriveApp.Access.ANYONE_WITH_LINK || a === DriveApp.Access.ANYONE; } catch (e) { return false; }
 }
 const urlImagem_ = id => 'https://lh3.googleusercontent.com/d/' + id;
 const urlVideo_ = id => 'https://drive.google.com/uc?export=download&confirm=t&id=' + id;
@@ -1528,6 +1642,7 @@ function comTrava_(fn) {
   try { return fn(); } finally { lock.releaseLock(); }
 }
 function publicarAgora_(eu, id, tipo) {
+  limite_('pub_' + eu.id, 10, 3600, 'Muitas publicações seguidas. Tente de novo em uma hora.');
   if (tipo === 'story') {
     const x = ler_(ABA_STORIES, CAMPOS_STORY).filter(s => s.id === String(id))[0];
     if (!x || !podeEditar_(eu, x.marcaId)) throw erro_('permissao', 'Você não pode publicar os stories desta marca.');
@@ -1626,7 +1741,7 @@ function resumoDiario() {
   const tz = Session.getScriptTimeZone(), hoje = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
   const dow = new Date().getDay();
   if (dow === 0 || dow === 6) return;
-  const site = PropertiesService.getScriptProperties().getProperty('site') || '';
+  const site = site_() || '';
   const pautas = ler_(ABA_PAUTAS, CAMPOS_PAUTA).map(pautaParaSite_);
   const tarefas = ler_(ABA_TAREFAS, CAMPOS_TAREFA).map(tarefaParaSite_);
   const stories = ler_(ABA_STORIES, CAMPOS_STORY).map(storyParaSite_);
@@ -1670,7 +1785,7 @@ function resumoDiario() {
     if (VEEM_TODAS.indexOf(u.papel) >= 0) add('Pedidos de reunião esperando resposta', agendaPend.filter(x => x.empresaId === u.empresaId && (participa_(u, x) || TODAS_MARCAS.indexOf(u.papel) >= 0)).map(x => x.criadoPor + ': ' + x.titulo + ' (' + paraBR_(x.data).slice(0, 5) + ')'));
     add('Suas tarefas para hoje ou atrasadas', tarefas.filter(t => t.status !== 'Feita' && t.responsavelId === u.id && ((t.prazo && t.prazo <= hoje) || (t.data && t.data <= hoje))).map(t => t.titulo + (t.prazo ? ' (até ' + paraBR_(t.prazo).slice(0, 5) + ')' : '')));
     if (!secoes.length || MailApp.getRemainingDailyQuota() < 1) return;
-    const link = site ? (u.papel === 'cliente' ? site + '#entrar=' + criarSessao_(u.id, 14, true) : site + (u.papel === 'cliente' ? '#aprovacoes' : '#tarefas')) : '';
+    const link = site ? (u.papel === 'cliente' ? site + '#entrar=' + criarLink_(u.id) : site + (u.papel === 'cliente' ? '#aprovacoes' : '#tarefas')) : '';
     const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#1d1d1f;max-width:560px">' +
       '<h2 style="margin:0 0 4px;font-size:22px;font-weight:600">Bom dia, ' + escH_(u.nome.split(' ')[0]) + '!</h2>' +
       '<p style="margin:0 0 16px;color:#6b6b70">O que pede a sua atenção hoje:</p>' +
@@ -1696,12 +1811,13 @@ function backupSemanal() {
 
 /* ---------- Gatilhos automáticos (criados ao rodar "configurar") ---------- */
 function instalarGatilhos_() {
-  const nomes = ['resumoDiario', 'backupSemanal', 'publicarAgendados', 'relatorioMensal'];
+  const nomes = ['resumoDiario', 'backupSemanal', 'publicarAgendados', 'relatorioMensal', 'limpezaDiaria'];
   ScriptApp.getProjectTriggers().forEach(t => { if (nomes.indexOf(t.getHandlerFunction()) >= 0) ScriptApp.deleteTrigger(t); });
   ScriptApp.newTrigger('resumoDiario').timeBased().everyDays(1).atHour(8).create();
   ScriptApp.newTrigger('backupSemanal').timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(3).create();
   ScriptApp.newTrigger('publicarAgendados').timeBased().everyMinutes(15).create();
   ScriptApp.newTrigger('relatorioMensal').timeBased().onMonthDay(1).atHour(9).create();
+  ScriptApp.newTrigger('limpezaDiaria').timeBased().everyDays(1).atHour(3).create();
 }
 
 /* ======================================================================
@@ -1710,6 +1826,7 @@ function instalarGatilhos_() {
 
 /* ---------- Aprovar (ou validar) várias postagens de uma vez ---------- */
 function acaoLote_(eu, ids, acao, site) {
+  site = site_(); // endereço oficial; o do pedido é ignorado
   const a = ACOES[acao];
   if (!a || a.motivo || a.agenda) throw erro_('server', 'Esta etapa não pode ser feita em lote.');
   const coletor = {}, feitas = [], falhas = [];
@@ -1722,7 +1839,7 @@ function acaoLote_(eu, ids, acao, site) {
   Object.keys(coletor).forEach(k => {
     const c = coletor[k];
     if (MailApp.getRemainingDailyQuota() < 1) return;
-    const link = base ? (c.u.papel === 'cliente' ? base + '#entrar=' + criarSessao_(c.u.id, 14, true) : base + '#aprovacoes') : '';
+    const link = base ? (c.u.papel === 'cliente' ? base + '#entrar=' + criarLink_(c.u.id) : base + '#aprovacoes') : '';
     MailApp.sendEmail({
       to: c.u.login, name: NOME_APP,
       subject: c.av.titulo + ' (' + c.itens.length + (c.itens.length === 1 ? ' post)' : ' posts)'),
@@ -1810,21 +1927,24 @@ function relatorioHtml_(marcaId, mes) {
   return { html: html, nome: m.nome, nomeMes: nomeMes };
 }
 function enviarRelatorio_(eu, marcaId, mes, site) {
+  limite_('rel_' + eu.id, 10, 3600, 'Muitos relatórios enviados agora. Tente de novo em uma hora.');
+  site = site_(); // endereço oficial; o do pedido é ignorado
   if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Só quem alimenta a marca envia o relatório.');
   if (!/^\d{4}-\d{2}$/.test(mes || '')) throw erro_('server', 'Mês inválido.');
   return mandarRelatorio_(marcaId, mes, eu, site);
 }
 function mandarRelatorio_(marcaId, mes, eu, site) {
+  site = site_(); // endereço oficial; o do pedido é ignorado
   const r = relatorioHtml_(marcaId, mes);
   const clientes = ler_(ABA_USUARIOS, CAMPOS_USUARIO).map(publicoUsuario_)
     .filter(u => u.ativo && u.papel === 'cliente' && u.marcas.indexOf('*') < 0 && u.marcas.indexOf(marcaId) >= 0 && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(u.login));
   if (!clientes.length) throw erro_('server', 'Esta marca não tem aprovador do cliente com e-mail cadastrado.');
   let pdf = null;
   try { pdf = Utilities.newBlob(r.html, 'text/html', 'relatorio.html').getAs('application/pdf').setName('Relatório ' + r.nome + ' - ' + r.nomeMes + '.pdf'); } catch (e) {}
-  const base = String(site || PropertiesService.getScriptProperties().getProperty('site') || '').split('#')[0];
+  const base = String(site || site_() || '').split('#')[0];
   clientes.forEach(u => {
     if (MailApp.getRemainingDailyQuota() < 1) return;
-    const link = /^https?:\/\//.test(base) ? base + '#entrar=' + criarSessao_(u.id, 14, true) : '';
+    const link = /^https?:\/\//.test(base) ? base + '#entrar=' + criarLink_(u.id) : '';
     const o = {
       to: u.login, name: NOME_APP, subject: '📊 Relatório de ' + r.nomeMes + ' · ' + r.nome,
       htmlBody: '<p style="font-family:Arial,sans-serif;font-size:15px">Olá, ' + escH_(u.nome.split(' ')[0]) + '! Aqui está o resumo de ' + escH_(r.nomeMes) + (pdf ? ' (também em PDF, em anexo)' : '') + '.</p>' + r.html +
@@ -1898,9 +2018,11 @@ function gravarEvento_(x) {
   gravar_(ABA_AGENDA, CAMPOS_AGENDA, o);
 }
 function salvarEvento_(eu, ev, site) {
+  site = site_(); // endereço oficial; o do pedido é ignorado
   const atual = ev.id ? eventoPorId_(ev.id) : null;
   if (ev.id && !atual) throw erro_('server', 'Compromisso não encontrado. Atualize a página.');
   const tipo = atual ? atual.tipo : (ev.tipo === 'atividade' ? 'atividade' : 'reuniao');
+  if (atual && !mesmaEmp_(eu, atual.empresaId)) throw erro_('permissao', 'Compromisso de outra empresa.');
   if (atual && atual.criadoPorId !== eu.id && !(tipo === 'reuniao' && chefe_(eu))) throw erro_('permissao', 'Só quem criou (ou a gestão) altera este compromisso.');
   if (eu.papel === 'cliente') throw erro_('permissao', 'O cliente não marca reuniões por aqui.');
   const data = String(ev.data || ''), hora = String(ev.hora || '');
@@ -1943,6 +2065,7 @@ function salvarEvento_(eu, ev, site) {
 }
 // resposta: aceitar ou recusar um pedido (gestão); sim / nao / talvez (participante)
 function responderEvento_(eu, id, resposta, motivo, dados, site) {
+  site = site_(); // endereço oficial; o do pedido é ignorado
   const x = eventoPorId_(id);
   if (x && !mesmaEmp_(eu, x.empresaId)) throw erro_('permissao', 'Reunião de outra empresa.');
   if (!x || x.tipo !== 'reuniao') throw erro_('server', 'Reunião não encontrada. Atualize a página.');
@@ -1973,8 +2096,10 @@ function responderEvento_(eu, id, resposta, motivo, dados, site) {
   gravarEvento_(x);
 }
 function excluirEvento_(eu, id, site) {
+  site = site_(); // endereço oficial; o do pedido é ignorado
   const x = eventoPorId_(id);
   if (!x) return;
+  if (!mesmaEmp_(eu, x.empresaId)) throw erro_('permissao', 'Compromisso de outra empresa.');
   if (x.criadoPorId !== eu.id && !(x.tipo === 'reuniao' && chefe_(eu))) throw erro_('permissao', 'Só quem criou (ou a gestão) cancela este compromisso.');
   excluirLinha_(ABA_AGENDA, CAMPOS_AGENDA, id);
   if (x.gcal) apagarGcal_(x.gcal);
@@ -1991,6 +2116,7 @@ function icsDe_(x) {
     'SUMMARY:' + t(x.titulo), 'DESCRIPTION:' + t(x.descricao), 'LOCATION:' + t(x.local), 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
 }
 function avisarEvento_(eu, x, tipo, site) {
+  site = site_(); // endereço oficial; o do pedido é ignorado
   const pessoas = ler_(ABA_USUARIOS, CAMPOS_USUARIO).map(publicoUsuario_).filter(u => u.ativo && u.notificar && u.id !== eu.id && u.empresaId === x.empresaId && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(u.login));
   let dest = [];
   if (tipo === 'pedido') {
@@ -2032,6 +2158,7 @@ function parse_(isoData) {
 
 /* ---------- Ata: o que foi decidido vira tarefa ---------- */
 function salvarAta_(eu, id, ata, tarefas, enviar, site) {
+  site = site_(); // endereço oficial; o do pedido é ignorado
   const x = eventoPorId_(id);
   if (x && !mesmaEmp_(eu, x.empresaId)) throw erro_('permissao', 'Reunião de outra empresa.');
   if (!x || x.tipo !== 'reuniao') throw erro_('server', 'Reunião não encontrada.');
@@ -2061,8 +2188,8 @@ function horariosLivres_(eu, ids, data) {
   if (eu.papel === 'cliente') throw erro_('permissao', 'Sem acesso.');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(data || '')) throw erro_('server', 'Dia inválido.');
   const todos = ler_(ABA_AGENDA, CAMPOS_AGENDA).map(eventoParaSite_).filter(x => x.data === data && x.status !== 'recusada');
-  const ocupado = {};
-  ids.concat([eu.id]).slice(0, 50).forEach(uid => {
+  const ocupado = {}, daEmpresa = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(u => mesmaEmp_(eu, u.empresaId)).map(u => u.id);
+  ids.concat([eu.id]).filter(uid => daEmpresa.indexOf(uid) >= 0).slice(0, 50).forEach(uid => {
     ocupado[uid] = todos.filter(x => (x.tipo === 'atividade' ? x.criadoPorId === uid : participa_({ id: uid }, x)) && !(x.tipo === 'reuniao' && x.respostas[uid] === 'nao'))
       .map(x => { const p = x.hora.split(':'); const ini = +p[0] * 60 + +p[1]; return [ini, ini + x.duracao]; });
   });
@@ -2077,7 +2204,7 @@ function veHora_(eu, h) {
 function salvarHora_(eu, h) {
   if (eu.papel === 'cliente') throw erro_('permissao', 'Sem acesso.');
   const atual = h.id ? ler_(ABA_HORAS, CAMPOS_HORA).filter(x => x.id === String(h.id))[0] : null;
-  if (atual && atual.uid !== eu.id && TODAS_MARCAS.indexOf(eu.papel) < 0) throw erro_('permissao', 'Só quem lançou altera estas horas.');
+  if (atual && (!mesmaEmp_(eu, atual.empresaId) || (atual.uid !== eu.id && TODAS_MARCAS.indexOf(eu.papel) < 0))) throw erro_('permissao', 'Só quem lançou altera estas horas.');
   const marcaId = String(h.marcaId || '');
   if (marcaId && !acesso_(eu, marcaId)) throw erro_('permissao', 'Sem acesso a esta marca.');
   const min = Math.round(Number(h.minutos) || 0);
@@ -2090,7 +2217,7 @@ function salvarHora_(eu, h) {
 function excluirHora_(eu, id) {
   const x = ler_(ABA_HORAS, CAMPOS_HORA).filter(h => h.id === String(id))[0];
   if (!x) return;
-  if (x.uid !== eu.id && TODAS_MARCAS.indexOf(eu.papel) < 0) throw erro_('permissao', 'Só quem lançou apaga estas horas.');
+  if (!mesmaEmp_(eu, x.empresaId) || (x.uid !== eu.id && TODAS_MARCAS.indexOf(eu.papel) < 0)) throw erro_('permissao', 'Só quem lançou apaga estas horas.');
   excluirLinha_(ABA_HORAS, CAMPOS_HORA, id);
 }
 
@@ -2100,6 +2227,7 @@ function avisoParaSite_(a) {
   return a;
 }
 function salvarAviso_(eu, a, site) {
+  site = site_(); // endereço oficial; o do pedido é ignorado
   if (VEEM_TODAS.indexOf(eu.papel) < 0) throw erro_('permissao', 'Só a gestão publica no mural.');
   const atual = a.id ? ler_(ABA_MURAL, CAMPOS_AVISO).filter(x => x.id === String(a.id))[0] : null;
   if (atual && !mesmaEmp_(eu, atual.empresaId)) throw erro_('permissao', 'Aviso de outra empresa.');
@@ -2145,8 +2273,9 @@ function lerAviso_(eu, ids) {
 /* ---------- Importar o documento do conteúdo do mês ---------- */
 function textoDoDrive_(id) {
   const tok = { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() };
-  let mt = '';
-  try { mt = DriveApp.getFileById(id).getMimeType(); } catch (e) { throw erro_('server', 'Não consegui abrir o arquivo. Confira se a conta dona da planilha tem acesso a ele.'); }
+  let mt = '', arq = null;
+  try { arq = DriveApp.getFileById(id); mt = arq.getMimeType(); } catch (e) { throw erro_('server', 'Não consegui abrir o arquivo. Confira se ele está compartilhado como "Qualquer pessoa com o link".'); }
+  if (!publicoPorLink_(arq)) throw erro_('permissao', 'Esse documento é particular. No Drive, compartilhe como "Qualquer pessoa com o link" e tente de novo.');
   let docId = id, temp = '';
   if (mt !== MimeType.GOOGLE_DOCS) {
     // .docx ou outro: converte numa cópia temporária em Google Docs
@@ -2161,6 +2290,7 @@ function textoDoDrive_(id) {
   return r.getContentText().replace(/^﻿/, '');
 }
 function lerConteudo_(eu, link) {
+  limite_('doc_' + eu.id, 30, 3600, 'Muitas leituras de documento agora. Tente de novo em uma hora.');
   if (['cliente', 'aprovador'].indexOf(eu.papel) >= 0) throw erro_('permissao', 'Sem permissão.');
   const m = String(link || '').match(/\/d\/([\w-]{20,})/) || String(link || '').match(/[?&]id=([\w-]{20,})/);
   if (!m) throw erro_('server', 'Cole o link do documento (Google Docs ou .docx no Drive).');
@@ -2187,7 +2317,7 @@ function lerTrends_(eu) {
   if (c) return JSON.parse(c);
   const m = String(link).match(/\/d\/([\w-]{20,})/);
   let ss;
-  try { ss = SpreadsheetApp.openById(m ? m[1] : link); } catch (e) { return { configurado: true, erro: 'Não consegui abrir a planilha de trends. Confira o link e se a conta dona do sistema tem acesso.' }; }
+  try { if (!publicoPorLink_(DriveApp.getFileById(m ? m[1] : link))) throw new Error('particular'); ss = SpreadsheetApp.openById(m ? m[1] : link); } catch (e) { return { configurado: true, erro: 'Não consegui abrir a planilha de trends. Confira o link e se a conta dona do sistema tem acesso.' }; }
   const itens = [];
   ss.getSheets().forEach(aba => {
     const v = aba.getDataRange().getDisplayValues();
@@ -2261,10 +2391,11 @@ function limparLixeira_() {
 const CAMPOS_BRIEFING = ['instagram', 'site', 'segmento', 'cidade', 'desde', 'canais', 'ticket', 'responsavel', 'historia', 'proposito', 'diferenciais', 'carroChefe',
   'pResumo', 'pIdade', 'pGenero', 'pLocal', 'pClasse', 'pMomento', 'pValores', 'pHorarios', 'tom', 'palavrasUsar', 'palavrasEvitar', 'naoFazer', 'concorrentes', 'referencias', 'cores', 'fontes', 'estiloFoto', 'datasImportantes', 'expectativas'];
 function briefingLink_(eu, marcaId, site) {
+  site = site_(); // endereço oficial; o do pedido é ignorado
   if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Só quem alimenta a marca gera o briefing.');
   const chave = Utilities.getUuid().replace(/-/g, '');
   PropertiesService.getScriptProperties().setProperty('brf_' + chave, JSON.stringify({ marcaId: marcaId, exp: Date.now() + 30 * 864e5, por: eu.nome, uid: eu.id }));
-  site = String(site || PropertiesService.getScriptProperties().getProperty('site') || '').split('#')[0];
+  site = String(site || site_() || '').split('#')[0];
   return { url: site + '#briefing=' + chave };
 }
 function briefingDe_(chave) {
@@ -2283,13 +2414,15 @@ function briefingVer_(chave) {
 }
 function briefingArquivo_(chave, req) {
   const b = briefingDe_(chave);
-  if (!req.base64 || req.base64.length > 30000000) throw erro_('server', 'Arquivo vazio ou grande demais (máx. 20 MB).');
+  limite_('brfup_' + String(chave).slice(0, 40), 15, 21600, 'Limite de arquivos do briefing atingido. Mande o resto pela agência.');
+  const a = arquivoSeguro_(req.base64, 20, false);
   const pasta = pasta_(pasta_(DriveApp.getRootFolder(), PASTA_ARQUIVOS), nomeDaMarca_(b.marcaId) || 'Sem marca');
-  const f = pasta.createFile(Utilities.newBlob(Utilities.base64Decode(req.base64), req.mime || 'application/octet-stream', String(req.nome || 'arquivo').slice(0, 120)));
+  const f = pasta.createFile(Utilities.newBlob(a.bytes, a.mime, nomeArquivo_(req.nome)));
   try { f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
   return { url: f.getUrl(), driveId: f.getId() };
 }
 function briefingEnviar_(chave, d, site) {
+  site = site_(); // endereço oficial; o do pedido é ignorado
   const b = briefingDe_(chave);
   const m = ler_(ABA_MARCAS, CAMPOS_MARCA).filter(x => x.id === b.marcaId)[0];
   if (!m) throw erro_('briefing', 'Marca não encontrada.');
@@ -2303,7 +2436,7 @@ function briefingEnviar_(chave, d, site) {
   const produtos = String(m.produtos || '').split('\n').filter(String);
   (d.produtos || []).forEach(p => { p = String(p || '').trim().slice(0, 120); if (p && produtos.indexOf(p) < 0) produtos.push(p); });
   const arquivos = parseJSON_(m.arquivos, []);
-  (d.arquivos || []).slice(0, 20).forEach(a => { if (a && a.url) arquivos.push({ id: 'b' + Date.now().toString(36) + Math.floor(Math.random() * 1e4), tipo: a.tipo || 'Outros', nome: String(a.nome || 'Arquivo').slice(0, 120), nota: 'Enviado pelo cliente no briefing', data: Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd'), url: a.url, driveId: a.driveId || '' }); });
+  (d.arquivos || []).slice(0, 20).forEach(a => { if (a && a.url && !/^https:\/\/drive\.google\.com\//.test(urlSegura_(a.url))) return; if (a && a.url) arquivos.push({ id: 'b' + Date.now().toString(36) + Math.floor(Math.random() * 1e4), tipo: a.tipo || 'Outros', nome: String(a.nome || 'Arquivo').slice(0, 120), nota: 'Enviado pelo cliente no briefing', data: Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd'), url: a.url, driveId: a.driveId || '' }); });
   gravar_(ABA_MARCAS, CAMPOS_MARCA, Object.assign({}, m, { produtos: produtos.join('\n'), perfil: JSON.stringify(pf), arquivos: JSON.stringify(arquivos) }));
   // acessos vão para o cofre da marca, fora da planilha
   const acs = (d.acessos || []).filter(a => a && (a.usuario || a.email || a.senha)).slice(0, 20);
@@ -2316,7 +2449,7 @@ function briefingEnviar_(chave, d, site) {
   try {
     const u = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(x => x.id === b.uid)[0];
     if (u && /@/.test(u.login) && MailApp.getRemainingDailyQuota() > 0) {
-      const base = String(site || PropertiesService.getScriptProperties().getProperty('site') || '').split('#')[0];
+      const base = String(site || site_() || '').split('#')[0];
       MailApp.sendEmail({ to: u.login, name: NOME_APP, subject: '📋 Briefing recebido: ' + m.nome,
         htmlBody: '<div style="font-family:Arial,sans-serif;font-size:15px"><h2>📋 Briefing de ' + escH_(m.nome) + ' recebido</h2><p>' + escH_(d.nome || 'O cliente') + ' preencheu o briefing. As respostas já estão na área da marca (Sobre, Público-alvo, Produtos, Arquivos e Acessos).</p>' + (base ? '<p><a href="' + base + '#marca" style="background:#1d1d1f;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;display:inline-block">Ver a marca</a></p>' : '') + '</div>' });
     }
@@ -2341,10 +2474,10 @@ function avaliar_(eu, marcaId, mes, nota, comentario) {
   }
 }
 function pedirAvaliacoes_(mes) {
-  const site = PropertiesService.getScriptProperties().getProperty('site') || '';
+  const site = site_() || '';
   ler_(ABA_USUARIOS, CAMPOS_USUARIO).map(publicoUsuario_).filter(u => u.ativo && u.papel === 'cliente' && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(u.login) && u.marcas.indexOf('*') < 0).forEach(u => {
     if (MailApp.getRemainingDailyQuota() < 1 || !site) return;
-    const link = site + '#entrar=' + criarSessao_(u.id, 14, true);
+    const link = site + '#entrar=' + criarLink_(u.id);
     MailApp.sendEmail({ to: u.login, name: NOME_APP, subject: '⭐ Como foi o seu conteúdo em ' + mes.slice(5, 7) + '/' + mes.slice(0, 4) + '?',
       htmlBody: '<div style="font-family:Arial,sans-serif;font-size:15px;max-width:520px"><h2>Olá, ' + escH_(u.nome.split(' ')[0]) + '!</h2><p>Leva 10 segundos: de 0 a 10, quanto você ficou satisfeito(a) com o conteúdo do mês passado? A sua resposta ajuda a gente a melhorar.</p><p><a href="' + link + '" style="background:#1d1d1f;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">Dar minha nota</a></p></div>' });
   });
@@ -2403,6 +2536,8 @@ function contextoMarca_(marcaId) {
 }
 function ia_(eu, tarefa, marcaId, d) {
   if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Só quem alimenta a marca usa a IA.');
+  limite_('ia_u_' + eu.id, 20, 3600, 'Você usou a IA muitas vezes na última hora. Tente de novo mais tarde.');
+  limite_('ia_e_' + empresaDe_(marcaId), 150, 21600, 'A empresa chegou ao limite de sugestões da IA por agora (150 a cada 6 horas).');
   const chave = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_KEY_' + empresaDe_(marcaId));
   if (!chave) throw erro_('server', 'A IA não está ligada. O administrador cadastra a chave em Minha conta.');
   const ctx = contextoMarca_(marcaId);
@@ -2465,6 +2600,7 @@ function apagarGcal_(gid) {
 
 /* ---------- Propostas comerciais (link para o cliente aceitar) ---------- */
 function salvarProposta_(eu, p, site) {
+  site = site_(); // endereço oficial; o do pedido é ignorado
   if (TODAS_MARCAS.indexOf(eu.papel) < 0) throw erro_('permissao', 'Só o administrador e o diretor fazem propostas.');
   const atual = p.id ? ler_(ABA_PROPOSTAS, CAMPOS_PROPOSTA).filter(x => x.id === String(p.id))[0] : null;
   if (atual && !mesmaEmp_(eu, atual.empresaId)) throw erro_('permissao', 'Proposta de outra empresa.');
@@ -2479,7 +2615,7 @@ function salvarProposta_(eu, p, site) {
   const chave = atual ? atual.chave : Utilities.getUuid().replace(/-/g, '');
   const id = atual ? atual.id : Utilities.getUuid().slice(0, 13);
   gravar_(ABA_PROPOSTAS, CAMPOS_PROPOSTA, { id: id, cliente: cliente, status: p.enviar ? 'enviada' : (atual ? atual.status : 'rascunho'), dados: JSON.stringify(dados), chave: chave, marcaId: '', por: atual ? atual.por : eu.nome, uid: atual ? atual.uid : eu.id, criado: atual ? atual.criado : Date.now(), respondido: '', empresaId: atual ? atual.empresaId : eu.empresaId });
-  const base = String(site || PropertiesService.getScriptProperties().getProperty('site') || '').split('#')[0];
+  const base = String(site || site_() || '').split('#')[0];
   const url = base + '#proposta=' + chave;
   if (p.enviar && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(dados.email) && MailApp.getRemainingDailyQuota() > 0) {
     MailApp.sendEmail(Object.assign(/@/.test(eu.login || '') ? { replyTo: eu.login } : {}, { to: dados.email, name: dados.agencia || NOME_APP, subject: 'Proposta de social media para ' + cliente,
@@ -2504,6 +2640,7 @@ function propostaVer_(chave) {
   return { cliente: x.cliente, status: x.status, dados: d, por: x.por, vencida: !!venc && x.status !== 'aceita', briefing: x.status === 'aceita' ? (PropertiesService.getScriptProperties().getProperty('brfprop_' + x.id) || '') : '' };
 }
 function propostaAceitar_(chave, nome, site) {
+  site = site_(); // endereço oficial; o do pedido é ignorado
   const x = propostaDe_(chave), d = parseJSON_(x.dados, {});
   if (x.status === 'aceita') return propostaVer_(chave);
   if (d.validade && d.validade < Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd')) throw erro_('proposta', 'Esta proposta venceu. Fale com a agência.');
@@ -2565,7 +2702,7 @@ function salvarEmpresa_(eu, e) {
   if (!atual && e.admin && e.admin.login) {
     const login = normLogin_(e.admin.login);
     if (ler_(ABA_USUARIOS, CAMPOS_USUARIO).some(u => u.login === login)) throw erro_('server', 'Já existe alguém com o login ' + login + '.');
-    if (String(e.admin.senha || '').length < 6) throw erro_('server', 'A senha do administrador precisa ter pelo menos 6 caracteres.');
+    senhaValida_(e.admin.senha);
     adm = { login: login, nome: String(e.admin.nome || '').trim() || login, senha: e.admin.senha };
   }
   gravar_(ABA_EMPRESAS, CAMPOS_EMPRESA, { id: id, nome: nome, ativo: e.ativo === false ? 'não' : 'sim', criado: atual ? atual.criado : Date.now(), obs: String(e.obs || '').slice(0, 500), perfil: atual ? atual.perfil : '', permissoes: atual ? atual.permissoes : '' });
@@ -2636,9 +2773,9 @@ function salvarPerfilEmpresa_(eu, perfil, permissoes, nome) {
 }
 function logoEmpresa_(eu, req) {
   podeEmpresa_(eu);
-  if (!req.base64 || req.base64.length > 4000000) throw erro_('server', 'Escolha uma imagem de até 3 MB.');
+  const a = arquivoSeguro_(req.base64, 3, true);
   const pasta = pasta_(pasta_(DriveApp.getRootFolder(), PASTA_ARQUIVOS), 'Empresas');
-  const f = pasta.createFile(Utilities.newBlob(Utilities.base64Decode(req.base64), req.mime || 'image/png', 'logo-' + eu.empresaId));
+  const f = pasta.createFile(Utilities.newBlob(a.bytes, a.mime, 'logo-' + eu.empresaId));
   try { f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
   return { id: f.getId() };
 }
@@ -2649,17 +2786,19 @@ function logoEmpresa_(eu, req) {
 
 /* ---------- Esqueci minha senha (link por e-mail, vale 1 hora) ---------- */
 function esqueciSenha_(login, site) {
+  site = site_(); // endereço oficial; o do pedido é ignorado
   login = normLogin_(login);
   const cache = CacheService.getScriptCache(), k = 'rstq_' + login;
   const tent = Number(cache.get(k) || 0);
   if (tent >= 5) throw erro_('server', 'Muitos pedidos seguidos. Espere uma hora e tente de novo.');
   cache.put(k, String(tent + 1), 3600);
+  limite_('rst_geral', 40, 3600, 'Muitos pedidos de senha agora. Tente de novo em uma hora.');
   const u = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(x => x.login === login && x.ativo === 'sim')[0];
   // a resposta é sempre a mesma, para não revelar quem tem cadastro
   if (!u || !empresaAtiva_(u) || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(u.login) || MailApp.getRemainingDailyQuota() < 1) return { enviado: true };
   const chave = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
   PropertiesService.getScriptProperties().setProperty('rst_' + chave, JSON.stringify({ uid: u.id, exp: Date.now() + 3600000 }));
-  const base = String(site || PropertiesService.getScriptProperties().getProperty('site') || '').split('#')[0];
+  const base = String(site || site_() || '').split('#')[0];
   const url = base + '#redefinir=' + chave;
   MailApp.sendEmail({ to: u.login, name: NOME_APP, subject: '🔑 Criar uma senha nova',
     htmlBody: '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#1d1d1f;max-width:520px"><h2 style="margin:0 0 12px">Olá, ' + escH_(u.nome.split(' ')[0]) + '!</h2>' +
@@ -2673,15 +2812,15 @@ function redefinirSenha_(chave, nova) {
   const props = PropertiesService.getScriptProperties(), k = 'rst_' + String(chave || '').replace(/\W/g, '');
   const d = parseJSON_(props.getProperty(k), null);
   if (!d || d.exp < Date.now()) throw erro_('server', 'Este link venceu ou já foi usado. Peça um novo em "Esqueci minha senha".');
-  if (String(nova || '').length < 6) throw erro_('server', 'A senha precisa ter pelo menos 6 caracteres.');
+  senhaValida_(nova);
   const u = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(x => x.id === d.uid)[0];
   if (!u || u.ativo !== 'sim') throw erro_('server', 'Conta não encontrada.');
   u.sal = Utilities.getUuid(); u.hash = hash_(nova, u.sal);
   gravar_(ABA_USUARIOS, CAMPOS_USUARIO, u);
   props.deleteProperty(k);
   // encerra as sessões abertas dessa pessoa em outros aparelhos
-  const todas = props.getProperties();
-  Object.keys(todas).forEach(x => { if (x.indexOf('tok_') === 0) { const s = parseJSON_(todas[x], {}); if (s.uid === u.id) props.deleteProperty(x); } });
+  derrubarSessoes_(u.id);
+  CacheService.getScriptCache().remove('lgf_' + u.login);
   try { auditar_(publicoUsuario_(u), 'Criou uma senha nova pelo link do e-mail', '', '', u.empresaId); } catch (e) {}
   return { login: u.login };
 }
@@ -2690,7 +2829,7 @@ function redefinirSenha_(chave, nova) {
 function auditar_(eu, acao, alvo, detalhe, empresaId) {
   const aba = aba_(ABA_AUDITORIA, CAMPOS_AUDITORIA);
   const linha = { id: Utilities.getUuid().slice(0, 12), empresaId: empresaId != null && empresaId !== '' ? empresaId : (eu.empresaId || ''), em: Date.now(), uid: eu.id || '', nome: eu.nome || '', acao: String(acao || '').slice(0, 200), alvo: String(alvo || '').slice(0, 300), detalhe: String(detalhe || '').slice(0, 500) };
-  aba.getRange(aba.getLastRow() + 1, 1, 1, CAMPOS_AUDITORIA.length).setValues([CAMPOS_AUDITORIA.map(c => String(linha[c[0]]))]);
+  aba.getRange(aba.getLastRow() + 1, 1, 1, CAMPOS_AUDITORIA.length).setNumberFormat('@').setValues([CAMPOS_AUDITORIA.map(c => String(linha[c[0]]))]);
 }
 // descreve a ação antes de rodar (para saber o nome do que vai ser apagado)
 function antesDoRegistro_(eu, req) {
@@ -2751,4 +2890,96 @@ function exportar_(eu) {
       Registro: ler_(ABA_AUDITORIA, CAMPOS_AUDITORIA).filter(a => a.empresaId === emp)
     }
   };
+}
+
+/* ======================================================================
+ * Segurança (2026-11-09): validação de dados que vêm do navegador,
+ * permissões por tela no servidor, limites de uso e limpeza diária.
+ * ====================================================================== */
+
+// só links https (nada de javascript:, data: etc.)
+function urlSegura_(u) {
+  u = String(u || '').trim();
+  return /^https:\/\/[^\s<>"'`]+$/i.test(u) ? u.slice(0, 1000) : '';
+}
+const idSeguro_ = v => /^[\w-]{6,80}$/.test(String(v || '')) ? String(v) : '';
+const textoCurto_ = (v, n) => String(v || '').replace(/[<>"'`\\]/g, '').trim().slice(0, n || 60);
+function limparArquivos_(l) {
+  return (Array.isArray(l) ? l : []).slice(0, 300).map(a => ({
+    id: idSeguro_(a && a.id) || ('a' + Utilities.getUuid().slice(0, 8)), tipo: textoCurto_(a.tipo, 60), nome: String(a.nome || '').slice(0, 200),
+    nota: String(a.nota || '').slice(0, 1000), data: /^\d{4}-\d{2}-\d{2}$/.test(a.data || '') ? a.data : '', url: urlSegura_(a.url), driveId: idSeguro_(a.driveId)
+  })).filter(a => a.url || a.driveId);
+}
+// campos de dinheiro e de pacote só o administrador e o diretor mudam; o resto do perfil é limpo
+const CAMPOS_FINANCEIROS = ['valorMensal', 'financeiro', 'pacote', 'relatorioAuto'];
+function limparPerfilMarca_(eu, novo, atual) {
+  const p = Object.assign({}, novo);
+  if (TODAS_MARCAS.indexOf(eu.papel) < 0 && !eu.dono) CAMPOS_FINANCEIROS.forEach(k => { if (k in atual) p[k] = atual[k]; else delete p[k]; });
+  if ('valorMensal' in p) p.valorMensal = Math.max(0, Number(p.valorMensal) || 0);
+  if (Array.isArray(p.biblioteca)) p.biblioteca = p.biblioteca.slice(0, 400).map(x => ({ id: idSeguro_(x && x.id), nome: String(x.nome || '').slice(0, 200), tipo: x.tipo === 'video' ? 'video' : 'imagem', tags: (Array.isArray(x.tags) ? x.tags : []).map(t => textoCurto_(t, 40).toLowerCase()).filter(String).slice(0, 15) })).filter(x => x.id);
+  ['site', 'fotoPerfil'].forEach(k => { if (k in p && p[k]) p[k] = urlSegura_(p[k]); });
+  if (Array.isArray(p.redes)) p.redes = p.redes.map(x => textoCurto_(x, 60)).filter(String).slice(0, 40);
+  if (Array.isArray(p.hashtags)) p.hashtags = p.hashtags.slice(0, 50).map(x => ({ nome: String(x.nome || '').slice(0, 80), texto: String(x.texto || '').slice(0, 2000) }));
+  if (Array.isArray(p.modelos)) p.modelos = p.modelos.slice(0, 50).map(x => ({ nome: String(x.nome || '').slice(0, 80), texto: String(x.texto || '').slice(0, 3000) }));
+  if (Array.isArray(p.nichos)) p.nichos = p.nichos.map(x => textoCurto_(x, 30)).slice(0, 20);
+  return p;
+}
+// tabela "quem vê o quê" aplicada no servidor (mesmas regras da tela)
+const TELAS_SERV = {
+  stories: ['admin diretor gestor social aprovador cliente', 'admin diretor gestor social aprovador cliente'],
+  'marca-acessos': ['admin diretor gestor social', 'admin diretor gestor social'],
+  agenda: ['admin diretor gestor social aprovador', 'admin diretor gestor social aprovador'],
+  tarefas: ['admin diretor gestor social aprovador', 'admin diretor gestor social aprovador'],
+  horas: ['admin diretor gestor social aprovador', 'admin diretor gestor social aprovador'],
+  mural: ['admin diretor gestor social aprovador', 'admin diretor gestor social aprovador'],
+  equipe: ['admin diretor', 'admin diretor'],
+  'equipe-atividade': ['admin diretor gestor', 'admin diretor gestor'],
+  financeiro: ['admin diretor', 'admin diretor'],
+  registro: ['admin diretor', 'admin diretor'],
+  empresa: ['admin', 'admin'],
+  ideias: ['admin diretor gestor social aprovador', 'admin diretor gestor social aprovador']
+};
+function podeTela_(eu, tela) {
+  if (eu.dono) return true;
+  const t = TELAS_SERV[tela]; if (!t) return true;
+  if (t[0].split(' ').indexOf(eu.papel) < 0) return false;
+  const e = eu.empresaId ? empresas_().filter(x => x.id === eu.empresaId)[0] : null;
+  const o = e && e.permissoes && e.permissoes[tela] && e.permissoes[tela][eu.papel];
+  return typeof o === 'boolean' ? o : t[1].split(' ').indexOf(eu.papel) >= 0;
+}
+function exigeTela_(eu, tela) {
+  if (!podeTela_(eu, tela)) throw erro_('permissao', 'Esta função não está liberada para o seu papel nesta empresa.');
+}
+// tipos de arquivo aceitos, conferidos pelos primeiros bytes (não pelo nome nem pelo tipo que o navegador diz)
+function tipoArquivo_(bytes) {
+  const b = i => (bytes[i] + 256) % 256, txt = (i, n) => String.fromCharCode.apply(null, bytes.slice(i, i + n).map(x => (x + 256) % 256));
+  if (b(0) === 0xFF && b(1) === 0xD8 && b(2) === 0xFF) return ['image/jpeg', 'imagem'];
+  if (txt(1, 3) === 'PNG') return ['image/png', 'imagem'];
+  if (txt(0, 4) === 'GIF8') return ['image/gif', 'imagem'];
+  if (txt(0, 4) === 'RIFF' && txt(8, 4) === 'WEBP') return ['image/webp', 'imagem'];
+  if (txt(4, 4) === 'ftyp') return [/qt/.test(txt(8, 4)) ? 'video/quicktime' : 'video/mp4', 'video'];
+  if (txt(0, 4) === '%PDF') return ['application/pdf', 'documento'];
+  if (txt(0, 4) === '8BPS') return ['image/vnd.adobe.photoshop', 'documento'];
+  if (txt(0, 2) === '%!') return ['application/postscript', 'documento'];
+  if (b(0) === 0x50 && b(1) === 0x4B) return ['application/zip', 'documento']; // docx, xlsx, pptx, zip
+  return null;
+}
+function arquivoSeguro_(base64, maxMB, soImagem) {
+  if (!base64) throw erro_('server', 'Arquivo vazio.');
+  if (base64.length > maxMB * 1.37 * 1048576) throw erro_('server', 'Arquivo grande demais (máx. ' + maxMB + ' MB).');
+  const bytes = Utilities.base64Decode(base64), t = tipoArquivo_(bytes);
+  if (!t || (soImagem && t[1] !== 'imagem')) throw erro_('server', soImagem ? 'Envie uma imagem (JPG, PNG, GIF ou WEBP).' : 'Tipo de arquivo não aceito. Use imagem, vídeo MP4/MOV, PDF, PSD, EPS ou Office/ZIP.');
+  return { bytes: bytes, mime: t[0] };
+}
+const nomeArquivo_ = n => String(n || 'arquivo').replace(/[\\/:*?"<>|\u0000-\u001f]/g, '_').slice(0, 120) || 'arquivo';
+// limpeza diária: sessões, convites e links vencidos (as Propriedades do Script têm limite de tamanho)
+function limpezaDiaria() {
+  const props = PropertiesService.getScriptProperties(), todas = props.getProperties(), agora = Date.now();
+  let n = 0;
+  Object.keys(todas).forEach(k => {
+    if (!/^(tok_|lnk_|rst_|brf_)/.test(k)) return;
+    const d = parseJSON_(todas[k], null);
+    if (!d || !d.exp || d.exp < agora) { props.deleteProperty(k); n++; }
+  });
+  Logger.log('Limpeza: ' + n + ' acessos vencidos removidos.');
 }

@@ -16,7 +16,7 @@ Sistema de planejamento de Instagram por marca: calendário, postagens, fluxo de
 4. No topo do editor, escolha a função **configurar** e clique em **Executar**.
    - Na primeira vez, o Google pede autorização: **Revisar permissões → escolha sua conta → Avançado → Acessar (não seguro) → Permitir**. Isso aparece porque o script é seu e não passou por verificação do Google.
    - A função cria as abas que faltarem (`MARCAS`, `POSTAGENS` e `USUARIOS`, que fica oculta), importa o que estiver nas abas `DETALHAMENTO` se `POSTAGENS` estiver vazia e atualiza os status antigos.
-   - Ela também cria **você como administrador**. Abra o **Registro de execução** (aparece embaixo do editor) e anote o login e a **senha provisória**. Depois de entrar no site, troque a senha em **Minha conta**.
+   - Ela também cria **você como administrador** e manda a **senha provisória para o seu e-mail** (ela não aparece mais no Registro de execução). Depois de entrar no site, troque a senha em **Minha conta**.
 5. Clique em **Implantar → Nova implantação**.
    - Em "Selecione o tipo", clique na engrenagem e escolha **App da Web**.
    - **Executar como:** Eu.
@@ -136,7 +136,8 @@ Aba **Stories**: calendário do mês só de stories.
 
 ## Link de aprovação sem senha (cliente)
 
-- Em **Equipe**, ao lado do aprovador do cliente, **🔗 Link sem senha** gera um link que entra direto na conta dele (vale 14 dias). Dá para copiar, mandar no WhatsApp ou enviar por e-mail.
+- Em **Equipe**, ao lado do aprovador do cliente, **🔗 Link sem senha** manda **para o e-mail do cliente** um link que entra direto na conta dele. O link vale 14 dias e **só funciona uma vez**.
+- Por segurança, o link não aparece na tela e não dá mais para copiar nem mandar no WhatsApp: assim ninguém da equipe consegue entrar como o cliente nem encaminhar o acesso. O login do cliente precisa ser um e-mail.
 - Nas **Aprovações**, quando há posts esperando o cliente, aparece o botão para mandar o link.
 - Os e-mails de "post para aprovar" que vão para o cliente já levam esse link.
 
@@ -158,6 +159,31 @@ Ao rodar **configurar**, o script cria quatro rotinas (a quarta é o relatório 
 - **Resumo diário por e-mail** (segunda a sexta, às 8h): cada pessoa recebe só o que é dela (aprovações pendentes, devolvidos, prazos vencendo, posts e stories do dia, tarefas). O cliente recebe com o link sem senha.
 - **Cópia de segurança** toda segunda de madrugada, na pasta "Planejamento de Conteúdo - Cópias de segurança" do seu Drive (guarda as 8 últimas).
 - **Publicação automática**: confere a cada 15 minutos se há post ou story para publicar.
+
+## Segurança (revisão de novembro de 2026)
+
+O que o sistema faz para se proteger:
+
+- **Permissões conferidas no servidor**: cada ação confere empresa, marca, papel e a tabela "quem vê o quê". Mexer no site pelo navegador não libera nada.
+- **Empresas separadas**: ninguém lê, altera ou apaga dados de outra empresa, nem mesmo sabendo o código (ID) do item.
+- **Senhas**: no mínimo 8 caracteres, sem senhas óbvias, guardadas embaralhadas com proteção reforçada. As senhas antigas são reforçadas sozinhas no próximo login. Depois de **5 tentativas erradas** a conta fica bloqueada por 15 minutos e a pessoa recebe um e-mail. Trocar ou redefinir a senha derruba os logins dos outros aparelhos.
+- **Links dos e-mails** (aprovação, senha, briefing, propostas) usam só o **endereço oficial do site**, que só a dona da plataforma muda (em **Empresas**). Ninguém consegue fazer os e-mails apontarem para um site falso.
+- **Link sem senha do cliente**: só por e-mail, uso único, 14 dias.
+- **Drive**: o sistema só lê pastas e arquivos que já estejam compartilhados como "Qualquer pessoa com o link", e **nunca** torna um arquivo público sozinho.
+- **Arquivos enviados**: o tipo é conferido pelo conteúdo (não só pelo nome), com limite de tamanho e de quantidade por hora.
+- **Limites de uso**: IA, envio de relatórios, publicação, leitura de documentos e "esqueci a senha" têm limite por hora, para ninguém gastar sua cota ou sua chave.
+- **Site**: links digitados pelas pessoas só abrem se forem `http(s)`, os textos são todos tratados antes de aparecer na tela, o site não abre dentro de outro site e há uma política de segurança (CSP) que só deixa o site falar com a planilha. As bibliotecas de PDF, imagem e Excel ficam na pasta `vendor/` do próprio site.
+- **Planilhas exportadas** (CSV, Excel e a planilha do Google): textos que começam com `=`, `+`, `-` ou `@` não viram fórmula.
+- **Registro**: logins, bloqueios, exportações e mudanças importantes ficam na aba `REGISTRO`.
+- **Limpeza diária** apaga logins, links e chaves vencidos.
+
+O que **depende de você** (não dá para resolver só com código):
+
+1. **Conta Google da dona**: ative a **verificação em duas etapas** (myaccount.google.com → Segurança). Quem entra nessa conta tem tudo: planilha, script, chaves e Drive.
+2. **Quem edita a planilha e o script**: deixe só você como editora. Qualquer editor do Apps Script consegue ver as chaves guardadas (Instagram, IA, Google Agenda) e todos os dados.
+3. **Chaves**: se desconfiar que alguém viu uma chave (IA, Instagram), gere outra no painel do serviço e cadastre de novo no sistema.
+4. **Mudou o endereço do site?** Atualize em **Empresas → Endereço oficial do site** e, se a planilha mudar de endereço, ajuste o `connect-src` da linha `Content-Security-Policy` no topo do `index.html`.
+5. Antes de vender para muitas agências, vale um **teste de invasão** feito por outra pessoa e testar em Safari e Firefox.
 
 ## Desempenho e segurança
 
