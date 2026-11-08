@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com; img-src 'self' data: https:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Minhas Compras</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icone-192.png">
+<link rel="apple-touch-icon" href="icone-180.png">
+<meta name="theme-color" content="#2F5D4E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Compras">
+<script>try { const a = JSON.parse(localStorage.getItem("compras.ajustes") || "{}"); const r = document.documentElement; if (a.tema === "escuro" || a.tema === "claro") r.dataset.tema = a.tema; if (a.letra) r.dataset.letra = a.letra; if (a.calmo) r.dataset.calmo = "1"; } catch (e) {}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Visual calmo: poucas cores, letras legíveis, botões grandes, nada piscando. */
+:root {
+  --bg: #F6F4EF; --surface: #FFFFFF; --surface-2: #EEEBE4; --ink: #22201C; --muted: #67625A; --line: #DEDAD1;
+  --accent: #2F5D4E; --accent-soft: #DCEAE3; --on-accent: #FFFFFF; --ok: #2F7A4F; --aviso: #8A5A12; --aviso-soft: #F6E8CF;
+  --sombra: 0 1px 2px rgba(0,0,0,.06), 0 4px 14px rgba(0,0,0,.05);
+  --raio: 16px; --gap: 16px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    --bg: #161719; --surface: #212226; --surface-2: #2B2C31; --ink: #ECEAE5; --muted: #A7A29A; --line: #36373D;
+    --accent: #7FC3A6; --accent-soft: #24392F; --on-accent: #0F1F18; --ok: #86D0A2; --aviso: #E9BE74; --aviso-soft: #3A2F1C;
+    --sombra: none; color-scheme: dark;
+  }
+}
+:root[data-tema="escuro"] {
+  --bg: #161719; --surface: #212226; --surface-2: #2B2C31; --ink: #ECEAE5; --muted: #A7A29A; --line: #36373D;
+  --accent: #7FC3A6; --accent-soft: #24392F; --on-accent: #0F1F18; --ok: #86D0A2; --aviso: #E9BE74; --aviso-soft: #3A2F1C;
+  --sombra: none; color-scheme: dark;
+}
+html { font-size: 17px; -webkit-text-size-adjust: 100%; }
+html[data-letra="grande"] { font-size: 20px; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.45; padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+html[data-calmo="1"] *, html[data-calmo="1"] *::before { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+img { max-width: 100%; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.topo { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: calc(10px + env(safe-area-inset-top)) 16px 8px; display: flex; align-items: center; gap: 12px; max-width: 760px; margin: 0 auto; }
+.topo h1 { font-size: 1.35rem; margin: 0; flex: 1; letter-spacing: -.01em; }
+.sync { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: .82rem; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; min-height: 36px; }
+.sync .pt { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.sync[data-e="ok"] .pt { background: var(--ok); }
+.sync[data-e="pendente"] .pt, .sync[data-e="offline"] .pt { background: var(--aviso); }
+main { max-width: 760px; margin: 0 auto; padding: 4px 16px 24px; }
+
+.abas { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--surface); border-top: 1px solid var(--line); display: flex; justify-content: center; padding-bottom: env(safe-area-inset-bottom); }
+.abas button { flex: 1; max-width: 220px; background: none; border: 0; padding: 10px 4px 12px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: .85rem; color: var(--muted); min-height: 64px; }
+.abas button .ic { font-size: 1.45rem; line-height: 1; }
+.abas button[aria-current="page"] { color: var(--accent); font-weight: 700; }
+.abas button[aria-current="page"] .ic { background: var(--accent-soft); border-radius: 999px; padding: 2px 16px; }
+
+.seg { display: flex; background: var(--surface-2); border-radius: 14px; padding: 4px; gap: 4px; margin: 8px 0 14px; }
+.seg button { flex: 1; border: 0; background: none; border-radius: 10px; padding: 10px 8px; min-height: 46px; color: var(--muted); font-weight: 700; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--sombra); }
+.seg.casas button[aria-pressed="true"] { background: var(--cor, var(--accent)); color: #fff; }
+
+.add { display: flex; gap: 8px; margin: 6px 0 14px; }
+.add input { flex: 1; min-width: 0; }
+input[type="text"], input[type="url"], input[type="search"], input[type="number"], input[type="password"], select, textarea { border: 2px solid var(--line); background: var(--surface); border-radius: 12px; padding: 11px 14px; min-height: 50px; width: 100%; }
+textarea { min-height: 80px; resize: vertical; }
+input:focus, select:focus, textarea:focus { border-color: var(--accent); outline: none; }
+.btn { border: 0; background: var(--accent); color: var(--on-accent); border-radius: 12px; padding: 12px 18px; min-height: 50px; font-weight: 700; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; }
+.btn.sec { background: var(--surface-2); color: var(--ink); }
+.btn.linha { background: none; border: 2px solid var(--line); color: var(--ink); }
+.btn.perigo { background: none; border: 2px solid var(--line); color: var(--aviso); }
+.btn.pq { min-height: 40px; padding: 8px 12px; font-size: .9rem; }
+.btn.grande { width: 100%; min-height: 58px; font-size: 1.08rem; }
+.ico { border: 0; background: var(--surface-2); color: var(--ink); width: 44px; height: 44px; border-radius: 12px; font-size: 1.05rem; display: inline-flex; align-items: center; justify-content: center; flex: none; text-decoration: none; }
+.linha-acoes { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+.grupo { margin: 18px 0 6px; font-size: .9rem; color: var(--muted); font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.item { background: var(--surface); border: 1px solid var(--line); border-radius: var(--raio); padding: 8px 8px 8px 14px; display: flex; align-items: center; gap: 10px; min-height: 60px; }
+.item .nome { flex: 1; min-width: 0; }
+.item .nome b { font-weight: 400; display: block; overflow-wrap: anywhere; }
+.item .nome small { color: var(--muted); }
+.chk { width: 44px; height: 44px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); flex: none; font-size: 1.2rem; display: inline-flex; align-items: center; justify-content: center; }
+.item.on { border-color: var(--accent); background: var(--accent-soft); }
+.item.on .chk { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+button.item { width: 100%; text-align: left; color: inherit; }
+
+.dica { background: var(--surface); border: 1px dashed var(--line); border-radius: var(--raio); padding: 18px; color: var(--muted); text-align: center; }
+.dica b { color: var(--ink); display: block; margin-bottom: 4px; font-size: 1.05rem; }
+.dica .btn { margin-top: 12px; }
+.resumo { color: var(--muted); font-size: .92rem; margin: 2px 0 10px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+.chips { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; margin: 0 -16px; padding-left: 16px; padding-right: 16px; scrollbar-width: thin; }
+.chip { border: 2px solid var(--line); background: var(--surface); border-radius: 999px; padding: 8px 14px; min-height: 44px; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
+.chip[aria-pressed="true"] { border-color: var(--c, var(--accent)); background: color-mix(in srgb, var(--c, var(--accent)) 16%, var(--surface)); font-weight: 700; }
+.chip .n { color: var(--muted); font-size: .85rem; font-weight: 400; }
+.chips.sub .chip { min-height: 40px; padding: 6px 12px; font-size: .92rem; }
+
+.cards { display: grid; gap: 10px; grid-template-columns: 1fr; }
+@media (min-width: 620px) { .cards { grid-template-columns: 1fr 1fr; } }
+.card { background: var(--surface); border: 1px solid var(--line); border-left: 6px solid var(--c, var(--line)); border-radius: var(--raio); padding: 12px; display: flex; gap: 12px; text-align: left; width: 100%; color: inherit; align-items: flex-start; }
+.card .foto { width: 76px; height: 76px; border-radius: 12px; background: color-mix(in srgb, var(--c, var(--muted)) 18%, var(--surface)); flex: none; display: flex; align-items: center; justify-content: center; font-size: 2rem; overflow: hidden; }
+.card .foto img { width: 100%; height: 100%; object-fit: cover; }
+.card .info { flex: 1; min-width: 0; display: grid; gap: 4px; }
+.card .t { font-weight: 700; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.card .cam { color: var(--muted); font-size: .85rem; }
+.card .preco { font-size: 1.1rem; font-weight: 700; }
+.card .preco small { font-weight: 400; color: var(--muted); font-size: .85rem; }
+.tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag { font-size: .8rem; border-radius: 999px; padding: 2px 10px; background: var(--surface-2); color: var(--ink); }
+.tag.boa { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.tag.espera { background: var(--aviso-soft); color: var(--aviso); }
+
+/* janela de edição (de baixo para cima no celular) */
+.fundo { position: fixed; inset: 0; background: rgba(0,0,0,.42); z-index: 20; display: flex; align-items: flex-end; justify-content: center; }
+.janela { background: var(--bg); width: 100%; max-width: 640px; max-height: 92vh; overflow: auto; border-radius: 22px 22px 0 0; padding: 8px 18px calc(18px + env(safe-area-inset-bottom)); }
+@media (min-width: 700px) { .fundo { align-items: center; } .janela { border-radius: 22px; max-height: 88vh; } }
+.janela header { position: sticky; top: -8px; background: var(--bg); display: flex; align-items: center; gap: 10px; padding: 10px 0; z-index: 1; }
+.janela header h2 { margin: 0; font-size: 1.2rem; flex: 1; }
+.campo { display: grid; gap: 6px; margin: 14px 0; }
+.campo > span, .campo legend { font-weight: 700; font-size: .95rem; }
+.campo small { color: var(--muted); }
+fieldset.campo { border: 0; padding: 0; min-width: 0; }
+.link-box, .link-topo, .link-preco { min-width: 0; }
+.opcoes { display: flex; gap: 8px; flex-wrap: wrap; }
+.opcoes button { border: 2px solid var(--line); background: var(--surface); border-radius: 12px; padding: 10px 14px; min-height: 48px; flex: 1; min-width: 100px; }
+.opcoes button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); font-weight: 700; }
+.link-box { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: grid; gap: 10px; }
+.link-box.melhor { border: 2px solid var(--accent); }
+.link-topo { display: flex; gap: 8px; align-items: center; }
+.link-topo b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.link-preco { display: flex; gap: 8px; align-items: center; }
+.link-preco input { max-width: 170px; }
+.hist { font-size: .85rem; color: var(--muted); }
+.rodape-janela { display: flex; gap: 10px; margin-top: 18px; position: sticky; bottom: calc(-18px - env(safe-area-inset-bottom)); background: var(--bg); padding: 12px 0 calc(6px + env(safe-area-inset-bottom)); }
+.rodape-janela .btn { flex: 1; }
+.cores { display: flex; gap: 8px; flex-wrap: wrap; }
+.cores button { width: 44px; height: 44px; border-radius: 50%; border: 3px solid transparent; background: var(--c); }
+.cores button[aria-pressed="true"] { border-color: var(--ink); }
+.arvore { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.arvore .arvore { margin: 6px 0 0 22px; }
+.no { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-left: 6px solid var(--c, var(--line)); border-radius: 12px; padding: 6px 6px 6px 12px; }
+.no span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+
+.secao { background: var(--surface); border: 1px solid var(--line); border-radius: var(--raio); padding: 4px 16px 14px; margin: 14px 0; }
+.secao h2 { font-size: 1.1rem; margin: 14px 0 6px; }
+.secao p { color: var(--muted); margin: 4px 0 10px; }
+.chave { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; border-top: 1px solid var(--line); }
+.chave:first-of-type { border-top: 0; }
+.chave label { flex: 1; }
+.chave label small { display: block; color: var(--muted); }
+.troca { appearance: none; width: 56px; height: 34px; border-radius: 999px; background: var(--line); position: relative; flex: none; border: 0; min-height: 0; padding: 0; }
+.troca::after { content: ""; position: absolute; top: 4px; left: 4px; width: 26px; height: 26px; border-radius: 50%; background: #fff; transition: left .15s; }
+.troca:checked { background: var(--accent); }
+.troca:checked::after { left: 26px; }
+
+/* modo mercado: tela cheia, letras grandes */
+.feira { position: fixed; inset: 0; z-index: 30; background: var(--bg); overflow: auto; padding: calc(12px + env(safe-area-inset-top)) 16px calc(110px + env(safe-area-inset-bottom)); font-size: 1.15rem; }
+.feira-topo { display: flex; align-items: center; gap: 10px; max-width: 640px; margin: 0 auto; }
+.feira-topo h2 { flex: 1; margin: 0; font-size: 1.3rem; }
+.barra { height: 12px; background: var(--surface-2); border-radius: 999px; overflow: hidden; margin: 12px auto 4px; max-width: 640px; }
+.barra i { display: block; height: 100%; background: var(--accent); }
+.feira .conteudo { max-width: 640px; margin: 0 auto; }
+.feira .item { min-height: 68px; }
+.feira .item.on .nome b { text-decoration: line-through; color: var(--muted); }
+.feira-rodape { position: fixed; left: 0; right: 0; bottom: 0; background: var(--bg); border-top: 1px solid var(--line); padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); }
+.feira-rodape .btn { max-width: 640px; margin: 0 auto; display: flex; }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(86px + env(safe-area-inset-bottom)); z-index: 40; background: var(--ink); color: var(--bg); border-radius: 14px; padding: 10px 10px 10px 16px; display: flex; gap: 12px; align-items: center; max-width: calc(100% - 32px); width: max-content; box-shadow: var(--sombra); }
+.toast[hidden] { display: none; }
+.toast button { background: none; border: 2px solid currentColor; color: inherit; border-radius: 10px; padding: 6px 12px; font-weight: 700; min-height: 40px; }
+.carregando { display: inline-block; width: 1em; height: 1em; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: gira .9s linear infinite; vertical-align: -2px; }
+@keyframes gira { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<header class="topo">
+  <h1 id="titulo">Minhas Compras</h1>
+  <button class="sync" id="syncBtn" data-act="sync" type="button"><span class="pt" aria-hidden="true"></span><span id="syncTxt">Neste aparelho</span></button>
+</header>
+<main id="main" tabindex="-1"></main>
+<nav class="abas" aria-label="Seções">
+  <button type="button" data-act="aba" data-v="mercado"><span class="ic" aria-hidden="true">🛒</span>Mercado</button>
+  <button type="button" data-act="aba" data-v="desejos"><span class="ic" aria-hidden="true">✨</span>Desejos</button>
+  <button type="button" data-act="aba" data-v="ajustes"><span class="ic" aria-hidden="true">⚙️</span>Ajustes</button>
+</nav>
+<div id="modal"></div>
+<div id="feira"></div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toastTxt"></span><button type="button" id="toastBtn">Desfazer</button></div>
+<script src="config.js"></script>
+<script>
+"use strict";
+// ================= base =================
+const $ = s => document.querySelector(s);
+const h = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const clone = o => JSON.parse(JSON.stringify(o));
+const hojeISO = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+const real = n => n == null || n === "" ? "" : Number(n).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const semAcento = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } };
+
+const LS = "compras.v1", LSA = "compras.ajustes", LSC = "compras.conexao";
+let D = lsGet(LS, null) || { regs: {}, pend: {}, rev: 0 };
+let A = Object.assign({ tema: "auto", letra: "normal", calmo: false, espera: true, diasEspera: 7, aba: "mercado", casa: "", merc: "lista", cat: "", status: "quero", ordem: "prioridade" }, lsGet(LSA, {}));
+let C = Object.assign({ api: "", chave: "" }, lsGet(LSC, {}));
+const apiUrl = () => (C.api || (window.CONFIG && window.CONFIG.API_URL) || "").trim();
+const salvarAjustes = () => lsSet(LSA, A);
+function persistir() { if (!lsSet(LS, D)) toast("Não consegui guardar neste aparelho. Libere espaço no navegador."); }
+
+// ================= dados =================
+const SETORES = [
+  ["hortifruti", "🥬", "Hortifrúti"], ["carnes", "🥩", "Carnes e frios"], ["padaria", "🥖", "Padaria"], ["mercearia", "🍚", "Mercearia"],
+  ["laticinios", "🧀", "Laticínios e ovos"], ["bebidas", "🧃", "Bebidas"], ["congelados", "🧊", "Congelados"], ["limpeza", "🧽", "Limpeza"],
+  ["higiene", "🧴", "Higiene"], ["pet", "🐾", "Pet"], ["outros", "📦", "Outros"]
+];
+const setor = id => SETORES.find(s => s[0] === id) || SETORES[SETORES.length - 1];
+const PALAVRAS = {
+  hortifruti: "alface tomate cebola alho batata cenoura banana maca laranja limao mamao abacate couve cheiro verde fruta legume verdura chuchu abobrinha pepino pimentao uva morango melancia melao mandioca inhame beterraba brocolis repolho manga",
+  carnes: "carne frango peixe linguica presunto mortadela salame bacon file costela moida patinho alcatra picanha salsicha peito coxa sobrecoxa",
+  padaria: "pao bisnaguinha bolo torrada rosca biscoito de polvilho",
+  mercearia: "arroz feijao acucar sal oleo azeite cafe macarrao farinha fuba molho extrato milho ervilha atum sardinha tempero vinagre aveia granola biscoito bolacha achocolatado gelatina fermento maionese ketchup mostarda pipoca amendoim cha leite condensado creme de leite",
+  laticinios: "leite queijo manteiga margarina iogurte requeijao ovo ovos nata",
+  bebidas: "agua refrigerante suco cerveja vinho energetico isotonico",
+  congelados: "sorvete pizza lasanha nuggets hamburguer polpa batata frita congelad",
+  limpeza: "detergente sabao amaciante agua sanitaria desinfetante esponja vassoura rodo pano saco de lixo lixo alcool limpa multiuso cloro lava",
+  higiene: "papel higienico sabonete shampoo xampu condicionador pasta de dente creme dental escova desodorante absorvente fio dental algodao cotonete hidratante",
+  pet: "racao areia petisco"
+};
+function adivinharSetor(nome) {
+  const n = " " + semAcento(nome) + " ";
+  let melhor = "outros", tam = 0;
+  for (const [s, lista] of Object.entries(PALAVRAS)) {
+    for (const p of lista.split(" ")) if (p.length > 2 && n.includes(p) && p.length > tam) { melhor = s; tam = p.length; }
+  }
+  for (const [s, lista] of Object.entries(PALAVRAS)) for (const frase of ["sabao em po", "agua sanitaria", "papel higienico", "pasta de dente", "creme dental", "saco de lixo", "leite condensado", "creme de leite", "batata frita", "fio dental"]) if (n.includes(frase) && lista.includes(frase)) return s;
+  return melhor;
+}
+const BASICOS = ["Arroz", "Feijão", "Açúcar", "Café", "Sal", "Óleo", "Macarrão", "Farinha de trigo", "Molho de tomate", "Leite", "Manteiga", "Queijo", "Ovos", "Pão", "Frango", "Carne moída", "Banana", "Tomate", "Cebola", "Alho", "Batata", "Alface", "Detergente", "Sabão em pó", "Amaciante", "Água sanitária", "Esponja", "Saco de lixo", "Papel higiênico", "Sabonete", "Pasta de dente", "Shampoo"];
+const CORES = ["#C9852B", "#3E6FA8", "#D9776B", "#7FA35A", "#4E9C8F", "#8C6BC2", "#C26B9E", "#8A8178"];
+const PRIORIDADES = [["preciso", "Preciso", 0], ["muito", "Quero muito", 1], ["legal", "Seria legal", 2]];
+const STATUS = [["quero", "Quero"], ["comprei", "Comprei"], ["chegou", "Chegou"]];
+
+// registros: { id, tipo, atualizadoEm, apagado, dados }
+const todos = tipo => Object.values(D.regs).filter(r => r.tipo === tipo && !r.apagado).map(r => Object.assign({}, r.dados, { id: r.id }));
+const pegar = id => { const r = D.regs[id]; return r && !r.apagado ? Object.assign({}, r.dados, { id }) : null; };
+function gravar(tipo, obj, quando) {
+  const id = obj.id || uid(), dados = Object.assign({}, obj); delete dados.id;
+  const antigo = D.regs[id];
+  D.regs[id] = { id, tipo, atualizadoEm: quando || Math.max(Date.now(), antigo ? antigo.atualizadoEm + 1 : 0), apagado: false, dados };
+  D.pend[id] = 1; return id;
+}
+function apagar(id) { const r = D.regs[id]; if (!r) return; r.apagado = true; r.atualizadoEm = Math.max(Date.now(), r.atualizadoEm + 1); D.pend[id] = 1; }
+// muda algo e oferece desfazer
+function mudar(ids, fn, msg) {
+  const antes = ids.map(id => D.regs[id] ? clone(D.regs[id]) : { id, ausente: true });
+  fn(); persistir(); render(); agendarSync();
+  if (msg) toast(msg, () => {
+    antes.forEach(r => {
+      if (r.ausente) { if (D.regs[r.id]) apagar(r.id); return; }
+      r.atualizadoEm = Math.max(Date.now(), (D.regs[r.id] ? D.regs[r.id].atualizadoEm : 0) + 1); D.regs[r.id] = r; D.pend[r.id] = 1;
+    });
+    persistir(); render(); agendarSync();
+  });
+}
+function salvar(tipo, obj) { const id = gravar(tipo, obj); persistir(); agendarSync(); return id; }
+
+// começo: duas casas e categorias de exemplo (ids fixos para não duplicar entre aparelhos)
+function semear() {
+  if (D.semeado) return;
+  const t = 1;
+  if (!D.regs["casa-inhumas"]) gravar("casa", { id: "casa-inhumas", nome: "Inhumas", cor: CORES[0], ordem: 1 }, t);
+  if (!D.regs["casa-goiania"]) gravar("casa", { id: "casa-goiania", nome: "Goiânia", cor: CORES[1], ordem: 2 }, t);
+  const cats = [
+    ["cat-casa", "Casa", "🏠", CORES[0], ""], ["cat-casa-decor", "Decoração", "🪴", "", "cat-casa"], ["cat-casa-decor-sala", "Sala", "🛋️", "", "cat-casa-decor"], ["cat-casa-decor-quarto", "Quarto", "🛏️", "", "cat-casa-decor"],
+    ["cat-casa-cozinha", "Cozinha", "🍳", "", "cat-casa"], ["cat-casa-banheiro", "Banheiro", "🛁", "", "cat-casa"], ["cat-casa-moveis", "Móveis", "🪑", "", "cat-casa"], ["cat-casa-eletro", "Eletrodomésticos", "🔌", "", "cat-casa"],
+    ["cat-trabalho", "Trabalho", "💼", CORES[1], ""], ["cat-trabalho-equip", "Equipamentos", "📷", "", "cat-trabalho"], ["cat-trabalho-escritorio", "Escritório", "🖊️", "", "cat-trabalho"], ["cat-trabalho-cursos", "Cursos e livros", "📚", "", "cat-trabalho"],
+    ["cat-roupas", "Roupas e acessórios", "👗", CORES[6], ""], ["cat-beleza", "Beleza e cuidados", "💄", CORES[2], ""], ["cat-tec", "Tecnologia", "💻", CORES[5], ""], ["cat-lazer", "Lazer", "🎨", CORES[3], ""], ["cat-presentes", "Presentes", "🎁", CORES[4], ""]
+  ];
+  cats.forEach(([id, nome, icone, cor, pai], i) => { if (!D.regs[id]) gravar("categoria", { id, nome, icone, cor, pai, ordem: i }, t); });
+  D.semeado = true; persistir();
+}
+
+// ================= categorias =================
+const cats = () => todos("categoria").sort((a, b) => (a.ordem ?? 99) - (b.ordem ?? 99) || a.nome.localeCompare(b.nome));
+const filhos = pai => cats().filter(c => (c.pai || "") === (pai || ""));
+function caminho(id) { const out = []; let c = id && pegar(id), n = 0; while (c && n++ < 5) { out.unshift(c); c = c.pai ? pegar(c.pai) : null; } return out; }
+const corCat = id => { const p = caminho(id); for (let i = p.length - 1; i >= 0; i--) if (p[i].cor) return p[i].cor; return ""; };
+const iconeCat = id => { const p = caminho(id); for (let i = p.length - 1; i >= 0; i--) if (p[i].icone) return p[i].icone; return "🛍️"; };
+function descendentes(id) { const s = new Set([id]); let mudou = true; const l = cats(); while (mudou) { mudou = false; l.forEach(c => { if (c.pai && s.has(c.pai) && !s.has(c.id)) { s.add(c.id); mudou = true; } }); } return s; }
+const nivel = id => caminho(id).length;
+
+// ================= desejos =================
+function melhorLink(d) { let m = null; (d.links || []).forEach(l => { if (l.preco > 0 && (!m || l.preco < m.preco)) m = l; }); return m; }
+function aplicarPreco(l, preco) {
+  const dia = hojeISO(); l.precoEm = dia;
+  if (l.preco === preco) return;
+  if (l.preco) l.antes = l.preco;
+  l.preco = preco;
+  l.hist = (l.hist || []).filter(x => x.d !== dia); l.hist.push({ d: dia, p: preco }); if (l.hist.length > 30) l.hist = l.hist.slice(-30);
+}
+const diasAte = iso => Math.ceil((new Date(iso + "T00:00:00") - new Date(hojeISO() + "T00:00:00")) / 864e5);
+function haQuanto(iso) { if (!iso) return ""; const d = -diasAte(iso); return d <= 0 ? "hoje" : d === 1 ? "ontem" : `há ${d} dias`; }
+function lojaDe(url) {
+  const host = ((String(url).match(/^https?:\/\/([^\/:?#]+)/i) || [])[1] || "").toLowerCase().replace(/^www\./, "");
+  const nomes = { amazon: "Amazon", mercadolivre: "Mercado Livre", shopee: "Shopee", magazineluiza: "Magalu", magalu: "Magalu", americanas: "Americanas", casasbahia: "Casas Bahia", shein: "Shein", aliexpress: "AliExpress", leroymerlin: "Leroy Merlin", tokstok: "Tok&Stok", mobly: "Mobly", camicado: "Camicado", renner: "Renner", riachuelo: "Riachuelo", zara: "Zara", sephora: "Sephora", boticario: "Boticário", natura: "Natura", kabum: "KaBuM!", westwing: "Westwing", etna: "Etna", madeiramadeira: "MadeiraMadeira", amzn: "Amazon", shp: "Shopee" };
+  const p = host.split(".").find(x => nomes[x]);
+  return p ? nomes[p] : host ? host.split(".")[0].replace(/^./, c => c.toUpperCase()) : "Loja";
+}
+const lendo = new Set();
+async function lerLink(desejoId, linkId) {
+  if (!apiUrl() || !C.chave) return false;
+  const d0 = pegar(desejoId); const l0 = d0 && (d0.links || []).find(x => x.id === linkId);
+  if (!l0) return false;
+  lendo.add(linkId); renderSuave(); if (ED && ED.id === desejoId && !digitando()) redesenharModal();
+  let r = null;
+  try { r = await api("lerLink", { url: l0.url }); } catch (e) { r = null; }
+  lendo.delete(linkId);
+  const d = pegar(desejoId); const l = d && (d.links || []).find(x => x.id === linkId);
+  if (!d || !l) { renderSuave(); return false; }
+  if (r && r.lido) {
+    if (r.preco) { aplicarPreco(l, r.preco); l.precoManual = false; l.fonte = r.fonte; l.erro = ""; } else l.erro = "sempreco";
+    if (r.loja) l.loja = r.loja;
+    if (r.foto && !d.foto) d.foto = r.foto;
+    if (r.nome && (!d.nome || d.nomeProvisorio)) { d.nome = r.nome; d.nomeProvisorio = false; }
+  } else l.erro = r ? (r.motivo || "bloqueado") : "rede";
+  gravar("desejo", d); persistir(); agendarSync();
+  if (ED && ED.id === desejoId) { const le = ED.links.find(x => x.id === linkId); if (le) Object.assign(le, clone(l)); if (!ED.foto && d.foto) ED.foto = d.foto; if (ED.nomeProvisorio && !d.nomeProvisorio) { ED.nome = d.nome; ED.nomeProvisorio = false; } if (!digitando()) redesenharModal(); }
+  renderSuave();
+  return !!(r && r.lido && r.preco);
+}
+function textoErro(l) {
+  if (l.erro === "bloqueado") return "A loja não deixou ler o preço. Digite aqui.";
+  if (l.erro === "sempreco") return "Não achei o preço na página. Digite aqui.";
+  if (l.erro === "rede") return "Não consegui abrir o link agora.";
+  if (l.erro === "manual") return "Preço digitado por você.";
+  return "";
+}
+function separarLink(texto) {
+  const m = String(texto).match(/https?:\/\/[^\s<>"']+/i);
+  if (!m) return { url: "", resto: String(texto).trim() };
+  return { url: m[0].replace(/[),.;!]+$/, ""), resto: String(texto).replace(m[0], " ").replace(/\s+/g, " ").trim() };
+}
+
+// ================= sincronização =================
+let estado = "local", syncando = false, syncTimer = null, ultimoErro = "";
+async function api(action, extra) {
+  const url = apiUrl();
+  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 45000);
+  try {
+    const r = await fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ action, chave: C.chave }, extra || {})), signal: ctl.signal });
+    const j = await r.json();
+    if (!j.ok) { const e = new Error(j.msg || j.erro); e.codigo = j.erro; throw e; }
+    return j;
+  } finally { clearTimeout(t); }
+}
+function agendarSync(ms) { atualizarSync(); if (!apiUrl() || !C.chave) return; clearTimeout(syncTimer); syncTimer = setTimeout(sincronizar, ms ?? 1200); }
+async function sincronizar() {
+  if (!apiUrl() || !C.chave) { estado = "local"; atualizarSync(); return; }
+  if (syncando) { agendarSync(1500); return; }
+  syncando = true; estado = Object.keys(D.pend).length ? "pendente" : estado; atualizarSync();
+  const enviados = {};
+  const mudancas = Object.keys(D.pend).filter(id => D.regs[id]).map(id => { enviados[id] = D.regs[id].atualizadoEm; return D.regs[id]; });
+  try {
+    const j = await api("sync", { mudancas, desde: D.rev || 0 });
+    const doServidor = new Set();
+    (j.registros || []).forEach(r => {
+      const loc = D.regs[r.id];
+      if (loc && D.pend[r.id] && loc.atualizadoEm > r.atualizadoEm) return;
+      D.regs[r.id] = r; doServidor.add(r.id);
+    });
+    Object.keys(enviados).forEach(id => { if (!D.regs[id] || doServidor.has(id) || D.regs[id].atualizadoEm <= enviados[id]) delete D.pend[id]; });
+    D.rev = j.rev; persistir();
+    estado = "ok"; ultimoErro = "";
+    renderSuave();
+  } catch (e) {
+    estado = e.codigo === "chave" ? "chave" : navigator.onLine === false || e.name === "AbortError" || e instanceof TypeError ? "offline" : "erro";
+    ultimoErro = e.message || "";
+  } finally {
+    syncando = false; atualizarSync();
+    if (estado === "ok" && Object.keys(D.pend).length) agendarSync(800);
+  }
+}
+function atualizarSync() {
+  const b = $("#syncBtn"), t = $("#syncTxt"); if (!b) return;
+  const pend = Object.keys(D.pend).length;
+  let e = estado, txt;
+  if (!apiUrl() || !C.chave) { e = "local"; txt = "Neste aparelho"; }
+  else if (syncando) txt = "Salvando…";
+  else if (e === "chave") txt = "Chave errada";
+  else if (e === "offline") txt = pend ? "Sem internet · guardado aqui" : "Sem internet";
+  else if (e === "erro") txt = "Não sincronizou";
+  else if (pend) { e = "pendente"; txt = "Salvando…"; }
+  else txt = "Tudo salvo";
+  b.dataset.e = e; t.textContent = txt;
+  b.title = e === "local" ? "Os dados ficam só neste aparelho. Conecte à planilha em Ajustes." : ultimoErro;
+}
+
+// ================= toast =================
+let toastTimer = null, toastDesfazer = null;
+function toast(msg, desfazer) {
+  const el = $("#toast"); $("#toastTxt").textContent = msg; toastDesfazer = desfazer || null;
+  $("#toastBtn").hidden = !desfazer; el.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; toastDesfazer = null; }, desfazer ? 8000 : 3500);
+}
+$("#toastBtn").addEventListener("click", () => { const f = toastDesfazer; $("#toast").hidden = true; toastDesfazer = null; if (f) { f(); toast("Desfeito."); } });
+
+// ================= telas =================
+let precisaRender = false;
+function digitando() { const a = document.activeElement; return a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== "checkbox" && a.type !== "button"; }
+function renderSuave() { if (digitando()) { precisaRender = true; atualizarSync(); return; } render(); }
+document.addEventListener("focusout", () => setTimeout(() => { if (precisaRender && !digitando()) { precisaRender = false; render(); } }, 50));
+
+function render() {
+  precisaRender = false;
+  document.querySelectorAll(".abas button").forEach(b => b.setAttribute("aria-current", b.dataset.v === A.aba ? "page" : "false"));
+  const m = $("#main");
+  m.innerHTML = A.aba === "desejos" ? vDesejos() : A.aba === "ajustes" ? vAjustes() : vMercado();
+  if (A.aba === "desejos") pintarLista();
+  if (FEIRA) $("#feira").innerHTML = vFeira();
+  atualizarSync();
+}
+
+// ---------- Mercado ----------
+const casas = () => todos("casa").sort((a, b) => (a.ordem ?? 9) - (b.ordem ?? 9) || a.nome.localeCompare(b.nome));
+function casaAtual() { const l = casas(); return l.find(c => c.id === A.casa) || l[0] || null; }
+const itensCasa = casaId => todos("mercado").filter(i => i.casaId === casaId).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+function porSetor(itens) { const g = {}; itens.forEach(i => { (g[i.setor] = g[i.setor] || []).push(i); }); return SETORES.filter(s => g[s[0]]).map(s => [s, g[s[0]]]); }
+
+function vMercado() {
+  const casa = casaAtual();
+  if (!casa) return `<div class="dica"><b>Nenhuma casa cadastrada</b>Crie uma casa em Ajustes.</div>`;
+  const itens = itensCasa(casa.id), falta = itens.filter(i => i.precisa);
+  let html = `<div class="seg casas" role="group" aria-label="Casa">${casas().map(c => `<button type="button" data-act="casa" data-v="${h(c.id)}" style="--cor:${h(c.cor || CORES[0])}" aria-pressed="${c.id === casa.id}">🏡 ${h(c.nome)}</button>`).join("")}</div>`;
+  html += `<form class="add" data-form="madd"><label class="sr" for="mNome">O que está faltando em ${h(casa.nome)}?</label><input id="mNome" type="text" autocomplete="off" enterkeyhint="done" placeholder="O que acabou? Ex.: arroz" maxlength="80"><button class="btn" type="submit">Adicionar</button></form>`;
+  html += `<div class="seg" role="group" aria-label="Mostrar"><button type="button" data-act="merc" data-v="lista" aria-pressed="${A.merc !== "tudo"}">Para comprar (${falta.length})</button><button type="button" data-act="merc" data-v="tudo" aria-pressed="${A.merc === "tudo"}">Tudo de casa (${itens.length})</button></div>`;
+  if (A.merc === "tudo") {
+    if (!itens.length) return html + `<div class="dica"><b>A lista de ${h(casa.nome)} está vazia</b>Comece com os itens básicos e depois tire ou acrescente o que quiser.<br><button class="btn" type="button" data-act="basicos">Começar com itens básicos</button></div>`;
+    html += `<p class="resumo"><span>Toque no que <b>acabou</b> para ir para a lista.</span></p>`;
+    porSetor(itens).forEach(([s, l]) => {
+      html += `<h3 class="grupo"><span aria-hidden="true">${s[1]}</span>${h(s[2])}</h3><ul class="lista">${l.map(i => `<li class="item${i.precisa ? " on" : ""}"><button type="button" class="chk" data-act="mtoggle" data-id="${h(i.id)}" aria-pressed="${!!i.precisa}" aria-label="${i.precisa ? "Tirar da lista" : "Acabou: pôr na lista"}: ${h(i.nome)}">${i.precisa ? "✓" : ""}</button><span class="nome"><b>${h(i.nome)}</b>${i.precisa ? `<small>Na lista${i.qtd ? " · " + h(i.qtd) : ""}</small>` : ""}</span><button class="ico" type="button" data-act="medit" data-id="${h(i.id)}" aria-label="Editar ${h(i.nome)}">✎</button></li>`).join("")}</ul>`;
+    });
+    return html;
+  }
+  if (!falta.length) {
+    html += itens.length ? `<div class="dica"><b>Nada faltando em ${h(casa.nome)} 🌿</b>Quando algo acabar, escreva acima ou toque em “Tudo de casa”.</div>`
+      : `<div class="dica"><b>Vamos montar a lista de ${h(casa.nome)}</b>Comece com os itens básicos ou escreva o que acabou no campo acima.<br><button class="btn" type="button" data-act="basicos">Começar com itens básicos</button></div>`;
+    return html;
+  }
+  html += `<button class="btn grande" type="button" data-act="feira">🛒 Estou no mercado</button>`;
+  porSetor(falta).forEach(([s, l]) => {
+    html += `<h3 class="grupo"><span aria-hidden="true">${s[1]}</span>${h(s[2])}</h3><ul class="lista">${l.map(i => `<li class="item"><span class="nome"><b>${h(i.nome)}</b>${i.qtd ? `<small>${h(i.qtd)}</small>` : ""}</span><button class="ico" type="button" data-act="medit" data-id="${h(i.id)}" aria-label="Editar ${h(i.nome)}">✎</button><button class="btn sec pq" type="button" data-act="mtenho" data-id="${h(i.id)}" aria-label="Já tenho ${h(i.nome)}: tirar da lista">Já tenho</button></li>`).join("")}</ul>`;
+  });
+  return html;
+}
+
+// modo mercado
+let FEIRA = null;
+function vFeira() {
+  const casa = pegar(FEIRA.casaId); if (!casa) return "";
+  const falta = itensCasa(casa.id).filter(i => i.precisa);
+  const feitos = falta.filter(i => i.carrinho).length;
+  const pct = falta.length ? Math.round(feitos / falta.length * 100) : 0;
+  let html = `<div class="feira" role="dialog" aria-modal="true" aria-label="Modo mercado"><div class="feira-topo"><h2>🛒 ${h(casa.nome)}</h2><button class="btn sec pq" type="button" data-act="ffechar">Sair</button></div>`;
+  html += `<div class="barra" aria-hidden="true"><i style="width:${pct}%"></i></div><p class="resumo conteudo"><span><b>${feitos}</b> de ${falta.length} no carrinho</span></p><div class="conteudo">`;
+  porSetor(falta).forEach(([s, l]) => {
+    l.sort((a, b) => (a.carrinho ? 1 : 0) - (b.carrinho ? 1 : 0));
+    html += `<h3 class="grupo"><span aria-hidden="true">${s[1]}</span>${h(s[2])}</h3><ul class="lista">${l.map(i => `<li><button type="button" class="item${i.carrinho ? " on" : ""}" data-act="fcheck" data-id="${h(i.id)}" aria-pressed="${!!i.carrinho}"><span class="chk" aria-hidden="true">${i.carrinho ? "✓" : ""}</span><span class="nome"><b>${h(i.nome)}</b>${i.qtd ? `<small>${h(i.qtd)}</small>` : ""}</span></button></li>`).join("")}</ul>`;
+  });
+  html += `</div><div class="feira-rodape"><button class="btn grande" type="button" data-act="fterminar"${feitos ? "" : " disabled"}>Terminei a compra (${feitos})</button></div></div>`;
+  return html;
+}
+let wake = null;
+async function pedirTelaLigada() { try { if (navigator.wakeLock) wake = await navigator.wakeLock.request("screen"); } catch (e) { wake = null; } }
+
+// ---------- Desejos ----------
+function vDesejos() {
+  const raiz = filhos("");
+  const l = todos("desejo");
+  const sem = l.filter(d => !d.categoriaId || !pegar(d.categoriaId)).length;
+  const cam = A.cat && A.cat !== "sem" ? caminho(A.cat) : [];
+  if (A.cat && A.cat !== "sem" && !cam.length) A.cat = "";
+  const conta = id => { const s = descendentes(id); return l.filter(d => s.has(d.categoriaId) && (d.status || "quero") === A.status).length; };
+  let html = `<form class="add" data-form="dadd"><label class="sr" for="dTexto">Cole um link ou escreva o que você quer</label><input id="dTexto" type="text" inputmode="url" autocomplete="off" enterkeyhint="done" placeholder="Cole o link ou escreva o que quer" maxlength="2100"><button class="btn" type="submit">Guardar</button></form>`;
+  html += `<div class="seg" role="group" aria-label="Situação">${STATUS.map(([v, t]) => `<button type="button" data-act="dstatus" data-v="${v}" aria-pressed="${A.status === v}">${t}</button>`).join("")}</div>`;
+  html += `<div class="chips" role="group" aria-label="Categorias"><button type="button" class="chip" data-act="dcat" data-v="" aria-pressed="${!A.cat}">Tudo</button>${sem ? `<button type="button" class="chip" data-act="dcat" data-v="sem" aria-pressed="${A.cat === "sem"}">📥 Não organizados <span class="n">${sem}</span></button>` : ""}${raiz.map(c => `<button type="button" class="chip" data-act="dcat" data-v="${h(c.id)}" style="--c:${h(c.cor || "")}" aria-pressed="${cam[0] && cam[0].id === c.id}"><span aria-hidden="true">${h(c.icone || "")}</span>${h(c.nome)} <span class="n">${conta(c.id)}</span></button>`).join("")}<button type="button" class="chip" data-act="cats">✎ Categorias</button></div>`;
+  for (let i = 0; i < cam.length && i < 2; i++) {
+    const subs = filhos(cam[i].id); if (!subs.length) break;
+    html += `<div class="chips sub" role="group" aria-label="Dentro de ${h(cam[i].nome)}"><button type="button" class="chip" data-act="dcat" data-v="${h(cam[i].id)}" style="--c:${h(corCat(cam[i].id))}" aria-pressed="${A.cat === cam[i].id}">Tudo em ${h(cam[i].nome)}</button>${subs.map(c => `<button type="button" class="chip" data-act="dcat" data-v="${h(c.id)}" style="--c:${h(corCat(c.id))}" aria-pressed="${cam[i + 1] && cam[i + 1].id === c.id}"><span aria-hidden="true">${h(c.icone || "")}</span>${h(c.nome)} <span class="n">${conta(c.id)}</span></button>`).join("")}</div>`;
+  }
+  html += `<div class="resumo"><span id="dResumo"></span><span class="linha-acoes"><label class="sr" for="dOrdem">Ordem</label><select id="dOrdem" data-ajuste="ordem" style="min-height:44px;padding:6px 10px;width:auto"><option value="prioridade"${A.ordem === "prioridade" ? " selected" : ""}>Prioridade</option><option value="preco"${A.ordem === "preco" ? " selected" : ""}>Menor preço</option><option value="recente"${A.ordem === "recente" ? " selected" : ""}>Mais recentes</option></select>${apiUrl() && C.chave && A.status === "quero" ? `<button class="btn sec pq" type="button" data-act="datualizar">↻ Preços</button>` : ""}</span></div>`;
+  html += `<input type="search" id="dBusca" placeholder="Buscar pelo nome" aria-label="Buscar pelo nome" style="margin-bottom:12px" value="${h(BUSCA)}"><div id="dLista"></div>`;
+  return html;
+}
+let BUSCA = "";
+function desejosFiltrados() {
+  let l = todos("desejo").filter(d => (d.status || "quero") === A.status);
+  if (A.cat === "sem") l = l.filter(d => !d.categoriaId || !pegar(d.categoriaId));
+  else if (A.cat) { const s = descendentes(A.cat); l = l.filter(d => s.has(d.categoriaId)); }
+  const b = semAcento(BUSCA); if (b) l = l.filter(d => semAcento(d.nome).includes(b) || (d.links || []).some(x => semAcento(x.loja).includes(b)));
+  const prio = d => (PRIORIDADES.find(p => p[0] === d.prioridade) || PRIORIDADES[1])[2];
+  const pr = d => { const m = melhorLink(d); return m ? m.preco : Infinity; };
+  if (A.ordem === "preco") l.sort((a, b) => pr(a) - pr(b));
+  else if (A.ordem === "recente") l.sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
+  else l.sort((a, b) => prio(a) - prio(b) || (b.criadoEm || 0) - (a.criadoEm || 0));
+  return l;
+}
+function pintarLista() {
+  const box = $("#dLista"); if (!box) return;
+  const l = desejosFiltrados();
+  const total = l.reduce((s, d) => { const m = melhorLink(d); return s + (m ? m.preco : 0); }, 0);
+  const r = $("#dResumo"); if (r) r.textContent = `${l.length} ${l.length === 1 ? "item" : "itens"}${total ? " · " + real(total) : ""}`;
+  if (!l.length) {
+    box.innerHTML = BUSCA ? `<div class="dica"><b>Nada com “${h(BUSCA)}”</b>Tente outra palavra.</div>`
+      : A.status === "quero" ? `<div class="dica"><b>Nada por aqui ainda</b>Cole o link de um produto no campo lá em cima. Eu busco o nome, a foto e o preço. Organizar pode ficar para depois.</div>`
+        : `<div class="dica"><b>Nada em “${h(STATUS.find(s => s[0] === A.status)[1])}”</b>Quando você marcar um desejo assim, ele aparece aqui.</div>`;
+    return;
+  }
+  box.innerHTML = `<div class="cards">${l.map(cartao).join("")}</div>`;
+}
+function cartao(d) {
+  const m = melhorLink(d), cor = corCat(d.categoriaId), cam = caminho(d.categoriaId).map(c => c.nome).join(" › ");
+  const p = PRIORIDADES.find(x => x[0] === d.prioridade);
+  const tags = [];
+  if (p && d.status !== "chegou" && d.status !== "comprei") tags.push(`<span class="tag">${h(p[1])}</span>`);
+  if (m && m.antes && m.preco < m.antes) tags.push(`<span class="tag boa">↓ baixou ${h(real(m.antes - m.preco))}</span>`);
+  if ((d.status || "quero") === "quero" && d.liberaEm && diasAte(d.liberaEm) > 0) tags.push(`<span class="tag espera">⏳ esfriando: ${diasAte(d.liberaEm)} ${diasAte(d.liberaEm) === 1 ? "dia" : "dias"}</span>`);
+  const lendoAlgo = (d.links || []).some(l => lendo.has(l.id));
+  const nl = (d.links || []).length;
+  return `<button type="button" class="card" data-act="dabrir" data-id="${h(d.id)}" style="--c:${h(cor)}"><span class="foto" data-ic="${h(iconeCat(d.categoriaId))}">${d.foto ? `<img src="${h(d.foto)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<span aria-hidden="true">${h(iconeCat(d.categoriaId))}</span>`}</span><span class="info"><span class="t">${lendoAlgo && d.nomeProvisorio ? '<span class="carregando" aria-hidden="true"></span> Lendo o link…' : h(d.nome || "Sem nome")}</span><span class="cam">${cam ? h(cam) : "📥 Não organizado"}</span><span class="preco">${m ? h(real(m.preco)) + ` <small>${h(m.loja || "")}${nl > 1 ? ` · ${nl} lojas` : ""}</small>` : lendoAlgo ? "" : `<small>${nl ? "Sem preço ainda" : "Sem link"}</small>`}</span>${tags.length ? `<span class="tags">${tags.join("")}</span>` : ""}</span></button>`;
+}
+
+// ---------- Ajustes ----------
+function vAjustes() {
+  const conectado = apiUrl() && C.chave;
+  let html = `<section class="secao"><h2>Do seu jeito</h2>
+  <div class="chave"><label for="aTema">Tema<small>Claro, escuro ou igual ao celular.</small></label><select id="aTema" data-ajuste="tema" style="width:auto"><option value="auto"${A.tema === "auto" ? " selected" : ""}>Automático</option><option value="claro"${A.tema === "claro" ? " selected" : ""}>Claro</option><option value="escuro"${A.tema === "escuro" ? " selected" : ""}>Escuro</option></select></div>
+  <div class="chave"><label for="aLetra">Letra grande</label><input class="troca" type="checkbox" id="aLetra" data-ajuste="letra"${A.letra === "grande" ? " checked" : ""}></div>
+  <div class="chave"><label for="aCalmo">Sem animações<small>Nada se mexe na tela.</small></label><input class="troca" type="checkbox" id="aCalmo" data-ajuste="calmo"${A.calmo ? " checked" : ""}></div>
+  <div class="chave"><label for="aEspera">Esperar antes de comprar<small>Desejos novos ficam “esfriando” por alguns dias. Ajuda a evitar compra por impulso.</small></label><input class="troca" type="checkbox" id="aEspera" data-ajuste="espera"${A.espera ? " checked" : ""}></div>
+  ${A.espera ? `<div class="chave"><label for="aDias">Dias de espera</label><input type="number" id="aDias" data-ajuste="diasEspera" min="1" max="60" value="${Number(A.diasEspera) || 7}" style="width:96px"></div>` : ""}
+  </section>`;
+  html += `<section class="secao"><h2>Casas</h2><p>Cada casa tem a sua lista de mercado.</p><ul class="lista">${casas().map(c => `<li class="no" style="--c:${h(c.cor || "")}"><span>🏡 ${h(c.nome)}</span><button class="ico" type="button" data-act="casaedit" data-id="${h(c.id)}" aria-label="Editar ${h(c.nome)}">✎</button></li>`).join("")}</ul><p style="margin-top:12px"><button class="btn sec" type="button" data-act="casaedit" data-id="">+ Nova casa</button></p></section>`;
+  html += `<section class="secao"><h2>Categorias dos desejos</h2><p>Até 3 níveis, por exemplo: Casa › Decoração › Quarto.</p><button class="btn sec" type="button" data-act="cats">Organizar categorias</button></section>`;
+  html += `<section class="secao"><h2>Planilha e celular</h2>`;
+  if (conectado) html += `<p>Conectado à sua planilha do Google. O que você muda aqui aparece nos outros aparelhos.</p><div class="linha-acoes"><button class="btn sec" type="button" data-act="syncagora">Sincronizar agora</button><button class="btn linha" type="button" data-act="desconectar">Desconectar este aparelho</button></div>`;
+  else html += `<p>Agora os dados estão só neste aparelho. Conecte à planilha para usar no celular e no computador e para buscar os preços dos links.</p>
+    <form data-form="conectar"><label class="campo"><span>Endereço do app da planilha</span><input type="url" id="cApi" placeholder="https://script.google.com/macros/s/…/exec" value="${h(apiUrl())}" autocomplete="off"><small>Está no passo a passo do LEIAME, termina em /exec.</small></label><label class="campo"><span>Chave de acesso</span><input type="text" id="cChave" placeholder="XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false"><small>Chegou no seu e-mail quando você configurou a planilha.</small></label><button class="btn" type="submit">Conectar</button></form>`;
+  html += `</section>`;
+  html += `<section class="secao"><h2>Cópia de segurança</h2><p>Um arquivo com tudo, para guardar ou levar para outro aparelho.</p><div class="linha-acoes"><button class="btn sec" type="button" data-act="exportar">Baixar cópia</button><label class="btn linha" for="aImport">Trazer de uma cópia</label><input type="file" id="aImport" accept="application/json,.json" class="sr"></div></section>`;
+  return html;
+}
+
+// ================= janelas (editar) =================
+let MODAL = null, ED = null, VOLTAR = null;
+function abrirModal(fn) { VOLTAR = document.activeElement; MODAL = fn; $("#modal").innerHTML = fn(); const f = $("#modal [data-foco]") || $("#modal .janela"); if (f) f.focus(); document.body.style.overflow = "hidden"; }
+function fecharModal() { MODAL = null; ED = null; CM = null; $("#modal").innerHTML = ""; document.body.style.overflow = ""; render(); if (VOLTAR && document.contains(VOLTAR)) VOLTAR.focus(); }
+const janela = (titulo, corpo, rodape) => `<div class="fundo" data-act="fundo"><div class="janela" role="dialog" aria-modal="true" aria-labelledby="jTit" tabindex="-1"><header><h2 id="jTit">${titulo}</h2><button class="ico" type="button" data-act="fechar" aria-label="Fechar">✕</button></header>${corpo}${rodape ? `<div class="rodape-janela">${rodape}</div>` : ""}</div></div>`;
+function redesenharModal() { if (!MODAL) return; const j = $("#modal .janela"), top = j ? j.scrollTop : 0; $("#modal").innerHTML = MODAL(); const n = $("#modal .janela"); if (n) n.scrollTop = top; }
+
+// item do mercado
+function mItemModal() {
+  return janela("Item de mercado", `
+  <label class="campo"><span>Nome</span><input type="text" data-ed="nome" value="${h(ED.nome)}" maxlength="80" data-foco></label>
+  <label class="campo"><span>Quantidade <small>(opcional)</small></span><input type="text" data-ed="qtd" value="${h(ED.qtd || "")}" placeholder="Ex.: 2 pacotes, 5 kg" maxlength="40"></label>
+  <label class="campo"><span>Setor do mercado</span><select data-ed="setor">${SETORES.map(s => `<option value="${s[0]}"${ED.setor === s[0] ? " selected" : ""}>${s[1]} ${h(s[2])}</option>`).join("")}</select></label>
+  <label class="campo"><span>Casa</span><select data-ed="casaId">${casas().map(c => `<option value="${h(c.id)}"${ED.casaId === c.id ? " selected" : ""}>${h(c.nome)}</option>`).join("")}</select></label>
+  ${casas().length > 1 ? `<p><button class="btn linha pq" type="button" data-act="mcopiar">Copiar para a outra casa</button></p>` : ""}
+  <p><button class="btn perigo pq" type="button" data-act="mapagar">Apagar item</button></p>`,
+    `<button class="btn sec" type="button" data-act="fechar">Cancelar</button><button class="btn" type="button" data-act="msalvar">Salvar</button>`);
+}
+
+// desejo
+function selectsCategoria(atual) {
+  const cam = caminho(atual); let html = "";
+  for (let n = 0; n < 3; n++) {
+    const pai = n === 0 ? "" : cam[n - 1] && cam[n - 1].id; if (n > 0 && !pai) break;
+    const ops = filhos(pai); if (!ops.length) break;
+    const sel = cam[n] ? cam[n].id : "";
+    html += `<select data-edcat="${n}" aria-label="${n === 0 ? "Categoria" : n === 1 ? "Subcategoria" : "Sub-subcategoria"}"><option value="">${n === 0 ? "📥 Não organizado" : "— (só " + h(cam[n - 1].nome) + ")"}</option>${ops.map(c => `<option value="${h(c.id)}"${c.id === sel ? " selected" : ""}>${h((c.icone ? c.icone + " " : "") + c.nome)}</option>`).join("")}</select>`;
+  }
+  return html;
+}
+function dModal() {
+  const m = melhorLink(ED);
+  const espera = (ED.status || "quero") === "quero" && ED.liberaEm && diasAte(ED.liberaEm) > 0;
+  const links = (ED.links || []).map((l, i) => {
+    const mostrarHist = (l.hist || []).length > 1 ? `<div class="hist">Histórico: ${l.hist.slice(-5).map(x => `${x.d.slice(8, 10)}/${x.d.slice(5, 7)} ${real(x.p)}`).join(" · ")}</div>` : "";
+    return `<div class="link-box${m && m.id === l.id && ED.links.length > 1 ? " melhor" : ""}">
+      <div class="link-topo"><b>${h(l.loja || lojaDe(l.url))}${m && m.id === l.id && ED.links.length > 1 ? " · mais barato" : ""}</b><a class="ico" href="${h(l.url)}" target="_blank" rel="noopener noreferrer" aria-label="Abrir na loja">↗</a>${apiUrl() && C.chave ? `<button class="ico" type="button" data-act="edler" data-i="${i}" aria-label="Ler o preço de novo">${lendo.has(l.id) ? '<span class="carregando"></span>' : "↻"}</button>` : ""}<button class="ico" type="button" data-act="edrmlink" data-i="${i}" aria-label="Tirar este link">✕</button></div>
+      <div class="link-preco"><label class="sr" for="lp${i}">Preço</label><input type="text" inputmode="decimal" id="lp${i}" data-edpreco="${i}" value="${l.preco ? String(l.preco.toFixed(2)).replace(".", ",") : ""}" placeholder="R$ 0,00"><small class="hist">${l.precoEm ? (l.precoManual ? "digitado " : "visto ") + haQuanto(l.precoEm) : ""}${l.antes && l.preco < l.antes ? ` · antes ${real(l.antes)}` : ""}</small></div>
+      ${textoErro(l) && !l.preco ? `<small class="hist">${h(textoErro(l))}</small>` : ""}${mostrarHist}</div>`;
+  }).join("");
+  return janela(ED.novo ? "Novo desejo" : "Desejo", `
+  ${ED.foto ? `<p style="text-align:center;margin:4px 0"><img src="${h(ED.foto)}" alt="" referrerpolicy="no-referrer" style="max-height:160px;border-radius:14px"></p>` : ""}
+  <label class="campo"><span>O que é</span><input type="text" data-ed="nome" value="${h(ED.nome)}" maxlength="200" data-foco></label>
+  ${espera ? `<p class="tag espera" style="display:block;padding:10px 14px;border-radius:12px">⏳ Esfriando: libera em ${diasAte(ED.liberaEm)} ${diasAte(ED.liberaEm) === 1 ? "dia" : "dias"}. Se ainda quiser até lá, é porque quer mesmo.</p>` : ""}
+  <fieldset class="campo"><legend>Categoria</legend><div style="display:grid;gap:8px">${selectsCategoria(ED.categoriaId)}</div></fieldset>
+  <fieldset class="campo"><legend>Prioridade</legend><div class="opcoes">${PRIORIDADES.map(([v, t]) => `<button type="button" data-act="edprio" data-v="${v}" aria-pressed="${ED.prioridade === v}">${t}</button>`).join("")}</div></fieldset>
+  <fieldset class="campo"><legend>Situação</legend><div class="opcoes">${STATUS.map(([v, t]) => `<button type="button" data-act="edstatus" data-v="${v}" aria-pressed="${(ED.status || "quero") === v}">${t}</button>`).join("")}</div></fieldset>
+  <fieldset class="campo"><legend>Links e preços</legend><div style="display:grid;gap:10px">${links || `<small>Nenhum link ainda.</small>`}
+    <div class="add" style="margin:0"><label class="sr" for="novoLink">Novo link</label><input type="url" id="novoLink" placeholder="Colar outro link" autocomplete="off"><button class="btn sec" type="button" data-act="edaddlink">+ Link</button></div></div></fieldset>
+  <label class="campo"><span>Anotações</span><textarea data-ed="obs" maxlength="2000" placeholder="Cor, tamanho, medida…">${h(ED.obs || "")}</textarea></label>
+  <label class="campo"><span>Foto <small>(endereço da imagem, opcional)</small></span><input type="url" data-ed="foto" value="${h(ED.foto || "")}" placeholder="https://…"></label>
+  ${ED.novo ? "" : `<p><button class="btn perigo pq" type="button" data-act="edapagar">Apagar desejo</button></p>`}`,
+    `<button class="btn sec" type="button" data-act="fechar">Cancelar</button><button class="btn" type="button" data-act="edsalvar">Salvar</button>`);
+}
+
+// categorias
+let CM = null;
+function catModal() {
+  if (CM && CM.editando !== undefined) {
+    const e = CM;
+    const ehRaiz = !e.pai;
+    return janela(e.editando ? "Editar categoria" : "Nova categoria", `
+      ${e.pai ? `<p class="hist">Dentro de: ${h(caminho(e.pai).map(c => c.nome).join(" › "))}</p>` : ""}
+      <label class="campo"><span>Nome</span><input type="text" data-cm="nome" value="${h(e.nome)}" maxlength="60" data-foco></label>
+      <label class="campo"><span>Símbolo <small>(um emoji, opcional)</small></span><input type="text" data-cm="icone" value="${h(e.icone)}" maxlength="4" style="width:96px"></label>
+      ${ehRaiz ? `<fieldset class="campo"><legend>Cor</legend><div class="cores">${CORES.map(c => `<button type="button" data-act="cmcor" data-v="${c}" style="--c:${c}" aria-pressed="${e.cor === c}" aria-label="Cor ${c}"></button>`).join("")}</div></fieldset>` : ""}
+      ${e.editando ? `<p><button class="btn perigo pq" type="button" data-act="cmapagar">Apagar categoria</button></p><p class="hist">Os desejos dela vão para “Não organizados”.</p>` : ""}`,
+      `<button class="btn sec" type="button" data-act="cmvoltar">Voltar</button><button class="btn" type="button" data-act="cmsalvar">Salvar</button>`);
+  }
+  const arv = pai => { const l = filhos(pai); if (!l.length) return ""; return `<ul class="arvore">${l.map(c => `<li><div class="no" style="--c:${h(corCat(c.id))}"><span>${h((c.icone ? c.icone + " " : "") + c.nome)}</span>${nivel(c.id) < 3 ? `<button class="ico" type="button" data-act="cmnova" data-pai="${h(c.id)}" aria-label="Nova dentro de ${h(c.nome)}">＋</button>` : ""}<button class="ico" type="button" data-act="cmedit" data-id="${h(c.id)}" aria-label="Editar ${h(c.nome)}">✎</button></div>${arv(c.id)}</li>`).join("")}</ul>`; };
+  return janela("Categorias", `<p class="hist">Toque em ＋ para criar uma subcategoria. Até 3 níveis.</p>${arv("") || `<p>Nenhuma categoria.</p>`}<p style="margin-top:14px"><button class="btn sec" type="button" data-act="cmnova" data-pai="">+ Categoria principal</button></p>`, `<button class="btn" type="button" data-act="fechar">Pronto</button>`);
+}
+
+// casa
+function casaModal() {
+  return janela(ED.id ? "Editar casa" : "Nova casa", `
+  <label class="campo"><span>Nome</span><input type="text" data-ed="nome" value="${h(ED.nome)}" maxlength="40" data-foco></label>
+  <fieldset class="campo"><legend>Cor</legend><div class="cores">${CORES.map(c => `<button type="button" data-act="casacor" data-v="${c}" style="--c:${c}" aria-pressed="${ED.cor === c}" aria-label="Cor ${c}"></button>`).join("")}</div></fieldset>
+  ${ED.id && casas().length > 1 ? `<p><button class="btn perigo pq" type="button" data-act="casaapagar">Apagar casa e a lista dela</button></p>` : ""}`,
+    `<button class="btn sec" type="button" data-act="fechar">Cancelar</button><button class="btn" type="button" data-act="casasalvar">Salvar</button>`);
+}
+
+// ================= ações =================
+const ACT = {
+  aba: d => { A.aba = d.v; salvarAjustes(); render(); window.scrollTo(0, 0); },
+  sync: () => { if (apiUrl() && C.chave) sincronizar(); else { A.aba = "ajustes"; salvarAjustes(); render(); } },
+  // mercado
+  casa: d => { A.casa = d.v; salvarAjustes(); render(); },
+  merc: d => { A.merc = d.v; salvarAjustes(); render(); },
+  mtoggle: d => { const i = pegar(d.id); if (!i) return; i.precisa = !i.precisa; i.carrinho = false; salvar("mercado", i); render(); },
+  mtenho: d => { const i = pegar(d.id); if (!i) return; mudar([i.id], () => { i.precisa = false; i.carrinho = false; gravar("mercado", i); }, `“${i.nome}” saiu da lista.`); },
+  medit: d => { ED = pegar(d.id); if (ED) abrirModal(mItemModal); },
+  msalvar: () => { const nome = String(ED.nome || "").trim(); if (!nome) return toast("Escreva o nome do item."); ED.nome = nome; salvar("mercado", ED); fecharModal(); },
+  mapagar: () => { const it = ED; fecharModal(); mudar([it.id], () => apagar(it.id), `“${it.nome}” apagado.`); },
+  mcopiar: () => {
+    const outras = casas().filter(c => c.id !== ED.casaId); const ids = [];
+    outras.forEach(c => { if (!itensCasa(c.id).some(x => semAcento(x.nome) === semAcento(ED.nome))) ids.push(gravar("mercado", { nome: ED.nome, setor: ED.setor, qtd: ED.qtd || "", casaId: c.id, precisa: false })); });
+    persistir(); agendarSync(); toast(ids.length ? `Copiado para ${outras.map(c => c.nome).join(", ")}.` : "A outra casa já tem esse item.");
+  },
+  basicos: () => {
+    const casa = casaAtual(); const tem = new Set(itensCasa(casa.id).map(i => semAcento(i.nome))); const ids = [];
+    mudar(ids, () => { BASICOS.forEach(n => { if (!tem.has(semAcento(n))) ids.push(gravar("mercado", { nome: n, setor: adivinharSetor(n), casaId: casa.id, precisa: false })); }); A.merc = "tudo"; salvarAjustes(); }, null);
+    toast(`${ids.length} itens básicos em ${casa.nome}. Toque no que está faltando.`, () => { ids.forEach(apagar); persistir(); render(); agendarSync(); });
+  },
+  feira: () => { const c = casaAtual(); FEIRA = { casaId: c.id }; $("#feira").innerHTML = vFeira(); document.body.style.overflow = "hidden"; pedirTelaLigada(); const b = $("#feira .btn"); if (b) b.focus(); },
+  ffechar: () => { FEIRA = null; $("#feira").innerHTML = ""; document.body.style.overflow = ""; if (wake) { wake.release().catch(() => {}); wake = null; } render(); },
+  fcheck: d => { const i = pegar(d.id); if (!i) return; i.carrinho = !i.carrinho; salvar("mercado", i); $("#feira").innerHTML = vFeira(); const b = $(`#feira [data-id="${CSS.escape(d.id)}"]`); if (b) b.focus(); },
+  fterminar: () => {
+    const c = pegar(FEIRA.casaId); const feitos = itensCasa(c.id).filter(i => i.precisa && i.carrinho);
+    ACT.ffechar();
+    mudar(feitos.map(i => i.id), () => feitos.forEach(i => { i.precisa = false; i.carrinho = false; gravar("mercado", i); }), `Compra registrada: ${feitos.length} ${feitos.length === 1 ? "item" : "itens"}. 🌿`);
+  },
+  // desejos
+  dstatus: d => { A.status = d.v; salvarAjustes(); render(); },
+  dcat: d => { A.cat = d.v; salvarAjustes(); render(); },
+  dabrir: d => { const x = pegar(d.id); if (!x) return; ED = clone(x); ED.links = ED.links || []; abrirModal(dModal); },
+  datualizar: async (d, b) => {
+    const lista = desejosFiltrados().flatMap(x => (x.links || []).map(l => [x.id, l.id]));
+    if (!lista.length) return toast("Nenhum link para atualizar.");
+    b.disabled = true; let ok = 0;
+    for (let i = 0; i < lista.length; i++) { b.textContent = `${i + 1} de ${lista.length}…`; if (await lerLink(lista[i][0], lista[i][1])) ok++; }
+    toast(`Preços conferidos: ${ok} de ${lista.length} links.`); render();
+  },
+  edprio: d => { ED.prioridade = d.v; redesenharModal(); },
+  edstatus: d => { ED.status = d.v; if (d.v !== "quero" && !ED.compradoEm) ED.compradoEm = hojeISO(); redesenharModal(); },
+  edaddlink: () => {
+    const inp = $("#novoLink"); const { url } = separarLink(inp.value);
+    if (!url) { toast("Cole um link que comece com https://"); inp.focus(); return; }
+    const l = { id: uid(), url, loja: lojaDe(url) }; ED.links.push(l);
+    redesenharModal();
+    if (!ED.novo && apiUrl() && C.chave) { const salvo = clone(ED); delete salvo.novo; gravar("desejo", salvo); persistir(); lerLink(ED.id, l.id); }
+  },
+  edrmlink: d => { ED.links.splice(Number(d.i), 1); redesenharModal(); },
+  edler: d => { const l = ED.links[Number(d.i)]; if (!l) return; const salvo = clone(ED); delete salvo.novo; gravar("desejo", salvo); persistir(); lerLink(ED.id, l.id); redesenharModal(); },
+  edsalvar: () => {
+    const nome = String(ED.nome || "").trim(); if (!nome) return toast("Escreva o que é.");
+    ED.nome = nome; ED.nomeProvisorio = false; const x = clone(ED); delete x.novo; salvar("desejo", x); fecharModal();
+  },
+  edapagar: () => { const x = ED; fecharModal(); mudar([x.id], () => apagar(x.id), `“${x.nome}” apagado.`); },
+  // categorias
+  cats: () => { CM = {}; abrirModal(catModal); },
+  cmnova: d => { CM = { editando: "", pai: d.pai || "", nome: "", icone: "", cor: d.pai ? "" : CORES[cats().length % CORES.length] }; redesenharModal(); const f = $("#modal [data-foco]"); if (f) f.focus(); },
+  cmedit: d => { const c = pegar(d.id); CM = { editando: c.id, pai: c.pai || "", nome: c.nome, icone: c.icone || "", cor: c.cor || "" }; redesenharModal(); const f = $("#modal [data-foco]"); if (f) f.focus(); },
+  cmcor: d => { CM.cor = d.v; redesenharModal(); },
+  cmvoltar: () => { CM = {}; redesenharModal(); },
+  cmsalvar: () => {
+    const nome = String(CM.nome || "").trim(); if (!nome) return toast("Escreva o nome da categoria.");
+    const antiga = CM.editando ? pegar(CM.editando) : null;
+    salvar("categoria", { id: CM.editando || undefined, nome, icone: String(CM.icone || "").trim(), cor: CM.pai ? "" : CM.cor, pai: CM.pai, ordem: antiga ? antiga.ordem : Date.now() });
+    CM = {}; redesenharModal(); render();
+  },
+  cmapagar: () => {
+    const ids = [...descendentes(CM.editando)]; const nome = pegar(CM.editando).nome;
+    CM = {}; mudar(ids, () => ids.forEach(apagar), `Categoria “${nome}” apagada.`); redesenharModal();
+  },
+  // casas
+  casaedit: d => { ED = d.id ? pegar(d.id) : { nome: "", cor: CORES[casas().length % CORES.length], ordem: casas().length + 1 }; abrirModal(casaModal); },
+  casacor: d => { ED.cor = d.v; redesenharModal(); },
+  casasalvar: () => { const nome = String(ED.nome || "").trim(); if (!nome) return toast("Escreva o nome da casa."); ED.nome = nome; salvar("casa", ED); fecharModal(); },
+  casaapagar: () => {
+    const c = ED, itens = itensCasa(c.id).map(i => i.id); fecharModal();
+    mudar([c.id, ...itens], () => { apagar(c.id); itens.forEach(apagar); if (A.casa === c.id) A.casa = ""; }, `Casa “${c.nome}” apagada.`);
+  },
+  // janela
+  fechar: () => fecharModal(),
+  fundo: (d, b, e) => { if (e.target === b) fecharModal(); },
+  // conexão
+  syncagora: () => { estado = "ok"; sincronizar(); },
+  desconectar: () => { if (Object.keys(D.pend).length && !confirm("Ainda tem mudanças que não chegaram na planilha. Desconectar mesmo assim?")) return; C = { api: "", chave: "" }; lsSet(LSC, C); estado = "local"; render(); toast("Este aparelho foi desconectado. Os dados continuam aqui."); },
+  exportar: () => {
+    const dados = Object.values(D.regs).filter(r => !r.apagado);
+    const blob = new Blob([JSON.stringify({ app: "minhas-compras", em: new Date().toISOString(), registros: dados }, null, 1)], { type: "application/json" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `minhas-compras-${hojeISO()}.json`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+};
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b || b.disabled) return;
+  if (b.dataset.act === "fundo" && e.target !== b) return;
+  const f = ACT[b.dataset.act]; if (!f) return;
+  if (b.tagName !== "A") e.preventDefault();
+  f(b.dataset, b, e);
+});
+document.addEventListener("input", e => {
+  const t = e.target;
+  if (t.dataset.ed && ED) ED[t.dataset.ed] = t.value;
+  if (t.dataset.cm && CM) CM[t.dataset.cm] = t.value;
+  if (t.id === "dBusca") { BUSCA = t.value; pintarLista(); }
+});
+document.addEventListener("change", e => {
+  const t = e.target;
+  if (t.dataset.edpreco !== undefined && ED) {
+    const l = ED.links[Number(t.dataset.edpreco)]; const s = t.value.replace(/[^\d.,]/g, "");
+    const n = s.includes(",") ? parseFloat(s.replace(/\./g, "").replace(",", ".")) : parseFloat(s);
+    if (l) { if (n > 0) { const v = Math.round(n * 100) / 100; if (v !== l.preco) { aplicarPreco(l, v); l.precoManual = true; l.erro = "manual"; } } else { l.preco = null; } }
+    setTimeout(() => { const foco = document.activeElement && document.activeElement.id; redesenharModal(); const f = foco && document.getElementById(foco); if (f) f.focus(); }, 0);
+    return;
+  }
+  if (t.dataset.edcat !== undefined && ED) {
+    const n = Number(t.dataset.edcat), cam = caminho(ED.categoriaId);
+    ED.categoriaId = t.value || (n > 0 && cam[n - 1] ? cam[n - 1].id : "");
+    redesenharModal(); return;
+  }
+  if (t.dataset.ajuste) {
+    const k = t.dataset.ajuste;
+    if (k === "letra") A.letra = t.checked ? "grande" : "normal";
+    else if (k === "calmo" || k === "espera") A[k] = t.checked;
+    else if (k === "diasEspera") A.diasEspera = Math.min(60, Math.max(1, Number(t.value) || 7));
+    else A[k] = t.value;
+    salvarAjustes(); aplicarVisual(); render();
+    const de = document.getElementById(t.id); if (de) de.focus();
+  }
+  if (t.id === "aImport" && t.files[0]) importar(t.files[0]);
+});
+document.addEventListener("submit", e => {
+  const f = e.target.closest("[data-form]"); if (!f) return; e.preventDefault();
+  const tipo = f.dataset.form;
+  if (tipo === "madd") {
+    const inp = $("#mNome"), nome = inp.value.trim(); if (!nome) return inp.focus();
+    const casa = casaAtual(); const ex = itensCasa(casa.id).find(i => semAcento(i.nome) === semAcento(nome));
+    if (ex) { ex.precisa = true; salvar("mercado", ex); toast(`“${ex.nome}” voltou para a lista.`); }
+    else salvar("mercado", { nome: nome.charAt(0).toUpperCase() + nome.slice(1), setor: adivinharSetor(nome), casaId: casa.id, precisa: true });
+    A.merc = "lista"; salvarAjustes(); render(); $("#mNome").focus();
+  }
+  if (tipo === "dadd") {
+    const inp = $("#dTexto"), v = inp.value.trim(); if (!v) return inp.focus();
+    const { url, resto } = separarLink(v);
+    const agora = Date.now();
+    const d = { nome: resto || (url ? "Item da " + lojaDe(url) : ""), nomeProvisorio: !!url && !resto, links: url ? [{ id: uid(), url, loja: lojaDe(url) }] : [], categoriaId: A.cat && A.cat !== "sem" ? A.cat : "", prioridade: "muito", status: "quero", criadoEm: agora };
+    if (A.espera) { const lib = new Date(); lib.setDate(lib.getDate() + (Number(A.diasEspera) || 7)); d.liberaEm = lib.getFullYear() + "-" + String(lib.getMonth() + 1).padStart(2, "0") + "-" + String(lib.getDate()).padStart(2, "0"); }
+    const id = salvar("desejo", d);
+    if (A.status !== "quero") { A.status = "quero"; salvarAjustes(); }
+    inp.value = ""; BUSCA = ""; render();
+    if (url && apiUrl() && C.chave) lerLink(id, d.links[0].id).then(ok => toast(ok ? "Guardado, com o preço do link." : "Guardado. Não consegui o preço; toque no item para digitar."));
+    else toast(url ? "Guardado. Toque no item para digitar o preço." : "Guardado.");
+  }
+  if (tipo === "conectar") conectar();
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") { if (MODAL) { e.preventDefault(); if (CM && CM.editando !== undefined) ACT.cmvoltar(); else fecharModal(); } else if (FEIRA) ACT.ffechar(); }
+  if (e.key === "Tab" && (MODAL || FEIRA)) {
+    const box = MODAL ? $("#modal .janela") : $("#feira .feira"); if (!box) return;
+    const f = [...box.querySelectorAll("button:not([disabled]),a[href],input,select,textarea")].filter(x => x.offsetParent !== null || x.type === "file");
+    if (!f.length) return; const ini = f[0], fim = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === ini) { e.preventDefault(); fim.focus(); } else if (!e.shiftKey && document.activeElement === fim) { e.preventDefault(); ini.focus(); }
+  }
+});
+
+async function conectar() {
+  const url = $("#cApi").value.trim(), chave = $("#cChave").value.trim();
+  if (!/^https:\/\/script\.google(usercontent)?\.com\/[^\s]+$/.test(url)) return toast("O endereço precisa começar com https://script.google.com");
+  if (!chave) return toast("Digite a chave de acesso.");
+  const antes = C; C = { api: url, chave };
+  const b = document.querySelector('[data-form="conectar"] button'); if (b) { b.disabled = true; b.textContent = "Conectando…"; }
+  try {
+    await api("ping");
+    lsSet(LSC, C); toast("Conectado! Juntando os dados…"); estado = "ok";
+    Object.keys(D.regs).forEach(id => { D.pend[id] = 1; }); D.rev = 0; persistir();
+    await sincronizar(); render();
+  } catch (e) {
+    C = antes; if (b) { b.disabled = false; b.textContent = "Conectar"; }
+    toast(e.codigo === "chave" ? "Chave errada. Confira no e-mail." : "Não consegui falar com a planilha. Confira o endereço.");
+  }
+}
+function importar(arq) {
+  const fr = new FileReader();
+  fr.onload = () => {
+    try {
+      const j = JSON.parse(fr.result); const l = Array.isArray(j.registros) ? j.registros : [];
+      const ok = l.filter(r => r && typeof r.id === "string" && /^[\w-]{1,64}$/.test(r.id) && ["casa", "mercado", "categoria", "desejo"].includes(r.tipo) && r.dados && typeof r.dados === "object");
+      if (!ok.length) return toast("Esse arquivo não tem dados do app.");
+      const ids = ok.map(r => r.id);
+      mudar(ids, () => ok.forEach(r => gravar(r.tipo, Object.assign({}, r.dados, { id: r.id }))), `${ok.length} registros trazidos da cópia.`);
+    } catch (e) { toast("Não consegui ler esse arquivo."); }
+  };
+  fr.readAsText(arq);
+}
+function aplicarVisual() {
+  const r = document.documentElement;
+  if (A.tema === "auto") delete r.dataset.tema; else r.dataset.tema = A.tema;
+  r.dataset.letra = A.letra; if (A.calmo) r.dataset.calmo = "1"; else delete r.dataset.calmo;
+}
+
+// foto que não carrega: mostra o símbolo da categoria (ou some, na janela)
+document.addEventListener("error", e => {
+  const t = e.target; if (!t || t.tagName !== "IMG") return;
+  const box = t.closest(".foto"); if (box) box.textContent = box.dataset.ic || "🛍️"; else t.remove();
+}, true);
+
+// ================= início =================
+semear(); aplicarVisual(); render();
+if (apiUrl() && C.chave) sincronizar();
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { agendarSync(200); if (FEIRA) pedirTelaLigada(); } });
+window.addEventListener("online", () => agendarSync(200));
+window.addEventListener("offline", () => { estado = "offline"; atualizarSync(); });
+setInterval(() => { if (document.visibilityState === "visible" && !syncando) agendarSync(0); }, 60000);
+if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js", { scope: "./" }).catch(() => {});
+</script>
+</body>
+</html>
