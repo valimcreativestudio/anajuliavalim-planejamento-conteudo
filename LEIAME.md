@@ -6,6 +6,8 @@ Sistema de planejamento de Instagram por marca: calendário, postagens, fluxo de
 - Os **dados** ficam na sua planilha do Google, nas abas `MARCAS` e `POSTAGENS`.
 - Cada pessoa entra com o próprio login e senha. O administrador cadastra a equipe e escolhe as marcas de cada um.
 
+> **Novo:** a pasta `afazeres/` tem o **Feito!**, um app pessoal de afazeres pensado para neurodivergentes (fica em `.../afazeres/` no mesmo site). Passo a passo em `afazeres/LEIAME.md`.
+
 ---
 
 ## 1. Ligar a planilha (Google Apps Script)

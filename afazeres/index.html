@@ -1,0 +1,1032 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; manifest-src 'self'; worker-src 'self'">
+<title>Feito! — um passo de cada vez</title>
+<meta name="description" content="Lista de afazeres pensada para cérebros neurodivergentes: uma coisa de cada vez.">
+<meta name="theme-color" content="#2E9D5B">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icone-192.png">
+<link rel="apple-touch-icon" href="icone-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --fundo:#FAF8F4; --cartao:#FFFFFF; --texto:#2B2A33; --suave:#6B6977; --linha:#E7E3DA;
+  --verde:#2E9D5B; --verde-fundo:#DDF3E4; --verde-texto:#1E6B3E;
+  --destaque:#5B5BD6; --destaque-fundo:#ECECFD; --aviso:#B7791F; --aviso-fundo:#FDF3E1;
+  --sombra:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.05);
+  --base:18px; --fonte:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --raio:16px;
+}
+:root[data-tema="escuro"]{
+  --fundo:#17171C; --cartao:#22222A; --texto:#ECEAF2; --suave:#A3A1AF; --linha:#34343F;
+  --verde:#43C07A; --verde-fundo:#1C3A29; --verde-texto:#9BE5B9;
+  --destaque:#9C9CF5; --destaque-fundo:#2A2A45; --aviso:#F0B35A; --aviso-fundo:#3A2F1C;
+  --sombra:0 1px 2px rgba(0,0,0,.3);
+}
+@media (prefers-color-scheme: dark){
+  :root[data-tema="auto"]{
+    --fundo:#17171C; --cartao:#22222A; --texto:#ECEAF2; --suave:#A3A1AF; --linha:#34343F;
+    --verde:#43C07A; --verde-fundo:#1C3A29; --verde-texto:#9BE5B9;
+    --destaque:#9C9CF5; --destaque-fundo:#2A2A45; --aviso:#F0B35A; --aviso-fundo:#3A2F1C;
+    --sombra:0 1px 2px rgba(0,0,0,.3);
+  }
+}
+:root[data-fonte="lexend"]{ --fonte:"Lexend",system-ui,sans-serif; }
+:root[data-fonte="sistema"]{ --fonte:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+:root[data-letra="grande"]{ --base:20px; }
+:root[data-letra="enorme"]{ --base:23px; }
+:root[data-espaco="largo"] body{ letter-spacing:.03em; word-spacing:.12em; }
+:root[data-espaco="largo"] .item .titulo{ line-height:1.55; }
+
+*{box-sizing:border-box}
+html{font-size:var(--base);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--fundo);color:var(--texto);font-family:var(--fonte);line-height:1.45;min-height:100vh}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--destaque);outline-offset:2px;border-radius:8px}
+.so-leitor{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* estrutura */
+.app{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+nav.menu{position:sticky;top:0;height:100vh;padding:20px 14px;border-right:1px solid var(--linha);display:flex;flex-direction:column;gap:4px}
+.marca{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.25rem;padding:4px 10px 18px}
+.marca img{width:34px;height:34px;border-radius:9px}
+nav.menu button{display:flex;align-items:center;gap:12px;border:0;background:none;padding:12px 14px;border-radius:12px;text-align:left;font-size:1rem}
+nav.menu button .ic{font-size:1.25rem;width:1.5rem;text-align:center}
+nav.menu button[aria-current="page"]{background:var(--destaque-fundo);color:var(--destaque);font-weight:700}
+nav.menu button:hover{background:var(--destaque-fundo)}
+nav.menu .espaco{flex:1}
+.conta{font-size:.8rem;color:var(--suave);padding:6px 14px}
+main{padding:24px 28px 120px;max-width:820px;width:100%;min-width:0}
+header.topo{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+h1{font-size:1.6rem;margin:0;line-height:1.2}
+.sub{color:var(--suave);margin:4px 0 0}
+h2{font-size:1.05rem;margin:26px 0 10px;display:flex;align-items:center;gap:8px}
+h2 .conta-num{font-weight:400;color:var(--suave);font-size:.9rem}
+
+.botao{border:0;border-radius:12px;padding:12px 18px;font-weight:700;background:var(--destaque);color:#fff;min-height:48px}
+.botao.verde{background:var(--verde)}
+.botao.leve{background:var(--cartao);color:var(--texto);border:1.5px solid var(--linha);font-weight:400}
+.botao.perigo{background:none;color:#C2410C;border:1.5px solid currentColor;font-weight:400}
+.botao.pequeno{padding:6px 12px;min-height:38px;font-size:.88rem}
+.icone-botao{border:0;background:none;width:44px;height:44px;border-radius:12px;font-size:1.3rem;display:inline-grid;place-items:center}
+.icone-botao:hover{background:var(--destaque-fundo)}
+
+/* captura rápida */
+.captura{display:flex;gap:8px;margin:6px 0 4px;position:sticky;top:0;z-index:5;background:var(--fundo);padding:8px 0}
+.captura input{flex:1;min-width:0;border:2px solid var(--linha);background:var(--cartao);border-radius:14px;padding:12px 16px;font-size:1rem}
+.captura input:focus{border-color:var(--destaque);outline:none}
+.dica{font-size:.82rem;color:var(--suave);margin:0 0 6px}
+
+/* progresso */
+.progresso{background:var(--cartao);border-radius:var(--raio);padding:16px 18px;box-shadow:var(--sombra);display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.barra{flex:1;min-width:160px}
+.barra .trilho{height:14px;background:var(--linha);border-radius:99px;overflow:hidden}
+.barra .enchimento{height:100%;background:var(--verde);border-radius:99px;transition:width .5s ease}
+.barra .rotulo{font-size:.9rem;margin-top:6px;color:var(--suave)}
+.barra .rotulo b{color:var(--texto)}
+
+/* energia */
+.energia{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:14px 0 0;font-size:.92rem}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1.5px solid var(--linha);background:var(--cartao);border-radius:99px;padding:7px 14px;font-size:.9rem;min-height:40px}
+.chip[aria-pressed="true"]{background:var(--destaque-fundo);border-color:var(--destaque);color:var(--destaque);font-weight:700}
+
+/* itens */
+.lista{display:flex;flex-direction:column;gap:10px}
+.item{display:flex;align-items:flex-start;gap:12px;background:var(--cartao);border-radius:var(--raio);padding:12px 12px 12px 10px;box-shadow:var(--sombra);border-left:6px solid var(--cor,#C9C6BE);transition:background .35s ease,transform .2s ease;position:relative}
+.item .check{flex:none;width:44px;height:44px;border-radius:50%;border:3px solid var(--cor,#C9C6BE);background:var(--cartao);display:grid;place-items:center;padding:0;transition:all .25s ease}
+.item .check svg{width:24px;height:24px;opacity:0;transform:scale(.4);transition:all .25s ease}
+.item .check:hover svg{opacity:.35;transform:scale(1)}
+.item .corpo{flex:1;min-width:0;border:0;background:none;text-align:left;padding:4px 0}
+.item .titulo{font-size:1.02rem;font-weight:700;overflow-wrap:anywhere}
+.item .meta{display:flex;flex-wrap:wrap;gap:4px 12px;color:var(--suave);font-size:.85rem;margin-top:3px}
+.item .porque{font-size:.85rem;color:var(--suave);margin-top:3px;font-style:italic}
+.item .estrela{flex:none;border:0;background:none;font-size:1.25rem;width:40px;height:44px;opacity:.3;filter:grayscale(1);padding:0}
+.item .estrela[aria-pressed="true"]{opacity:1;filter:none}
+.item.feito{background:var(--verde-fundo);border-left-color:var(--verde)}
+.item.feito .check{background:var(--verde);border-color:var(--verde)}
+.item.feito .check svg{opacity:1;transform:scale(1)}
+.item.feito .titulo{color:var(--verde-texto)}
+.item.pulo{animation:pulo .45s ease}
+@keyframes pulo{0%{transform:scale(1)}40%{transform:scale(1.025)}100%{transform:scale(1)}}
+.passos-mini{display:inline-flex;align-items:center;gap:6px}
+.passos-mini .mini{width:60px;height:6px;border-radius:9px;background:var(--linha);overflow:hidden}
+.passos-mini .mini i{display:block;height:100%;background:var(--verde)}
+.item.com-acoes{flex-wrap:wrap}
+.acoes-item{display:flex;gap:6px;flex-wrap:wrap;flex-basis:100%;margin:0 0 2px 56px}
+
+.caixa{border-radius:var(--raio);padding:14px 16px;margin-top:12px}
+.caixa.gentil{background:var(--aviso-fundo)}
+.caixa.gentil h2{margin-top:0;color:var(--aviso)}
+.caixa.calma{background:var(--destaque-fundo)}
+.vazio{text-align:center;color:var(--suave);padding:28px 16px;background:var(--cartao);border-radius:var(--raio);border:2px dashed var(--linha)}
+.vazio .grande{font-size:2.2rem;display:block;margin-bottom:6px}
+details.dobra{margin-top:18px}
+details.dobra summary{cursor:pointer;font-weight:700;padding:10px 0;color:var(--suave);list-style:none}
+details.dobra summary::before{content:"▸";display:inline-block;margin-right:8px;transition:transform .2s}
+details.dobra[open] summary::before{transform:rotate(90deg)}
+.escondidos{font-size:.85rem;color:var(--suave);margin-top:10px}
+
+/* semana */
+.semana{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:8px 0 6px}
+.dia{background:var(--cartao);border-radius:12px;padding:8px 2px;text-align:center;border:2px solid transparent;box-shadow:var(--sombra)}
+.dia.hoje{border-color:var(--destaque)}
+.dia .ds{font-size:.75rem;color:var(--suave);text-transform:capitalize}
+.dia .dn{font-weight:700;font-size:1.1rem}
+.dia .pts{display:flex;gap:3px;justify-content:center;min-height:8px;margin-top:3px;flex-wrap:wrap}
+.dia .pts i{width:7px;height:7px;border-radius:50%;background:var(--destaque)}
+.dia .pts i.ok{background:var(--verde)}
+
+/* abas internas */
+.abas{display:flex;gap:6px;background:var(--cartao);padding:5px;border-radius:14px;box-shadow:var(--sombra);margin:6px 0 10px;width:fit-content;max-width:100%}
+.abas button{border:0;background:none;padding:10px 16px;border-radius:10px;font-weight:700;color:var(--suave)}
+.abas button[aria-selected="true"]{background:var(--destaque);color:#fff}
+
+/* notas */
+.notas{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.nota{border:0;text-align:left;border-radius:var(--raio);padding:14px 16px;background:var(--nota,#FFF6C9);color:#2B2A33;box-shadow:var(--sombra);min-height:110px;display:flex;flex-direction:column;gap:6px}
+.nota b{font-size:1rem}
+.nota span{font-size:.9rem;white-space:pre-wrap;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.nota small{margin-top:auto;opacity:.6;font-size:.75rem}
+
+/* janela (editor) */
+.fundo-janela{position:fixed;inset:0;background:rgba(20,20,30,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.fundo-janela.aberto{display:flex}
+.janela{background:var(--fundo);border-radius:20px;width:100%;max-width:620px;max-height:calc(100vh - 32px);overflow:auto;padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.janela h3{margin:0 0 12px;font-size:1.2rem;display:flex;justify-content:space-between;align-items:center}
+.campo{margin:14px 0}
+.campo > label,.campo > .rot{display:block;font-weight:700;margin-bottom:6px;font-size:.95rem}
+.campo .ajuda{font-weight:400;color:var(--suave);font-size:.82rem}
+.campo input[type=text],.campo input[type=date],.campo input[type=time],.campo input[type=url],.campo input[type=password],.campo textarea,.campo select{width:100%;border:2px solid var(--linha);background:var(--cartao);border-radius:12px;padding:11px 14px}
+.campo textarea{min-height:80px;resize:vertical}
+.campo input:focus,.campo textarea:focus,.campo select:focus{border-color:var(--destaque);outline:none}
+.linha2{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.linha2 > *{flex:1;min-width:140px}
+.passo{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.passo input[type=checkbox]{width:26px;height:26px;accent-color:var(--verde);flex:none}
+.passo input[type=text]{flex:1;border:2px solid var(--linha);background:var(--cartao);border-radius:10px;padding:8px 12px}
+.passo.ok input[type=text]{background:var(--verde-fundo)}
+.rodape-janela{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;align-items:center}
+.rodape-janela .esq{margin-right:auto}
+.tipos{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.tipos .chip{border-radius:12px;padding:8px 4px;text-align:center}
+.cores{display:flex;gap:8px;flex-wrap:wrap}
+.cores button{width:38px;height:38px;border-radius:50%;border:3px solid transparent}
+.cores button[aria-pressed="true"]{border-color:var(--texto)}
+
+/* modo foco */
+.foco{position:fixed;inset:0;background:var(--fundo);z-index:60;display:none;overflow:auto}
+.foco.aberto{display:block}
+.foco .dentro{max-width:620px;margin:0 auto;padding:22px 20px 40px;min-height:100%;display:flex;flex-direction:column}
+.foco .topo-foco{display:flex;justify-content:space-between;align-items:center;color:var(--suave)}
+.foco .cartao-foco{background:var(--cartao);border-radius:24px;box-shadow:var(--sombra);padding:26px 24px;margin:20px 0;border-top:8px solid var(--cor,var(--destaque))}
+.foco .grande{font-size:1.7rem;font-weight:700;line-height:1.25;margin:6px 0 10px;overflow-wrap:anywhere}
+.foco .info{display:flex;flex-direction:column;gap:6px;color:var(--suave)}
+.foco .porque-foco{background:var(--destaque-fundo);border-radius:14px;padding:12px 14px;margin-top:14px}
+.foco .botoes-foco{display:grid;gap:10px;margin-top:auto}
+.foco .botoes-foco .botao{min-height:60px;font-size:1.1rem}
+.foco .dupla{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.timer{display:flex;align-items:center;gap:16px;margin-top:16px;flex-wrap:wrap}
+.timer svg{width:84px;height:84px;transform:rotate(-90deg)}
+.timer .tempo{font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums}
+.foco .fim{text-align:center;margin:auto 0;padding:40px 0}
+.foco .fim .enorme{font-size:4rem}
+
+/* aviso e comemoração */
+.aviso-flutuante{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--texto);color:var(--fundo);padding:12px 18px;border-radius:14px;display:flex;gap:14px;align-items:center;opacity:0;pointer-events:none;transition:all .25s ease;z-index:80;max-width:calc(100vw - 32px);box-shadow:0 8px 30px rgba(0,0,0,.25)}
+.foco.aberto ~ .aviso-flutuante{bottom:auto;top:16px}
+.aviso-flutuante.mostrar{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.aviso-flutuante button{border:0;background:none;color:var(--verde);font-weight:700;padding:6px}
+:root[data-tema="escuro"] .aviso-flutuante button{color:#1E6B3E}
+.confete{position:fixed;width:10px;height:14px;z-index:90;pointer-events:none;border-radius:3px;animation:cair 1.1s ease-out forwards}
+@keyframes cair{from{transform:translate(0,0) rotate(0);opacity:1}to{transform:translate(var(--dx),var(--dy)) rotate(var(--rot));opacity:0}}
+:root[data-anima="nao"] *{animation:none !important;transition:none !important}
+@media (prefers-reduced-motion: reduce){ *{animation:none !important;transition:none !important} }
+
+/* ajustes */
+.grupo{background:var(--cartao);border-radius:var(--raio);padding:4px 18px;box-shadow:var(--sombra);margin-bottom:14px}
+.grupo .campo{border-bottom:1px solid var(--linha);padding-bottom:14px}
+.grupo .campo:last-child{border-bottom:0}
+.cat-linha{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.cat-linha input[type=text]{flex:1;min-width:0}
+.cat-linha input.em{flex:none;width:64px;text-align:center}
+.cat-linha input[type=color]{width:44px;height:44px;border:0;background:none;padding:0}
+.status-sinc{font-size:.85rem;color:var(--suave)}
+
+/* celular */
+@media (max-width: 760px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  nav.menu{position:fixed;top:auto;bottom:0;left:0;right:0;height:auto;flex-direction:row;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom));border-right:0;border-top:1px solid var(--linha);background:var(--fundo);z-index:40;gap:0}
+  .marca,nav.menu .espaco,.conta,nav.menu .so-pc{display:none}
+  nav.menu button{flex-direction:column;gap:2px;font-size:.68rem;padding:6px 4px;flex:1;align-items:center;text-align:center;min-width:0}
+  nav.menu button .ic{font-size:1.35rem}
+  main{padding:16px 16px 120px}
+  h1{font-size:1.35rem}
+  .tipos{grid-template-columns:repeat(3,1fr)}
+  .janela{padding:18px 16px;border-radius:20px 20px 0 0;max-height:94vh}
+  .fundo-janela{align-items:flex-end;padding:0}
+  .aviso-flutuante{bottom:88px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="menu" aria-label="Seções">
+    <div class="marca"><img src="icone-192.png" alt="">Feito!</div>
+    <button data-aba="hoje"><span class="ic" aria-hidden="true">☀️</span>Hoje</button>
+    <button data-aba="proximos"><span class="ic" aria-hidden="true">📅</span>Próximos</button>
+    <button data-aba="rotinas"><span class="ic" aria-hidden="true">🔁</span>Rotinas</button>
+    <button data-aba="quandoder"><span class="ic" aria-hidden="true">📥</span>Sem data</button>
+    <button data-aba="notas"><span class="ic" aria-hidden="true">📝</span>Notas</button>
+    <div class="espaco"></div>
+    <button data-aba="ajustes"><span class="ic" aria-hidden="true">⚙️</span>Ajustes</button>
+    <div class="conta" id="statusMenu"></div>
+  </nav>
+  <main id="tela" tabindex="-1"></main>
+</div>
+
+<div class="fundo-janela" id="fundoJanela" role="dialog" aria-modal="true" aria-labelledby="tituloJanela">
+  <div class="janela" id="janela"></div>
+</div>
+<div class="foco" id="foco" role="dialog" aria-modal="true" aria-label="Uma coisa de cada vez"><div class="dentro" id="focoDentro"></div></div>
+<div class="aviso-flutuante" id="aviso" role="status" aria-live="polite"><span id="avisoTexto"></span><button id="avisoBotao" hidden></button></div>
+
+<script>
+"use strict";
+/* ================= utilidades ================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const iso = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+const deISO = s => { const [a, m, d] = s.split("-").map(Number); return new Date(a, m - 1, d); };
+const somaDias = (s, n) => { const d = deISO(s); d.setDate(d.getDate() + n); return iso(d); };
+const hoje = () => iso(new Date());
+const inicioSemana = s => { const d = deISO(s); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return iso(d); };
+const DIAS = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+const DIAS_CURTOS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+const dataBonita = s => { const d = deISO(s); return DIAS[d.getDay()] + ", " + d.getDate() + " de " + MESES[d.getMonth()]; };
+const dataRelativa = s => {
+  const h = hoje(); if (s === h) return "hoje"; if (s === somaDias(h, 1)) return "amanhã"; if (s === somaDias(h, -1)) return "ontem";
+  const d = deISO(s); return DIAS_CURTOS[d.getDay()] + ", " + d.getDate() + "/" + String(d.getMonth() + 1).padStart(2, "0");
+};
+const MOMENTOS = { manha: "☀️ Manhã", tarde: "🌤️ Tarde", noite: "🌙 Noite", "": "🕐 Qualquer hora" };
+const ENERGIAS = { baixa: "🪫 pouca", media: "🔋 média", alta: "⚡ muita" };
+const NIVEL = { baixa: 1, media: 2, alta: 3 };
+const CORES_NOTA = ["#FFF6C9", "#DDF3E4", "#E3EEFF", "#FDE2E4", "#EEE3FF", "#FFE8D1"];
+const PARABENS = ["Feito! 🎉", "Mandou bem! ✨", "Um a menos! 💚", "Isso aí! 🌱", "Arrasou! 🌟", "Passo dado! 👣", "Orgulho de você! 💪", "Pronto! ✅"];
+
+/* ================= dados ================= */
+const CHAVE = "feito-v1";
+const CATEGORIAS_PADRAO = [
+  ["casa", "🏠", "Casa", "#F2A65A"], ["trabalho", "💼", "Trabalho", "#5B8DEF"], ["saude", "💊", "Saúde", "#E26D7E"],
+  ["estudos", "📚", "Estudos", "#9B6FE0"], ["dinheiro", "💰", "Dinheiro", "#3FA672"], ["pessoas", "💬", "Pessoas", "#E5A93B"],
+  ["autocuidado", "🌱", "Autocuidado", "#4DB6AC"], ["recados", "🛒", "Recados", "#8D8A9A"]
+].map(([id, emoji, nome, cor], i) => ({ id, emoji, nome, cor, ordem: i, atualizado: 1 }));
+
+function estadoNovo() {
+  return {
+    itens: [], categorias: CATEGORIAS_PADRAO.map(c => Object.assign({}, c)),
+    ajustes: { tema: "auto", letra: "normal", fonte: "atkinson", espaco: "normal", anima: "sim", confete: true, som: false, energia: "", avisos: false, mostrarPorque: true },
+    sinc: { url: "", codigo: "", ultimo: 0 }, ui: { aba: "hoje", subRotina: "diaria" }
+  };
+}
+function carregar() {
+  let s = null;
+  try { s = JSON.parse(localStorage.getItem(CHAVE)); } catch (e) { s = null; }
+  const n = estadoNovo();
+  if (!s || typeof s !== "object") return exemplo(n);
+  s.itens = Array.isArray(s.itens) ? s.itens : [];
+  s.categorias = Array.isArray(s.categorias) && s.categorias.length ? s.categorias : n.categorias;
+  s.ajustes = Object.assign(n.ajustes, s.ajustes || {});
+  s.sinc = Object.assign(n.sinc, s.sinc || {});
+  s.ui = Object.assign(n.ui, s.ui || {});
+  return s;
+}
+function exemplo(s) {
+  // primeiros itens para a tela não começar vazia (dá para apagar)
+  const h = hoje(), t = Date.now();
+  const add = o => s.itens.push(Object.assign({ id: uid(), criado: t, atualizado: t, passos: [], feitos: {} }, o));
+  add({ tipo: "diaria", titulo: "Tomar remédio", categoria: "saude", momento: "manha", energia: "baixa", duracao: 5 });
+  add({ tipo: "diaria", titulo: "Beber água", categoria: "autocuidado", momento: "", energia: "baixa", duracao: 5 });
+  add({ tipo: "diaria", titulo: "Escovar os dentes antes de dormir", categoria: "autocuidado", momento: "noite", energia: "baixa", duracao: 5 });
+  add({ tipo: "semanal", titulo: "Lavar a roupa", categoria: "casa", dia: 6, energia: "media", duracao: 30 });
+  add({ tipo: "tarefa", titulo: "Experimentar o Feito! 👋", categoria: "autocuidado", data: h, energia: "baixa", duracao: 5,
+    porque: "Para ver como fica uma tarefa quebrada em passinhos.", onde: "Aqui mesmo",
+    passos: [{ id: uid(), t: "Toque no círculo para marcar como feito", ok: false }, { id: uid(), t: "Toque no texto para abrir e editar", ok: false }, { id: uid(), t: "Experimente o botão “Uma coisa de cada vez”", ok: false }] });
+  add({ tipo: "nota", titulo: "Ideias soltas", texto: "Anote aqui o que vier na cabeça para não precisar segurar na memória.", cor: CORES_NOTA[0] });
+  return s;
+}
+let S = carregar();
+const vivos = () => S.itens.filter(i => !i.apagado);
+const pegar = id => S.itens.find(i => i.id === id);
+const cat = id => S.categorias.find(c => c.id === id && !c.apagado);
+const categoriasVivas = () => S.categorias.filter(c => !c.apagado).sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+
+function guardar(semSinc) {
+  try { localStorage.setItem(CHAVE, JSON.stringify(S)); } catch (e) { mostrarAviso("Não consegui guardar neste aparelho. Faça um backup em Ajustes."); }
+  if (!semSinc) agendarSinc();
+}
+function tocar(it) { it.atualizado = Date.now(); }
+
+/* ================= estado de "feito" ================= */
+function chaveFeito(it, dia) { return it.tipo === "semanal" ? inicioSemana(dia || hoje()) : (dia || hoje()); }
+function estaFeito(it, dia) {
+  if (it.tipo === "diaria" || it.tipo === "semanal") return !!(it.feitos && it.feitos[chaveFeito(it, dia)]);
+  return !!it.feito;
+}
+function marcar(id, el) {
+  const it = pegar(id); if (!it) return;
+  const virou = !estaFeito(it);
+  if (it.tipo === "diaria" || it.tipo === "semanal") {
+    it.feitos = it.feitos || {};
+    const k = chaveFeito(it);
+    if (virou) it.feitos[k] = Date.now(); else delete it.feitos[k];
+    const limite = somaDias(hoje(), -45);
+    Object.keys(it.feitos).forEach(d => { if (d < limite) delete it.feitos[d]; });
+  } else {
+    it.feito = virou; it.feitoEm = virou ? Date.now() : 0;
+    if (virou && it.passos) it.passos.forEach(p => p.ok = true);
+  }
+  tocar(it); guardar();
+  if (virou) comemorar(el);
+  render();
+  if (virou) {
+    const novo = document.querySelector('.item[data-id="' + id + '"]');
+    if (novo) novo.classList.add("pulo");
+  }
+}
+
+/* ================= comemoração ================= */
+let audio = null;
+function comemorar(el) {
+  mostrarAviso(PARABENS[Math.floor(Math.random() * PARABENS.length)]);
+  if (S.ajustes.som) tocarSom();
+  if (navigator.vibrate) try { navigator.vibrate(30); } catch (e) {}
+  if (!S.ajustes.confete || S.ajustes.anima === "nao" || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : { left: innerWidth / 2, top: innerHeight / 2, width: 0, height: 0 };
+  const x = r.left + r.width / 2, y = r.top + r.height / 2;
+  const cores = ["#2E9D5B", "#5B5BD6", "#F2A65A", "#E26D7E", "#4DB6AC", "#E5A93B"];
+  for (let i = 0; i < 22; i++) {
+    const c = document.createElement("div"); c.className = "confete";
+    const ang = Math.random() * Math.PI * 2, dist = 50 + Math.random() * 90;
+    c.style.left = x + "px"; c.style.top = y + "px"; c.style.background = cores[i % cores.length];
+    c.style.setProperty("--dx", Math.cos(ang) * dist + "px"); c.style.setProperty("--dy", Math.sin(ang) * dist + 60 + "px");
+    c.style.setProperty("--rot", (Math.random() * 540 - 270) + "deg");
+    document.body.appendChild(c); setTimeout(() => c.remove(), 1200);
+  }
+}
+function tocarSom() {
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    [660, 880].forEach((f, i) => {
+      const o = audio.createOscillator(), g = audio.createGain(), t = audio.currentTime + i * .1;
+      o.frequency.value = f; o.type = "sine"; g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.15, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + .35);
+      o.connect(g).connect(audio.destination); o.start(t); o.stop(t + .4);
+    });
+  } catch (e) {}
+}
+let avisoTimer = null;
+function mostrarAviso(texto, botao, acao) {
+  $("#avisoTexto").textContent = texto;
+  const b = $("#avisoBotao");
+  if (botao) { b.hidden = false; b.textContent = botao; b.onclick = () => { acao(); esconderAviso(); }; } else { b.hidden = true; b.onclick = null; }
+  $("#aviso").classList.add("mostrar");
+  clearTimeout(avisoTimer); avisoTimer = setTimeout(esconderAviso, botao ? 6000 : 2200);
+}
+function esconderAviso() { $("#aviso").classList.remove("mostrar"); }
+
+/* ================= peças de tela ================= */
+const SVG_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+function cartaoItem(it, opc) {
+  opc = opc || {};
+  const c = cat(it.categoria), feito = estaFeito(it);
+  const meta = [];
+  if (opc.mostrarData && it.data) meta.push("📅 " + esc(dataRelativa(it.data)));
+  if (it.hora) meta.push("🕐 " + esc(it.hora));
+  if (it.tipo === "semanal" && it.dia !== "" && it.dia != null && opc.mostrarDia) meta.push("📆 " + DIAS[it.dia]);
+  if (it.onde) meta.push("📍 " + esc(it.onde));
+  if (it.duracao) meta.push("⏱️ " + it.duracao + " min");
+  if (it.energia) meta.push(ENERGIAS[it.energia]);
+  if (c) meta.push(esc(c.emoji + " " + c.nome));
+  const ps = it.passos || [];
+  if (ps.length && !(it.tipo === "diaria" || it.tipo === "semanal")) {
+    const ok = ps.filter(p => p.ok).length;
+    meta.push('<span class="passos-mini"><span class="mini"><i style="width:' + Math.round(ok / ps.length * 100) + '%"></i></span>' + ok + "/" + ps.length + " passinhos</span>");
+  }
+  const porque = S.ajustes.mostrarPorque && it.porque && !feito ? '<div class="porque">💭 ' + esc(it.porque) + "</div>" : "";
+  const acoes = opc.acoes ? '<div class="acoes-item">' + opc.acoes + "</div>" : "";
+  return '<div class="item' + (feito ? " feito" : "") + (acoes ? " com-acoes" : "") + '" data-id="' + esc(it.id) + '" style="--cor:' + esc(c ? c.cor : "#C9C6BE") + '">' +
+    '<button class="check" data-acao="marcar" aria-pressed="' + feito + '" aria-label="' + (feito ? "Desmarcar: " : "Marcar como feito: ") + esc(it.titulo) + '">' + SVG_CHECK + "</button>" +
+    '<button class="corpo" data-acao="abrir" aria-label="Abrir: ' + esc(it.titulo) + '"><div class="titulo">' + esc(it.titulo) + "</div>" +
+    (meta.length ? '<div class="meta">' + meta.map(m => "<span>" + m + "</span>").join("") + "</div>" : "") + porque + "</button>" +
+    (it.tipo === "tarefa" ? '<button class="estrela" data-acao="estrela" aria-pressed="' + !!it.importante + '" aria-label="Importante" title="Importante">⭐</button>' : "") +
+    acoes + "</div>";
+}
+function lista(itens, opc) { return '<div class="lista">' + itens.map(i => cartaoItem(i, opc)).join("") + "</div>"; }
+function ordenar(a, b) {
+  return (estaFeito(a) - estaFeito(b)) || ((b.importante ? 1 : 0) - (a.importante ? 1 : 0)) ||
+    ((a.hora || "99") < (b.hora || "99") ? -1 : (a.hora || "99") > (b.hora || "99") ? 1 : 0) || (a.ordem || a.criado || 0) - (b.ordem || b.criado || 0);
+}
+function captura(placeholder, dica) {
+  return '<form class="captura" id="captura" autocomplete="off"><label class="so-leitor" for="campoCaptura">Adicionar</label><input id="campoCaptura" type="text" placeholder="' + esc(placeholder) + '" enterkeyhint="done"><button class="botao" type="submit" aria-label="Adicionar">＋</button></form>' +
+    (dica ? '<p class="dica">' + dica + "</p>" : "");
+}
+function vazio(emoji, texto) { return '<div class="vazio"><span class="grande" aria-hidden="true">' + emoji + "</span>" + texto + "</div>"; }
+function passaEnergia(it) {
+  const e = S.ajustes.energia; if (!e || !it.energia) return true;
+  return NIVEL[it.energia] <= NIVEL[e];
+}
+
+/* ================= telas ================= */
+const TELAS = {};
+TELAS.hoje = () => {
+  const h = hoje(), dsem = deISO(h).getDay(), hr = new Date().getHours();
+  const saud = hr < 5 ? "Boa noite" : hr < 12 ? "Bom dia" : hr < 18 ? "Boa tarde" : "Boa noite";
+  const todos = vivos();
+  const atrasadas = todos.filter(i => i.tipo === "tarefa" && i.data && i.data < h && !i.feito).sort(ordenar);
+  const tarefasHoje = todos.filter(i => i.tipo === "tarefa" && i.data === h);
+  const diarias = todos.filter(i => i.tipo === "diaria");
+  const semanaisHoje = todos.filter(i => i.tipo === "semanal" && String(i.dia) === String(dsem));
+  const semanaisResto = todos.filter(i => i.tipo === "semanal" && String(i.dia) !== String(dsem) && !estaFeito(i) &&
+    (i.dia === "" || i.dia == null || ((+i.dia + 6) % 7) <= ((dsem + 6) % 7)));
+  const doDia = tarefasHoje.concat(diarias, semanaisHoje);
+  const total = doDia.length, feitos = doDia.filter(i => estaFeito(i)).length;
+  const pct = total ? Math.round(feitos / total * 100) : 0;
+  let escondidos = 0;
+  const filtra = arr => arr.filter(i => { const ok = passaEnergia(i) || estaFeito(i); if (!ok) escondidos++; return ok; });
+
+  let html = '<header class="topo"><div><h1>' + saud + "!</h1><p class=\"sub\">" + esc(dataBonita(h)) + "</p></div></header>";
+  html += captura("O que você precisa fazer hoje?", "Escreva e aperte Enter. Dá para escrever “amanhã” no fim. Os detalhes podem vir depois.");
+  html += '<div class="progresso"><div class="barra"><div class="trilho" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '" aria-label="Progresso de hoje"><div class="enchimento" style="width:' + pct + '%"></div></div><div class="rotulo"><b>' + feitos + " de " + total + "</b> " + (total && feitos === total ? "— dia completo! 🎉" : "feitos hoje") + "</div></div>" +
+    '<button class="botao verde" data-acao="foco">▶ Uma coisa de cada vez</button></div>';
+  html += '<div class="energia"><span>Como está sua energia agora?</span><div class="chips" role="group" aria-label="Energia">' +
+    [["", "Tanto faz"], ["baixa", "🪫 Pouca"], ["media", "🔋 Média"], ["alta", "⚡ Muita"]].map(([v, t]) => '<button class="chip" data-acao="energia" data-valor="' + v + '" aria-pressed="' + (S.ajustes.energia === v) + '">' + t + "</button>").join("") + "</div></div>";
+
+  if (atrasadas.length) {
+    html += '<div class="caixa gentil"><h2>🍂 Ficou para trás <span class="conta-num">— tudo bem, acontece</span></h2><div class="lista">' +
+      atrasadas.map(i => cartaoItem(i, { mostrarData: true, acoes: '<button class="botao pequeno leve" data-acao="pra-hoje">Trazer pra hoje</button><button class="botao pequeno leve" data-acao="sem-data">Tirar a data</button>' })).join("") +
+      "</div></div>";
+  }
+  const grupos = { manha: [], tarde: [], noite: [], "": [] };
+  filtra(diarias.concat(semanaisHoje)).forEach(i => (grupos[i.momento || ""] || grupos[""]).push(i));
+  const tem = Object.values(grupos).some(g => g.length);
+  if (tem) {
+    html += "<h2>🔁 Rotina de hoje</h2>";
+    ["manha", "tarde", "noite", ""].forEach(m => {
+      if (!grupos[m].length) return;
+      html += '<div class="sub" style="margin:12px 0 6px;font-weight:700">' + MOMENTOS[m] + "</div>" + lista(grupos[m].sort(ordenar));
+    });
+  }
+  const th = filtra(tarefasHoje).sort(ordenar);
+  html += '<h2>✅ Tarefas de hoje <span class="conta-num">' + (th.length ? th.filter(i => !i.feito).length + " faltando" : "") + "</span></h2>";
+  html += th.length ? lista(th) : vazio("🌿", "Nenhuma tarefa marcada para hoje.<br>Pode descansar — ou puxar algo de “Sem data”.");
+  const sr = filtra(semanaisResto);
+  if (sr.length) html += '<details class="dobra"><summary>Ainda esta semana (' + sr.length + ")</summary>" + lista(sr, { mostrarDia: true }) + "</details>";
+  if (escondidos) html += '<p class="escondidos">🙈 ' + escondidos + " " + (escondidos === 1 ? "coisa escondida" : "coisas escondidas") + " para quando tiver mais energia.</p>";
+  return html;
+};
+
+TELAS.proximos = () => {
+  const h = hoje(), ini = inicioSemana(h);
+  const futuras = vivos().filter(i => i.tipo === "tarefa" && i.data && i.data > h);
+  let html = '<header class="topo"><div><h1>Próximos dias</h1><p class="sub">O que já tem data marcada</p></div></header>';
+  html += captura("Nova tarefa para amanhã…", "Vai para amanhã. Toque nela depois para escolher outro dia.");
+  html += '<div class="semana">';
+  for (let k = 0; k < 7; k++) {
+    const d = somaDias(ini, k), dt = deISO(d);
+    const doDia = vivos().filter(i => i.tipo === "tarefa" && i.data === d);
+    html += '<div class="dia' + (d === h ? " hoje" : "") + '"><div class="ds">' + DIAS_CURTOS[dt.getDay()] + '</div><div class="dn">' + dt.getDate() + '</div><div class="pts">' +
+      doDia.slice(0, 6).map(i => '<i class="' + (i.feito ? "ok" : "") + '"></i>').join("") + "</div></div>";
+  }
+  html += "</div>";
+  if (!futuras.length) return html + "<h2>Mais pra frente</h2>" + vazio("🗓️", "Nada marcado para os próximos dias.");
+  const porDia = {};
+  futuras.forEach(i => (porDia[i.data] = porDia[i.data] || []).push(i));
+  Object.keys(porDia).sort().forEach(d => {
+    const rel = dataRelativa(d), bonito = dataBonita(d);
+    html += "<h2>" + esc(rel === "amanhã" ? "Amanhã · " + bonito : bonito) + "</h2>" + lista(porDia[d].sort(ordenar));
+  });
+  return html;
+};
+
+TELAS.rotinas = () => {
+  const sub = S.ui.subRotina === "semanal" ? "semanal" : "diaria";
+  const itens = vivos().filter(i => i.tipo === sub);
+  const feitos = itens.filter(i => estaFeito(i)).length;
+  let html = '<header class="topo"><div><h1>Rotinas</h1><p class="sub">Checklists que se renovam sozinhos</p></div></header>';
+  html += '<div class="abas" role="tablist"><button role="tab" data-acao="sub-rotina" data-valor="diaria" aria-selected="' + (sub === "diaria") + '">Todo dia</button><button role="tab" data-acao="sub-rotina" data-valor="semanal" aria-selected="' + (sub === "semanal") + '">Toda semana</button></div>';
+  html += captura(sub === "diaria" ? "Algo que você faz todo dia…" : "Algo que você faz toda semana…",
+    sub === "diaria" ? "Volta a ficar desmarcado todo dia de manhã. Toque no item para escolher manhã, tarde ou noite." : "Volta a ficar desmarcado toda segunda-feira. Toque no item para escolher o dia da semana.");
+  html += '<div class="progresso"><div class="barra"><div class="trilho"><div class="enchimento" style="width:' + (itens.length ? Math.round(feitos / itens.length * 100) : 0) + '%"></div></div><div class="rotulo"><b>' + feitos + " de " + itens.length + "</b> " + (sub === "diaria" ? "feitos hoje" : "feitos esta semana") + "</div></div></div>";
+  if (!itens.length) return html + "<h2></h2>" + vazio("🔁", sub === "diaria" ? "Ainda não tem rotina diária.<br>Ex.: tomar remédio, beber água, arrumar a cama." : "Ainda não tem rotina semanal.<br>Ex.: lavar roupa, pagar contas, regar as plantas.");
+  if (sub === "diaria") {
+    ["manha", "tarde", "noite", ""].forEach(m => {
+      const g = itens.filter(i => (i.momento || "") === m);
+      if (g.length) html += "<h2>" + MOMENTOS[m] + "</h2>" + lista(g.sort(ordenar));
+    });
+  } else {
+    const ordemDia = i => i.dia === "" || i.dia == null ? 9 : (+i.dia + 6) % 7;
+    const grupos = {};
+    itens.forEach(i => (grupos[ordemDia(i)] = grupos[ordemDia(i)] || []).push(i));
+    Object.keys(grupos).sort().forEach(k => {
+      const nome = k === "9" ? "Qualquer dia da semana" : DIAS[(+k + 1) % 7];
+      html += "<h2>📆 " + nome.charAt(0).toUpperCase() + nome.slice(1) + "</h2>" + lista(grupos[k].sort(ordenar));
+    });
+  }
+  return html;
+};
+
+TELAS.quandoder = () => {
+  const itens = vivos().filter(i => i.tipo === "tarefa" && !i.data);
+  const abertos = itens.filter(i => !i.feito).sort(ordenar), feitos = itens.filter(i => i.feito);
+  let html = '<header class="topo"><div><h1>Sem data</h1><p class="sub">Coisas para fazer quando der — sem pressão</p></div></header>';
+  html += captura("Algo para fazer um dia…", "Tire da cabeça e coloque aqui. Quando der, puxe para hoje.");
+  if (!abertos.length) html += vazio("📥", "Nada por aqui. Cabeça leve! 🎈");
+  else {
+    const porCat = {};
+    abertos.forEach(i => (porCat[i.categoria || ""] = porCat[i.categoria || ""] || []).push(i));
+    categoriasVivas().map(c => c.id).concat([""]).forEach(cid => {
+      if (!porCat[cid]) return; const c = cat(cid);
+      html += "<h2>" + esc(c ? c.emoji + " " + c.nome : "📌 Sem tipo") + ' <span class="conta-num">' + porCat[cid].length + "</span></h2>";
+      html += lista(porCat[cid], { acoes: '<button class="botao pequeno leve" data-acao="pra-hoje">Fazer hoje</button><button class="botao pequeno leve" data-acao="abrir">Escolher dia</button>' });
+    });
+  }
+  if (feitos.length) html += '<details class="dobra"><summary>Já feitas (' + feitos.length + ")</summary>" + lista(feitos) + '<p><button class="botao pequeno leve" data-acao="limpar-feitas">Limpar as feitas</button></p></details>';
+  return html;
+};
+
+TELAS.notas = () => {
+  const notas = vivos().filter(i => i.tipo === "nota").sort((a, b) => (b.atualizado || 0) - (a.atualizado || 0));
+  let html = '<header class="topo"><div><h1>Notas</h1><p class="sub">Para anotar e não precisar lembrar</p></div></header>';
+  html += captura("Anotar rapidinho…", "");
+  if (!notas.length) return html + vazio("📝", "Nenhuma nota ainda.");
+  html += '<div class="notas">' + notas.map(n => '<button class="nota" data-acao="abrir" data-id="' + esc(n.id) + '" style="--nota:' + esc(n.cor || CORES_NOTA[0]) + '"><b>' + esc(n.titulo) + "</b>" + (n.texto ? "<span>" + esc(n.texto) + "</span>" : "") + "<small>" + esc(dataRelativa(iso(new Date(n.atualizado || n.criado)))) + "</small></button>").join("") + "</div>";
+  return html;
+};
+
+TELAS.ajustes = () => {
+  const a = S.ajustes;
+  const sel = (nome, opcoes) => '<div class="chips" role="group">' + opcoes.map(([v, t]) => '<button class="chip" data-acao="ajuste" data-nome="' + nome + '" data-valor="' + v + '" aria-pressed="' + (String(a[nome]) === v) + '">' + t + "</button>").join("") + "</div>";
+  let html = '<header class="topo"><div><h1>Ajustes</h1><p class="sub">Deixe do jeito que funciona para você</p></div></header>';
+  html += '<h2>👀 Visual e conforto</h2><div class="grupo">' +
+    '<div class="campo"><span class="rot">Tema</span>' + sel("tema", [["auto", "Igual ao aparelho"], ["claro", "☀️ Claro"], ["escuro", "🌙 Escuro"]]) + "</div>" +
+    '<div class="campo"><span class="rot">Tamanho da letra</span>' + sel("letra", [["normal", "Normal"], ["grande", "Grande"], ["enorme", "Enorme"]]) + "</div>" +
+    '<div class="campo"><span class="rot">Tipo de letra <span class="ajuda">— todas pensadas para leitura fácil</span></span>' + sel("fonte", [["atkinson", "Atkinson (clara)"], ["lexend", "Lexend (espaçada)"], ["sistema", "Do aparelho"]]) + "</div>" +
+    '<div class="campo"><span class="rot">Espaço entre letras <span class="ajuda">— ajuda na dislexia</span></span>' + sel("espaco", [["normal", "Normal"], ["largo", "Mais espaço"]]) + "</div>" +
+    '<div class="campo"><span class="rot">Animações</span>' + sel("anima", [["sim", "Ligadas"], ["nao", "Desligadas (menos estímulo)"]]) + "</div>" +
+    '<div class="campo"><span class="rot">Ao terminar uma tarefa</span><div class="chips">' +
+      '<button class="chip" data-acao="liga" data-nome="confete" aria-pressed="' + !!a.confete + '">🎉 Confete</button>' +
+      '<button class="chip" data-acao="liga" data-nome="som" aria-pressed="' + !!a.som + '">🔔 Sonzinho</button></div></div>' +
+    '<div class="campo"><span class="rot">Mostrar o “por quê” na lista</span><div class="chips"><button class="chip" data-acao="liga" data-nome="mostrarPorque" aria-pressed="' + !!a.mostrarPorque + '">💭 Mostrar</button></div></div>' +
+    '<div class="campo"><span class="rot">Avisos na hora marcada <span class="ajuda">— funcionam com o app aberto. Para avisos garantidos, use o botão “Pôr no Google Agenda” de cada tarefa.</span></span><div class="chips"><button class="chip" data-acao="avisos" aria-pressed="' + !!a.avisos + '">🔔 Avisar</button></div></div>' +
+    "</div>";
+  html += '<h2>🏷️ Tipos de coisa</h2><div class="grupo"><div class="campo"><p class="dica">Cada tipo tem uma cor, que aparece na borda da tarefa. Toque no emoji ou no nome para trocar.</p>' +
+    categoriasVivas().map(c => '<div class="cat-linha" data-cat="' + esc(c.id) + '"><input type="text" class="em" maxlength="4" value="' + esc(c.emoji) + '" aria-label="Emoji" data-campo="emoji"><input type="text" value="' + esc(c.nome) + '" maxlength="30" aria-label="Nome" data-campo="nome"><input type="color" value="' + esc(c.cor) + '" aria-label="Cor" data-campo="cor"><button class="icone-botao" data-acao="apagar-cat" aria-label="Apagar tipo ' + esc(c.nome) + '">🗑️</button></div>').join("") +
+    '<button class="botao pequeno leve" data-acao="nova-cat">＋ Novo tipo</button></div></div>';
+  const s = S.sinc;
+  html += '<h2>📱💻 Usar no celular e no computador</h2><div class="grupo">' +
+    '<div class="campo"><p class="dica" style="margin:0">Sem sincronizar, as tarefas ficam só neste aparelho. Para ver as mesmas tarefas no celular e no computador, ligue ao seu Google Drive (passo a passo no arquivo <b>afazeres/LEIAME.md</b>) e cole aqui o endereço e o código secreto — nos dois aparelhos.</p></div>' +
+    '<div class="campo"><label for="sincUrl">Endereço (termina em /exec)</label><input type="url" id="sincUrl" value="' + esc(s.url) + '" placeholder="https://script.google.com/macros/s/…/exec"></div>' +
+    '<div class="campo"><label for="sincCodigo">Código secreto</label><input type="password" id="sincCodigo" value="' + esc(s.codigo) + '" autocomplete="off"></div>' +
+    '<div class="campo linha2"><button class="botao" data-acao="salvar-sinc">Ligar e sincronizar</button>' + (s.url ? '<button class="botao leve" data-acao="desligar-sinc">Desligar</button>' : "") + '</div><div class="campo"><span class="status-sinc" id="statusSinc">' + esc(textoSinc()) + "</span></div></div>";
+  html += '<h2>💾 Cópia de segurança e Google Agenda</h2><div class="grupo"><div class="campo linha2">' +
+    '<button class="botao leve" data-acao="exportar">⬇️ Baixar cópia (.json)</button>' +
+    '<label class="botao leve" style="text-align:center;display:grid;place-items:center">⬆️ Restaurar cópia<input type="file" id="importar" accept="application/json,.json" hidden></label></div>' +
+    '<div class="campo"><p class="dica" style="margin-top:0">Leve todas as tarefas com data para o Google Agenda de uma vez: baixe o arquivo abaixo e, no Google Agenda do computador, vá em ⚙️ Configurações → Importar e exportar → Importar.</p><button class="botao leve" data-acao="ics">📅 Baixar tarefas para o Google Agenda (.ics)</button></div></div>';
+  html += '<h2>🧹 Começar do zero</h2><div class="grupo"><div class="campo"><button class="botao perigo" data-acao="zerar">Apagar tudo deste aparelho</button></div></div>';
+  html += '<p class="dica">Feito! guarda tudo no seu aparelho (e no seu Google Drive, se ligar). Nada vai para outro lugar.</p>';
+  return html;
+};
+
+/* ================= desenhar ================= */
+function aplicarAjustes() {
+  const a = S.ajustes, r = document.documentElement;
+  r.dataset.tema = a.tema; r.dataset.letra = a.letra; r.dataset.fonte = a.fonte; r.dataset.espaco = a.espaco; r.dataset.anima = a.anima;
+  const escuro = a.tema === "escuro" || (a.tema === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
+  document.querySelector('meta[name="theme-color"]').content = escuro ? "#17171C" : "#2E9D5B";
+}
+function render(focar) {
+  const aba = TELAS[S.ui.aba] ? S.ui.aba : "hoje";
+  const ativo = document.activeElement, idAtivo = ativo && ativo.id, valor = idAtivo === "campoCaptura" ? ativo.value : null;
+  const rolagem = window.scrollY;
+  $("#tela").innerHTML = TELAS[aba]();
+  document.querySelectorAll("nav.menu button[data-aba]").forEach(b => b.setAttribute("aria-current", b.dataset.aba === aba ? "page" : "false"));
+  if (valor !== null && $("#campoCaptura")) { $("#campoCaptura").value = valor; $("#campoCaptura").focus(); }
+  if (!focar) window.scrollTo(0, rolagem);
+  $("#statusMenu").textContent = S.sinc.url ? textoSinc() : "";
+}
+function irPara(aba) { S.ui.aba = aba; guardar(true); render(true); window.scrollTo(0, 0); if (location.hash !== "#" + aba) history.replaceState(null, "", "#" + aba); }
+
+/* ================= ações ================= */
+function novoItem(o) {
+  const t = Date.now();
+  const it = Object.assign({ id: uid(), tipo: "tarefa", titulo: "", categoria: "", data: "", hora: "", onde: "", porque: "", energia: "", duracao: 0, passos: [], feitos: {}, criado: t, atualizado: t }, o);
+  S.itens.push(it); guardar(); return it;
+}
+function interpretar(texto) {
+  // "ligar pro médico amanhã" → data amanhã
+  let t = texto.trim(), data = null;
+  const regras = [[/\s+(hoje)$/i, 0], [/\s+(amanh[ãa])$/i, 1], [/\s+(depois de amanh[ãa])$/i, 2]];
+  for (const [re, n] of regras) if (re.test(t)) { t = t.replace(re, ""); data = somaDias(hoje(), n); break; }
+  const m = t.match(/\s+(?:na |no )?(segunda|terça|terca|quarta|quinta|sexta|sábado|sabado|domingo)(?:-feira)?$/i);
+  if (!data && m) {
+    const alvo = DIAS.findIndex(d => d.normalize("NFD").replace(/[\u0300-\u036f]/g, "") === m[1].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+    if (alvo >= 0) { let n = (alvo - deISO(hoje()).getDay() + 7) % 7; if (n === 0) n = 7; data = somaDias(hoje(), n); t = t.replace(m[0], ""); }
+  }
+  return { titulo: t, data };
+}
+function capturar(texto) {
+  if (!texto.trim()) return;
+  const aba = S.ui.aba, { titulo, data } = interpretar(texto);
+  if (!titulo) return;
+  let it;
+  if (aba === "notas") it = novoItem({ tipo: "nota", titulo, texto: "", cor: CORES_NOTA[S.itens.filter(i => i.tipo === "nota").length % CORES_NOTA.length] });
+  else if (aba === "rotinas") it = novoItem({ tipo: S.ui.subRotina === "semanal" ? "semanal" : "diaria", titulo, momento: "", dia: "" });
+  else if (aba === "proximos") it = novoItem({ titulo, data: data || somaDias(hoje(), 1) });
+  else if (aba === "quandoder") it = novoItem({ titulo, data: data || "" });
+  else it = novoItem({ titulo, data: data || hoje() });
+  render();
+  const quando = it.tipo === "tarefa" ? (it.data ? " para " + dataRelativa(it.data) : " em Sem data") : "";
+  mostrarAviso("Anotado" + quando + " ✍️", "Detalhes", () => abrirEditor(it.id));
+}
+function apagar(id) {
+  const it = pegar(id); if (!it) return;
+  const copia = JSON.parse(JSON.stringify(it));
+  it.apagado = true; tocar(it); guardar(); fecharEditor(); render();
+  mostrarAviso("Apagado.", "Desfazer", () => { Object.assign(it, copia, { apagado: false }); tocar(it); guardar(); render(); });
+}
+
+document.addEventListener("click", e => {
+  const alvo = e.target.closest("[data-acao],[data-aba]"); if (!alvo) return;
+  if (alvo.dataset.aba && !alvo.dataset.acao) { irPara(alvo.dataset.aba); return; }
+  const acao = alvo.dataset.acao, cartao = alvo.closest(".item"), id = alvo.dataset.id || (cartao && cartao.dataset.id);
+  switch (acao) {
+    case "marcar": marcar(id, alvo); break;
+    case "abrir": abrirEditor(id); break;
+    case "estrela": { const it = pegar(id); it.importante = !it.importante; tocar(it); guardar(); render(); break; }
+    case "pra-hoje": { const it = pegar(id); it.data = hoje(); tocar(it); guardar(); render(); mostrarAviso("Foi para hoje ☀️"); break; }
+    case "sem-data": { const it = pegar(id); it.data = ""; tocar(it); guardar(); render(); mostrarAviso("Foi para Sem data 📥"); break; }
+    case "energia": S.ajustes.energia = alvo.dataset.valor; guardar(true); render(); break;
+    case "sub-rotina": S.ui.subRotina = alvo.dataset.valor; guardar(true); render(); break;
+    case "foco": abrirFoco(); break;
+    case "limpar-feitas": vivos().filter(i => i.tipo === "tarefa" && !i.data && i.feito).forEach(i => { i.apagado = true; tocar(i); }); guardar(); render(); break;
+    case "ajuste": S.ajustes[alvo.dataset.nome] = alvo.dataset.valor; guardar(true); aplicarAjustes(); render(); break;
+    case "liga": S.ajustes[alvo.dataset.nome] = !S.ajustes[alvo.dataset.nome]; guardar(true); render(); break;
+    case "avisos": alternarAvisos(); break;
+    case "nova-cat": { const c = { id: uid(), emoji: "⭐", nome: "Novo tipo", cor: "#7C83DB", ordem: S.categorias.length, atualizado: Date.now() }; S.categorias.push(c); guardar(); render(); break; }
+    case "apagar-cat": { const c = cat(alvo.closest(".cat-linha").dataset.cat); if (c) { c.apagado = true; c.atualizado = Date.now(); guardar(); render(); mostrarAviso("Tipo apagado.", "Desfazer", () => { c.apagado = false; c.atualizado = Date.now(); guardar(); render(); }); } break; }
+    case "salvar-sinc": S.sinc.url = $("#sincUrl").value.trim(); S.sinc.codigo = $("#sincCodigo").value.trim(); guardar(true); sincronizar(true); break;
+    case "desligar-sinc": S.sinc = { url: "", codigo: "", ultimo: 0 }; guardar(true); render(); mostrarAviso("Sincronização desligada neste aparelho."); break;
+    case "exportar": baixar("feito-copia-" + hoje() + ".json", JSON.stringify({ itens: S.itens, categorias: S.categorias, ajustes: S.ajustes }, null, 1), "application/json"); break;
+    case "ics": baixar("feito-tarefas.ics", gerarICS(vivos().filter(i => i.tipo === "tarefa" && i.data && !i.feito)), "text/calendar"); break;
+    case "zerar":
+      if (confirm("Apagar todas as tarefas, rotinas e notas deste aparelho? (Se a sincronização estiver ligada, o Drive continua com a cópia.)")) {
+        try { localStorage.removeItem(CHAVE); } catch (er) {}
+        S = estadoNovo(); guardar(true); aplicarAjustes(); render();
+      }
+      break;
+  }
+});
+document.addEventListener("submit", e => {
+  if (e.target.id === "captura") { e.preventDefault(); const c = $("#campoCaptura"); capturar(c.value); c.value = ""; c.focus(); }
+});
+document.addEventListener("change", e => {
+  const l = e.target.closest(".cat-linha");
+  if (l) { const c = cat(l.dataset.cat); if (c) { c[e.target.dataset.campo] = e.target.value.trim() || c[e.target.dataset.campo]; c.atualizado = Date.now(); guardar(); } }
+  if (e.target.id === "importar" && e.target.files[0]) importar(e.target.files[0]);
+});
+
+/* ================= editor ================= */
+let editando = null;
+function abrirEditor(id) {
+  const orig = pegar(id); if (!orig) return;
+  editando = JSON.parse(JSON.stringify(orig));
+  desenharEditor();
+  $("#fundoJanela").classList.add("aberto");
+  document.body.style.overflow = "hidden";
+  setTimeout(() => { const t = $("#edTitulo"); if (t && !t.value) t.focus(); }, 30);
+}
+function desenharEditor() {
+  const it = editando, nota = it.tipo === "nota";
+  const chipsDe = (nome, opcoes, atual) => '<div class="chips" role="group">' + opcoes.map(([v, t]) => '<button type="button" class="chip" data-ed="' + nome + '" data-valor="' + esc(v) + '" aria-pressed="' + (String(atual == null ? "" : atual) === String(v)) + '">' + t + "</button>").join("") + "</div>";
+  let h = '<h3 id="tituloJanela"><span>' + (nota ? "📝 Nota" : "✏️ Detalhes") + '</span><button type="button" class="icone-botao" data-ed="fechar" aria-label="Fechar">✕</button></h3>';
+  h += '<div class="campo"><label for="edTitulo">' + (nota ? "Título" : "O que fazer?") + '</label><input type="text" id="edTitulo" value="' + esc(it.titulo) + '" maxlength="200"></div>';
+  h += '<div class="campo"><span class="rot">Onde fica</span>' + chipsDe("tipo", [["tarefa", "✅ Tarefa"], ["diaria", "🔁 Todo dia"], ["semanal", "📆 Toda semana"], ["nota", "📝 Nota"]], it.tipo) + "</div>";
+  if (nota) {
+    h += '<div class="campo"><label for="edTexto">Anotação</label><textarea id="edTexto" rows="8">' + esc(it.texto || "") + "</textarea></div>";
+    h += '<div class="campo"><span class="rot">Cor</span><div class="cores">' + CORES_NOTA.map(c => '<button type="button" data-ed="cor" data-valor="' + c + '" style="background:' + c + '" aria-pressed="' + (it.cor === c) + '" aria-label="Cor"></button>').join("") + "</div></div>";
+  } else {
+    if (it.tipo === "tarefa") {
+      const h0 = hoje(), am = somaDias(h0, 1), personalizado = it.data && it.data !== h0 && it.data !== am;
+      h += '<div class="campo"><span class="rot">Quando?</span>' + chipsDe("quando", [[h0, "Hoje"], [am, "Amanhã"], ["", "Sem data"]], personalizado ? "x" : it.data) +
+        '<div class="linha2" style="margin-top:8px"><label class="so-leitor" for="edData">Dia</label><input type="date" id="edData" value="' + esc(it.data || "") + '"><label class="so-leitor" for="edHora">Hora</label><input type="time" id="edHora" value="' + esc(it.hora || "") + '" aria-label="Hora (opcional)"></div></div>';
+    } else if (it.tipo === "diaria") {
+      h += '<div class="campo"><span class="rot">Em que parte do dia?</span>' + chipsDe("momento", [["manha", "☀️ Manhã"], ["tarde", "🌤️ Tarde"], ["noite", "🌙 Noite"], ["", "Qualquer hora"]], it.momento || "") + "</div>";
+    } else {
+      h += '<div class="campo"><span class="rot">Em que dia da semana?</span>' + chipsDe("dia", [["", "Qualquer dia"], ["1", "Seg"], ["2", "Ter"], ["3", "Qua"], ["4", "Qui"], ["5", "Sex"], ["6", "Sáb"], ["0", "Dom"]], it.dia == null ? "" : it.dia) + "</div>";
+    }
+    h += '<div class="campo"><span class="rot">Tipo de coisa</span><div class="tipos">' + categoriasVivas().map(c => '<button type="button" class="chip" data-ed="categoria" data-valor="' + esc(c.id) + '" aria-pressed="' + (it.categoria === c.id) + '" style="' + (it.categoria === c.id ? "border-color:" + esc(c.cor) : "") + '">' + esc(c.emoji) + "<br>" + esc(c.nome) + "</button>").join("") + "</div></div>";
+    h += '<div class="campo"><label for="edOnde">📍 Onde? <span class="ajuda">(opcional)</span></label><input type="text" id="edOnde" value="' + esc(it.onde || "") + '" placeholder="Casa, trabalho, mercado, online…" maxlength="150"></div>';
+    h += '<div class="campo"><label for="edPorque">💭 Por que isso importa? <span class="ajuda">— lembrar o motivo ajuda a começar</span></label><textarea id="edPorque" rows="2" placeholder="Ex.: para não pagar multa / porque vou me sentir mais leve" maxlength="400">' + esc(it.porque || "") + "</textarea></div>";
+    h += '<div class="campo"><span class="rot">Quanta energia pede?</span>' + chipsDe("energia", [["baixa", "🪫 Pouca"], ["media", "🔋 Média"], ["alta", "⚡ Muita"], ["", "Não sei"]], it.energia || "") + "</div>";
+    h += '<div class="campo"><span class="rot">Quanto tempo mais ou menos?</span>' + chipsDe("duracao", [["5", "5 min"], ["15", "15 min"], ["30", "30 min"], ["60", "1 hora"], ["120", "2 h+"], ["0", "Não sei"]], String(it.duracao || 0)) + "</div>";
+    h += '<div class="campo"><span class="rot">👣 Passinhos <span class="ajuda">— quebrar em partes pequenas deixa mais fácil começar</span></span><div id="edPassos">' +
+      (it.passos || []).map((p, k) => '<div class="passo' + (p.ok ? " ok" : "") + '"><input type="checkbox" data-passo-ok="' + k + '"' + (p.ok ? " checked" : "") + ' aria-label="Passinho feito"><input type="text" data-passo-t="' + k + '" value="' + esc(p.t) + '" aria-label="Passinho ' + (k + 1) + '"><button type="button" class="icone-botao" data-ed="tirar-passo" data-valor="' + k + '" aria-label="Tirar passinho">✕</button></div>').join("") +
+      '</div><div class="passo"><span style="width:26px;text-align:center" aria-hidden="true">＋</span><input type="text" id="edNovoPasso" placeholder="Próximo passinho… (Enter)" aria-label="Novo passinho"></div></div>';
+    if (it.tipo === "tarefa") h += '<div class="campo"><div class="chips"><button type="button" class="chip" data-ed="importante" aria-pressed="' + !!it.importante + '">⭐ Importante</button></div></div>';
+  }
+  h += '<div class="rodape-janela"><button type="button" class="botao perigo esq" data-ed="apagar">Apagar</button>' +
+    (nota ? '<button type="button" class="botao leve" data-ed="virar-tarefa">Virar tarefa</button>' : "") +
+    (it.tipo === "tarefa" && it.data ? '<button type="button" class="botao leve" data-ed="agenda">📅 Pôr no Google Agenda</button>' : "") +
+    '<button type="button" class="botao" data-ed="salvar">Salvar</button></div>';
+  $("#janela").innerHTML = h;
+}
+function lerCamposEditor() {
+  const it = editando, v = id => { const e = $(id); return e ? e.value : undefined; };
+  if (v("#edTitulo") !== undefined) it.titulo = v("#edTitulo").trim();
+  if (v("#edTexto") !== undefined) it.texto = v("#edTexto");
+  if (v("#edData") !== undefined) it.data = v("#edData");
+  if (v("#edHora") !== undefined) it.hora = v("#edHora");
+  if (v("#edOnde") !== undefined) it.onde = v("#edOnde").trim();
+  if (v("#edPorque") !== undefined) it.porque = v("#edPorque").trim();
+  document.querySelectorAll("[data-passo-t]").forEach(e => { const p = it.passos[+e.dataset.passoT]; if (p) p.t = e.value; });
+  const np = v("#edNovoPasso"); if (np && np.trim()) { it.passos.push({ id: uid(), t: np.trim(), ok: false }); }
+  it.passos = (it.passos || []).filter(p => p.t.trim());
+}
+function salvarEditor() {
+  lerCamposEditor();
+  if (!editando.titulo) { mostrarAviso("Escreva o que é 🙂"); $("#edTitulo").focus(); return; }
+  const it = pegar(editando.id); if (!it) return;
+  Object.keys(it).forEach(k => delete it[k]); Object.assign(it, editando); tocar(it);
+  guardar(); fecharEditor(); render();
+}
+function fecharEditor() { $("#fundoJanela").classList.remove("aberto"); document.body.style.overflow = ""; editando = null; }
+$("#janela").addEventListener("click", e => {
+  const b = e.target.closest("[data-ed]"); if (!b || !editando) return;
+  const k = b.dataset.ed, val = b.dataset.valor;
+  if (k === "fechar") return fecharSalvando();
+  if (k === "salvar") return salvarEditor();
+  if (k === "apagar") return apagar(editando.id);
+  if (k === "agenda") { lerCamposEditor(); return window.open(linkGoogleAgenda(editando), "_blank", "noopener"); }
+  lerCamposEditor();
+  if (k === "virar-tarefa") { editando.tipo = "tarefa"; editando.porque = editando.porque || ""; if (editando.texto && !editando.passos.length) editando.porque = editando.texto.slice(0, 400); editando.data = editando.data || hoje(); }
+  else if (k === "tipo") { editando.tipo = val; if (val === "tarefa" && editando.data == null) editando.data = ""; if (val === "nota") editando.cor = editando.cor || CORES_NOTA[0]; }
+  else if (k === "quando") { editando.data = val; }
+  else if (k === "categoria") { editando.categoria = editando.categoria === val ? "" : val; }
+  else if (k === "duracao") { editando.duracao = +val; }
+  else if (k === "tirar-passo") { editando.passos.splice(+val, 1); }
+  else if (k === "importante") { editando.importante = !editando.importante; }
+  else editando[k] = val;
+  const y = $("#janela").scrollTop; desenharEditor(); $("#janela").scrollTop = y;
+});
+$("#janela").addEventListener("change", e => {
+  if (e.target.dataset.passoOk != null) { lerCamposEditor(); editando.passos[+e.target.dataset.passoOk].ok = e.target.checked; const y = $("#janela").scrollTop; desenharEditor(); $("#janela").scrollTop = y; }
+  if (e.target.id === "edData") { lerCamposEditor(); const y = $("#janela").scrollTop; desenharEditor(); $("#janela").scrollTop = y; }
+});
+$("#janela").addEventListener("keydown", e => {
+  if (e.key === "Enter" && e.target.id === "edNovoPasso") { e.preventDefault(); lerCamposEditor(); desenharEditor(); $("#edNovoPasso").focus(); }
+  else if (e.key === "Enter" && e.target.id === "edTitulo") { e.preventDefault(); salvarEditor(); }
+});
+function fecharSalvando() { lerCamposEditor(); if (editando.titulo) salvarEditor(); else fecharEditor(); }
+$("#fundoJanela").addEventListener("click", e => { if (e.target.id === "fundoJanela") fecharSalvando(); });
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  if ($("#foco").classList.contains("aberto")) fecharFoco();
+  else if (editando) fecharSalvando();
+});
+
+/* ================= Google Agenda ================= */
+const compacta = s => s.replace(/[-:]/g, "");
+function linkGoogleAgenda(it) {
+  let datas;
+  if (it.hora) {
+    const ini = deISO(it.data); const [hh, mm] = it.hora.split(":").map(Number); ini.setHours(hh, mm, 0, 0);
+    const fim = new Date(ini.getTime() + (it.duracao || 30) * 60000);
+    const f = d => iso(d).replace(/-/g, "") + "T" + String(d.getHours()).padStart(2, "0") + String(d.getMinutes()).padStart(2, "0") + "00";
+    datas = f(ini) + "/" + f(fim);
+  } else datas = compacta(it.data) + "/" + compacta(somaDias(it.data, 1));
+  const det = [it.porque ? "Por quê: " + it.porque : "", (it.passos || []).length ? "Passinhos:\n" + it.passos.map(p => "☐ " + p.t).join("\n") : ""].filter(Boolean).join("\n\n");
+  const p = new URLSearchParams({ action: "TEMPLATE", text: it.titulo, dates: datas });
+  if (det) p.set("details", det); if (it.onde) p.set("location", it.onde);
+  return "https://calendar.google.com/calendar/render?" + p.toString();
+}
+function gerarICS(itens) {
+  const e = s => String(s || "").replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/[,;]/g, m => "\\" + m);
+  const linhas = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Feito//Afazeres//PT", "CALSCALE:GREGORIAN"];
+  itens.forEach(it => {
+    linhas.push("BEGIN:VEVENT", "UID:" + it.id + "@feito", "DTSTAMP:" + new Date().toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z");
+    if (it.hora) {
+      const ini = deISO(it.data); const [hh, mm] = it.hora.split(":").map(Number); ini.setHours(hh, mm);
+      const fim = new Date(ini.getTime() + (it.duracao || 30) * 60000);
+      const f = d => iso(d).replace(/-/g, "") + "T" + String(d.getHours()).padStart(2, "0") + String(d.getMinutes()).padStart(2, "0") + "00";
+      linhas.push("DTSTART:" + f(ini), "DTEND:" + f(fim));
+    } else linhas.push("DTSTART;VALUE=DATE:" + compacta(it.data), "DTEND;VALUE=DATE:" + compacta(somaDias(it.data, 1)));
+    linhas.push("SUMMARY:" + e(it.titulo));
+    if (it.onde) linhas.push("LOCATION:" + e(it.onde));
+    if (it.porque) linhas.push("DESCRIPTION:" + e("Por quê: " + it.porque));
+    linhas.push("END:VEVENT");
+  });
+  linhas.push("END:VCALENDAR");
+  return linhas.join("\r\n");
+}
+function baixar(nome, conteudo, tipo) {
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([conteudo], { type: tipo })); a.download = nome;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function importar(arquivo) {
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const d = JSON.parse(r.result);
+      if (!Array.isArray(d.itens)) throw new Error("formato");
+      S.itens = mesclar(S.itens, d.itens.filter(validoItem));
+      if (Array.isArray(d.categorias)) S.categorias = mesclar(S.categorias, d.categorias.filter(validoItem));
+      guardar(); render(); mostrarAviso("Cópia restaurada ✅");
+    } catch (e) { mostrarAviso("Esse arquivo não parece uma cópia do Feito!"); }
+  };
+  r.readAsText(arquivo);
+}
+
+/* ================= modo foco ================= */
+let fila = [], posFila = 0, timer = null, timerFim = 0, timerTotal = 0;
+function montarFila() {
+  const h = hoje(), dsem = deISO(h).getDay(), hr = new Date().getHours();
+  const momentoAgora = hr < 12 ? "manha" : hr < 18 ? "tarde" : "noite";
+  const ordemMomento = { manha: 0, tarde: 1, noite: 2, "": 1.5 };
+  const v = vivos().filter(i => !estaFeito(i) && passaEnergia(i));
+  const rotina = v.filter(i => i.tipo === "diaria" && ordemMomento[i.momento || ""] <= ordemMomento[momentoAgora] + .5)
+    .concat(v.filter(i => i.tipo === "semanal" && String(i.dia) === String(dsem)));
+  const tarefas = v.filter(i => i.tipo === "tarefa" && i.data && i.data <= h).sort(ordenar);
+  return rotina.sort(ordenar).concat(tarefas).map(i => i.id);
+}
+function abrirFoco() {
+  fila = montarFila(); posFila = 0;
+  $("#foco").classList.add("aberto"); document.body.style.overflow = "hidden";
+  desenharFoco();
+}
+function fecharFoco() { pararTimer(); $("#foco").classList.remove("aberto"); document.body.style.overflow = ""; render(); }
+function desenharFoco() {
+  const d = $("#focoDentro");
+  fila = fila.filter(id => { const i = pegar(id); return i && !i.apagado && !estaFeito(i); });
+  if (posFila >= fila.length) posFila = 0;
+  const topo = '<div class="topo-foco"><span>' + (fila.length ? "Faltam " + fila.length : "") + '</span><button class="botao leve pequeno" data-foco="sair">Sair do foco ✕</button></div>';
+  if (!fila.length) {
+    d.innerHTML = topo + '<div class="fim"><div class="enorme" aria-hidden="true">🌈</div><h1>Tudo feito por agora!</h1><p class="sub">Você merece uma pausa. Beba água, alongue, respire.</p><p><button class="botao verde" data-foco="sair">Voltar</button></p></div>';
+    return;
+  }
+  const it = pegar(fila[posFila]), c = cat(it.categoria);
+  const info = [];
+  if (it.data && it.data < hoje()) info.push("🍂 Era para " + dataRelativa(it.data) + " — sem problema");
+  if (it.hora) info.push("🕐 " + esc(it.hora));
+  if (it.onde) info.push("📍 " + esc(it.onde));
+  if (it.duracao) info.push("⏱️ Uns " + it.duracao + " minutos");
+  if (c) info.push(esc(c.emoji + " " + c.nome));
+  const ps = it.passos || [];
+  const proximo = ps.find(p => !p.ok);
+  let h = topo + '<div class="cartao-foco" style="--cor:' + esc(c ? c.cor : "var(--destaque)") + '"><div class="sub">Agora, só isto:</div><div class="grande">' + esc(it.titulo) + '</div><div class="info">' + info.map(x => "<span>" + x + "</span>").join("") + "</div>";
+  if (it.porque) h += '<div class="porque-foco">💭 <b>Por quê:</b> ' + esc(it.porque) + "</div>";
+  if (ps.length) {
+    h += '<h2 style="margin-top:18px">👣 Passinhos</h2><div class="lista">' + ps.map((p, k) => '<label class="passo' + (p.ok ? " ok" : "") + '"><input type="checkbox" data-foco-passo="' + k + '"' + (p.ok ? " checked" : "") + '><span style="flex:1;' + (p === proximo ? "font-weight:700" : "") + '">' + esc(p.t) + (p === proximo ? " ← comece aqui" : "") + "</span></label>").join("") + "</div>";
+  }
+  h += '<div class="timer" id="timerCaixa">' + desenhoTimer() + "</div></div>";
+  h += '<div class="botoes-foco"><button class="botao verde" data-foco="fiz">✔ Fiz!</button><div class="dupla"><button class="botao leve" data-foco="pular">Pular por agora</button>' +
+    (it.tipo === "tarefa" ? '<button class="botao leve" data-foco="amanha">Deixar pra amanhã</button>' : '<button class="botao leve" data-foco="editar">Editar</button>') + "</div></div>";
+  d.innerHTML = h;
+}
+function desenhoTimer() {
+  if (!timer) {
+    const it = pegar(fila[posFila]), sugestao = it && it.duracao && it.duracao <= 60 ? it.duracao : 15;
+    return '<span>⏳ Cronômetro:</span><div class="chips">' + [5, 15, 25].concat(sugestao && ![5, 15, 25].includes(sugestao) ? [sugestao] : []).map(m => '<button class="chip" data-foco="timer" data-min="' + m + '">' + m + " min</button>").join("") + "</div>";
+  }
+  const resta = Math.max(0, timerFim - Date.now()), frac = timerTotal ? resta / timerTotal : 0, R = 36, C = 2 * Math.PI * R;
+  const mm = Math.floor(resta / 60000), ss = Math.floor(resta / 1000) % 60;
+  return '<svg viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="' + R + '" fill="none" stroke="var(--linha)" stroke-width="8"/><circle cx="42" cy="42" r="' + R + '" fill="none" stroke="var(--verde)" stroke-width="8" stroke-linecap="round" stroke-dasharray="' + C + '" stroke-dashoffset="' + (C * (1 - frac)) + '"/></svg>' +
+    '<div><div class="tempo" role="timer">' + mm + ":" + String(ss).padStart(2, "0") + '</div><button class="botao pequeno leve" data-foco="parar-timer">Parar</button></div>';
+}
+function pararTimer() { clearInterval(timer); timer = null; }
+function tiqueTimer() {
+  const cx = $("#timerCaixa");
+  if (Date.now() >= timerFim) {
+    pararTimer(); if (cx) cx.innerHTML = desenhoTimer();
+    mostrarAviso("⏰ Tempo! Terminou ou quer mais um pouquinho?"); tocarSom();
+    if (navigator.vibrate) try { navigator.vibrate([200, 100, 200]); } catch (e) {}
+    notificar("⏰ Tempo!", "Terminou ou quer mais um pouquinho?");
+    return;
+  }
+  if (cx) cx.innerHTML = desenhoTimer();
+}
+$("#foco").addEventListener("click", e => {
+  const b = e.target.closest("[data-foco]"); if (!b) return;
+  const k = b.dataset.foco, it = pegar(fila[posFila]);
+  if (k === "sair") return fecharFoco();
+  if (k === "fiz") { pararTimer(); marcarSemRender(it, b); posFila = posFila % Math.max(1, fila.length); return desenharFoco(); }
+  if (k === "pular") { pararTimer(); fila.push(fila.splice(posFila, 1)[0]); if (fila.length === 1) mostrarAviso("É a única que falta 🙂"); return desenharFoco(); }
+  if (k === "amanha") { pararTimer(); it.data = somaDias(hoje(), 1); tocar(it); guardar(); mostrarAviso("Foi para amanhã. Tudo bem descansar 🌙"); return desenharFoco(); }
+  if (k === "editar") { fecharFoco(); return abrirEditor(it.id); }
+  if (k === "timer") { const m = +b.dataset.min; timerTotal = m * 60000; timerFim = Date.now() + timerTotal; pararTimer(); timer = setInterval(tiqueTimer, 1000); $("#timerCaixa").innerHTML = desenhoTimer(); return; }
+  if (k === "parar-timer") { pararTimer(); $("#timerCaixa").innerHTML = desenhoTimer(); }
+});
+$("#foco").addEventListener("change", e => {
+  const k = e.target.dataset.focoPasso; if (k == null) return;
+  const it = pegar(fila[posFila]); it.passos[+k].ok = e.target.checked; tocar(it); guardar();
+  if (e.target.checked) { mostrarAviso("Passinho dado 👣"); }
+  desenharFoco();
+});
+function marcarSemRender(it, el) {
+  if (!it || estaFeito(it)) return;
+  if (it.tipo === "diaria" || it.tipo === "semanal") { it.feitos = it.feitos || {}; it.feitos[chaveFeito(it)] = Date.now(); }
+  else { it.feito = true; it.feitoEm = Date.now(); (it.passos || []).forEach(p => p.ok = true); }
+  tocar(it); guardar(); comemorar(el);
+}
+
+/* ================= avisos na hora ================= */
+function notificar(titulo, corpo) {
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+  const op = { body: corpo, icon: "icone-192.png", badge: "icone-192.png", tag: "feito-" + titulo };
+  if (navigator.serviceWorker && navigator.serviceWorker.ready) navigator.serviceWorker.ready.then(r => r.showNotification(titulo, op)).catch(() => { try { new Notification(titulo, op); } catch (e) {} });
+  else try { new Notification(titulo, op); } catch (e) {}
+}
+async function alternarAvisos() {
+  if (!S.ajustes.avisos) {
+    if (!("Notification" in window)) { mostrarAviso("Este navegador não mostra avisos."); return; }
+    const p = await Notification.requestPermission();
+    if (p !== "granted") { mostrarAviso("Sem permissão para avisar. Libere nas configurações do navegador."); return; }
+  }
+  S.ajustes.avisos = !S.ajustes.avisos; guardar(true); render();
+}
+const avisados = new Set();
+setInterval(() => {
+  if (!S.ajustes.avisos) return;
+  const agora = new Date(), h = iso(agora), hm = String(agora.getHours()).padStart(2, "0") + ":" + String(agora.getMinutes()).padStart(2, "0");
+  vivos().forEach(i => {
+    if (i.tipo === "tarefa" && !i.feito && i.data === h && i.hora === hm && !avisados.has(i.id + h + hm)) {
+      avisados.add(i.id + h + hm); notificar("🕐 " + i.titulo, [i.onde && "📍 " + i.onde, i.porque && "💭 " + i.porque].filter(Boolean).join(" · ") || "Está na hora.");
+    }
+  });
+}, 20000);
+
+/* ================= sincronização (Google Drive via Apps Script) ================= */
+function validoItem(x) { return x && typeof x === "object" && typeof x.id === "string" && x.id.length < 80; }
+function mesclar(a, b) {
+  const m = new Map();
+  (a || []).concat(b || []).forEach(x => { if (!validoItem(x)) return; const y = m.get(x.id); if (!y || (x.atualizado || 0) > (y.atualizado || 0)) m.set(x.id, x); });
+  return [...m.values()];
+}
+let sincTimer = null, sincRodando = false, sincErro = "";
+function textoSinc() {
+  if (!S.sinc.url) return "Sincronização desligada — tarefas só neste aparelho.";
+  if (sincErro) return "⚠️ " + sincErro;
+  if (!S.sinc.ultimo) return "Ainda não sincronizou.";
+  const s = Math.round((Date.now() - S.sinc.ultimo) / 60000);
+  return "☁️ Sincronizado " + (s < 1 ? "agora há pouco" : "há " + s + " min");
+}
+function agendarSinc() { if (!S.sinc.url) return; clearTimeout(sincTimer); sincTimer = setTimeout(() => sincronizar(false), 1500); }
+async function sincronizar(manual) {
+  if (!S.sinc.url || !S.sinc.codigo || sincRodando) return;
+  if (!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(S.sinc.url)) { sincErro = "O endereço precisa começar com https://script.google.com/macros/s/ e terminar em /exec"; atualizarStatusSinc(); return; }
+  sincRodando = true;
+  const limite = Date.now() - 90 * 864e5; // apagados há mais de 90 dias somem de vez
+  try {
+    const r = await fetch(S.sinc.url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ acao: "sincronizar", codigo: S.sinc.codigo, itens: S.itens, categorias: S.categorias }) });
+    const j = await r.json();
+    if (j.erro) throw new Error(j.erro);
+    S.itens = mesclar(S.itens, (j.itens || []).filter(validoItem)).filter(i => !(i.apagado && (i.atualizado || 0) < limite));
+    S.categorias = mesclar(S.categorias, (j.categorias || []).filter(validoItem));
+    S.sinc.ultimo = Date.now(); sincErro = "";
+    guardar(true);
+    if (!editando) render();
+    if (manual) mostrarAviso("Sincronizado ☁️");
+  } catch (e) {
+    sincErro = e && e.message && /código/i.test(e.message) ? "Código secreto errado." : "Sem conexão com o Drive agora. Tudo continua guardado aqui e sincroniza depois.";
+    if (manual) mostrarAviso(sincErro);
+  } finally { sincRodando = false; atualizarStatusSinc(); }
+}
+function atualizarStatusSinc() { const t = textoSinc(); if ($("#statusSinc")) $("#statusSinc").textContent = t; $("#statusMenu").textContent = S.sinc.url ? t : ""; }
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { sincronizar(false); if (!editando && !$("#foco").classList.contains("aberto")) render(); } });
+setInterval(() => { if (document.visibilityState === "visible") sincronizar(false); }, 60000);
+// virou o dia com o app aberto: redesenha (as rotinas voltam a ficar desmarcadas)
+let diaAtual = hoje();
+setInterval(() => { if (hoje() !== diaAtual) { diaAtual = hoje(); if (!editando) render(); } }, 60000);
+
+/* ================= início ================= */
+aplicarAjustes();
+matchMedia("(prefers-color-scheme: dark)").addEventListener && matchMedia("(prefers-color-scheme: dark)").addEventListener("change", aplicarAjustes);
+const abaHash = location.hash.replace("#", "");
+if (TELAS[abaHash]) S.ui.aba = abaHash;
+guardar(true);
+render();
+sincronizar(false);
+window.addEventListener("hashchange", () => { const a = location.hash.replace("#", ""); if (TELAS[a] && a !== S.ui.aba) irPara(a); });
+if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>

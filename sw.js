@@ -3,7 +3,7 @@
 const CACHE = "planejamento-v3";
 const ARQUIVOS = ["./", "index.html", "config.js", "manifest.webmanifest", "icone-192.png", "icone-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ARQUIVOS)).catch(() => {})); self.skipWaiting(); });
-self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE && k !== "plan-auth").map(k => caches.delete(k)))).then(() => self.clients.claim())); });
+self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE && k !== "plan-auth" && !k.startsWith("feito-")).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 // página: tenta a internet primeiro (para pegar a versão nova) e usa a cópia só sem conexão
 self.addEventListener("fetch", e => {
   const u = new URL(e.request.url);
