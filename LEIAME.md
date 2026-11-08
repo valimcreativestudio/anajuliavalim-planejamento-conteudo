@@ -2,7 +2,8 @@
 
 Sistema de planejamento de Instagram por marca: calendário, postagens, fluxo de produção, grade do feed e resumo do mês.
 
-- O **site** fica no GitHub Pages (arquivos `index.html` e `config.js`).
+- O **site** fica no Netlify: **https://planejaae.netlify.app/** (antes ficava no GitHub Pages, que suspendeu a conta). As regras de segurança da hospedagem estão em `netlify.toml` e `_headers`.
+- Para publicar uma versão nova sem o GitHub: em app.netlify.com → site **planejaae** → Deploys, arraste a pasta do projeto.
 - Os **dados** ficam na sua planilha do Google, nas abas `MARCAS` e `POSTAGENS`.
 - Cada pessoa entra com o próprio login e senha. O administrador cadastra a equipe e escolhe as marcas de cada um.
 

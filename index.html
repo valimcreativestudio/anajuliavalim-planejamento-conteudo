@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; font-src https://fonts.gstatic.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://accounts.google.com/gsi/; img-src 'self' data: blob: https:; media-src 'self' blob: https:; frame-src https://drive.google.com https://docs.google.com https://accounts.google.com/gsi/; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="robots" content="noindex, nofollow">
 <script>if (window.top !== window.self) { try { window.top.location = window.self.location; } catch (e) { document.documentElement.style.display = "none"; } }</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Planeja Aê</title>
@@ -609,6 +610,7 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 .papel-sel { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 5px 8px; font-size: 13px; }
 .empty { border: 1px dashed var(--line); border-radius: 14px; padding: 36px 20px; text-align: center; color: var(--muted); display: grid; gap: 12px; justify-items: center; }
 .empty strong { font-family: var(--f-display); font-weight: 400; font-size: 26px; color: var(--ink); }
+.login-dono { font-size: 12px; color: var(--muted); text-align: center; line-height: 1.4; }
 .g-btn { display: flex; justify-content: center; padding-top: 6px; border-top: 1px solid var(--line); margin-top: 4px; min-height: 44px; }
 .toast-desf { margin-left: 12px; background: transparent; color: var(--bg); border: 1px solid currentColor; border-radius: 999px; padding: 3px 10px; font: inherit; font-weight: 600; cursor: pointer; }
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 999px; font-weight: 500; z-index: 50; box-shadow: var(--shadow); }
@@ -3068,6 +3070,7 @@ function vLogin() {
     <button class="btn primary" type="submit" id="lgBtn">Entrar</button>
     <button class="link-esq" type="button" onclick="S.esqLogin=$('#lgLogin').value;S.esqueci=true;render()">Esqueci minha senha</button>
     <div id="gBtn" class="g-btn" hidden></div>
+    <span class="login-dono">Planeja Aê · ferramenta interna da Valim Creative Studio para a equipe e os clientes da agência. Nunca pedimos senha de Instagram, banco ou e-mail nesta tela.</span>
   </form>`;
 }
 async function entrar() {
