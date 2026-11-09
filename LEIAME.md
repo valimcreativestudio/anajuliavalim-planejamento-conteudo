@@ -195,6 +195,16 @@ Ao rodar **configurar**, o script cria quatro rotinas (a quarta é o relatório 
 
 **Apagar uma empresa** (só a dona, em Empresas): o botão **Apagar** pede para digitar o nome da empresa. Antes de apagar, o sistema guarda uma **cópia completa em JSON** no seu Drive ("Planejamento de Conteúdo - Cópias de segurança"). Some tudo da empresa (marcas, posts, pessoas, tarefas, agenda, financeiro, registro…); as artes no Drive ficam. A sua própria empresa não pode ser apagada. Para só pausar, desmarque "Empresa ativa".
 
+## Quadros (tipo Trello) e reordenar a grade
+
+**Quadros** (Equipe → Quadros): quadros livres para qualquer projeto (lançamento, Black Friday, onboarding de cliente…).
+- Você escolhe o nome, a cor e as colunas (renomear, mudar a ordem, tirar; os cartões de uma coluna tirada vão para a primeira).
+- Cartões com título, detalhes, responsável (recebe aviso), prazo (fica vermelho quando vence), cor, marca e checklist.
+- No computador, arraste os cartões entre colunas e dentro da coluna; no celular, use as setas ◀ ▶. Mover e apagar têm **Desfazer**.
+- Quem vê: administração, direção, gestão e social media (dá para mudar em "quem vê o quê"). Clientes não veem.
+
+**Reordenar a grade** (Grade do Insta → ↕ Reordenar grade): arraste os posts (no celular, toque num e depois no lugar para onde ele vai). As datas do mês continuam as mesmas, só trocam entre os posts; cada post mostra a data nova e a antiga. Posts agendados ou postados ficam travados (🔒). **Só grava ao apertar "Salvar nova ordem"**; se sair da tela, mudar de mês ou cancelar, tudo volta como estava. Depois de salvar ainda dá para **Desfazer**.
+
 ## Testes automáticos
 
 A pasta `tests/` tem testes que simulam a planilha e abrem o site num navegador: segurança (empresas separadas, permissões, código malicioso), login com código e com Google, tarefas, quadro, marcar na arte, modelos, desfazer, apagar pessoa e empresa.

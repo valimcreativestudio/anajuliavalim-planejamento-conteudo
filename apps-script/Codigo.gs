@@ -19,7 +19,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-12.1';
+const VERSAO = '2026-11-13.1';
 // Endereço oficial do site. Os links dos e-mails SEMPRE usam este endereço (nunca o que vem do pedido).
 // A dona da plataforma pode trocar em Gestão → Empresas → Endereço do sistema.
 const SITE_PADRAO = 'https://planejaae.netlify.app/';
@@ -50,6 +50,11 @@ const ABA_PROPOSTAS = 'PROPOSTAS';
 const CAMPOS_PROPOSTA = [['id', 'ID'], ['cliente', 'Cliente'], ['status', 'Status'], ['dados', 'Dados'], ['chave', 'Chave do link'], ['marcaId', 'Marca criada'], ['por', 'Criada por'], ['uid', 'Criada por ID'], ['criado', 'Criada em'], ['respondido', 'Respondida em'], ['empresaId', 'Empresa ID']];
 const ABA_MODELOS = 'MODELOS';
 const CAMPOS_MODELO = [['id', 'ID'], ['empresaId', 'Empresa ID'], ['nome', 'Nome'], ['itens', 'Itens'], ['por', 'Criado por'], ['uid', 'Criado por ID'], ['criado', 'Criado em']];
+const ABA_QUADROS = 'QUADROS';
+const CAMPOS_QUADRO = [['id', 'ID'], ['empresaId', 'Empresa ID'], ['nome', 'Nome'], ['cor', 'Cor'], ['colunas', 'Colunas'], ['por', 'Criado por'], ['uid', 'Criado por ID'], ['criado', 'Criado em'], ['atualizado', 'Atualizado em']];
+const ABA_CARTOES = 'CARTOES';
+const CAMPOS_CARTAO = [['id', 'ID'], ['quadroId', 'Quadro ID'], ['empresaId', 'Empresa ID'], ['coluna', 'Coluna'], ['ordem', 'Ordem'], ['titulo', 'Título'], ['descricao', 'Detalhes'],
+  ['responsavelId', 'Responsável ID'], ['prazo', 'Prazo'], ['cor', 'Cor'], ['checklist', 'Checklist'], ['marcaId', 'Marca ID'], ['por', 'Criado por'], ['uid', 'Criado por ID'], ['criado', 'Criado em'], ['atualizado', 'Atualizado em']];
 const ABA_AUDITORIA = 'REGISTRO';
 const CAMPOS_AUDITORIA = [['id', 'ID'], ['empresaId', 'Empresa ID'], ['em', 'Quando'], ['uid', 'Pessoa ID'], ['nome', 'Pessoa'], ['acao', 'O que fez'], ['alvo', 'Em quê'], ['detalhe', 'Detalhe']];
 const ABA_MURAL = 'MURAL';
@@ -210,7 +215,8 @@ const TELA_DA_ACAO = {
   salvarHora: 'horas', excluirHora: 'horas', salvarAviso: 'mural', excluirAviso: 'mural', lerAviso: 'mural',
   salvarUsuario: 'equipe', excluirUsuario: 'equipe', pagamento: 'financeiro', salvarProposta: 'financeiro', excluirProposta: 'financeiro',
   auditoria: 'registro', perfilEmpresa: 'empresa', exportar: 'empresa', acessosListar: 'marca-acessos', acessosSalvar: 'marca-acessos',
-  trends: 'ideias', trendsConfig: 'ideias'
+  trends: 'ideias', trendsConfig: 'ideias',
+  quadroSalvar: 'quadros', quadroExcluir: 'quadros', cartaoSalvar: 'quadros', cartaoMover: 'quadros', cartaoExcluir: 'quadros'
 };
 function rodarAcao_(eu, req) {
       if (TELA_DA_ACAO[req.action]) exigeTela_(eu, TELA_DA_ACAO[req.action]);
@@ -235,6 +241,12 @@ function rodarAcao_(eu, req) {
         case 'itemTarefa': itemTarefa_(eu, req.id, req.item, req.ok); return json_({ ok: true });
         case 'comentarTarefa': return json_(Object.assign({ ok: true }, comentarTarefa_(eu, req.id, req.texto)));
         case 'apagarComentarioTarefa': apagarComentarioTarefa_(eu, req.id, req.cid); return json_({ ok: true });
+        case 'quadroSalvar': return json_({ ok: true, id: quadroSalvar_(eu, req.quadro || {}) });
+        case 'quadroExcluir': quadroExcluir_(eu, req.id); return json_({ ok: true });
+        case 'cartaoSalvar': return json_({ ok: true, id: cartaoSalvar_(eu, req.cartao || {}) });
+        case 'cartaoMover': cartaoMover_(eu, req.id, req.coluna, req.ordem); return json_({ ok: true });
+        case 'cartaoExcluir': cartaoExcluir_(eu, req.id); return json_({ ok: true });
+        case 'reordenarGrade': return json_({ ok: true, n: reordenarGrade_(eu, req.marcaId, req.mudancas) });
         case 'modeloSalvar': return json_({ ok: true, id: modeloSalvar_(eu, req.marcaId, req.mes, req.nome, req.comTemas) });
         case 'modeloAplicar': return json_({ ok: true, n: modeloAplicar_(eu, req.id, req.marcaId, req.mes, req.comTemas) });
         case 'modeloExcluir': modeloExcluir_(eu, req.id); return json_({ ok: true });
@@ -481,6 +493,11 @@ function listar_(eu, desde, se) {
   try { r.pushChave = chavesPush_().pub; } catch (e) { r.pushChave = ''; }
   r.pushAparelhos = parseJSON_(pp.getProperty('psh_' + eu.id), []).map(a => a.e);
   r.modelos = ['cliente', 'aprovador'].indexOf(eu.papel) >= 0 ? [] : ler_(ABA_MODELOS, CAMPOS_MODELO).filter(x => mesmaEmp_(eu, x.empresaId)).map(x => ({ id: x.id, nome: x.nome, por: x.por, uid: x.uid, criado: Number(x.criado) || 0, itens: parseJSON_(x.itens, []) }));
+  if (eu.papel !== 'cliente' && podeTela_(eu, 'quadros')) {
+    r.quadros = ler_(ABA_QUADROS, CAMPOS_QUADRO).filter(q => mesmaEmp_(eu, q.empresaId)).map(q => ({ id: q.id, nome: q.nome, cor: q.cor, colunas: parseJSON_(q.colunas, []), por: q.por, uid: q.uid, criado: Number(q.criado) || 0, atualizado: Number(q.atualizado) || 0 }));
+    const ids = r.quadros.map(q => q.id);
+    r.cartoes = ler_(ABA_CARTOES, CAMPOS_CARTAO).filter(c => ids.indexOf(c.quadroId) >= 0).map(c => Object.assign(c, { ordem: Number(c.ordem) || 0, checklist: parseJSON_(c.checklist, []), prazo: paraISO_(c.prazo), criado: Number(c.criado) || 0, atualizado: Number(c.atualizado) || 0 }));
+  } else { r.quadros = []; r.cartoes = []; }
   if (eu.dono) r.googleClientId = pp.getProperty('GOOGLE_CLIENT_ID') || '';
   r.propostas = TODAS_MARCAS.indexOf(eu.papel) >= 0 ? ler_(ABA_PROPOSTAS, CAMPOS_PROPOSTA).filter(x => mesmaEmp_(eu, x.empresaId)).map(x => ({ id: x.id, cliente: x.cliente, status: x.status, dados: parseJSON_(x.dados, {}), chave: x.chave, marcaId: x.marcaId, por: x.por, criado: Number(x.criado) || 0, respondido: Number(x.respondido) || 0 })) : [];
   r.mural = eu.papel === 'cliente' || !podeTela_(eu, 'mural') ? [] : ler_(ABA_MURAL, CAMPOS_AVISO).filter(a => mesmaEmp_(eu, a.empresaId)).map(avisoParaSite_).filter(a => !a.ate || a.ate >= Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd') || a.fixado);
@@ -1151,7 +1168,7 @@ function excluirEmpresa_(eu, id, confirmacao) {
   const marcas = ler_(ABA_MARCAS, CAMPOS_MARCA).filter(m => m.empresaId === emp.id).map(m => m.id);
   const pessoas = usuarios.filter(u => u.empresaId === emp.id).map(u => u.id);
   const porMarca = [[ABA_PAUTAS, CAMPOS_PAUTA], [ABA_STORIES, CAMPOS_STORY], [ABA_PAGAMENTOS, CAMPOS_PAGAMENTO], [ABA_AVALIACOES, CAMPOS_AVALIACAO], [ABA_LIXEIRA, CAMPOS_LIXEIRA]];
-  const porEmpresa = [[ABA_TAREFAS, CAMPOS_TAREFA], [ABA_AGENDA, CAMPOS_AGENDA], [ABA_HORAS, CAMPOS_HORA], [ABA_MURAL, CAMPOS_AVISO], [ABA_PROPOSTAS, CAMPOS_PROPOSTA], [ABA_MODELOS, CAMPOS_MODELO], [ABA_AUDITORIA, CAMPOS_AUDITORIA], [ABA_MARCAS, CAMPOS_MARCA], [ABA_USUARIOS, CAMPOS_USUARIO]];
+  const porEmpresa = [[ABA_TAREFAS, CAMPOS_TAREFA], [ABA_AGENDA, CAMPOS_AGENDA], [ABA_HORAS, CAMPOS_HORA], [ABA_MURAL, CAMPOS_AVISO], [ABA_PROPOSTAS, CAMPOS_PROPOSTA], [ABA_MODELOS, CAMPOS_MODELO], [ABA_QUADROS, CAMPOS_QUADRO], [ABA_CARTOES, CAMPOS_CARTAO], [ABA_AUDITORIA, CAMPOS_AUDITORIA], [ABA_MARCAS, CAMPOS_MARCA], [ABA_USUARIOS, CAMPOS_USUARIO]];
   let linhas = 0;
   porMarca.forEach(([a, c]) => { linhas += apagarLinhasOnde_(a, c, 'marcaId', marcas); });
   porEmpresa.forEach(([a, c]) => { linhas += apagarLinhasOnde_(a, c, 'empresaId', [emp.id]); });
@@ -1443,6 +1460,8 @@ function configurar() {
   aba_(ABA_PAGAMENTOS, CAMPOS_PAGAMENTO);
   aba_(ABA_PROPOSTAS, CAMPOS_PROPOSTA);
   aba_(ABA_MODELOS, CAMPOS_MODELO);
+  aba_(ABA_QUADROS, CAMPOS_QUADRO);
+  aba_(ABA_CARTOES, CAMPOS_CARTAO);
   aba_(ABA_AUDITORIA, CAMPOS_AUDITORIA);
   instalarGatilhos_();
 
@@ -2555,6 +2574,89 @@ function diaEquivalente_(para, dow, semana) {
   const dias = []; for (let i = 1; i <= ultimo; i++) if (new Date(ay, am - 1, i).getDay() === dow) dias.push(i);
   return para + '-' + ('0' + dias[Math.min(Math.max(1, semana), dias.length) - 1]).slice(-2);
 }
+/* ---------- Quadros livres (tipo Trello) ---------- */
+const COR_OK_ = c => /^#[0-9a-f]{6}$/i.test(String(c || '')) ? String(c) : '';
+function quadroDe_(eu, id) {
+  const q = ler_(ABA_QUADROS, CAMPOS_QUADRO).filter(x => x.id === String(id || ''))[0];
+  if (!q || !mesmaEmp_(eu, q.empresaId)) throw erro_('server', 'Quadro não encontrado. Atualize a página.');
+  return q;
+}
+function quadroSalvar_(eu, q) {
+  const atual = q.id ? quadroDe_(eu, q.id) : null;
+  if (!atual && !eu.empresaId) throw erro_('server', 'Escolha a empresa no topo antes de criar o quadro.');
+  const nome = String(q.nome || '').trim().slice(0, 80);
+  if (!nome) throw erro_('server', 'Dê um nome ao quadro.');
+  const vistos = {}, colunas = (Array.isArray(q.colunas) ? q.colunas : []).slice(0, 20)
+    .map(c => ({ id: idSeguro_(c.id) || Utilities.getUuid().slice(0, 8), nome: String(c.nome || '').trim().slice(0, 40) }))
+    .filter(c => c.nome && !vistos[c.id] && (vistos[c.id] = 1));
+  if (!colunas.length) throw erro_('server', 'O quadro precisa de pelo menos uma coluna.');
+  const id = atual ? atual.id : Utilities.getUuid().slice(0, 13);
+  gravar_(ABA_QUADROS, CAMPOS_QUADRO, { id: id, empresaId: atual ? atual.empresaId : eu.empresaId, nome: nome, cor: COR_OK_(q.cor), colunas: JSON.stringify(colunas),
+    por: atual ? atual.por : eu.nome, uid: atual ? atual.uid : eu.id, criado: atual ? atual.criado : String(Date.now()), atualizado: String(Date.now()) });
+  // cartões de colunas apagadas vão para a primeira coluna
+  if (atual) {
+    const ok = colunas.map(c => c.id);
+    ler_(ABA_CARTOES, CAMPOS_CARTAO).filter(c => c.quadroId === id && ok.indexOf(c.coluna) < 0).forEach(c => { c.coluna = ok[0]; c.atualizado = String(Date.now()); gravar_(ABA_CARTOES, CAMPOS_CARTAO, c); });
+  }
+  return id;
+}
+function quadroExcluir_(eu, id) {
+  const q = quadroDe_(eu, id);
+  if (q.uid !== eu.id && TODAS_MARCAS.indexOf(eu.papel) < 0) throw erro_('permissao', 'Só quem criou o quadro ou a direção pode apagar.');
+  apagarLinhasOnde_(ABA_CARTOES, CAMPOS_CARTAO, 'quadroId', [q.id]);
+  excluirLinha_(ABA_QUADROS, CAMPOS_QUADRO, q.id);
+}
+function cartaoSalvar_(eu, c) {
+  const atual = c.id ? ler_(ABA_CARTOES, CAMPOS_CARTAO).filter(x => x.id === String(c.id))[0] : null;
+  if (c.id && !atual) throw erro_('server', 'Cartão não encontrado. Atualize a página.');
+  const q = quadroDe_(eu, atual ? atual.quadroId : c.quadroId), cols = parseJSON_(q.colunas, []).map(x => x.id);
+  const titulo = String(c.titulo || '').trim().slice(0, 200);
+  if (!titulo) throw erro_('server', 'Escreva o título do cartão.');
+  const coluna = cols.indexOf(String(c.coluna)) >= 0 ? String(c.coluna) : (atual ? atual.coluna : cols[0]);
+  const pessoas = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(u => u.empresaId === q.empresaId && u.ativo === 'sim');
+  const resp = pessoas.filter(u => u.id === String(c.responsavelId || ''))[0];
+  const marcaId = c.marcaId && empresaDe_(c.marcaId) === q.empresaId ? String(c.marcaId) : '';
+  const id = atual ? atual.id : Utilities.getUuid().slice(0, 13);
+  const checklist = (Array.isArray(c.checklist) ? c.checklist : []).slice(0, 50).map(i => ({ id: idSeguro_(i.id) || Utilities.getUuid().slice(0, 8), t: String(i.t || '').trim().slice(0, 200), ok: !!i.ok })).filter(i => i.t);
+  gravar_(ABA_CARTOES, CAMPOS_CARTAO, { id: id, quadroId: q.id, empresaId: q.empresaId, coluna: coluna,
+    ordem: String(isFinite(Number(c.ordem)) && c.ordem !== '' && c.ordem != null ? Number(c.ordem) : (atual ? atual.ordem : Date.now())),
+    titulo: titulo, descricao: String(c.descricao || '').slice(0, 3000), responsavelId: resp ? resp.id : '', prazo: paraBR_(c.prazo), cor: COR_OK_(c.cor),
+    checklist: JSON.stringify(checklist), marcaId: marcaId, por: atual ? atual.por : eu.nome, uid: atual ? atual.uid : eu.id,
+    criado: atual ? atual.criado : String(Date.now()), atualizado: String(Date.now()) });
+  if (resp && resp.id !== eu.id && (!atual || atual.responsavelId !== resp.id)) pushPara_(resp.id, '🗂️ ' + eu.nome + ' te colocou num cartão', q.nome + ': ' + titulo, '#quadros');
+  return id;
+}
+function cartaoMover_(eu, id, coluna, ordem) {
+  const c = ler_(ABA_CARTOES, CAMPOS_CARTAO).filter(x => x.id === String(id || ''))[0];
+  if (!c) throw erro_('server', 'Cartão não encontrado. Atualize a página.');
+  const q = quadroDe_(eu, c.quadroId), cols = parseJSON_(q.colunas, []).map(x => x.id);
+  if (cols.indexOf(String(coluna)) < 0) throw erro_('server', 'Coluna não encontrada. Atualize a página.');
+  if (!isFinite(Number(ordem))) throw erro_('server', 'Posição inválida.');
+  c.coluna = String(coluna); c.ordem = String(Number(ordem)); c.atualizado = String(Date.now());
+  gravar_(ABA_CARTOES, CAMPOS_CARTAO, c);
+}
+function cartaoExcluir_(eu, id) {
+  const c = ler_(ABA_CARTOES, CAMPOS_CARTAO).filter(x => x.id === String(id || ''))[0];
+  if (!c) return;
+  quadroDe_(eu, c.quadroId);
+  excluirLinha_(ABA_CARTOES, CAMPOS_CARTAO, c.id);
+}
+
+/* ---------- Reordenar a grade: troca as datas dos posts de uma vez ---------- */
+function reordenarGrade_(eu, marcaId, mudancas) {
+  if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Você não pode mudar as postagens desta marca.');
+  const l = (Array.isArray(mudancas) ? mudancas : []).slice(0, 200);
+  const todas = ler_(ABA_PAUTAS, CAMPOS_PAUTA).map(pautaParaSite_);
+  l.forEach(m => {
+    const p = todas.filter(x => x.id === String(m.id || ''))[0];
+    if (!p || p.marcaId !== marcaId) throw erro_('server', 'Postagem não encontrada. Atualize a página.');
+    if (['Postado', 'Agendado'].indexOf(p.status) >= 0) throw erro_('server', '"' + (p.postagem || 'Postagem') + '" já está agendada ou postada e não muda de lugar.');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(m.data || ''))) throw erro_('server', 'Data inválida.');
+  });
+  l.forEach(m => salvarPauta_(eu, { id: String(m.id), data: String(m.data) }));
+  return l.length;
+}
+
 const CAMPOS_ITEM_MODELO = ['formato', 'fase', 'produto', 'rede', 'objetivo', 'cta', 'gravacao', 'postagem', 'pauta', 'agHora'];
 function modeloSalvar_(eu, marcaId, mes, nome, comTemas) {
   if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Você não pode criar modelos desta marca.');
@@ -3093,6 +3195,8 @@ function antesDoRegistro_(eu, req) {
       return [atual ? 'Alterou a pessoa' : 'Cadastrou a pessoa', (u.nome || u.login || '') + ' (' + (PAPEIS.indexOf(u.papel) >= 0 ? u.papel : '') + ')', mud];
     }
     case 'excluirEmpresa': { const x = ler_(ABA_EMPRESAS, CAMPOS_EMPRESA).filter(e => e.id === String(req.id))[0]; return x ? ['Apagou a empresa', x.nome, 'com todos os dados (cópia guardada no Drive)', ''] : null; }
+    case 'reordenarGrade': return (req.mudancas || []).length ? ['Reordenou a grade', nomeDaMarca_(req.marcaId), (req.mudancas || []).length + ' postagem(ns) mudaram de data', empresaDe_(req.marcaId)] : null;
+    case 'quadroExcluir': { const x = ler_(ABA_QUADROS, CAMPOS_QUADRO).filter(q => q.id === String(req.id))[0]; return x ? ['Apagou o quadro', x.nome, 'com todos os cartões', x.empresaId] : null; }
     case 'modeloExcluir': { const x = ler_(ABA_MODELOS, CAMPOS_MODELO).filter(m => m.id === String(req.id))[0]; return x ? ['Apagou o modelo de mês', x.nome, '', x.empresaId] : null; }
     case 'definirGoogle': return ['Mudou o login com Google', req.clientId ? 'ligado' : 'desligado', ''];
     case 'excluirUsuario': { const x = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(u => u.id === String(req.id))[0]; return x ? ['Apagou a pessoa', x.nome + ' (' + x.login + ')', x.papel, x.empresaId] : null; }
@@ -3193,7 +3297,8 @@ const TELAS_SERV = {
   financeiro: ['admin diretor', 'admin diretor'],
   registro: ['admin diretor', 'admin diretor'],
   empresa: ['admin', 'admin'],
-  ideias: ['admin diretor gestor social aprovador', 'admin diretor gestor social aprovador']
+  ideias: ['admin diretor gestor social aprovador', 'admin diretor gestor social aprovador'],
+  quadros: ['admin diretor gestor social aprovador', 'admin diretor gestor social']
 };
 function podeTela_(eu, tela) {
   if (eu.dono) return true;

@@ -486,6 +486,45 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 .emp-del { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--danger); border-radius: 12px; background: color-mix(in srgb, var(--danger) 6%, transparent); white-space: normal; }
 .emp-del > span { font-size: 13.5px; }
 .tf-dica { margin: 0; align-self: end; font-size: 12.5px; padding-bottom: 8px; }
+.rd-barra { position: sticky; top: 8px; z-index: 5; display: flex; justify-content: space-between; align-items: center; gap: 10px 16px; flex-wrap: wrap; max-width: 520px; margin: 0 auto 12px; padding: 12px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.rd-barra > div:first-child { display: grid; gap: 3px; flex: 1 1 260px; }
+.rd-barra .muted { font-size: 12.5px; }
+.rd-acts { display: flex; gap: 8px; }
+.tile.rd { cursor: grab; user-select: none; }
+.tile.rd.fixo { cursor: not-allowed; opacity: .55; }
+.tile.rd.sel { outline: 3px solid var(--pr-alta); outline-offset: -3px; }
+.tile.rd.over { outline: 3px dashed var(--pr-alta); outline-offset: -3px; }
+.tile.rd.arrastando { opacity: .35; }
+.tile.rd.mudou { box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--st-postado) 70%, transparent); }
+.rd-data { position: absolute; left: 6px; bottom: 6px; z-index: 2; background: rgba(0,0,0,.65); color: #fff; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 6px; display: grid; line-height: 1.2; }
+.rd-data small { font-weight: 500; opacity: .85; font-size: 10px; }
+.tile.rd .tm { display: none; }
+.qc .mv { display: none; }
+@media (hover: none), (max-width: 760px) { .qc .mv { display: flex; } }
+.rd-lock { position: absolute; right: 6px; bottom: 6px; z-index: 2; font-size: 12px; }
+.qd-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.qd-it { display: grid; gap: 4px; text-align: left; padding: 14px 16px 14px 18px; border: 1px solid var(--line); border-left: 6px solid var(--qc); border-radius: 14px; background: var(--surface); color: var(--ink); font: inherit; cursor: pointer; }
+.qd-it:hover { border-color: var(--qc); }
+.qd-it .muted { font-size: 13px; }
+.board.qd-board { grid-template-columns: repeat(var(--qn), minmax(250px, 280px)); align-items: start; }
+.qd-col { min-height: 120px; }
+.qc { position: relative; overflow: hidden; }
+.qc-cor { position: absolute; left: 0; top: 0; right: 0; height: 5px; background: var(--qc); }
+.qc .t { margin-top: 2px; }
+.qc .meta { flex-wrap: wrap; }
+.qc .meta .atraso { color: var(--danger); font-weight: 600; }
+.qc-resp { display: inline-flex; align-items: center; gap: 4px; }
+.qd-add input { width: 100%; border: 1px dashed var(--line); background: transparent; border-radius: 10px; padding: 8px 10px; font: inherit; font-size: 13px; color: var(--ink); }
+.qd-add input:focus { border-style: solid; background: var(--surface); }
+.qc-cores { display: flex; gap: 8px; flex-wrap: wrap; }
+.qc-c { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--surface); background: var(--qc); box-shadow: 0 0 0 1px var(--line); cursor: pointer; padding: 0; font-size: 13px; color: var(--muted); }
+.qc-c.sem { background: var(--surface); }
+.qc-c.on { box-shadow: 0 0 0 2px var(--ink); }
+.qf-cols { display: grid; gap: 6px; }
+.qf-col { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 6px; align-items: center; }
+.qf-col input { min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 7px 10px; color: var(--ink); font: inherit; }
+#qdDlg, #qcDlg { width: min(620px, calc(100vw - 24px)); }
+@media (max-width: 640px) { .board.qd-board { grid-template-columns: repeat(var(--qn), minmax(240px, 82vw)); } }
 .mk-corpo { padding: 14px 20px 20px; display: grid; gap: 12px; }
 .mk-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
 .mk-tabs button { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 5px 12px; font: inherit; font-size: 13px; cursor: pointer; }
@@ -1037,6 +1076,8 @@ tr.reg-alerta td:first-child { box-shadow: inset 3px 0 0 var(--pr-alta); }
 <dialog id="cfDlg"><form id="cfForm" method="dialog"></form></dialog>
 <dialog id="imDlg"><form id="imForm" method="dialog"></form></dialog>
 <dialog id="lxDlg"><form id="lxForm" method="dialog"></form></dialog>
+<dialog id="qdDlg"><form id="qdForm" method="dialog" onsubmit="event.preventDefault()"></form></dialog>
+<dialog id="qcDlg"><form id="qcForm" method="dialog" onsubmit="event.preventDefault()"></form></dialog>
 <dialog id="mkDlg"><form id="mkForm" method="dialog"></form></dialog>
 <dialog id="mdDlg"><form id="mdForm" method="dialog" onsubmit="event.preventDefault()"></form></dialog>
 <dialog id="buDlg"><form id="buForm" method="dialog" onsubmit="event.preventDefault()"></form></dialog>
@@ -1182,7 +1223,7 @@ function setMonth(ym) {
 /* ---------- Vistas ---------- */
 const view = () => {
   const h = location.hash.replace("#", "");
-  return ["calendario", "stories", "ideias", "resultados", "painel", "empresas", "empresa", "registro", "agenda", "horas", "mural", "financeiro", "marca-midias", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-acessos", "marca-config", "marca-plano", "aprovacoes", "equipe", "equipe-atividade", "equipe-carga", "conta", "tarefas"].includes(h) ? h : "calendario";
+  return ["calendario", "stories", "ideias", "resultados", "painel", "empresas", "empresa", "registro", "agenda", "horas", "mural", "financeiro", "marca-midias", "pautas", "fluxo", "grade", "resumo", "marca", "marca-sobre", "marca-publico", "marca-arquivos", "marca-notas", "marca-produtos", "marca-redes", "marca-acessos", "marca-config", "marca-plano", "aprovacoes", "equipe", "equipe-atividade", "equipe-carga", "quadros", "conta", "tarefas"].includes(h) ? h : "calendario";
 };
 
 function render() {
@@ -1217,9 +1258,10 @@ function render() {
   if (!S.token) { app.innerHTML = S.esqueci ? vEsqueci() : vLogin(); (S.esqueci ? $("#esLogin") : $("#lgLogin"))?.focus(); return; }
   if (!S.loadedM || !S.loadedP) return;
   const v0 = view();
-  if (v0 === "equipe" || v0 === "equipe-atividade" || v0 === "equipe-carga" || v0 === "conta" || v0 === "aprovacoes" || v0 === "tarefas" || v0 === "agenda" || v0 === "horas" || v0 === "mural" || v0 === "financeiro" || v0 === "painel" || v0 === "empresas" || v0 === "empresa" || v0 === "registro") {
-    app.innerHTML = avisoVersao() + faixaAvisos() + (v0 === "equipe" ? vEquipe : v0 === "equipe-atividade" ? vAtividade : v0 === "equipe-carga" ? vCarga : v0 === "conta" ? vConta : v0 === "tarefas" ? vTarefas : v0 === "agenda" ? vAgenda : v0 === "horas" ? vHoras : v0 === "mural" ? vMural : v0 === "financeiro" ? vFinanceiro : v0 === "painel" ? vPainel : v0 === "empresas" ? vEmpresas : v0 === "empresa" ? vEmpresa : v0 === "registro" ? vRegistro : vAprovacoes)();
+  if (v0 === "equipe" || v0 === "equipe-atividade" || v0 === "equipe-carga" || v0 === "quadros" || v0 === "conta" || v0 === "aprovacoes" || v0 === "tarefas" || v0 === "agenda" || v0 === "horas" || v0 === "mural" || v0 === "financeiro" || v0 === "painel" || v0 === "empresas" || v0 === "empresa" || v0 === "registro") {
+    app.innerHTML = avisoVersao() + faixaAvisos() + (v0 === "equipe" ? vEquipe : v0 === "equipe-atividade" ? vAtividade : v0 === "equipe-carga" ? vCarga : v0 === "quadros" ? vQuadros : v0 === "conta" ? vConta : v0 === "tarefas" ? vTarefas : v0 === "agenda" ? vAgenda : v0 === "horas" ? vHoras : v0 === "mural" ? vMural : v0 === "financeiro" ? vFinanceiro : v0 === "painel" ? vPainel : v0 === "empresas" ? vEmpresas : v0 === "empresa" ? vEmpresa : v0 === "registro" ? vRegistro : vAprovacoes)();
     if (v0 === "tarefas" && S.tf.modo === "quadro") wireQuadroTarefas();
+    if (v0 === "quadros") wireQuadro();
     return;
   }
   if (!marca()) {
@@ -1232,6 +1274,7 @@ function render() {
   const v = view();
   app.innerHTML = avisoVersao() + faixaAvisos() + ({ calendario: vCal, stories: vStories, ideias: vIdeias, pautas: vPautas, fluxo: vFluxo, grade: vGrade, resumo: vResumo, marca: vMarcaGeral, "marca-sobre": () => vPerfil("sobre"), "marca-publico": vPublico, "marca-arquivos": vArquivos, "marca-notas": () => vPerfil("notas"), "marca-produtos": vProdutos, "marca-redes": vRedes, "marca-acessos": vAcessos, "marca-config": vMarca, "marca-plano": vPlano, "marca-midias": vBiblioteca, resultados: vResultados })[v]();
   if (v === "fluxo") wireBoard();
+  if (v === "grade" && S.reord) wireReord();
   if (v === "calendario") wireCalendario();
   if (v === "stories") wireStories();
   if (v === "pautas") { const q = $("#fq"); if (q && S.f.q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); } }
@@ -1509,8 +1552,11 @@ function gradeBox(m, mes, destaque) {
     <div class="grade-legenda"><span><i></i>Já postado</span><span>Sem bolinha: ainda não postado</span>${destaque ? `<span><b style="color:var(--pr-alta)">▢</b> Este post</span><span style="opacity:.8">┄ Outros esperando aprovação</span>` : ""}</div>` };
 }
 function vGrade() {
-  const m = marca(), g = gradeBox(m, S.month);
-  return headM(m.nome, "Grade do Instagram", monthNav() + (g.ig ? `<button class="btn sm" type="button" onclick="carregarInsta(S.marcaId, true);render()">Atualizar do Instagram</button>` : "")) +
+  const m = marca();
+  if (S.reord && (S.reord.marcaId !== m.id || S.reord.mes !== S.month)) S.reord = null; // mudou de marca ou de mês sem salvar: volta como antes
+  if (S.reord) return headM(m.nome, "Reordenar a grade", "") + reordHtml(m);
+  const g = gradeBox(m, S.month);
+  return headM(m.nome, "Grade do Instagram", monthNav() + (S.canWrite && !ehCliente() ? `<button class="btn sm" type="button" onclick="reordIniciar()">↕ Reordenar grade</button>` : "") + (g.ig ? `<button class="btn sm" type="button" onclick="carregarInsta(S.marcaId, true);render()">Atualizar do Instagram</button>` : "")) +
     g.html + (!g.ig && !ehCliente() ? `<p class="grade-note">Para ver aqui também os posts que já estão no perfil, conecte o Instagram da marca em <a class="lnk" href="#marca-config">Marca → Configurações</a>.</p>` : g.aviso) +
     `<p class="grade-note">Do mais recente (canto superior esquerdo) ao mais antigo. Os planejados mostram a arte quando a postagem tem a imagem de prévia; os posts do perfil abrem no Instagram.</p>`;
 }
@@ -3850,6 +3896,215 @@ function clientesHtml() {
     ${pessoas.map(u => `<button class="btn sm" type="button" onclick="linkCliente(${js(u.id)})">${avatarHtml(u, 20)} ${esc(u.nome)}</button>`).join("")}</div>`;
 }
 
+/* ---------- Reordenar a grade (muda as datas; só grava no "Salvar") ---------- */
+const FIXOS_GRADE = ["Postado", "Agendado"];
+function postsDaGrade(mid, mes) {
+  return S.posts.filter(p => p.marcaId === mid && (p.data || "").startsWith(mes))
+    .filter(p => { const r = redesDe(p.rede); return !r.length || r.some(x => !NAO_FEED.includes(x)); });
+}
+function reordIniciar() {
+  const ps = postsDaGrade(S.marcaId, S.month).filter(p => !FIXOS_GRADE.includes(p.status));
+  if (ps.length < 2) return toast("É preciso ter pelo menos 2 posts não agendados neste mês para reordenar.");
+  const ord = ps.slice().sort((a, b) => (b.data || "").localeCompare(a.data || "") || String(b.agHora || "").localeCompare(String(a.agHora || "")));
+  S.reord = { marcaId: S.marcaId, mes: S.month, ordem: ord.map(p => p.id), slots: ord.map(p => p.data), orig: Object.fromEntries(ord.map(p => [p.id, p.data])), sel: null };
+  render(); window.scrollTo(0, 0);
+}
+function reordDatas() { const r = S.reord, o = {}; r.ordem.forEach((id, i) => { o[id] = r.slots[i]; }); return o; }
+function reordMudancas() { const d = reordDatas(); return S.reord.ordem.filter(id => d[id] !== S.reord.orig[id]).map(id => ({ id, data: d[id] })); }
+function reordHtml(m) {
+  const r = S.reord, d = reordDatas(), mud = reordMudancas().length;
+  const fixos = postsDaGrade(m.id, r.mes).filter(p => FIXOS_GRADE.includes(p.status));
+  const itens = r.ordem.map(id => ({ p: S.posts.find(x => x.id === id), data: d[id], mov: true })).filter(x => x.p)
+    .concat(fixos.map(p => ({ p, data: p.agData || p.data, mov: false })))
+    .sort((a, b) => b.data.localeCompare(a.data) || (a.mov === b.mov ? 0 : a.mov ? -1 : 1));
+  const tile = x => {
+    const p = x.p, src = blobSrc(p), mudou = x.mov && r.orig[p.id] !== x.data;
+    return `<div class="tile rd${src ? " has-img" : ""}${x.mov ? "" : " fixo"}${r.sel === p.id ? " sel" : ""}${mudou ? " mudou" : ""}" ${x.mov ? `draggable="true" data-id="${esc(p.id)}" role="button" tabindex="0" onclick="reordToque(${js(p.id)})"` : `title="${esc(p.status)}: não muda de lugar"`} style="--fase:${esc(faseCor(m, p.fase))}">
+      ${src ? `<img src="${esc(src)}" alt="${esc(nm(p))}" loading="lazy" draggable="false" onerror="this.parentNode.classList.remove('has-img');this.remove()">` : ""}
+      <span class="tt">${esc(nm(p))}</span><span class="tm">${esc(p.formato || "")}</span>
+      <span class="rd-data">${br(x.data)}${mudou ? `<small>era ${br(r.orig[p.id])}</small>` : ""}</span>${x.mov ? "" : `<span class="rd-lock">🔒</span>`}</div>`;
+  };
+  return `<div class="rd-barra"><div><b>${mud ? `${mud} post${mud > 1 ? "s" : ""} mudando de data` : "Arraste os posts para mudar a ordem"}</b>
+      <span class="muted">${r.sel ? "Agora toque no lugar para onde ele vai." : "No celular: toque num post e depois no lugar para onde ele vai."} As datas do mês ficam as mesmas, só trocam entre os posts. Posts agendados ou postados (🔒) não mudam. Só vale depois de <b>Salvar</b>.</span></div>
+      <div class="rd-acts"><button class="btn" type="button" onclick="S.reord=null;render()">Cancelar</button><button class="btn primary" type="button" id="rdSalvar" onclick="reordSalvar()"${mud ? "" : " disabled"}>Salvar nova ordem</button></div></div>
+    <div class="grade-box"><div class="grade">${itens.map(tile).join("")}</div></div>`;
+}
+function reordMover(id, alvo) {
+  const o = S.reord.ordem, i = o.indexOf(id), j = o.indexOf(alvo);
+  if (i < 0 || j < 0 || i === j) return;
+  o.splice(i, 1); o.splice(j, 0, id);
+}
+function reordToque(id) {
+  const r = S.reord;
+  if (!r.sel) r.sel = id; else if (r.sel === id) r.sel = null; else { reordMover(r.sel, id); r.sel = null; }
+  render();
+}
+function wireReord() {
+  document.querySelectorAll(".tile.rd[draggable=true]").forEach(t => {
+    t.addEventListener("dragstart", e => { e.dataTransfer.setData("text/plain", "rd:" + t.dataset.id); e.dataTransfer.effectAllowed = "move"; t.classList.add("arrastando"); });
+    t.addEventListener("dragend", () => t.classList.remove("arrastando"));
+    t.addEventListener("dragover", e => { e.preventDefault(); t.classList.add("over"); });
+    t.addEventListener("dragleave", () => t.classList.remove("over"));
+    t.addEventListener("drop", e => { e.preventDefault(); t.classList.remove("over"); const d = e.dataTransfer.getData("text/plain"); if (d.startsWith("rd:")) { reordMover(d.slice(3), t.dataset.id); S.reord.sel = null; render(); } });
+    t.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); reordToque(t.dataset.id); } });
+  });
+}
+async function reordSalvar() {
+  const r = S.reord, mud = reordMudancas(); if (!mud.length) return;
+  const volta = mud.map(x => ({ id: x.id, data: r.orig[x.id] })), mid = r.marcaId;
+  const b = $("#rdSalvar"); b.disabled = true; b.textContent = "Salvando…";
+  try {
+    await api("reordenarGrade", { marcaId: mid, mudancas: mud });
+    S.reord = null; S.carimbo = ""; await carregar(); render();
+    toast(`Grade reordenada (${mud.length} post${mud.length > 1 ? "s" : ""})`, async () => { await api("reordenarGrade", { marcaId: mid, mudancas: volta }); S.carimbo = ""; await carregar(); render(); toast("Ordem anterior de volta"); });
+  } catch (e) { b.disabled = false; b.textContent = "Salvar nova ordem"; writeFail(e); }
+}
+
+/* ---------- Quadros livres (tipo Trello) ---------- */
+const CORES_Q = ["#ef4444", "#f59e0b", "#eab308", "#22c55e", "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899"];
+const quadroAtual = () => (S.quadros || []).find(q => q.id === S.quadroId);
+const cartoesDe = (qid, col) => (S.cartoes || []).filter(c => c.quadroId === qid && (!col || c.coluna === col)).sort((a, b) => a.ordem - b.ordem);
+function vQuadros() {
+  if (S.quadroId === undefined) S.quadroId = store("quadro") || null;
+  const q = quadroAtual(); if (q) return vQuadro(q);
+  const l = (S.quadros || []).slice().sort((a, b) => b.atualizado - a.atualizado);
+  return head("Equipe", "Quadros", `<button class="btn primary" type="button" onclick="abrirQuadroForm()">+ Novo quadro</button>`) +
+    `<p class="muted" style="margin:-4px 0 14px">Quadros livres para qualquer coisa: um lançamento, a Black Friday, o onboarding de um cliente, ideias da equipe… Você escolhe as colunas e arrasta os cartões.</p>
+    ${l.length ? `<div class="qd-lista">${l.map(q => { const n = cartoesDe(q.id).length; return `<button type="button" class="qd-it" style="--qc:${esc(q.cor || "var(--primary)")}" onclick="S.quadroId=${js(q.id)};store('quadro',${js(q.id)});render()">
+      <b>${esc(q.nome)}</b><span class="muted">${n} cartão${n === 1 ? "" : "es"} · ${q.colunas.map(c => esc(c.nome)).join(" → ")}</span><small class="muted">por ${esc(q.por)}</small></button>`; }).join("")}</div>`
+    : `<div class="empty"><strong>Nenhum quadro ainda</strong><span>Crie o primeiro com as colunas que fizerem sentido, por exemplo: A fazer → Fazendo → Feito.</span><button class="btn primary" type="button" onclick="abrirQuadroForm()">+ Novo quadro</button></div>`}`;
+}
+function vQuadro(q) {
+  const h = hojeIso();
+  const card = (c, ci) => {
+    const l = c.checklist || [], f = l.filter(i => i.ok).length, atras = c.prazo && c.prazo < h;
+    const resp = c.responsavelId ? S.equipe.find(u => u.id === c.responsavelId) : null;
+    return `<article class="card qc" draggable="true" data-id="${esc(c.id)}" onclick="abrirCartao(${js(c.id)})"${c.cor ? ` style="--qc:${esc(c.cor)}"` : ""}>
+      ${c.cor ? `<span class="qc-cor"></span>` : ""}<div class="t">${esc(c.titulo)}</div>
+      <div class="meta">${resp ? `<span class="qc-resp">${avatarHtml(resp, 18)} ${esc(resp.nome.split(" ")[0])}</span>` : ""}${c.prazo ? `<span class="${atras ? "atraso" : ""}">⏳ ${br(c.prazo)}</span>` : ""}${l.length ? `<span class="tf-sel${f === l.length ? " cheio" : ""}">☑ ${f}/${l.length}</span>` : ""}${c.descricao ? `<span title="Tem detalhes">≡</span>` : ""}${c.marcaId ? `<span>${esc(nomeMarca(c.marcaId))}</span>` : ""}</div>
+      <div class="mv">${ci > 0 ? `<button type="button" aria-label="Para ${esc(q.colunas[ci - 1].nome)}" onclick="event.stopPropagation();moverCartao(${js(c.id)},${js(q.colunas[ci - 1].id)})">◀</button>` : ""}${ci < q.colunas.length - 1 ? `<button type="button" aria-label="Para ${esc(q.colunas[ci + 1].nome)}" onclick="event.stopPropagation();moverCartao(${js(c.id)},${js(q.colunas[ci + 1].id)})">▶</button>` : ""}</div>
+    </article>`;
+  };
+  return head("Quadros", q.nome, `<button class="btn" type="button" onclick="S.quadroId=null;store('quadro','');render()">← Todos os quadros</button><button class="btn" type="button" onclick="abrirQuadroForm(${js(q.id)})">Editar quadro</button>`) +
+    `<div class="board-rolo" aria-hidden="true"><div></div></div><div class="board qd-board" style="--qn:${q.colunas.length}">${q.colunas.map((col, ci) => { const cs = cartoesDe(q.id, col.id); return `<section class="col qd-col" data-col="${esc(col.id)}">
+      <h3>${esc(col.nome)}<span class="n">${cs.length}</span></h3>
+      ${cs.map(c => card(c, ci)).join("")}
+      <form class="qd-add" onsubmit="event.preventDefault();addCartao(${js(col.id)},this)"><input name="t" maxlength="200" placeholder="+ Adicionar cartão" aria-label="Novo cartão em ${esc(col.nome)}"></form></section>`; }).join("")}</div>`;
+}
+function wireQuadro() {
+  rolagemNoTopo();
+  document.querySelectorAll(".qd-board .qc").forEach(c => {
+    c.addEventListener("dragstart", e => { e.dataTransfer.setData("text/plain", "qc:" + c.dataset.id); c.classList.add("arrastando"); });
+    c.addEventListener("dragend", () => c.classList.remove("arrastando"));
+  });
+  document.querySelectorAll(".qd-col").forEach(col => {
+    col.addEventListener("dragover", e => { e.preventDefault(); col.classList.add("over"); });
+    col.addEventListener("dragleave", e => { if (!col.contains(e.relatedTarget)) col.classList.remove("over"); });
+    col.addEventListener("drop", e => {
+      e.preventDefault(); col.classList.remove("over");
+      const d = e.dataTransfer.getData("text/plain"); if (!d.startsWith("qc:")) return;
+      const alvo = [...col.querySelectorAll(".qc")].find(x => { const r = x.getBoundingClientRect(); return e.clientY < r.top + r.height / 2; });
+      moverCartao(d.slice(3), col.dataset.col, alvo ? alvo.dataset.id : null);
+    });
+  });
+}
+// coloca o cartão antes de "antesDe" (ou no fim da coluna)
+async function moverCartao(id, colId, antesDe) {
+  const c = (S.cartoes || []).find(x => x.id === id); if (!c) return;
+  const lista = cartoesDe(c.quadroId, colId).filter(x => x.id !== id), i = antesDe ? lista.findIndex(x => x.id === antesDe) : -1;
+  const ordem = i < 0 ? (lista.length ? lista[lista.length - 1].ordem + 1 : 1) : i === 0 ? lista[0].ordem - 1 : (lista[i - 1].ordem + lista[i].ordem) / 2;
+  if (c.coluna === colId && Math.abs(c.ordem - ordem) < 1e-9) return;
+  const antes = { coluna: c.coluna, ordem: c.ordem }; c.coluna = colId; c.ordem = ordem; render();
+  try {
+    await api("cartaoMover", { id, coluna: colId, ordem });
+    if (antes.coluna !== colId && !desfazendo.on) { const q = quadroAtual(), nomeCol = (q && q.colunas.find(x => x.id === colId) || {}).nome || ""; toast(`Movido para ${nomeCol}`, () => comDesfazer(async () => { c.coluna = antes.coluna; c.ordem = antes.ordem; render(); await api("cartaoMover", { id, coluna: antes.coluna, ordem: antes.ordem }); })); }
+  } catch (e) { Object.assign(c, antes); render(); writeFail(e); }
+}
+async function addCartao(colId, f) {
+  const t = f.t.value.trim(); if (!t) return;
+  const q = quadroAtual(), l = cartoesDe(q.id, colId);
+  f.t.disabled = true;
+  try { await api("cartaoSalvar", { cartao: { quadroId: q.id, coluna: colId, titulo: t, ordem: l.length ? l[l.length - 1].ordem + 1 : 1 } }); S.carimbo = ""; await carregar(); render(); const n = document.querySelector(`.qd-col[data-col="${CSS.escape(colId)}"] .qd-add input`); if (n) n.focus(); }
+  catch (e) { f.t.disabled = false; writeFail(e); }
+}
+// ---- formulário do quadro
+let QF = null;
+function abrirQuadroForm(id) {
+  const q = id ? (S.quadros || []).find(x => x.id === id) : null;
+  QF = q ? { id: q.id, nome: q.nome, cor: q.cor || "", colunas: q.colunas.map(c => ({ ...c })), del: false } : { nome: "", cor: CORES_Q[5], colunas: [{ nome: "A fazer" }, { nome: "Fazendo" }, { nome: "Feito" }], del: false };
+  desenharQuadroForm(); if (!$("#qdDlg").open) $("#qdDlg").showModal();
+}
+function desenharQuadroForm() {
+  const podeApagar = QF.id && (((S.quadros || []).find(x => x.id === QF.id) || {}).uid === S.eu.id || TODAS_MARCAS.includes(S.eu.papel));
+  $("#qdForm").innerHTML = `<div class="dlg-head"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600">${QF.id ? "Editar quadro" : "Novo quadro"}</div><h2>${esc(QF.nome || "Quadro sem nome")}</h2></div>
+      <button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#qdDlg').close()">×</button></div>
+    <div class="dlg-body" style="grid-template-columns:1fr">
+      <label class="field"><span>Nome</span><input id="qfNome" maxlength="80" value="${esc(QF.nome)}" placeholder="Ex.: Black Friday 2026" oninput="QF.nome=this.value"></label>
+      <div class="field"><span>Cor</span><div class="qc-cores">${CORES_Q.map(c => `<button type="button" class="qc-c${QF.cor === c ? " on" : ""}" style="--qc:${c}" aria-label="Cor ${c}" onclick="QF.cor='${c}';desenharQuadroForm()"></button>`).join("")}</div></div>
+      <div class="field"><span>Colunas (na ordem)</span><div class="qf-cols">${QF.colunas.map((c, i) => `<div class="qf-col"><input value="${esc(c.nome)}" maxlength="40" oninput="QF.colunas[${i}].nome=this.value" aria-label="Coluna ${i + 1}">
+        <button type="button" class="icon-btn" aria-label="Subir" ${i ? "" : "disabled"} onclick="QF.colunas.splice(${i - 1},0,QF.colunas.splice(${i},1)[0]);desenharQuadroForm()">↑</button>
+        <button type="button" class="icon-btn" aria-label="Descer" ${i < QF.colunas.length - 1 ? "" : "disabled"} onclick="QF.colunas.splice(${i + 1},0,QF.colunas.splice(${i},1)[0]);desenharQuadroForm()">↓</button>
+        <button type="button" class="com-x" aria-label="Tirar coluna" ${QF.colunas.length > 1 ? "" : "disabled"} onclick="QF.colunas.splice(${i},1);desenharQuadroForm()">×</button></div>`).join("")}</div>
+        <button class="btn sm" type="button" style="justify-self:start" onclick="QF.colunas.push({nome:''});desenharQuadroForm();const l=document.querySelectorAll('.qf-col input');l[l.length-1].focus()">+ Coluna</button>
+        ${QF.id ? `<span class="muted" style="font-size:12.5px">Se tirar uma coluna, os cartões dela vão para a primeira.</span>` : ""}</div>
+    </div>
+    <div class="dlg-foot">${podeApagar ? (QF.del ? `<span class="confirm">Apagar o quadro e todos os cartões? <button class="btn sm danger" type="button" onclick="excluirQuadro()">Apagar</button><button class="btn sm" type="button" onclick="QF.del=false;desenharQuadroForm()">Não</button></span>` : `<button class="btn danger" type="button" onclick="QF.del=true;desenharQuadroForm()">Apagar quadro</button>`) : ""}
+      <span class="sp"></span><button class="btn" type="button" onclick="$('#qdDlg').close()">Cancelar</button><button class="btn primary" type="button" id="qfSalvar" onclick="salvarQuadro()">${QF.id ? "Salvar" : "Criar quadro"}</button></div>`;
+}
+async function salvarQuadro() {
+  const cols = QF.colunas.map(c => ({ id: c.id, nome: (c.nome || "").trim() })).filter(c => c.nome);
+  if (!QF.nome.trim()) return toast("Dê um nome ao quadro.");
+  if (!cols.length) return toast("Coloque pelo menos uma coluna.");
+  const b = $("#qfSalvar"); b.disabled = true;
+  try { const r = await api("quadroSalvar", { quadro: { id: QF.id || "", nome: QF.nome.trim(), cor: QF.cor, colunas: cols } }); $("#qdDlg").close(); S.quadroId = r.id; store("quadro", r.id); S.carimbo = ""; await carregar(); render(); toast(QF.id ? "Quadro salvo" : "Quadro criado"); }
+  catch (e) { b.disabled = false; writeFail(e); }
+}
+async function excluirQuadro() {
+  try { await api("quadroExcluir", { id: QF.id }); $("#qdDlg").close(); S.quadroId = null; store("quadro", ""); S.carimbo = ""; await carregar(); render(); toast("Quadro apagado"); } catch (e) { writeFail(e); }
+}
+// ---- cartão
+let QC = null;
+function abrirCartao(id) {
+  const c = (S.cartoes || []).find(x => x.id === id); if (!c) return;
+  QC = { ...c, checklist: (c.checklist || []).map(i => ({ ...i })), del: false };
+  desenharCartao(); if (!$("#qcDlg").open) $("#qcDlg").showModal();
+}
+function desenharCartao() {
+  const q = (S.quadros || []).find(x => x.id === QC.quadroId); if (!q) return;
+  const opt = (arr, cur) => arr.map(([v, l]) => `<option value="${esc(v)}"${v === cur ? " selected" : ""}>${esc(l)}</option>`).join("");
+  const l = QC.checklist, f = l.filter(i => i.ok).length;
+  $("#qcForm").innerHTML = `<div class="dlg-head"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600">${esc(q.nome)} · criado por ${esc(QC.por || "")} ${esc(quando(QC.criado))}</div><h2>${esc(QC.titulo)}</h2></div>
+      <button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#qcDlg').close()">×</button></div>
+    <div class="dlg-body">
+      <label class="field full"><span>Título</span><input id="qcT" maxlength="200" value="${esc(QC.titulo)}" oninput="QC.titulo=this.value"></label>
+      <label class="field full"><span>Detalhes</span><textarea id="qcD" rows="3" oninput="QC.descricao=this.value">${esc(QC.descricao || "")}</textarea></label>
+      <label class="field"><span>Coluna</span><select onchange="QC.coluna=this.value">${opt(q.colunas.map(c => [c.id, c.nome]), QC.coluna)}</select></label>
+      <label class="field"><span>Responsável</span><select onchange="QC.responsavelId=this.value">${opt([["", "Ninguém"]].concat(S.equipe.filter(u => u.papel !== "cliente").map(u => [u.id, u.id === S.eu.id ? u.nome + " (você)" : u.nome])), QC.responsavelId || "")}</select></label>
+      <label class="field"><span>Prazo</span><input type="date" value="${esc(QC.prazo || "")}" onchange="QC.prazo=this.value"></label>
+      <label class="field"><span>Marca (opcional)</span><select onchange="QC.marcaId=this.value">${opt([["", "Sem marca"]].concat(S.marcas.map(m => [m.id, m.nome])), QC.marcaId || "")}</select></label>
+      <div class="field full"><span>Cor</span><div class="qc-cores"><button type="button" class="qc-c sem${QC.cor ? "" : " on"}" aria-label="Sem cor" onclick="QC.cor='';desenharCartao()">∅</button>${CORES_Q.map(c => `<button type="button" class="qc-c${QC.cor === c ? " on" : ""}" style="--qc:${c}" aria-label="Cor ${c}" onclick="QC.cor='${c}';desenharCartao()"></button>`).join("")}</div></div>
+      <div class="field full"><span>Checklist ${l.length ? `<small class="muted">${f} de ${l.length}</small>` : ""}</span><div class="ck-lista">${l.map((i, n) => `<div class="ck-it${i.ok ? " ok" : ""}"><input type="checkbox"${i.ok ? " checked" : ""} aria-label="Feito" onchange="QC.checklist[${n}].ok=this.checked;desenharCartao()"><input class="ck-t" value="${esc(i.t)}" maxlength="200" oninput="QC.checklist[${n}].t=this.value"><button type="button" class="com-x" aria-label="Tirar item" onclick="QC.checklist.splice(${n},1);desenharCartao()">×</button></div>`).join("")}</div>
+        <div class="ck-novo"><input id="qcCk" placeholder="Novo item (Enter)" maxlength="200" onkeydown="if(event.key==='Enter'){event.preventDefault();const t=this.value.trim();if(t){QC.checklist.push({t,ok:false});desenharCartao();$('#qcCk').focus()}}"></div></div>
+    </div>
+    <div class="dlg-foot">${QC.del ? `<span class="confirm">Apagar este cartão? <button class="btn sm danger" type="button" onclick="excluirCartao()">Apagar</button><button class="btn sm" type="button" onclick="QC.del=false;desenharCartao()">Não</button></span>` : `<button class="btn danger" type="button" onclick="QC.del=true;desenharCartao()">Apagar</button>`}
+      <span class="sp"></span><button class="btn" type="button" onclick="$('#qcDlg').close()">Cancelar</button><button class="btn primary" type="button" id="qcSalvar" onclick="salvarCartao()">Salvar</button></div>`;
+}
+async function salvarCartao() {
+  if (!QC.titulo.trim()) return toast("Escreva o título do cartão.");
+  const b = $("#qcSalvar"); b.disabled = true;
+  const orig = (S.cartoes || []).find(x => x.id === QC.id), mudouCol = orig && orig.coluna !== QC.coluna;
+  const ordem = mudouCol ? (() => { const l = cartoesDe(QC.quadroId, QC.coluna); return l.length ? l[l.length - 1].ordem + 1 : 1; })() : QC.ordem;
+  try { await api("cartaoSalvar", { cartao: { id: QC.id, quadroId: QC.quadroId, coluna: QC.coluna, ordem, titulo: QC.titulo.trim(), descricao: QC.descricao || "", responsavelId: QC.responsavelId || "", prazo: QC.prazo || "", cor: QC.cor || "", marcaId: QC.marcaId || "", checklist: QC.checklist.filter(i => (i.t || "").trim()) } }); $("#qcDlg").close(); S.carimbo = ""; await carregar(); render(); toast("Cartão salvo"); }
+  catch (e) { b.disabled = false; writeFail(e); }
+}
+async function excluirCartao() {
+  const c = { ...QC };
+  try { await api("cartaoExcluir", { id: c.id }); $("#qcDlg").close(); S.carimbo = ""; await carregar(); render();
+    toast("Cartão apagado", async () => { await api("cartaoSalvar", { cartao: { quadroId: c.quadroId, coluna: c.coluna, ordem: c.ordem, titulo: c.titulo, descricao: c.descricao || "", responsavelId: c.responsavelId || "", prazo: c.prazo || "", cor: c.cor || "", marcaId: c.marcaId || "", checklist: c.checklist } }); S.carimbo = ""; await carregar(); render(); toast("Cartão de volta"); });
+  } catch (e) { writeFail(e); }
+}
+["qdDlg", "qcDlg"].forEach(d => $("#" + d).addEventListener("click", e => { if (e.target === $("#" + d)) $("#" + d).close(); }));
+
 /* ---------- Ajuste marcado na arte ---------- */
 let MK = null;
 function artesDe(p) {
@@ -5346,7 +5601,7 @@ function menuGrupos() {
   ];
   if (!cli) {
     g.push({ id: "marca", l: "Marca", ic: "🏷️", itens: [["marca", "Visão geral"], ["marca-sobre", "Sobre"], ["marca-publico", "Público-alvo"], ["marca-produtos", "Produtos"], ["marca-redes", "Redes"], ["marca-arquivos", "Arquivos e identidade"], ["marca-midias", "Biblioteca"], ["marca-notas", "Observações"], ["marca-acessos", "Acessos"], ["marca-plano", "Pacote e legendas"], ["marca-config", "Configurações"]].map(([v, l]) => it(v, l)) });
-    g.push({ id: "equipe", l: "Equipe", ic: "👥", itens: [it("agenda", "Agenda", "🗓️"), it("tarefas", "Tarefas", "☐"), it("horas", "Horas" + (cronAtual() ? " ⏱" : ""), "⏱"), it("mural", "Mural", "📌"), ...(chefe ? [it("equipe", "Pessoas", "👤"), it("equipe-atividade", "Atividade", "📈"), it("equipe-carga", "Carga da equipe", "⚖️")] : [])] });
+    g.push({ id: "equipe", l: "Equipe", ic: "👥", itens: [it("agenda", "Agenda", "🗓️"), it("tarefas", "Tarefas", "☐"), it("quadros", "Quadros", "🗂️"), it("horas", "Horas" + (cronAtual() ? " ⏱" : ""), "⏱"), it("mural", "Mural", "📌"), ...(chefe ? [it("equipe", "Pessoas", "👤"), it("equipe-atividade", "Atividade", "📈"), it("equipe-carga", "Carga da equipe", "⚖️")] : [])] });
     const gest = [...(dir ? [it("financeiro", "Financeiro", "💰")] : []), ...((S.eu.papel === "admin" || dono) && S.empresaInfo ? [it("empresa", "Minha empresa", "🏷️")] : []), ...(dir || dono ? [it("registro", "Registro", "📜")] : []), ...(dono ? [it("empresas", "Empresas", "🏢")] : [])];
     if (gest.length) g.push({ id: "gestao", l: "Gestão", ic: "💼", itens: gest });
   }
@@ -5456,6 +5711,7 @@ const TELAS = [
   ["stories", "Stories", "Calendário de stories com a sequência do dia como no Instagram.", "admin diretor gestor social aprovador cliente", "admin diretor gestor social aprovador cliente"],
   ["ideias", "Banco de ideias", "Ideias sem data, trends da semana e sugestões da IA.", "admin diretor gestor social aprovador", "admin diretor gestor social aprovador"],
   ["pautas", "Postagens", "Lista das postagens do mês com filtros e busca.", "admin diretor gestor social aprovador", "admin diretor gestor social aprovador"],
+  ["quadros", "Quadros", "Quadros livres tipo Trello: colunas e cartões para qualquer projeto da equipe.", "admin diretor gestor social aprovador", "admin diretor gestor social"],
   ["fluxo", "Fluxo de produção", "Quadro com as colunas de cada etapa (ideia, validação, produção, aprovação…).", "admin diretor gestor social aprovador", "admin diretor gestor social aprovador"],
   ["grade", "Grade do Insta", "Como o feed vai ficar, com os posts reais do perfil.", "admin diretor gestor social aprovador cliente", "admin diretor gestor social aprovador cliente"],
   ["aprovacoes", "Aprovações", "Validar ideias e aprovar conteúdos (equipe e cliente).", "admin diretor gestor social aprovador cliente", "admin diretor gestor social aprovador cliente"],
@@ -5751,7 +6007,7 @@ async function exportarDados(tipo) {
 /* ---------- Eventos ---------- */
 $("#marcaSel").addEventListener("change", e => { S.marcaId = e.target.value; store("marca", S.marcaId); S.month = null; S.f = { status: "", formato: "", produto: "", q: "" }; S.confirmDel = false; S.dirty = false; render(); });
 $("#novaMarca").addEventListener("click", novaMarca);
-addEventListener("hashchange", () => { S.confirmDel = false; S.delArq = null; S.dirty = false; render(); window.scrollTo(0, 0); });
+addEventListener("hashchange", () => { S.reord = null; S.confirmDel = false; S.delArq = null; S.dirty = false; render(); window.scrollTo(0, 0); });
 document.addEventListener("input", e => { if (e.target.closest("#app form")) { S.dirty = true; const m = $("#app .save-bar .msg"); if (m) m.textContent = "Alterações não salvas"; } });
 $("#dlg").addEventListener("close", () => render());
 $("#tfDlg").addEventListener("close", () => { S.delTarefa = false; render(); });
@@ -5763,7 +6019,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-12.1"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-13.1"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",
@@ -5782,6 +6038,7 @@ async function carregar() {
     if (j.igual) { S.versao = j.versao || S.versao; return; }
     S.carimbo = j.carimbo || "";
     S.stories = j.stories || []; S.agenda = j.agenda || []; S.horas = j.horas || []; S.mural = j.mural || []; S.avaliacoes = j.avaliacoes || []; S.pagamentos = j.pagamentos || []; S.temTrends = !!j.temTrends; S.temIA = !!j.temIA; S.gcal = !!j.gcal; S.propostas = j.propostas || [];
+    S.quadros = j.quadros || []; S.cartoes = j.cartoes || [];
     S.eu = j.eu; S.pushChave = j.pushChave || ""; S.pushAparelhos = j.pushAparelhos || []; S.modelos = j.modelos || []; if (j.googleClientId !== undefined) S.googleCfg = j.googleClientId;
     if (S.eu && authParaAvisos.feito !== S.token) { authParaAvisos.feito = S.token; authParaAvisos(S.token); }
     S.empresaInfo = j.empresa || null;
