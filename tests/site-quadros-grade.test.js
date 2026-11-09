@@ -29,11 +29,17 @@ const datas = () => Object.fromEntries(P({ action: 'listar', token: ta }).pautas
   // ---------- reordenar grade
   await pg.goto('http://site.test/#grade'); await pg.waitForTimeout(400);
   await pg.click('button:has-text("Reordenar grade")'); await pg.waitForTimeout(300);
-  ok('modo reordenar abre', await pg.isVisible('.rd-barra') && await pg.isDisabled('#rdSalvar'));
+  ok('modo reordenar abre', await pg.isVisible('.rd-barra'));
+  await pg.click('#rdSalvar'); await pg.waitForTimeout(200);
+  ok('Salvar sem mudança explica o que fazer', /ainda não mudou/.test(await pg.textContent('#toast')));
+  await pg.click('.tile.rd:has-text("Post 2") .rd-mv button[aria-label^="Mais para frente"]'); await pg.waitForTimeout(200);
+  ok('seta ▶ troca com o vizinho', /era/.test(await pg.textContent('.tile.rd:has-text("Post 2")')) && /era/.test(await pg.textContent('.tile.rd:has-text("Post 1")')));
+  await pg.click('.tile.rd:has-text("Post 2") .rd-mv button[aria-label^="Mais para trás"]'); await pg.waitForTimeout(200);
+  ok('seta ◀ desfaz', !/era/.test(await pg.textContent('.rd-barra + .grade-box')));
   ok('post agendado aparece travado', (await pg.$$('.tile.rd.fixo')).length === 1);
   // arrastar o Post 1 (o mais antigo, último) para o lugar do Post 4 (o mais recente, primeiro)
   await pg.dragAndDrop('.tile.rd:has-text("Post 1")', '.tile.rd:has-text("Post 4")'); await pg.waitForTimeout(200);
-  ok('arrastar muda as datas na tela', /era/.test(await pg.textContent('.tile.rd:has-text("Post 1")')) && !(await pg.isDisabled('#rdSalvar')));
+  ok('arrastar muda as datas na tela', /era/.test(await pg.textContent('.tile.rd:has-text("Post 1")')) && /mudando de data/.test(await pg.textContent('.rd-barra')));
   ok('nada gravado antes de Salvar', JSON.stringify(datas()) === JSON.stringify({ 'Post 1': '03', 'Post 2': '10', 'Post 3': '17', 'Post 4': '24' }), JSON.stringify(datas()));
   await pg.screenshot({ path: cap('grade-reordenar.png'), fullPage: true });
   // sair sem salvar: volta como antes

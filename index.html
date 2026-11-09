@@ -504,6 +504,9 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 .tile.rd .tm { display: none; }
 .qc .mv { display: none; }
 @media (hover: none), (max-width: 760px) { .qc .mv { display: flex; } }
+.rd-mv { position: absolute; right: 5px; bottom: 5px; z-index: 3; display: flex; gap: 3px; }
+.rd-mv button { width: 26px; height: 24px; border-radius: 6px; border: 0; background: rgba(0,0,0,.65); color: #fff; font-size: 11px; cursor: pointer; padding: 0; }
+.rd-mv button:disabled { opacity: .3; cursor: default; }
 .rd-lock { position: absolute; right: 6px; bottom: 6px; z-index: 2; font-size: 12px; }
 .qd-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
 .qd-it { display: grid; gap: 4px; text-align: left; padding: 14px 16px 14px 18px; border: 1px solid var(--line); border-left: 6px solid var(--qc); border-radius: 14px; background: var(--surface); color: var(--ink); font: inherit; cursor: pointer; }
@@ -3956,11 +3959,11 @@ function reordHtml(m) {
     return `<div class="tile rd${src ? " has-img" : ""}${x.mov ? "" : " fixo"}${r.sel === p.id ? " sel" : ""}${mudou ? " mudou" : ""}" ${x.mov ? `draggable="true" data-id="${esc(p.id)}" role="button" tabindex="0" onclick="reordToque(${js(p.id)})"` : `title="${esc(p.status)}: não muda de lugar"`} style="--fase:${esc(faseCor(m, p.fase))}">
       ${src ? `<img src="${esc(src)}" alt="${esc(nm(p))}" loading="lazy" draggable="false" onerror="this.parentNode.classList.remove('has-img');this.remove()">` : ""}
       <span class="tt">${esc(nm(p))}</span><span class="tm">${esc(p.formato || "")}</span>
-      <span class="rd-data">${br(x.data)}${mudou ? `<small>era ${br(r.orig[p.id])}</small>` : ""}</span>${x.mov ? "" : `<span class="rd-lock">🔒</span>`}</div>`;
+      <span class="rd-data">${br(x.data)}${mudou ? `<small>era ${br(r.orig[p.id])}</small>` : ""}</span>${x.mov ? `<span class="rd-mv"><button type="button" aria-label="Mais para trás (data mais nova)" onclick="event.stopPropagation();reordPasso(${js(p.id)},-1)"${r.ordem[0] === p.id ? " disabled" : ""}>◀</button><button type="button" aria-label="Mais para frente (data mais antiga)" onclick="event.stopPropagation();reordPasso(${js(p.id)},1)"${r.ordem[r.ordem.length - 1] === p.id ? " disabled" : ""}>▶</button></span>` : `<span class="rd-lock">🔒</span>`}</div>`;
   };
   return `<div class="rd-barra"><div><b>${mud ? `${mud} post${mud > 1 ? "s" : ""} mudando de data` : "Arraste os posts para mudar a ordem"}</b>
-      <span class="muted">${r.sel ? "Agora toque no lugar para onde ele vai." : "No celular: toque num post e depois no lugar para onde ele vai."} As datas do mês ficam as mesmas, só trocam entre os posts. Posts agendados ou postados (🔒) não mudam. Só vale depois de <b>Salvar</b>.</span></div>
-      <div class="rd-acts"><button class="btn" type="button" onclick="S.reord=null;render()">Cancelar</button><button class="btn primary" type="button" id="rdSalvar" onclick="reordSalvar()"${mud ? "" : " disabled"}>Salvar nova ordem</button></div></div>
+      <span class="muted">${r.sel ? "Agora toque no post que está no lugar para onde ele vai." : "Arraste, use as setas ◀ ▶ de cada post, ou toque num post e depois no lugar para onde ele vai."} As datas do mês ficam as mesmas, só trocam entre os posts. Posts agendados ou postados (🔒) não mudam. Só vale depois de <b>Salvar</b>.</span></div>
+      <div class="rd-acts"><button class="btn" type="button" onclick="S.reord=null;render()">Cancelar</button><button class="btn primary" type="button" id="rdSalvar" onclick="reordSalvar()">Salvar nova ordem</button></div></div>
     <div class="grade-box"><div class="grade">${itens.map(tile).join("")}</div></div>`;
 }
 function reordMover(id, alvo) {
@@ -3983,8 +3986,14 @@ function wireReord() {
     t.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); reordToque(t.dataset.id); } });
   });
 }
+function reordPasso(id, d) {
+  const o = S.reord.ordem, i = o.indexOf(id), j = i + d;
+  if (i < 0 || j < 0 || j >= o.length) return;
+  o.splice(i, 1); o.splice(j, 0, id); S.reord.sel = null; render();
+}
 async function reordSalvar() {
-  const r = S.reord, mud = reordMudancas(); if (!mud.length) return;
+  const r = S.reord, mud = reordMudancas();
+  if (!mud.length) return toast(r.ordem.length && new Set(r.slots).size < r.slots.length ? "Nada mudou: esses posts estão no mesmo dia. Mude a ordem com outro post." : "Você ainda não mudou nenhum post de lugar. Arraste ou use as setas ◀ ▶.");
   const volta = mud.map(x => ({ id: x.id, data: r.orig[x.id] })), mid = r.marcaId;
   const b = $("#rdSalvar"); b.disabled = true; b.textContent = "Salvando…";
   try {
