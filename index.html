@@ -486,6 +486,9 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 .emp-del { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--danger); border-radius: 12px; background: color-mix(in srgb, var(--danger) 6%, transparent); white-space: normal; }
 .emp-del > span { font-size: 13.5px; }
 .tf-dica { margin: 0; align-self: end; font-size: 12.5px; padding-bottom: 8px; }
+.kb-tf { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
+.kb-tf-l { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 520px) { .kb-tf-l { grid-template-columns: 1fr; } }
 .rd-barra { position: sticky; top: 8px; z-index: 5; display: flex; justify-content: space-between; align-items: center; gap: 10px 16px; flex-wrap: wrap; max-width: 520px; margin: 0 auto 12px; padding: 12px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
 .rd-barra > div:first-child { display: grid; gap: 3px; flex: 1 1 260px; }
 .rd-barra .muted { font-size: 12.5px; }
@@ -2874,10 +2877,12 @@ function abrirTarefa(id) {
       <div class="field full"><span>Links e anexos</span><div id="tAnexos" class="an-lista"></div>${pode ? `<button class="btn sm" type="button" style="justify-self:start" onclick="addAnexoTarefa()">+ Link (Drive, Canva, referência…)</button>` : ""}</div>
       ${t ? `<div class="field full"><span>Comentários</span><div id="tComs"></div></div>` : ""}
       ${t && t.status === "Feita" ? `<div class="full muted" style="font-size:13px">✓ Feita por ${esc(t.concluidoPor || "")} ${esc(quando(t.concluidoEm))}</div>` : ""}
+      <div class="full" id="tKb"></div>
     </div>
     <div class="dlg-foot">
       ${excluir ? (S.delTarefa ? `<span class="confirm">Excluir esta tarefa? <button class="btn sm danger" type="button" onclick="excluirTarefa()">Excluir</button><button class="btn sm" type="button" onclick="S.delTarefa=false;abrirTarefa(${js(t.id)})">Cancelar</button></span>`
         : `<button class="btn danger" type="button" onclick="S.delTarefa=true;abrirTarefa(${js(t.id)})">Excluir</button>`) : ""}
+      ${podeVer("quadros") && !ehCliente() ? `<button class="btn" type="button" onclick="painelKanbanTarefa()">🗂️ Mandar para o Kanban</button>` : ""}
       <span class="sp"></span>
       <button class="btn" type="button" onclick="$('#tfDlg').close()">${pode ? "Cancelar" : "Fechar"}</button>
       ${pode ? `<button class="btn primary" type="submit" id="tSalvar">${t ? "Salvar" : "Criar tarefa"}</button>` : ""}
@@ -2955,6 +2960,35 @@ async function mudarTarefa(id, status) {
   render();
   try { await api("concluirTarefa", { id, status, feita: status === "Feita" }); toast(status === "Feita" ? "Tarefa feita ✓" : status === "Fazendo" ? "Tarefa em andamento" : antes.status === "Feita" ? "Tarefa reaberta" : "Tarefa voltou para A fazer", desfazendo.on ? null : () => comDesfazer(() => mudarTarefa(id, antes.status || "Pendente"))); await carregar(); }
   catch (e) { Object.assign(t, antes); render(); writeFail(e); }
+}
+// tarefa → cartão do Kanban (leva título, detalhes, responsável, prazo, marca e checklist)
+function painelKanbanTarefa() {
+  const box = $("#tKb"), l = S.quadros || []; if (!box) return;
+  if (box.innerHTML) { box.innerHTML = ""; return; }
+  if (!l.length) { box.innerHTML = `<div class="kb-tf"><b>Você ainda não tem nenhum quadro no Kanban.</b><span class="muted">Crie um primeiro no menu <b>Kanban</b>.</span><div><button class="btn sm" type="button" onclick="$('#tfDlg').close();location.hash='#quadros'">Ir para o Kanban</button></div></div>`; return; }
+  const q0 = l.find(q => q.id === S.quadroId) || l[0];
+  const podeExcluir = TF.id && (["admin", "diretor", "gestor"].includes(S.eu.papel) || TF.criadoPorId === S.eu.id);
+  box.innerHTML = `<div class="kb-tf"><b>🗂️ Mandar para o Kanban</b>
+    <div class="kb-tf-l"><label class="field"><span>Quadro</span><select id="kbQ" onchange="kbColunas()">${l.map(q => `<option value="${esc(q.id)}"${q.id === q0.id ? " selected" : ""}>${esc(q.nome)}</option>`).join("")}</select></label>
+    <label class="field"><span>Coluna</span><select id="kbC"></select></label></div>
+    ${podeExcluir ? `<label style="display:flex;gap:8px;align-items:center;font-size:13.5px"><input type="checkbox" id="kbTirar"> Tirar das tarefas depois (para não ficar repetido)</label>` : ""}
+    <div style="display:flex;gap:8px"><button class="btn sm primary" type="button" id="kbBtn" onclick="mandarParaKanban()">Criar o cartão</button><button class="btn sm" type="button" onclick="$('#tKb').innerHTML=''">Cancelar</button></div></div>`;
+  kbColunas(); box.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+function kbColunas() { const q = (S.quadros || []).find(x => x.id === $("#kbQ").value); $("#kbC").innerHTML = (q ? q.colunas : []).map(c => `<option value="${esc(c.id)}">${esc(c.nome)}</option>`).join(""); }
+async function mandarParaKanban() {
+  const titulo = ($("#tTitulo").value || TF.titulo || "").trim(); if (!titulo) return toast("Escreva o título da tarefa primeiro.");
+  const qid = $("#kbQ").value, col = $("#kbC").value, tirar = $("#kbTirar") && $("#kbTirar").checked;
+  const l = cartoesDe(qid, col), b = $("#kbBtn"); b.disabled = true; b.textContent = "Criando…";
+  const desc = ($("#tDesc").value || "").trim(), links = TF.anexos.filter(a => urlOk(a.url)).map(a => `${a.nome || "Link"}: ${a.url}`).join("\n");
+  try {
+    await api("cartaoSalvar", { cartao: { quadroId: qid, coluna: col, ordem: l.length ? l[l.length - 1].ordem + 1 : 1, titulo,
+      descricao: [desc, links].filter(Boolean).join("\n\n"), responsavelId: $("#tResp").value || "", prazo: $("#tPrazo").value || $("#tData").value || "",
+      marcaId: $("#tMarca").value || "", checklist: TF.checklist.filter(i => (i.t || "").trim()).map(i => ({ t: i.t.trim(), ok: !!i.ok })) } });
+    if (tirar && TF.id) await api("excluirTarefa", { id: TF.id });
+    $("#tfDlg").close(); S.quadroId = qid; store("quadro", qid); S.carimbo = ""; await carregar();
+    toast(tirar ? "Virou cartão no Kanban e saiu das tarefas" : "Cartão criado no Kanban");
+  } catch (e) { b.disabled = false; b.textContent = "Criar o cartão"; writeFail(e); }
 }
 async function excluirTarefa() {
   try { await api("excluirTarefa", { id: TF.id }); S.delTarefa = false; $("#tfDlg").close(); await carregar(); toast("Tarefa excluída"); }

@@ -2,8 +2,8 @@
 
 Sistema de planejamento de Instagram por marca: calendário, postagens, fluxo de produção, grade do feed e resumo do mês.
 
-- O **site** fica no Netlify: **https://planejaae.netlify.app/** (antes ficava no GitHub Pages, que suspendeu a conta). As regras de segurança da hospedagem estão em `netlify.toml` e `_headers`.
-- Para publicar uma versão nova sem o GitHub: em app.netlify.com → site **planejaae** → Deploys, arraste a pasta do projeto.
+- O **site** fica na Cloudflare: **https://planejaae.com.br** (e https://planejaae.pages.dev). Antes ficava no GitHub Pages, que suspendeu a conta. As regras de segurança da hospedagem estão em `_headers`.
+- O site fica na **Cloudflare Pages** (projeto **planejaae**). Para publicar uma versão nova: `node ferramentas/publicar-cloudflare.js` (detalhes no topo do arquivo) ou, no painel da Cloudflare, Workers & Pages → planejaae → Create deployment → arrastar a pasta.
 - Os **dados** ficam na sua planilha do Google, nas abas `MARCAS` e `POSTAGENS`.
 - Cada pessoa entra com o próprio login e senha. O administrador cadastra a equipe e escolhe as marcas de cada um.
 
@@ -199,6 +199,7 @@ Ao rodar **configurar**, o script cria quatro rotinas (a quarta é o relatório 
 
 **Kanban** (menu **Kanban**, no topo): quadros livres para qualquer projeto (lançamento, Black Friday, onboarding de cliente…).
 - Você escolhe o nome, a cor e as colunas (renomear, mudar a ordem, tirar; os cartões de uma coluna tirada vão para a primeira).
+- Nas **Tarefas**, o botão **🗂️ Mandar para o Kanban** transforma a tarefa num cartão (com detalhes, responsável, prazo, marca, checklist e links), no quadro e coluna que você escolher; dá para tirar a tarefa da lista ao mesmo tempo.
 - Cartões com título, detalhes, responsável (recebe aviso), prazo (fica vermelho quando vence), cor, marca e checklist.
 - No computador, arraste os cartões entre colunas e dentro da coluna; no celular, use as setas ◀ ▶. Mover e apagar têm **Desfazer**.
 - Quem vê: administração, direção, gestão e social media (dá para mudar em "quem vê o quê"). Clientes não veem.

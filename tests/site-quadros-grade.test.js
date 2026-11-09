@@ -76,6 +76,21 @@ const datas = () => Object.fromEntries(P({ action: 'listar', token: ta }).pautas
   ok('cartão salvo com responsável, prazo, cor e checklist', c && c.responsavelId && c.prazo === '2026-01-02' && c.cor && c.checklist.length === 1);
   ok('prazo vencido em vermelho', await pg.isVisible('.qc:has-text("Briefing") .atraso'));
   await pg.screenshot({ path: cap('quadro.png'), fullPage: true });
+  // ---------- tarefa → Kanban
+  const tsf = P({ action: 'login', login: 'sofi@x.com', senha: 'Teste#2026' }).token;
+  P({ action: 'salvarTarefa', token: tsf, tarefa: { titulo: 'Gravar bastidores', descricao: 'Na loja', prazo: '2026-12-01', checklist: [{ t: 'Separar roupas' }], anexos: [{ nome: 'Ref', url: 'https://x.com/r' }] } });
+  await pg.evaluate(() => { S.carimbo = ''; return carregar(); }); await pg.goto('http://site.test/#tarefas'); await pg.waitForTimeout(400);
+  await pg.selectOption('#tfQuem', 'criei'); await pg.waitForTimeout(200);
+  await pg.click('.tf:has-text("Gravar bastidores") .corpo'); await pg.waitForTimeout(300);
+  await pg.click('#tfDlg button:has-text("Mandar para o Kanban")'); await pg.waitForTimeout(200);
+  await pg.selectOption('#kbC', { label: 'Feito' }); await pg.check('#kbTirar');
+  await pg.screenshot({ path: cap('tarefa-kanban.png') });
+  await pg.click('#kbBtn'); await pg.waitForTimeout(900);
+  const L2 = P({ action: 'listar', token: ta }), card = L2.cartoes.find(x => x.titulo === 'Gravar bastidores'), q2 = L2.quadros[0];
+  ok('tarefa virou cartão na coluna escolhida', card && q2.colunas.find(c => c.id === card.coluna).nome === 'Feito' && card.prazo === '2026-12-01' && card.checklist.length === 1 && /Na loja/.test(card.descricao) && /x\.com\/r/.test(card.descricao), card && JSON.stringify([card.descricao, card.prazo]));
+  ok('e saiu das tarefas', !L2.tarefas.some(t => t.titulo === 'Gravar bastidores'));
+  await pg.goto('http://site.test/#quadros'); await pg.waitForTimeout(400);
+  ok('cartão aparece no quadro', (await pg.textContent('.qd-board')).includes('Gravar bastidores'));
   await pg.click('button:has-text("← Todos os quadros")'); await pg.waitForTimeout(300);
   ok('lista de quadros', (await pg.textContent('.qd-lista')).includes('Black Friday'));
   // ---------- celular

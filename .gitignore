@@ -1,2 +1,4 @@
 node_modules/
 tests/capturas/
+ferramentas/curl-args.txt
+ferramentas/manifest.json
