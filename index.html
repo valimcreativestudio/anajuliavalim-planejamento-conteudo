@@ -560,6 +560,35 @@ body.com-fundo main#app { background: color-mix(in srgb, var(--bg) 86%, transpar
 .qf-vis-op small { font-size: 12px; }
 .qf-membros { margin-top: 8px; }
 @media (max-width: 560px) { .qf-vis { grid-template-columns: 1fr; } }
+.qc-etq { display: flex; flex-wrap: wrap; gap: 4px; }
+.qc-etq span { min-width: 40px; height: 8px; border-radius: 4px; background: var(--ec); font-size: 0; }
+.qc-etq span:not(:empty) { height: auto; font-size: 11px; font-weight: 700; color: #fff; padding: 1px 8px; line-height: 16px; text-shadow: 0 1px 1px rgba(0,0,0,.25); }
+.qc-etq.grande { align-items: center; }
+.qc-etq.grande span { height: 24px; min-width: 48px; font-size: 12px; line-height: 22px; padding: 1px 10px; border-radius: 6px; }
+.qc .t { display: flex; align-items: flex-start; gap: 6px; }
+.qc-ok { flex: none; width: 16px; height: 16px; margin-top: 2px; border-radius: 50%; border: 2px solid currentColor; opacity: .55; background: transparent; color: inherit; padding: 0; font-size: 10px; line-height: 12px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.qc-ok:hover { opacity: 1; }
+.qc-ok[aria-pressed="true"] { background: #22a06b; border-color: #22a06b; color: #fff; opacity: 1; }
+.qc.feito .t span { opacity: .65; }
+.qc-ok.grande { width: 24px; height: 24px; font-size: 14px; line-height: 20px; margin-top: 8px; }
+.qc-topo { display: flex !important; flex-direction: row !important; gap: 10px; align-items: flex-start; }
+.qc-topo input { flex: 1; font-size: 18px; font-weight: 600; }
+.qc-barra { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.qc-feito-tag { font-size: 12.5px; font-weight: 700; color: #22a06b; }
+.qc-data { border-radius: 4px; padding: 0 5px; }
+.qc-data.ok { background: #22a06b; color: #fff; }
+.qc-data.atraso { background: #c9372c; color: #fff !important; font-weight: 600; }
+.qc-data.perto { background: #f5cd47; color: #172b4d; }
+.qc.capa-cheia { background: var(--qc) !important; color: var(--qct) !important; border-color: transparent !important; }
+.qc.capa-cheia .t span { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: .02em; padding: 6px 0 4px; }
+.qc.capa-cheia .meta { color: var(--qct) !important; opacity: .85; }
+.qc-capa-tipo { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13.5px; margin-top: 6px; }
+.etq-box { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
+.etq-op { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.etq-op span { flex: 1; height: 30px; border-radius: 6px; background: var(--ec); color: #fff; font-weight: 700; font-size: 13px; padding: 0 10px; display: flex; align-items: center; text-shadow: 0 1px 1px rgba(0,0,0,.25); }
+.etq-ed { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.etq-ed input[type=color] { width: 40px; height: 32px; border: 1px solid var(--line); border-radius: 8px; padding: 2px; background: var(--surface); }
+.etq-ed input:not([type=color]) { min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 7px 10px; color: var(--ink); font: inherit; }
 .qd-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
 .qd-it { display: grid; gap: 4px; text-align: left; padding: 14px 16px 14px 18px; border: 1px solid var(--line); border-left: 6px solid var(--qc); border-radius: 14px; background: var(--surface); color: var(--ink); font: inherit; cursor: pointer; }
 .qd-it:hover { border-color: var(--qc); }
@@ -4118,12 +4147,18 @@ function vQuadros() {
 }
 function vQuadro(q) {
   const h = hojeIso();
+  const etqDe = id => (q.etiquetas || []).find(e => e.id === id);
   const card = (c, ci) => {
-    const l = c.checklist || [], f = l.filter(i => i.ok).length, atras = c.prazo && c.prazo < h;
+    const l = c.checklist || [], f = l.filter(i => i.ok).length, atras = !c.feito && c.prazo && c.prazo < h;
+    const perto = !c.feito && !atras && c.prazo && (parse(c.prazo) - parse(h)) / 864e5 <= 1;
     const resp = c.responsavelId ? S.equipe.find(u => u.id === c.responsavelId) : null;
-    return `<article class="card qc" draggable="true" data-id="${esc(c.id)}" onclick="abrirCartao(${js(c.id)})"${c.cor ? ` style="--qc:${esc(c.cor)}"` : ""}>
-      ${c.cor ? `<span class="qc-cor"></span>` : ""}<div class="t">${esc(c.titulo)}</div>
-      <div class="meta">${resp ? `<span class="qc-resp">${avatarHtml(resp, 18)} ${esc(resp.nome.split(" ")[0])}</span>` : ""}${c.prazo ? `<span class="${atras ? "atraso" : ""}">⏳ ${br(c.prazo)}</span>` : ""}${l.length ? `<span class="tf-sel${f === l.length ? " cheio" : ""}">☑ ${f}/${l.length}</span>` : ""}${c.descricao ? `<span title="Tem detalhes">≡</span>` : ""}${c.marcaId ? `<span>${esc(nomeMarca(c.marcaId))}</span>` : ""}</div>
+    const etqs = (c.etiquetas || []).map(etqDe).filter(Boolean), cheia = c.capa === "cheia" && c.cor;
+    const dataTxt = c.prazo ? parse(c.prazo).toLocaleDateString("pt-BR", { day: "numeric", month: "short" }).replace(".", "") : "";
+    return `<article class="card qc${cheia ? " capa-cheia" : ""}${c.feito ? " feito" : ""}" draggable="true" data-id="${esc(c.id)}" onclick="abrirCartao(${js(c.id)})"${c.cor ? ` style="--qc:${esc(c.cor)};${cheia ? `--qct:${contraste(c.cor)}` : ""}"` : ""}>
+      ${c.cor && !cheia ? `<span class="qc-cor"></span>` : ""}
+      ${etqs.length ? `<div class="qc-etq">${etqs.map(e => `<span style="--ec:${esc(e.cor)}" title="${esc(e.nome || "Etiqueta")}">${esc(e.nome)}</span>`).join("")}</div>` : ""}
+      <div class="t"><button type="button" class="qc-ok" aria-label="${c.feito ? "Desmarcar concluído" : "Marcar como concluído"}" aria-pressed="${!!c.feito}" onclick="event.stopPropagation();marcarFeito(${js(c.id)})">${c.feito ? "✓" : ""}</button><span>${esc(c.titulo)}</span></div>
+      <div class="meta">${c.prazo ? `<span class="qc-data${c.feito ? " ok" : atras ? " atraso" : perto ? " perto" : ""}">🕒 ${esc(dataTxt)}</span>` : ""}${(c.anexos || []).length ? `<span title="Anexos">📎 ${c.anexos.length}</span>` : ""}${l.length ? `<span class="tf-sel${f === l.length ? " cheio" : ""}">☑ ${f}/${l.length}</span>` : ""}${c.descricao ? `<span title="Tem detalhes">≡</span>` : ""}${c.marcaId ? `<span>${esc(nomeMarca(c.marcaId))}</span>` : ""}${resp ? `<span class="qc-resp" title="${esc(resp.nome)}">${avatarHtml(resp, 20)}</span>` : ""}</div>
       <div class="mv">${ci > 0 ? `<button type="button" aria-label="Para ${esc(q.colunas[ci - 1].nome)}" onclick="event.stopPropagation();moverCartao(${js(c.id)},${js(q.colunas[ci - 1].id)})">◀</button>` : ""}${ci < q.colunas.length - 1 ? `<button type="button" aria-label="Para ${esc(q.colunas[ci + 1].nome)}" onclick="event.stopPropagation();moverCartao(${js(c.id)},${js(q.colunas[ci + 1].id)})">▶</button>` : ""}</div>
     </article>`;
   };
@@ -4223,11 +4258,18 @@ async function salvarQuadro() {
 async function excluirQuadro() {
   try { await api("quadroExcluir", { id: QF.id }); $("#qdDlg").close(); S.quadroId = null; store("quadro", ""); S.carimbo = ""; await carregar(); render(); toast("Quadro apagado"); } catch (e) { writeFail(e); }
 }
+// ---- concluído com um clique (o círculo do cartão)
+async function marcarFeito(id) {
+  const c = (S.cartoes || []).find(x => x.id === id); if (!c) return;
+  c.feito = !c.feito; render();
+  try { await api("cartaoFeito", { id, feito: c.feito }); if (c.feito) toast("Concluído ✓"); }
+  catch (e) { c.feito = !c.feito; render(); writeFail(e); }
+}
 // ---- cartão
 let QC = null;
 function abrirCartao(id) {
   const c = (S.cartoes || []).find(x => x.id === id); if (!c) return;
-  QC = { ...c, checklist: (c.checklist || []).map(i => ({ ...i })), del: false };
+  QC = { ...c, checklist: (c.checklist || []).map(i => ({ ...i })), etiquetas: (c.etiquetas || []).slice(), anexos: (c.anexos || []).map(a => ({ ...a })), del: false, editEtq: null };
   desenharCartao(); if (!$("#qcDlg").open) $("#qcDlg").showModal();
 }
 function desenharCartao() {
@@ -4237,31 +4279,57 @@ function desenharCartao() {
   $("#qcForm").innerHTML = `<div class="dlg-head"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600">${esc(q.nome)} · criado por ${esc(QC.por || "")} ${esc(quando(QC.criado))}</div><h2>${esc(QC.titulo)}</h2></div>
       <button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#qcDlg').close()">×</button></div>
     <div class="dlg-body">
-      <label class="field full"><span>Título</span><input id="qcT" maxlength="200" value="${esc(QC.titulo)}" oninput="QC.titulo=this.value"></label>
+      <div class="field full qc-topo"><button type="button" class="qc-ok grande" aria-pressed="${!!QC.feito}" aria-label="${QC.feito ? "Desmarcar concluído" : "Marcar como concluído"}" onclick="QC.feito=!QC.feito;desenharCartao()">${QC.feito ? "✓" : ""}</button>
+        <input id="qcT" maxlength="200" value="${esc(QC.titulo)}" oninput="QC.titulo=this.value" aria-label="Título"></div>
+      <div class="full qc-barra"><button class="btn sm" type="button" onclick="QC.verEtq=!QC.verEtq;desenharCartao()">🏷️ Etiquetas</button><button class="btn sm" type="button" onclick="document.getElementById('qcPrazo').focus();try{document.getElementById('qcPrazo').showPicker()}catch(e){}">🕒 Datas</button><button class="btn sm" type="button" onclick="document.getElementById('qcCk').focus()">☑ Checklist</button><button class="btn sm" type="button" onclick="QC.anexos.push({nome:'',url:''});desenharCartao();const l=document.querySelectorAll('#qcForm .an-it input');if(l.length)l[l.length-2].focus()">📎 Anexo</button>${QC.feito ? `<span class="qc-feito-tag">✓ Concluído</span>` : ""}</div>
+      ${etiquetasCartaoHtml(q)}
       <label class="field full"><span>Detalhes</span><textarea id="qcD" rows="3" oninput="QC.descricao=this.value">${esc(QC.descricao || "")}</textarea></label>
       <label class="field"><span>Coluna</span><select onchange="QC.coluna=this.value">${opt(q.colunas.map(c => [c.id, c.nome]), QC.coluna)}</select></label>
       <label class="field"><span>Responsável</span><select onchange="QC.responsavelId=this.value">${opt([["", "Ninguém"]].concat(S.equipe.filter(u => u.papel !== "cliente" && (q.visibilidade === "equipe" || !q.visibilidade || u.id === q.uid || (q.membros || []).includes(u.id))).map(u => [u.id, u.id === S.eu.id ? u.nome + " (você)" : u.nome])), QC.responsavelId || "")}</select></label>
-      <label class="field"><span>Prazo</span><input type="date" value="${esc(QC.prazo || "")}" onchange="QC.prazo=this.value"></label>
+      <label class="field"><span>Prazo</span><input type="date" id="qcPrazo" value="${esc(QC.prazo || "")}" onchange="QC.prazo=this.value"></label>
       <label class="field"><span>Marca (opcional)</span><select onchange="QC.marcaId=this.value">${opt([["", "Sem marca"]].concat(S.marcas.map(m => [m.id, m.nome])), QC.marcaId || "")}</select></label>
-      <div class="field full"><span>Cor</span><div class="qc-cores"><button type="button" class="qc-c sem${QC.cor ? "" : " on"}" aria-label="Sem cor" onclick="QC.cor='';desenharCartao()">∅</button>${CORES_Q.map(c => `<button type="button" class="qc-c${QC.cor === c ? " on" : ""}" style="--qc:${c}" aria-label="Cor ${c}" onclick="QC.cor='${c}';desenharCartao()"></button>`).join("")}</div></div>
+      <div class="field full"><span>Capa</span><div class="qc-cores"><button type="button" class="qc-c sem${QC.cor ? "" : " on"}" aria-label="Sem cor" onclick="QC.cor='';QC.capa='';desenharCartao()">∅</button>${CORES_Q.map(c => `<button type="button" class="qc-c${QC.cor === c ? " on" : ""}" style="--qc:${c}" aria-label="Cor ${c}" onclick="QC.cor='${c}';desenharCartao()"></button>`).join("")}</div>
+        ${QC.cor ? `<div class="qc-capa-tipo"><label><input type="radio" name="qcCapa"${QC.capa === "cheia" ? "" : " checked"} onchange="QC.capa='';desenharCartao()"> Faixa no topo</label><label><input type="radio" name="qcCapa"${QC.capa === "cheia" ? " checked" : ""} onchange="QC.capa='cheia';desenharCartao()"> Cartão todo colorido</label></div>` : ""}</div>
+      <div class="field full"><span>Anexos e links</span><div class="an-lista">${QC.anexos.map((a, n) => `<div class="an-it"><input value="${esc(a.nome || "")}" placeholder="Nome" maxlength="120" oninput="QC.anexos[${n}].nome=this.value" aria-label="Nome do link"><input value="${esc(a.url || "")}" placeholder="https://…" type="url" oninput="QC.anexos[${n}].url=this.value" aria-label="Endereço">${urlOk(a.url) ? `<a class="btn sm" href="${esc(urlOk(a.url))}" target="_blank" rel="noopener">Abrir</a>` : "<span></span>"}<button type="button" class="com-x" aria-label="Tirar link" onclick="QC.anexos.splice(${n},1);desenharCartao()">×</button></div>`).join("") || `<span class="muted" style="font-size:13px">Nenhum anexo. Use "📎 Anexo" para colocar links do Drive, Canva, referências…</span>`}</div></div>
       <div class="field full"><span>Checklist ${l.length ? `<small class="muted">${f} de ${l.length}</small>` : ""}</span><div class="ck-lista">${l.map((i, n) => `<div class="ck-it${i.ok ? " ok" : ""}"><input type="checkbox"${i.ok ? " checked" : ""} aria-label="Feito" onchange="QC.checklist[${n}].ok=this.checked;desenharCartao()"><input class="ck-t" value="${esc(i.t)}" maxlength="200" oninput="QC.checklist[${n}].t=this.value"><button type="button" class="com-x" aria-label="Tirar item" onclick="QC.checklist.splice(${n},1);desenharCartao()">×</button></div>`).join("")}</div>
         <div class="ck-novo"><input id="qcCk" placeholder="Novo item (Enter)" maxlength="200" onkeydown="if(event.key==='Enter'){event.preventDefault();const t=this.value.trim();if(t){QC.checklist.push({t,ok:false});desenharCartao();$('#qcCk').focus()}}"></div></div>
     </div>
     <div class="dlg-foot">${QC.del ? `<span class="confirm">Apagar este cartão? <button class="btn sm danger" type="button" onclick="excluirCartao()">Apagar</button><button class="btn sm" type="button" onclick="QC.del=false;desenharCartao()">Não</button></span>` : `<button class="btn danger" type="button" onclick="QC.del=true;desenharCartao()">Apagar</button>`}
       <span class="sp"></span><button class="btn" type="button" onclick="$('#qcDlg').close()">Cancelar</button><button class="btn primary" type="button" id="qcSalvar" onclick="salvarCartao()">Salvar</button></div>`;
 }
+function etiquetasCartaoHtml(q) {
+  const l = q.etiquetas || [], sel = QC.etiquetas;
+  const marcadas = l.filter(e => sel.includes(e.id));
+  if (!QC.verEtq) return marcadas.length ? `<div class="full qc-etq grande">${marcadas.map(e => `<span style="--ec:${esc(e.cor)}">${esc(e.nome)}</span>`).join("")}<button type="button" class="btn sm" onclick="QC.verEtq=true;desenharCartao()">+</button></div>` : "";
+  if (QC.editEtq) return `<div class="full etq-box"><b>Editar etiquetas do quadro</b><span class="muted" style="font-size:12.5px">Valem para todos os cartões deste quadro.</span>
+    ${QC.editEtq.map((e, n) => `<div class="etq-ed"><input type="color" value="${esc(e.cor)}" oninput="QC.editEtq[${n}].cor=this.value" aria-label="Cor"><input value="${esc(e.nome)}" maxlength="30" placeholder="Nome (opcional)" oninput="QC.editEtq[${n}].nome=this.value"><button type="button" class="com-x" aria-label="Apagar etiqueta" onclick="QC.editEtq.splice(${n},1);desenharCartao()">×</button></div>`).join("")}
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" type="button" onclick="QC.editEtq.push({cor:'#838c91',nome:''});desenharCartao()">+ Nova etiqueta</button><span class="sp"></span><button class="btn sm" type="button" onclick="QC.editEtq=null;desenharCartao()">Cancelar</button><button class="btn sm primary" type="button" id="etqSalvar" onclick="salvarEtiquetas()">Salvar etiquetas</button></div></div>`;
+  return `<div class="full etq-box"><b>Etiquetas</b>${l.map(e => `<label class="etq-op"><input type="checkbox"${sel.includes(e.id) ? " checked" : ""} onchange="QC.etiquetas=this.checked?QC.etiquetas.concat([${js(e.id)}]):QC.etiquetas.filter(x=>x!==${js(e.id)});desenharCartao()"><span style="--ec:${esc(e.cor)}">${esc(e.nome)}</span></label>`).join("")}
+    <div style="display:flex;gap:8px"><button class="btn sm" type="button" onclick="QC.editEtq=(((S.quadros||[]).find(x=>x.id===QC.quadroId)||{}).etiquetas||[]).map(e=>({...e}));desenharCartao()">✏️ Criar ou editar etiquetas</button><button class="btn sm" type="button" onclick="QC.verEtq=false;desenharCartao()">Pronto</button></div></div>`;
+}
+async function salvarEtiquetas() {
+  const q = (S.quadros || []).find(x => x.id === QC.quadroId), l = QC.editEtq.map(e => ({ id: e.id, cor: e.cor, nome: (e.nome || "").trim() }));
+  const b = $("#etqSalvar"); b.disabled = true;
+  try {
+    await api("quadroEtiquetas", { id: q.id, etiquetas: l });
+    S.carimbo = ""; await carregar();
+    const q2 = (S.quadros || []).find(x => x.id === QC.quadroId); if (q2) QC.etiquetas = QC.etiquetas.filter(id => (q2.etiquetas || []).some(e => e.id === id));
+    QC.editEtq = null; desenharCartao(); toast("Etiquetas salvas");
+  } catch (e) { b.disabled = false; writeFail(e); }
+}
 async function salvarCartao() {
   if (!QC.titulo.trim()) return toast("Escreva o título do cartão.");
+  if (QC.anexos.some(a => (a.url || "").trim() && !urlOk(a.url.trim()))) return toast("Os links precisam começar com https://");
   const b = $("#qcSalvar"); b.disabled = true;
   const orig = (S.cartoes || []).find(x => x.id === QC.id), mudouCol = orig && orig.coluna !== QC.coluna;
   const ordem = mudouCol ? (() => { const l = cartoesDe(QC.quadroId, QC.coluna); return l.length ? l[l.length - 1].ordem + 1 : 1; })() : QC.ordem;
-  try { await api("cartaoSalvar", { cartao: { id: QC.id, quadroId: QC.quadroId, coluna: QC.coluna, ordem, titulo: QC.titulo.trim(), descricao: QC.descricao || "", responsavelId: QC.responsavelId || "", prazo: QC.prazo || "", cor: QC.cor || "", marcaId: QC.marcaId || "", checklist: QC.checklist.filter(i => (i.t || "").trim()) } }); $("#qcDlg").close(); S.carimbo = ""; await carregar(); render(); toast("Cartão salvo"); }
+  try { await api("cartaoSalvar", { cartao: { id: QC.id, quadroId: QC.quadroId, coluna: QC.coluna, ordem, titulo: QC.titulo.trim(), descricao: QC.descricao || "", responsavelId: QC.responsavelId || "", prazo: QC.prazo || "", cor: QC.cor || "", marcaId: QC.marcaId || "", checklist: QC.checklist.filter(i => (i.t || "").trim()), etiquetas: QC.etiquetas, feito: !!QC.feito, capa: QC.capa || "", anexos: QC.anexos.filter(a => (a.url || "").trim()).map(a => ({ nome: (a.nome || "").trim(), url: a.url.trim() })) } }); $("#qcDlg").close(); S.carimbo = ""; await carregar(); render(); toast("Cartão salvo"); }
   catch (e) { b.disabled = false; writeFail(e); }
 }
 async function excluirCartao() {
   const c = { ...QC };
   try { await api("cartaoExcluir", { id: c.id }); $("#qcDlg").close(); S.carimbo = ""; await carregar(); render();
-    toast("Cartão apagado", async () => { await api("cartaoSalvar", { cartao: { quadroId: c.quadroId, coluna: c.coluna, ordem: c.ordem, titulo: c.titulo, descricao: c.descricao || "", responsavelId: c.responsavelId || "", prazo: c.prazo || "", cor: c.cor || "", marcaId: c.marcaId || "", checklist: c.checklist } }); S.carimbo = ""; await carregar(); render(); toast("Cartão de volta"); });
+    toast("Cartão apagado", async () => { await api("cartaoSalvar", { cartao: { quadroId: c.quadroId, coluna: c.coluna, ordem: c.ordem, titulo: c.titulo, descricao: c.descricao || "", responsavelId: c.responsavelId || "", prazo: c.prazo || "", cor: c.cor || "", marcaId: c.marcaId || "", checklist: c.checklist, etiquetas: c.etiquetas, feito: !!c.feito, capa: c.capa || "", anexos: c.anexos } }); S.carimbo = ""; await carregar(); render(); toast("Cartão de volta"); });
   } catch (e) { writeFail(e); }
 }
 ["qdDlg", "qcDlg"].forEach(d => $("#" + d).addEventListener("click", e => { if (e.target === $("#" + d)) $("#" + d).close(); }));
@@ -6198,7 +6266,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-16.1"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-17.1"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",

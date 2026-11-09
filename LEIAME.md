@@ -200,6 +200,7 @@ Ao rodar **configurar**, o script cria quatro rotinas (a quarta é o relatório 
 **Kanban** (menu **Kanban**, no topo): quadros livres para qualquer projeto (lançamento, Black Friday, onboarding de cliente…).
 - Você escolhe o nome, a cor e as colunas (renomear, mudar a ordem, tirar; os cartões de uma coluna tirada vão para a primeira).
 - Nas **Tarefas**, o botão **🗂️ Mandar para o Kanban** transforma a tarefa num cartão (com detalhes, responsável, prazo, marca, checklist e links), no quadro e coluna que você escolher; dá para tirar a tarefa da lista ao mesmo tempo.
+- **Cartões como no Trello**: círculo para marcar como **concluído** (direto no quadro, sem abrir), **etiquetas** coloridas com nome (o quadro já vem com 6 cores; crie, renomeie e apague em 🏷️ Etiquetas → Criar ou editar), **data** em selo (verde quando concluído, amarela perto do dia, vermelha quando vence), **📎 anexos/links** e **capa** (faixa no topo ou cartão todo colorido).
 - Cartões com título, detalhes, responsável (recebe aviso), prazo (fica vermelho quando vence), cor, marca e checklist.
 - No computador, arraste os cartões entre colunas e dentro da coluna; no celular, use as setas ◀ ▶. Mover e apagar têm **Desfazer**.
 - **Quem vê cada quadro** (escolhido por quem cria): **🔒 Só eu** (pessoal — ninguém mais vê, nem a administração), **👥 Toda a equipe** ou **👤 Escolher pessoas**. Quadro novo começa como "Só eu". Só quem criou muda isso. Os quadros antigos ficaram como "Toda a equipe".
