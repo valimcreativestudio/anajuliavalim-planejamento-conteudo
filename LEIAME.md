@@ -195,9 +195,9 @@ Ao rodar **configurar**, o script cria quatro rotinas (a quarta é o relatório 
 
 **Apagar uma empresa** (só a dona, em Empresas): o botão **Apagar** pede para digitar o nome da empresa. Antes de apagar, o sistema guarda uma **cópia completa em JSON** no seu Drive ("Planejamento de Conteúdo - Cópias de segurança"). Some tudo da empresa (marcas, posts, pessoas, tarefas, agenda, financeiro, registro…); as artes no Drive ficam. A sua própria empresa não pode ser apagada. Para só pausar, desmarque "Empresa ativa".
 
-## Quadros (tipo Trello) e reordenar a grade
+## Kanban (tipo Trello) e reordenar a grade
 
-**Quadros** (Equipe → Quadros): quadros livres para qualquer projeto (lançamento, Black Friday, onboarding de cliente…).
+**Kanban** (menu **Kanban**, no topo): quadros livres para qualquer projeto (lançamento, Black Friday, onboarding de cliente…).
 - Você escolhe o nome, a cor e as colunas (renomear, mudar a ordem, tirar; os cartões de uma coluna tirada vão para a primeira).
 - Cartões com título, detalhes, responsável (recebe aviso), prazo (fica vermelho quando vence), cor, marca e checklist.
 - No computador, arraste os cartões entre colunas e dentro da coluna; no celular, use as setas ◀ ▶. Mover e apagar têm **Desfazer**.

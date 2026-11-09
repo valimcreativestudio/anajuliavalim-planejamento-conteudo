@@ -48,7 +48,11 @@ const datas = () => Object.fromEntries(P({ action: 'listar', token: ta }).pautas
   ok('agendado não mudou', P({ action: 'listar', token: ta }).pautas.find(p => p.id === fixo).data.endsWith('-28'));
   await pg.click('#toast .toast-desf'); await pg.waitForTimeout(900);
   ok('Desfazer volta a ordem anterior', JSON.stringify(datas()) === JSON.stringify({ 'Post 1': '03', 'Post 2': '10', 'Post 3': '17', 'Post 4': '24' }), JSON.stringify(datas()));
-  // ---------- quadros
+  // ---------- kanban
+  const menu = await pg.$$eval('#tabs > *', x => x.map(e => e.textContent.trim().replace(/\s+/g, ' ')));
+  ok('Kanban é um item próprio no menu do topo', menu.some(t => /^🗂️?\s*Kanban/.test(t) || t === 'Kanban'), menu.join(' | '));
+  await pg.evaluate(() => { const g = menuGrupos().find(x => x.id === 'equipe'); window.__eq = g ? g.itens.map(i => i.v).join(',') : ''; });
+  ok('Kanban saiu do submenu Equipe', !(await pg.evaluate(() => window.__eq)).includes('quadros'));
   await pg.goto('http://site.test/#quadros'); await pg.waitForTimeout(400);
   await pg.click('button:has-text("+ Novo quadro")'); await pg.waitForTimeout(200);
   await pg.fill('#qfNome', 'Black Friday'); await pg.click('#qdDlg button:has-text("+ Coluna")'); await pg.fill('.qf-col:last-child input', 'Aprovado');

@@ -3968,7 +3968,7 @@ function vQuadros() {
   if (S.quadroId === undefined) S.quadroId = store("quadro") || null;
   const q = quadroAtual(); if (q) return vQuadro(q);
   const l = (S.quadros || []).slice().sort((a, b) => b.atualizado - a.atualizado);
-  return head("Equipe", "Quadros", `<button class="btn primary" type="button" onclick="abrirQuadroForm()">+ Novo quadro</button>`) +
+  return head("Projetos da equipe", "Kanban", `<button class="btn primary" type="button" onclick="abrirQuadroForm()">+ Novo quadro</button>`) +
     `<p class="muted" style="margin:-4px 0 14px">Quadros livres para qualquer coisa: um lançamento, a Black Friday, o onboarding de um cliente, ideias da equipe… Você escolhe as colunas e arrasta os cartões.</p>
     ${l.length ? `<div class="qd-lista">${l.map(q => { const n = cartoesDe(q.id).length; return `<button type="button" class="qd-it" style="--qc:${esc(q.cor || "var(--primary)")}" onclick="S.quadroId=${js(q.id)};store('quadro',${js(q.id)});render()">
       <b>${esc(q.nome)}</b><span class="muted">${n} cartão${n === 1 ? "" : "es"} · ${q.colunas.map(c => esc(c.nome)).join(" → ")}</span><small class="muted">por ${esc(q.por)}</small></button>`; }).join("")}</div>`
@@ -3985,7 +3985,7 @@ function vQuadro(q) {
       <div class="mv">${ci > 0 ? `<button type="button" aria-label="Para ${esc(q.colunas[ci - 1].nome)}" onclick="event.stopPropagation();moverCartao(${js(c.id)},${js(q.colunas[ci - 1].id)})">◀</button>` : ""}${ci < q.colunas.length - 1 ? `<button type="button" aria-label="Para ${esc(q.colunas[ci + 1].nome)}" onclick="event.stopPropagation();moverCartao(${js(c.id)},${js(q.colunas[ci + 1].id)})">▶</button>` : ""}</div>
     </article>`;
   };
-  return head("Quadros", q.nome, `<button class="btn" type="button" onclick="S.quadroId=null;store('quadro','');render()">← Todos os quadros</button><button class="btn" type="button" onclick="abrirQuadroForm(${js(q.id)})">Editar quadro</button>`) +
+  return head("Kanban", q.nome, `<button class="btn" type="button" onclick="S.quadroId=null;store('quadro','');render()">← Todos os quadros</button><button class="btn" type="button" onclick="abrirQuadroForm(${js(q.id)})">Editar quadro</button>`) +
     `<div class="board-rolo" aria-hidden="true"><div></div></div><div class="board qd-board" style="--qn:${q.colunas.length}">${q.colunas.map((col, ci) => { const cs = cartoesDe(q.id, col.id); return `<section class="col qd-col" data-col="${esc(col.id)}">
       <h3>${esc(col.nome)}<span class="n">${cs.length}</span></h3>
       ${cs.map(c => card(c, ci)).join("")}
@@ -5597,11 +5597,12 @@ function menuGrupos() {
     { id: "plan", l: "Planejamento", ic: "📅", itens: cli ? [it("calendario", "Calendário", "📅"), it("stories", "Stories", "◯"), it("grade", "Grade do Insta", "▦")]
       : [it("calendario", "Calendário", "📅"), it("stories", "Stories", "◯"), it("ideias", "Banco de ideias", "💡"), it("pautas", "Postagens", "☰"), it("fluxo", "Fluxo de produção", "⇄"), it("grade", "Grade do Insta", "▦")] },
     { id: "apv", l: "Aprovações", ic: "✓", itens: [it("aprovacoes", "Aprovações", "✓")] },
+    ...(cli ? [] : [{ id: "kanban", l: "Kanban", ic: "🗂️", itens: [it("quadros", "Kanban", "🗂️")] }]),
     { id: "res", l: "Resultados", ic: "📊", itens: cli ? [it("resultados", "Resultados", "📊")] : [it("resumo", "Resumo do mês", "📊"), ...(chefe ? [it("painel", "Painel da agência", "🧭")] : [])] }
   ];
   if (!cli) {
     g.push({ id: "marca", l: "Marca", ic: "🏷️", itens: [["marca", "Visão geral"], ["marca-sobre", "Sobre"], ["marca-publico", "Público-alvo"], ["marca-produtos", "Produtos"], ["marca-redes", "Redes"], ["marca-arquivos", "Arquivos e identidade"], ["marca-midias", "Biblioteca"], ["marca-notas", "Observações"], ["marca-acessos", "Acessos"], ["marca-plano", "Pacote e legendas"], ["marca-config", "Configurações"]].map(([v, l]) => it(v, l)) });
-    g.push({ id: "equipe", l: "Equipe", ic: "👥", itens: [it("agenda", "Agenda", "🗓️"), it("tarefas", "Tarefas", "☐"), it("quadros", "Quadros", "🗂️"), it("horas", "Horas" + (cronAtual() ? " ⏱" : ""), "⏱"), it("mural", "Mural", "📌"), ...(chefe ? [it("equipe", "Pessoas", "👤"), it("equipe-atividade", "Atividade", "📈"), it("equipe-carga", "Carga da equipe", "⚖️")] : [])] });
+    g.push({ id: "equipe", l: "Equipe", ic: "👥", itens: [it("agenda", "Agenda", "🗓️"), it("tarefas", "Tarefas", "☐"), it("horas", "Horas" + (cronAtual() ? " ⏱" : ""), "⏱"), it("mural", "Mural", "📌"), ...(chefe ? [it("equipe", "Pessoas", "👤"), it("equipe-atividade", "Atividade", "📈"), it("equipe-carga", "Carga da equipe", "⚖️")] : [])] });
     const gest = [...(dir ? [it("financeiro", "Financeiro", "💰")] : []), ...((S.eu.papel === "admin" || dono) && S.empresaInfo ? [it("empresa", "Minha empresa", "🏷️")] : []), ...(dir || dono ? [it("registro", "Registro", "📜")] : []), ...(dono ? [it("empresas", "Empresas", "🏢")] : [])];
     if (gest.length) g.push({ id: "gestao", l: "Gestão", ic: "💼", itens: gest });
   }
@@ -5711,7 +5712,7 @@ const TELAS = [
   ["stories", "Stories", "Calendário de stories com a sequência do dia como no Instagram.", "admin diretor gestor social aprovador cliente", "admin diretor gestor social aprovador cliente"],
   ["ideias", "Banco de ideias", "Ideias sem data, trends da semana e sugestões da IA.", "admin diretor gestor social aprovador", "admin diretor gestor social aprovador"],
   ["pautas", "Postagens", "Lista das postagens do mês com filtros e busca.", "admin diretor gestor social aprovador", "admin diretor gestor social aprovador"],
-  ["quadros", "Quadros", "Quadros livres tipo Trello: colunas e cartões para qualquer projeto da equipe.", "admin diretor gestor social aprovador", "admin diretor gestor social"],
+  ["quadros", "Kanban", "Quadros kanban livres, tipo Trello: colunas e cartões para qualquer projeto da equipe.", "admin diretor gestor social aprovador", "admin diretor gestor social"],
   ["fluxo", "Fluxo de produção", "Quadro com as colunas de cada etapa (ideia, validação, produção, aprovação…).", "admin diretor gestor social aprovador", "admin diretor gestor social aprovador"],
   ["grade", "Grade do Insta", "Como o feed vai ficar, com os posts reais do perfil.", "admin diretor gestor social aprovador cliente", "admin diretor gestor social aprovador cliente"],
   ["aprovacoes", "Aprovações", "Validar ideias e aprovar conteúdos (equipe e cliente).", "admin diretor gestor social aprovador cliente", "admin diretor gestor social aprovador cliente"],
