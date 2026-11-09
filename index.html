@@ -3105,6 +3105,7 @@ function authParaAvisos(token) {
 async function sair() {
   try { const sub = SWREG && SWREG.pushManager && await SWREG.pushManager.getSubscription(); if (sub) { await api("pushSair", { endpoint: sub.endpoint }).catch(() => {}); await sub.unsubscribe(); } } catch (e) {}
   authParaAvisos("");
+  try { if ("clearAppBadge" in navigator) navigator.clearAppBadge(); } catch (e) {}
   try { await api("sair"); } catch (e) {}
   S.token = ""; store("token", ""); S.eu = null; S.marcas = []; S.posts = []; S.loadedM = S.loadedP = false;
   limparTela();
@@ -5316,6 +5317,17 @@ function vPainel() {
     </div>`;
 }
 
+/* ---------- Numerozinho no ícone do app (celular e computador) ---------- */
+function contarPendentes() {
+  if (!S.eu) return 0;
+  const n = f => { try { return f(); } catch (e) { return 0; } };
+  return n(() => pendencias().length) + n(minhasUrgentes) + n(() => pedidosParaMim().length + convitesSemResposta().length) + n(() => avisosNaoLidos().length);
+}
+function atualizarNumeroIcone() {
+  if (!("setAppBadge" in navigator)) return;
+  const q = S.eu ? contarPendentes() : 0;
+  (q ? navigator.setAppBadge(q) : navigator.clearAppBadge()).catch(() => {});
+}
 /* ---------- Menu do topo com submenus ---------- */
 function menuGrupos() {
   if (!S.eu) return [];
@@ -5781,7 +5793,7 @@ async function carregar() {
     S.loadedM = S.loadedP = true; S.failed = false;
     if (S.eu) { store("cores", JSON.stringify(S.eu.cores || {})); aplicarCores(S.eu.cores || {}); }
     if (S.eu && !S.tourChecado) { S.tourChecado = true; setTimeout(() => { if (!TOUR && !document.querySelector("dialog[open]")) iniciarTour(); }, 900); }
-    avisarNovidades();
+    avisarNovidades(); atualizarNumeroIcone();
   } catch (e) {
     if (e.code === "sessao") return writeFail(e);
     if (!S.loadedP) S.failed = true; else toast("Sem conexão com a planilha agora.");

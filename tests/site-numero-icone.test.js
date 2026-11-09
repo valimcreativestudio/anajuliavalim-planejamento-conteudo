@@ -1,0 +1,35 @@
+// O numerozinho no ícone do app soma o que espera pela pessoa
+const G = require('./simulador-google.js');
+const { chromium } = require('playwright'); const fs = require('fs'), path = require('path');
+const dir = path.join(__dirname, '..');
+const P = o => G.post(JSON.stringify(o));
+let falhas = 0; const ok = (nome, cond, extra) => { if (!cond) falhas++; console.log((cond ? 'ok   ' : 'FALHA') + ' ' + nome + (extra !== undefined ? ' → ' + extra : '')); };
+G.configurar(); const senha = G.logs[0].match(/Senha provisória: (\S+)/)[1];
+const ta = P({ action: 'login', login: 'ana@agencia.com', senha }).token;
+const liso = P({ action: 'salvarMarca', token: ta, marca: { nome: 'Liso' } }).id;
+P({ action: 'salvarUsuario', token: ta, usuario: { nome: 'Sofi', login: 'sofi@x.com', papel: 'social', marcas: [liso], senha: 'Teste#2026' } });
+const sofi = P({ action: 'listar', token: ta }).usuarios.find(u => u.nome === 'Sofi').id;
+const hoje = new Date().toISOString().slice(0, 10);
+P({ action: 'salvarTarefa', token: ta, tarefa: { titulo: 'Urgente 1', responsavelId: sofi, prazo: hoje } });
+P({ action: 'salvarTarefa', token: ta, tarefa: { titulo: 'Urgente 2', responsavelId: sofi, prazo: '2026-01-02' } });
+(async () => {
+  const b = await chromium.launch(); const pg = await b.newPage({ viewport: { width: 390, height: 800 } }); const erros = [];
+  pg.on('pageerror', e => erros.push(e.message));
+  await pg.addInitScript(() => { window.__badge = []; navigator.setAppBadge = n => { window.__badge.push(n); return Promise.resolve(); }; navigator.clearAppBadge = () => { window.__badge.push(0); return Promise.resolve(); }; });
+  await pg.route('http://site.test/**', r => { const u = new URL(r.request().url()); const f = path.join(dir, u.pathname === '/' ? 'index.html' : u.pathname); if (!fs.existsSync(f)) return r.fulfill({ status: 404, body: '' }); let body = fs.readFileSync(f); if (f.endsWith('index.html')) body = body.toString().replace("connect-src 'self'", "connect-src 'self' https://api.test"); if (f.endsWith('config.js')) body = body.toString().replace(/API_URL: "[^"]*"/, 'API_URL: "https://api.test/exec"'); r.fulfill({ body, contentType: f.endsWith('.js') ? 'text/javascript' : 'text/html' }); });
+  await pg.route('https://api.test/**', r => r.fulfill({ contentType: 'application/json', body: JSON.stringify(G.post(r.request().postData())) }));
+  await pg.route(/fonts|drive|accounts\.google/, r => r.abort());
+  await pg.goto('http://site.test/#tarefas'); await pg.waitForTimeout(300);
+  await pg.fill('#lgLogin', 'sofi@x.com'); await pg.fill('#lgSenha', 'Teste#2026'); await pg.click('#lgBtn'); await pg.waitForTimeout(900);
+  const esperado = await pg.evaluate(() => contarPendentes());
+  let marcas = await pg.evaluate(() => window.__badge);
+  ok('número no ícone = pendências da pessoa', esperado >= 2 && marcas[marcas.length - 1] === esperado, JSON.stringify({ esperado, marcas }));
+  await pg.evaluate(() => mudarTarefa(S.tarefas.find(t => t.titulo === 'Urgente 1').id, 'Feita')); await pg.waitForTimeout(700);
+  marcas = await pg.evaluate(() => window.__badge);
+  ok('concluir tarefa diminui o número', marcas[marcas.length - 1] === esperado - 1, JSON.stringify(marcas));
+  await pg.evaluate(() => sair()); await pg.waitForTimeout(500);
+  marcas = await pg.evaluate(() => window.__badge);
+  ok('sair zera o número', marcas[marcas.length - 1] === 0, JSON.stringify(marcas));
+  ok('sem erros na página', !erros.length, erros.join(' | '));
+  await b.close(); process.exit(falhas ? 1 : 0);
+})();

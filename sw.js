@@ -1,6 +1,6 @@
 // App no celular: guarda a página para abrir rápido e mostra os avisos.
 // Os dados sempre vêm da planilha (nada da planilha fica guardado aqui).
-const CACHE = "planejamento-v3";
+const CACHE = "planejamento-v4";
 const ARQUIVOS = ["./", "index.html", "config.js", "manifest.webmanifest", "icone-192.png", "icone-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ARQUIVOS)).catch(() => {})); self.skipWaiting(); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE && k !== "plan-auth").map(k => caches.delete(k)))).then(() => self.clients.claim())); });
@@ -35,6 +35,7 @@ self.addEventListener("push", e => {
     if (!msgs.length) msgs = [{ t: "Planeja Aê", c: "Tem novidade para você.", h: "#calendario" }];
     const m = msgs[msgs.length - 1], mais = msgs.length > 1 ? ` (+${msgs.length - 1})` : "";
     const destino = /^#[\w=-]*$/.test(m.h || "") ? m.h : "";
+    try { if (self.navigator.setAppBadge) await self.navigator.setAppBadge(msgs.length); } catch (err) {}
     return self.registration.showNotification(m.t + mais, { body: m.c || "", icon: "icone-192.png", badge: "icone-192.png", tag: "planeja", renotify: true, data: { url: "./" + destino } });
   })());
 });
