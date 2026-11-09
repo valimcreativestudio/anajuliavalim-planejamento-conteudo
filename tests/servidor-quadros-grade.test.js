@@ -9,7 +9,7 @@ const novo = (nome, login, papel) => { P({ action: 'salvarUsuario', token: ta, u
 const ts = novo('Sofi', 'sofi@x.com', 'social'), tb = novo('Bia', 'bia@x.com', 'social'), tc = novo('Cli', 'cli@x.com', 'cliente');
 const sofi = P({ action: 'listar', token: ta }).usuarios.find(u => u.nome === 'Sofi').id;
 // ---- quadros
-const qid = P({ action: 'quadroSalvar', token: ts, quadro: { nome: 'Black Friday', cor: '#ff5a5f', colunas: [{ nome: 'Ideias' }, { nome: 'Fazendo' }, { nome: 'Pronto' }] } }).id;
+const qid = P({ action: 'quadroSalvar', token: ts, quadro: { nome: 'Black Friday', cor: '#ff5a5f', visibilidade: 'equipe', colunas: [{ nome: 'Ideias' }, { nome: 'Fazendo' }, { nome: 'Pronto' }] } }).id;
 let L = P({ action: 'listar', token: ta }); let q = L.quadros.find(x => x.id === qid);
 ok('quadro criado com 3 colunas', q && q.colunas.length === 3, q && q.colunas.map(c => c.nome).join(','));
 ok('cliente não vê quadros', P({ action: 'listar', token: tc }).quadros.length === 0);
@@ -38,6 +38,23 @@ ok('cartão apagado', !P({ action: 'listar', token: ta }).cartoes.some(x => x.id
 P({ action: 'quadroExcluir', token: ta, id: qid });
 L = P({ action: 'listar', token: ta });
 ok('direção apaga o quadro e os cartões', !L.quadros.length && !L.cartoes.length);
+// ---- quem vê o quadro
+const bia = P({ action: 'listar', token: ta }).usuarios.find(u => u.nome === 'Bia').id;
+const priv = P({ action: 'quadroSalvar', token: ts, quadro: { nome: 'Minhas coisas', colunas: [{ nome: 'A fazer' }] } }).id;
+ok('quadro novo sem escolha é privado', P({ action: 'listar', token: ts }).quadros.find(q => q.id === priv).visibilidade === 'privado');
+ok('privado: Bia e até a administração não veem', !P({ action: 'listar', token: tb }).quadros.some(q => q.id === priv) && !P({ action: 'listar', token: ta }).quadros.some(q => q.id === priv));
+ok('privado: ninguém mais mexe pelo ID', !!P({ action: 'cartaoSalvar', token: tb, cartao: { quadroId: priv, titulo: 'x' } }).error && !!P({ action: 'quadroExcluir', token: ta, id: priv }).error);
+const kp = P({ action: 'cartaoSalvar', token: ts, cartao: { quadroId: priv, titulo: 'Só meu', responsavelId: bia } }).id;
+ok('privado: não dá para pôr outra pessoa como responsável', P({ action: 'listar', token: ts }).cartoes.find(c => c.id === kp).responsavelId === '');
+P({ action: 'quadroSalvar', token: ts, quadro: { id: priv, nome: 'Minhas coisas', colunas: [{ nome: 'A fazer' }], visibilidade: 'pessoas', membros: [bia] } });
+ok('pessoas: Bia passa a ver', P({ action: 'listar', token: tb }).quadros.some(q => q.id === priv) && P({ action: 'listar', token: tb }).cartoes.some(c => c.id === kp));
+ok('pessoas: a administração continua sem ver', !P({ action: 'listar', token: ta }).quadros.some(q => q.id === priv));
+P({ action: 'quadroSalvar', token: tb, quadro: { id: priv, nome: 'Renomeado pela Bia', colunas: [{ nome: 'A fazer' }], visibilidade: 'equipe' } });
+const qb = P({ action: 'listar', token: ts }).quadros.find(q => q.id === priv);
+ok('só quem criou muda quem vê (Bia renomeia, mas não abre para todos)', qb.nome === 'Renomeado pela Bia' && qb.visibilidade === 'pessoas', JSON.stringify([qb.nome, qb.visibilidade]));
+P({ action: 'quadroSalvar', token: ts, quadro: { id: priv, nome: 'Minhas coisas', colunas: [{ nome: 'A fazer' }], visibilidade: 'privado' } });
+ok('voltar para privado tira a Bia', !P({ action: 'listar', token: tb }).quadros.some(q => q.id === priv));
+ok('cliente não entra nem sendo marcado', (P({ action: 'quadroSalvar', token: ts, quadro: { id: priv, nome: 'x', colunas: [{ nome: 'A' }], visibilidade: 'pessoas', membros: [P({ action: 'listar', token: ta }).usuarios.find(u => u.nome === 'Cli').id] } }), !P({ action: 'listar', token: tc }).quadros.length));
 // ---- reordenar grade
 const ids = ['2026-11-03', '2026-11-10', '2026-11-17'].map((d, i) => P({ action: 'salvarPauta', token: ts, pauta: { marcaId: liso, data: d, postagem: 'P' + i } }).id);
 const ag = P({ action: 'salvarPauta', token: ts, pauta: { marcaId: liso, data: '2026-11-24', postagem: 'Agendado' } }).id;

@@ -77,6 +77,8 @@ const datas = () => Object.fromEntries(P({ action: 'listar', token: ta }).pautas
   ok('Kanban saiu do submenu Equipe', !(await pg.evaluate(() => window.__eq)).includes('quadros'));
   await pg.goto('http://site.test/#quadros'); await pg.waitForTimeout(400);
   await pg.click('button:has-text("+ Novo quadro")'); await pg.waitForTimeout(200);
+  ok('quadro novo começa como "Só eu"', await pg.isChecked('#qdForm input[value=privado]'));
+  await pg.click('#qdForm .qf-vis-op:has(input[value=equipe])'); await pg.waitForTimeout(150);
   await pg.fill('#qfNome', 'Black Friday'); await pg.click('#qdDlg button:has-text("+ Coluna")'); await pg.fill('.qf-col:last-child input:not([type=color])', 'Aprovado');
   await pg.click('#qfSalvar'); await pg.waitForTimeout(700);
   ok('quadro criado com 4 colunas', (await pg.$$('.qd-col')).length === 4);

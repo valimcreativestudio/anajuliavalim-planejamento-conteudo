@@ -202,7 +202,8 @@ Ao rodar **configurar**, o script cria quatro rotinas (a quarta é o relatório 
 - Nas **Tarefas**, o botão **🗂️ Mandar para o Kanban** transforma a tarefa num cartão (com detalhes, responsável, prazo, marca, checklist e links), no quadro e coluna que você escolher; dá para tirar a tarefa da lista ao mesmo tempo.
 - Cartões com título, detalhes, responsável (recebe aviso), prazo (fica vermelho quando vence), cor, marca e checklist.
 - No computador, arraste os cartões entre colunas e dentro da coluna; no celular, use as setas ◀ ▶. Mover e apagar têm **Desfazer**.
-- Quem vê: administração, direção, gestão e social media (dá para mudar em "quem vê o quê"). Clientes não veem.
+- **Quem vê cada quadro** (escolhido por quem cria): **🔒 Só eu** (pessoal — ninguém mais vê, nem a administração), **👥 Toda a equipe** ou **👤 Escolher pessoas**. Quadro novo começa como "Só eu". Só quem criou muda isso. Os quadros antigos ficaram como "Toda a equipe".
+- A tela Kanban aparece para administração, direção, gestão e social media (dá para mudar em "quem vê o quê"). Clientes não veem.
 
 **Aparência do Kanban** (Editar quadro): plano de fundo com gradientes, cores ou uma imagem (link do Drive compartilhado ou qualquer imagem https), fonte do quadro (Arredondada, Manuscrita, Moderna, Clássica, Máquina de escrever…) e uma cor para cada coluna.
 

@@ -531,6 +531,15 @@ body.com-fundo main#app { background: color-mix(in srgb, var(--bg) 86%, transpar
 .rd-mv button { width: 26px; height: 24px; border-radius: 6px; border: 0; background: rgba(0,0,0,.65); color: #fff; font-size: 11px; cursor: pointer; padding: 0; }
 .rd-mv button:disabled { opacity: .3; cursor: default; }
 .rd-lock { position: absolute; right: 6px; bottom: 6px; z-index: 2; font-size: 12px; }
+.qd-vis { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.qd-vis.grande { align-self: center; padding: 6px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-size: 12.5px; }
+.qf-vis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.qf-vis-op { display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; background: var(--surface); }
+.qf-vis-op.on { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+.qf-vis-op input { position: absolute; opacity: 0; pointer-events: none; }
+.qf-vis-op small { font-size: 12px; }
+.qf-membros { margin-top: 8px; }
+@media (max-width: 560px) { .qf-vis { grid-template-columns: 1fr; } }
 .qd-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
 .qd-it { display: grid; gap: 4px; text-align: left; padding: 14px 16px 14px 18px; border: 1px solid var(--line); border-left: 6px solid var(--qc); border-radius: 14px; background: var(--surface); color: var(--ink); font: inherit; cursor: pointer; }
 .qd-it:hover { border-color: var(--qc); }
@@ -2995,7 +3004,7 @@ function painelKanbanTarefa() {
   const q0 = l.find(q => q.id === S.quadroId) || l[0];
   const podeExcluir = TF.id && (["admin", "diretor", "gestor"].includes(S.eu.papel) || TF.criadoPorId === S.eu.id);
   box.innerHTML = `<div class="kb-tf"><b>🗂️ Mandar para o Kanban</b>
-    <div class="kb-tf-l"><label class="field"><span>Quadro</span><select id="kbQ" onchange="kbColunas()">${l.map(q => `<option value="${esc(q.id)}"${q.id === q0.id ? " selected" : ""}>${esc(q.nome)}</option>`).join("")}</select></label>
+    <div class="kb-tf-l"><label class="field"><span>Quadro</span><select id="kbQ" onchange="kbColunas()">${l.map(q => `<option value="${esc(q.id)}"${q.id === q0.id ? " selected" : ""}>${esc(q.nome)} (${visTxt(q).replace(/^\S+ /, "")})</option>`).join("")}</select></label>
     <label class="field"><span>Coluna</span><select id="kbC"></select></label></div>
     ${podeExcluir ? `<label style="display:flex;gap:8px;align-items:center;font-size:13.5px"><input type="checkbox" id="kbTirar"> Tirar das tarefas depois (para não ficar repetido)</label>` : ""}
     <div style="display:flex;gap:8px"><button class="btn sm primary" type="button" id="kbBtn" onclick="mandarParaKanban()">Criar o cartão</button><button class="btn sm" type="button" onclick="$('#tKb').innerHTML=''">Cancelar</button></div></div>`;
@@ -4072,6 +4081,8 @@ async function reordSalvar() {
 
 /* ---------- Quadros livres (tipo Trello) ---------- */
 const CORES_Q = ["#ef4444", "#f59e0b", "#eab308", "#22c55e", "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899"];
+const visTxt = q => q.visibilidade === "privado" ? "🔒 Só você" : q.visibilidade === "pessoas" ? `👤 ${1 + (q.membros || []).length} pessoas` : "👥 Toda a equipe";
+const pessoasQuadro = () => S.equipe.filter(u => u.papel !== "cliente" && u.id !== S.eu.id);
 const quadroAtual = () => (S.quadros || []).find(q => q.id === S.quadroId);
 const cartoesDe = (qid, col) => (S.cartoes || []).filter(c => c.quadroId === qid && (!col || c.coluna === col)).sort((a, b) => a.ordem - b.ordem);
 function vQuadros() {
@@ -4081,7 +4092,7 @@ function vQuadros() {
   return head("Projetos da equipe", "Kanban", `<button class="btn primary" type="button" onclick="abrirQuadroForm()">+ Novo quadro</button>`) +
     `<p class="muted" style="margin:-4px 0 14px">Quadros livres para qualquer coisa: um lançamento, a Black Friday, o onboarding de um cliente, ideias da equipe… Você escolhe as colunas e arrasta os cartões.</p>
     ${l.length ? `<div class="qd-lista">${l.map(q => { const n = cartoesDe(q.id).length; return `<button type="button" class="qd-it" style="--qc:${esc(q.cor || "var(--primary)")}" onclick="S.quadroId=${js(q.id)};store('quadro',${js(q.id)});render()">
-      <b>${esc(q.nome)}</b><span class="muted">${n} cartão${n === 1 ? "" : "es"} · ${q.colunas.map(c => esc(c.nome)).join(" → ")}</span><small class="muted">por ${esc(q.por)}</small></button>`; }).join("")}</div>`
+      <b>${esc(q.nome)}</b><span class="muted">${n} cartão${n === 1 ? "" : "es"} · ${q.colunas.map(c => esc(c.nome)).join(" → ")}</span><small class="muted"><span class="qd-vis">${visTxt(q)}</span> · por ${q.uid === S.eu.id ? "você" : esc(q.por)}</small></button>`; }).join("")}</div>`
     : `<div class="empty"><strong>Nenhum quadro ainda</strong><span>Crie o primeiro com as colunas que fizerem sentido, por exemplo: A fazer → Fazendo → Feito.</span><button class="btn primary" type="button" onclick="abrirQuadroForm()">+ Novo quadro</button></div>`}`;
 }
 function vQuadro(q) {
@@ -4097,7 +4108,7 @@ function vQuadro(q) {
   };
   const est = q.estilo || {}, fundo = fundoCss(est.fundo), fonte = FONTES[est.fonte] ? est.fonte : "padrao";
   if (fonte !== "padrao") carregarFonte(fonte);
-  return head("Kanban", q.nome, `<button class="btn" type="button" onclick="S.quadroId=null;store('quadro','');render()">← Todos os quadros</button><button class="btn" type="button" onclick="abrirQuadroForm(${js(q.id)})">Editar quadro</button>`) +
+  return head("Kanban", q.nome, `<span class="qd-vis grande" title="Quem vê este quadro">${visTxt(q)}</span><button class="btn" type="button" onclick="S.quadroId=null;store('quadro','');render()">← Todos os quadros</button><button class="btn" type="button" onclick="abrirQuadroForm(${js(q.id)})">Editar quadro</button>`) +
     `<div class="qd-fundo${fundo ? " com-fundo" : ""}${fundo && fundoEscuro(est.fundo) ? " escuro" : ""}" style="${fundo ? `background:${esc(fundo)};` : ""}${fonte !== "padrao" ? `font-family:${esc(FONTES[fonte][1])};` : ""}"><div class="board-rolo" aria-hidden="true"><div></div></div><div class="board qd-board" style="--qn:${q.colunas.length}">${q.colunas.map((col, ci) => { const cs = cartoesDe(q.id, col.id); return `<section class="col qd-col${col.cor ? " tem-cor" : ""}" data-col="${esc(col.id)}"${col.cor ? ` style="--colc:${esc(col.cor)}"` : ""}>
       <h3>${esc(col.nome)}<span class="n">${cs.length}</span></h3>
       ${cs.map(c => card(c, ci)).join("")}
@@ -4143,7 +4154,8 @@ async function addCartao(colId, f) {
 let QF = null;
 function abrirQuadroForm(id) {
   const q = id ? (S.quadros || []).find(x => x.id === id) : null;
-  QF = q ? { id: q.id, nome: q.nome, cor: q.cor || "", estilo: { ...(q.estilo || {}) }, colunas: q.colunas.map(c => ({ ...c })), del: false } : { nome: "", cor: CORES_Q[5], estilo: { fundo: "", fonte: "padrao" }, colunas: [{ nome: "A fazer" }, { nome: "Fazendo" }, { nome: "Feito" }], del: false };
+  QF = q ? { id: q.id, uid: q.uid, nome: q.nome, cor: q.cor || "", estilo: { ...(q.estilo || {}) }, visibilidade: q.visibilidade || "equipe", membros: (q.membros || []).slice(), colunas: q.colunas.map(c => ({ ...c })), del: false }
+    : { nome: "", cor: CORES_Q[5], estilo: { fundo: "", fonte: "padrao" }, visibilidade: "privado", membros: [], colunas: [{ nome: "A fazer" }, { nome: "Fazendo" }, { nome: "Feito" }], del: false };
   desenharQuadroForm(); if (!$("#qdDlg").open) $("#qdDlg").showModal();
 }
 function desenharQuadroForm() {
@@ -4153,6 +4165,9 @@ function desenharQuadroForm() {
     <div class="dlg-body" style="grid-template-columns:1fr">
       <label class="field"><span>Nome</span><input id="qfNome" maxlength="80" value="${esc(QF.nome)}" placeholder="Ex.: Black Friday 2026" oninput="QF.nome=this.value"></label>
       <div class="field"><span>Cor</span><div class="qc-cores">${CORES_Q.map(c => `<button type="button" class="qc-c${QF.cor === c ? " on" : ""}" style="--qc:${c}" aria-label="Cor ${c}" onclick="QF.cor='${c}';desenharQuadroForm()"></button>`).join("")}</div></div>
+      ${!QF.id || QF.uid === S.eu.id ? `<div class="field"><span>Quem vê este quadro</span><div class="qf-vis" role="radiogroup">${[["privado", "🔒 Só eu", "Quadro pessoal: ninguém mais vê."], ["equipe", "👥 Toda a equipe", "Todos da equipe veem e mexem."], ["pessoas", "👤 Escolher pessoas", "Só você e quem você marcar."]].map(([v, l, d]) => `<label class="qf-vis-op${QF.visibilidade === v ? " on" : ""}"><input type="radio" name="qfVis" value="${v}"${QF.visibilidade === v ? " checked" : ""} onchange="QF.visibilidade=this.value;desenharQuadroForm()"><b>${l}</b><small class="muted">${d}</small></label>`).join("")}</div>
+        ${QF.visibilidade === "pessoas" ? `<div class="chk-list qf-membros">${pessoasQuadro().map(u => `<label><input type="checkbox" value="${esc(u.id)}"${QF.membros.includes(u.id) ? " checked" : ""} onchange="QF.membros=this.checked?QF.membros.concat([this.value]):QF.membros.filter(x=>x!==this.value)"> ${esc(u.nome)}</label>`).join("") || `<span class="muted">Ninguém na equipe ainda.</span>`}</div>` : ""}</div>`
+        : `<div class="field"><span>Quem vê este quadro</span><span class="muted" style="font-size:13px">${visTxt(QF)} · só quem criou o quadro muda isso.</span></div>`}
       <div class="field"><span>Plano de fundo</span>${escolherFundoHtml(QF.estilo.fundo || "", "qfFundo")}</div>
       <label class="field"><span>Fonte do quadro</span><select onchange="QF.estilo.fonte=this.value;carregarFonte(this.value)">${Object.entries(FONTES).map(([k, [l, css]]) => `<option value="${k}"${(QF.estilo.fonte || "padrao") === k ? " selected" : ""}${css ? ` style="font-family:${esc(css)}"` : ""}>${esc(l)}</option>`).join("")}</select></label>
       <div class="field"><span>Colunas (na ordem, com cor opcional)</span><div class="qf-cols">${QF.colunas.map((c, i) => `<div class="qf-col"><span class="qf-cor"><input type="color" value="${esc(c.cor || "#94a3b8")}" aria-label="Cor da coluna ${i + 1}" oninput="QF.colunas[${i}].cor=this.value;this.parentNode.classList.add('on')"${c.cor ? "" : ` title="Sem cor"`}>${c.cor ? `<button type="button" aria-label="Tirar cor" onclick="QF.colunas[${i}].cor='';desenharQuadroForm()">×</button>` : ""}</span><input value="${esc(c.nome)}" maxlength="40" oninput="QF.colunas[${i}].nome=this.value" aria-label="Coluna ${i + 1}">
@@ -4170,8 +4185,9 @@ async function salvarQuadro() {
   const cols = QF.colunas.map(c => ({ id: c.id, nome: (c.nome || "").trim(), cor: c.cor || "" })).filter(c => c.nome);
   if (!QF.nome.trim()) return toast("Dê um nome ao quadro.");
   if (!cols.length) return toast("Coloque pelo menos uma coluna.");
+  if (QF.visibilidade === "pessoas" && !QF.membros.length) return toast("Marque pelo menos uma pessoa, ou escolha \"Só eu\".");
   const b = $("#qfSalvar"); b.disabled = true;
-  try { const r = await api("quadroSalvar", { quadro: { id: QF.id || "", nome: QF.nome.trim(), cor: QF.cor, colunas: cols, estilo: QF.estilo } }); $("#qdDlg").close(); S.quadroId = r.id; store("quadro", r.id); S.carimbo = ""; await carregar(); render(); toast(QF.id ? "Quadro salvo" : "Quadro criado"); }
+  try { const r = await api("quadroSalvar", { quadro: { id: QF.id || "", nome: QF.nome.trim(), cor: QF.cor, colunas: cols, estilo: QF.estilo, visibilidade: QF.visibilidade, membros: QF.membros } }); $("#qdDlg").close(); S.quadroId = r.id; store("quadro", r.id); S.carimbo = ""; await carregar(); render(); toast(QF.id ? "Quadro salvo" : "Quadro criado"); }
   catch (e) { b.disabled = false; writeFail(e); }
 }
 async function excluirQuadro() {
@@ -4194,7 +4210,7 @@ function desenharCartao() {
       <label class="field full"><span>Título</span><input id="qcT" maxlength="200" value="${esc(QC.titulo)}" oninput="QC.titulo=this.value"></label>
       <label class="field full"><span>Detalhes</span><textarea id="qcD" rows="3" oninput="QC.descricao=this.value">${esc(QC.descricao || "")}</textarea></label>
       <label class="field"><span>Coluna</span><select onchange="QC.coluna=this.value">${opt(q.colunas.map(c => [c.id, c.nome]), QC.coluna)}</select></label>
-      <label class="field"><span>Responsável</span><select onchange="QC.responsavelId=this.value">${opt([["", "Ninguém"]].concat(S.equipe.filter(u => u.papel !== "cliente").map(u => [u.id, u.id === S.eu.id ? u.nome + " (você)" : u.nome])), QC.responsavelId || "")}</select></label>
+      <label class="field"><span>Responsável</span><select onchange="QC.responsavelId=this.value">${opt([["", "Ninguém"]].concat(S.equipe.filter(u => u.papel !== "cliente" && (q.visibilidade === "equipe" || !q.visibilidade || u.id === q.uid || (q.membros || []).includes(u.id))).map(u => [u.id, u.id === S.eu.id ? u.nome + " (você)" : u.nome])), QC.responsavelId || "")}</select></label>
       <label class="field"><span>Prazo</span><input type="date" value="${esc(QC.prazo || "")}" onchange="QC.prazo=this.value"></label>
       <label class="field"><span>Marca (opcional)</span><select onchange="QC.marcaId=this.value">${opt([["", "Sem marca"]].concat(S.marcas.map(m => [m.id, m.nome])), QC.marcaId || "")}</select></label>
       <div class="field full"><span>Cor</span><div class="qc-cores"><button type="button" class="qc-c sem${QC.cor ? "" : " on"}" aria-label="Sem cor" onclick="QC.cor='';desenharCartao()">∅</button>${CORES_Q.map(c => `<button type="button" class="qc-c${QC.cor === c ? " on" : ""}" style="--qc:${c}" aria-label="Cor ${c}" onclick="QC.cor='${c}';desenharCartao()"></button>`).join("")}</div></div>
@@ -6152,7 +6168,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-15.1"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-16.1"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",
