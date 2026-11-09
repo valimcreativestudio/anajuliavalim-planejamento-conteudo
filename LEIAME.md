@@ -204,6 +204,10 @@ Ao rodar **configurar**, o script cria quatro rotinas (a quarta é o relatório 
 - No computador, arraste os cartões entre colunas e dentro da coluna; no celular, use as setas ◀ ▶. Mover e apagar têm **Desfazer**.
 - Quem vê: administração, direção, gestão e social media (dá para mudar em "quem vê o quê"). Clientes não veem.
 
+**Aparência do Kanban** (Editar quadro): plano de fundo com gradientes, cores ou uma imagem (link do Drive compartilhado ou qualquer imagem https), fonte do quadro (Arredondada, Manuscrita, Moderna, Clássica, Máquina de escrever…) e uma cor para cada coluna.
+
+**Plano de fundo e fonte do sistema** (Minha conta → Plano de fundo e fonte): cada pessoa escolhe o fundo e a fonte só para ela, junto com as cores pessoais. O conteúdo fica num cartão claro por cima, para continuar legível.
+
 **Reordenar a grade** (Grade do Insta → ↕ Reordenar grade): arraste os posts (no celular, toque num e depois no lugar para onde ele vai). As datas do mês continuam as mesmas, só trocam entre os posts; cada post mostra a data nova e a antiga. Posts agendados ou postados ficam travados (🔒). **Só grava ao apertar "Salvar nova ordem"**; se sair da tela, mudar de mês ou cancelar, tudo volta como estava. Depois de salvar ainda dá para **Desfazer**.
 
 ## Testes automáticos

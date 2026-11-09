@@ -489,6 +489,29 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 .kb-tf { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
 .kb-tf-l { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 @media (max-width: 520px) { .kb-tf-l { grid-template-columns: 1fr; } }
+.fd-grupo { display: grid; gap: 6px; }
+.fd-ops { display: flex; flex-wrap: wrap; gap: 8px; }
+.fd-op { width: 46px; height: 32px; border-radius: 8px; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line); cursor: pointer; padding: 0; background-size: cover; }
+.fd-op.sem { position: relative; }
+.fd-op.sem::after { content: ""; position: absolute; inset: 4px; background: linear-gradient(135deg, transparent 46%, var(--danger) 47%, var(--danger) 53%, transparent 54%); }
+.fd-op.on { box-shadow: 0 0 0 3px var(--ink); }
+.fd-link { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 7px 10px; color: var(--ink); font: inherit; }
+/* quadro com plano de fundo */
+.qd-fundo { border-radius: 16px; }
+.qd-fundo.com-fundo { padding: 14px; background-attachment: local; }
+.qd-fundo.com-fundo .qd-col { background: color-mix(in srgb, var(--surface-2) 90%, transparent); backdrop-filter: blur(4px); box-shadow: 0 2px 10px rgba(0,0,0,.12); }
+.qd-fundo.com-fundo .board-rolo { background: color-mix(in srgb, var(--surface) 70%, transparent); border-radius: 999px; }
+.qd-fundo .qd-col, .qd-fundo .qc, .qd-fundo .qd-add input { font-family: inherit; }
+.qd-col.tem-cor { background: color-mix(in srgb, var(--colc) 16%, var(--surface-2)); border-top: 5px solid var(--colc); }
+.qd-fundo.com-fundo .qd-col.tem-cor { background: color-mix(in srgb, var(--colc) 18%, color-mix(in srgb, var(--surface-2) 90%, transparent)); }
+.qd-col.tem-cor h3 { color: color-mix(in srgb, var(--colc) 70%, var(--ink)); }
+.qf-col { grid-template-columns: auto minmax(0, 1fr) auto auto auto !important; }
+.qf-cor { display: inline-flex; align-items: center; gap: 2px; }
+.qf-cor input[type=color] { width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 8px; padding: 2px; background: var(--surface); cursor: pointer; }
+.qf-cor button { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 14px; }
+/* sistema com plano de fundo: o conteúdo fica num cartão por cima */
+body.com-fundo main#app { background: color-mix(in srgb, var(--bg) 86%, transparent); backdrop-filter: blur(8px); border-radius: 20px; margin-top: 16px; margin-bottom: 24px; box-shadow: 0 8px 30px rgba(0,0,0,.18); }
+@media (max-width: 640px) { body.com-fundo main#app { margin-top: 10px; border-radius: 14px; } }
 .rd-barra { position: sticky; top: 8px; z-index: 5; display: flex; justify-content: space-between; align-items: center; gap: 10px 16px; flex-wrap: wrap; max-width: 520px; margin: 0 auto 12px; padding: 12px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
 .rd-barra > div:first-child { display: grid; gap: 3px; flex: 1 1 260px; }
 .rd-barra .muted { font-size: 12.5px; }
@@ -3933,6 +3956,47 @@ function clientesHtml() {
     ${pessoas.map(u => `<button class="btn sm" type="button" onclick="linkCliente(${js(u.id)})">${avatarHtml(u, 20)} ${esc(u.nome)}</button>`).join("")}</div>`;
 }
 
+/* ---------- Aparência: planos de fundo e fontes (Kanban e sistema) ---------- */
+const GRADIENTES = {
+  oceano: ["Oceano", "linear-gradient(135deg,#0ea5e9,#6366f1)"], por_do_sol: ["Pôr do sol", "linear-gradient(135deg,#f97316,#ec4899)"],
+  floresta: ["Floresta", "linear-gradient(135deg,#16a34a,#0f766e)"], lavanda: ["Lavanda", "linear-gradient(135deg,#a78bfa,#f0abfc)"],
+  noite: ["Noite", "linear-gradient(135deg,#0f172a,#4c1d95)"], pessego: ["Pêssego", "linear-gradient(135deg,#fecaca,#fde68a)"],
+  vinho: ["Vinho", "linear-gradient(135deg,#4a1d33,#9d174d)"], areia: ["Areia", "linear-gradient(135deg,#f5f5f0,#e7dcc8)"],
+  aurora: ["Aurora", "linear-gradient(135deg,#22d3ee,#a3e635)"], cereja: ["Cereja", "linear-gradient(135deg,#be123c,#fb7185)"]
+};
+const CORES_FUNDO = ["#0079bf", "#d29034", "#519839", "#b04632", "#89609e", "#cd5a91", "#4bbf6b", "#00aecc", "#838c91", "#1d1d1f"];
+const FONTES = {
+  padrao: ["Padrão", "", ""], elegante: ["Elegante", "'Instrument Serif', Georgia, serif", ""],
+  arredondada: ["Arredondada", "'Nunito', system-ui, sans-serif", "Nunito:wght@400;600;700"],
+  manuscrita: ["Manuscrita", "'Caveat', cursive", "Caveat:wght@500;700"],
+  moderna: ["Moderna", "'Space Grotesk', system-ui, sans-serif", "Space+Grotesk:wght@400;500;700"],
+  classica: ["Clássica", "'Playfair Display', Georgia, serif", "Playfair+Display:wght@400;600;700"],
+  maquina: ["Máquina de escrever", "'Courier Prime', 'Courier New', monospace", "Courier+Prime:wght@400;700"]
+};
+function carregarFonte(id) {
+  const f = FONTES[id]; if (!f || !f[2] || document.querySelector(`link[data-fonte="${id}"]`)) return;
+  const l = document.createElement("link"); l.rel = "stylesheet"; l.dataset.fonte = id;
+  l.href = "https://fonts.googleapis.com/css2?family=" + f[2] + "&display=swap"; document.head.appendChild(l);
+}
+// "g:oceano" | "c:#0079bf" | "i:https://…" → CSS de background
+function fundoCss(v) {
+  v = String(v || "");
+  if (v.startsWith("g:") && GRADIENTES[v.slice(2)]) return GRADIENTES[v.slice(2)][1];
+  if (/^c:#[0-9a-f]{6}$/i.test(v)) return v.slice(2);
+  if (v.startsWith("i:")) { const u = urlOk(v.slice(2)), d = u && driveId(u); return u ? `url("${(d ? `https://drive.google.com/thumbnail?id=${d}&sz=w2000` : u).replace(/["\\]/g, "")}") center / cover no-repeat` : ""; }
+  return "";
+}
+const fundoEscuro = v => /^g:(noite|vinho|floresta|oceano|cereja)$/.test(v || "") || /^i:/.test(v || "") || (/^c:#/.test(v || "") && contraste(v.slice(2)) !== "#141415");
+// escolhedor de plano de fundo (usado no Kanban e em Minha conta)
+function escolherFundoHtml(atual, onPick) {
+  const b = (val, estilo, rot, cls = "") => `<button type="button" class="fd-op${atual === val ? " on" : ""}${cls}" style="background:${estilo}" aria-label="${esc(rot)}" title="${esc(rot)}" onclick="${onPick}(${js(val)})"></button>`;
+  const img = String(atual || "").startsWith("i:") ? atual.slice(2) : "";
+  return `<div class="fd-grupo"><small class="muted">Gradientes</small><div class="fd-ops">${b("", "var(--surface)", "Sem plano de fundo", " sem")}${Object.entries(GRADIENTES).map(([k, [l, g]]) => b("g:" + k, g, l)).join("")}</div></div>
+    <div class="fd-grupo"><small class="muted">Cores</small><div class="fd-ops">${CORES_FUNDO.map(c => b("c:" + c, c, "Cor " + c)).join("")}</div></div>
+    <div class="fd-grupo"><small class="muted">Imagem (link do Drive compartilhado como "Qualquer pessoa com o link", ou de qualquer imagem https)</small>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><input class="fd-link" value="${esc(img)}" placeholder="https://drive.google.com/file/d/…" style="flex:1 1 200px;min-width:0"><button class="btn sm" type="button" onclick="const v=this.previousElementSibling.value.trim();if(!urlOk(v)){toast('Cole um link começando com https://');return}${onPick}('i:'+v)">Usar imagem</button></div></div>`;
+}
+
 /* ---------- Reordenar a grade (muda as datas; só grava no "Salvar") ---------- */
 // posição salva pelo reordenar (desempata posts do mesmo dia); sem posição, fica depois
 const posGrade = it => it.t === "plan" && it.p.ordemGrade != null && it.p.ordemGrade !== "" ? Number(it.p.ordemGrade) : 1e6;
@@ -4031,11 +4095,13 @@ function vQuadro(q) {
       <div class="mv">${ci > 0 ? `<button type="button" aria-label="Para ${esc(q.colunas[ci - 1].nome)}" onclick="event.stopPropagation();moverCartao(${js(c.id)},${js(q.colunas[ci - 1].id)})">◀</button>` : ""}${ci < q.colunas.length - 1 ? `<button type="button" aria-label="Para ${esc(q.colunas[ci + 1].nome)}" onclick="event.stopPropagation();moverCartao(${js(c.id)},${js(q.colunas[ci + 1].id)})">▶</button>` : ""}</div>
     </article>`;
   };
+  const est = q.estilo || {}, fundo = fundoCss(est.fundo), fonte = FONTES[est.fonte] ? est.fonte : "padrao";
+  if (fonte !== "padrao") carregarFonte(fonte);
   return head("Kanban", q.nome, `<button class="btn" type="button" onclick="S.quadroId=null;store('quadro','');render()">← Todos os quadros</button><button class="btn" type="button" onclick="abrirQuadroForm(${js(q.id)})">Editar quadro</button>`) +
-    `<div class="board-rolo" aria-hidden="true"><div></div></div><div class="board qd-board" style="--qn:${q.colunas.length}">${q.colunas.map((col, ci) => { const cs = cartoesDe(q.id, col.id); return `<section class="col qd-col" data-col="${esc(col.id)}">
+    `<div class="qd-fundo${fundo ? " com-fundo" : ""}${fundo && fundoEscuro(est.fundo) ? " escuro" : ""}" style="${fundo ? `background:${esc(fundo)};` : ""}${fonte !== "padrao" ? `font-family:${esc(FONTES[fonte][1])};` : ""}"><div class="board-rolo" aria-hidden="true"><div></div></div><div class="board qd-board" style="--qn:${q.colunas.length}">${q.colunas.map((col, ci) => { const cs = cartoesDe(q.id, col.id); return `<section class="col qd-col${col.cor ? " tem-cor" : ""}" data-col="${esc(col.id)}"${col.cor ? ` style="--colc:${esc(col.cor)}"` : ""}>
       <h3>${esc(col.nome)}<span class="n">${cs.length}</span></h3>
       ${cs.map(c => card(c, ci)).join("")}
-      <form class="qd-add" onsubmit="event.preventDefault();addCartao(${js(col.id)},this)"><input name="t" maxlength="200" placeholder="+ Adicionar cartão" aria-label="Novo cartão em ${esc(col.nome)}"></form></section>`; }).join("")}</div>`;
+      <form class="qd-add" onsubmit="event.preventDefault();addCartao(${js(col.id)},this)"><input name="t" maxlength="200" placeholder="+ Adicionar cartão" aria-label="Novo cartão em ${esc(col.nome)}"></form></section>`; }).join("")}</div></div>`;
 }
 function wireQuadro() {
   rolagemNoTopo();
@@ -4077,7 +4143,7 @@ async function addCartao(colId, f) {
 let QF = null;
 function abrirQuadroForm(id) {
   const q = id ? (S.quadros || []).find(x => x.id === id) : null;
-  QF = q ? { id: q.id, nome: q.nome, cor: q.cor || "", colunas: q.colunas.map(c => ({ ...c })), del: false } : { nome: "", cor: CORES_Q[5], colunas: [{ nome: "A fazer" }, { nome: "Fazendo" }, { nome: "Feito" }], del: false };
+  QF = q ? { id: q.id, nome: q.nome, cor: q.cor || "", estilo: { ...(q.estilo || {}) }, colunas: q.colunas.map(c => ({ ...c })), del: false } : { nome: "", cor: CORES_Q[5], estilo: { fundo: "", fonte: "padrao" }, colunas: [{ nome: "A fazer" }, { nome: "Fazendo" }, { nome: "Feito" }], del: false };
   desenharQuadroForm(); if (!$("#qdDlg").open) $("#qdDlg").showModal();
 }
 function desenharQuadroForm() {
@@ -4087,7 +4153,9 @@ function desenharQuadroForm() {
     <div class="dlg-body" style="grid-template-columns:1fr">
       <label class="field"><span>Nome</span><input id="qfNome" maxlength="80" value="${esc(QF.nome)}" placeholder="Ex.: Black Friday 2026" oninput="QF.nome=this.value"></label>
       <div class="field"><span>Cor</span><div class="qc-cores">${CORES_Q.map(c => `<button type="button" class="qc-c${QF.cor === c ? " on" : ""}" style="--qc:${c}" aria-label="Cor ${c}" onclick="QF.cor='${c}';desenharQuadroForm()"></button>`).join("")}</div></div>
-      <div class="field"><span>Colunas (na ordem)</span><div class="qf-cols">${QF.colunas.map((c, i) => `<div class="qf-col"><input value="${esc(c.nome)}" maxlength="40" oninput="QF.colunas[${i}].nome=this.value" aria-label="Coluna ${i + 1}">
+      <div class="field"><span>Plano de fundo</span>${escolherFundoHtml(QF.estilo.fundo || "", "qfFundo")}</div>
+      <label class="field"><span>Fonte do quadro</span><select onchange="QF.estilo.fonte=this.value;carregarFonte(this.value)">${Object.entries(FONTES).map(([k, [l, css]]) => `<option value="${k}"${(QF.estilo.fonte || "padrao") === k ? " selected" : ""}${css ? ` style="font-family:${esc(css)}"` : ""}>${esc(l)}</option>`).join("")}</select></label>
+      <div class="field"><span>Colunas (na ordem, com cor opcional)</span><div class="qf-cols">${QF.colunas.map((c, i) => `<div class="qf-col"><span class="qf-cor"><input type="color" value="${esc(c.cor || "#94a3b8")}" aria-label="Cor da coluna ${i + 1}" oninput="QF.colunas[${i}].cor=this.value;this.parentNode.classList.add('on')"${c.cor ? "" : ` title="Sem cor"`}>${c.cor ? `<button type="button" aria-label="Tirar cor" onclick="QF.colunas[${i}].cor='';desenharQuadroForm()">×</button>` : ""}</span><input value="${esc(c.nome)}" maxlength="40" oninput="QF.colunas[${i}].nome=this.value" aria-label="Coluna ${i + 1}">
         <button type="button" class="icon-btn" aria-label="Subir" ${i ? "" : "disabled"} onclick="QF.colunas.splice(${i - 1},0,QF.colunas.splice(${i},1)[0]);desenharQuadroForm()">↑</button>
         <button type="button" class="icon-btn" aria-label="Descer" ${i < QF.colunas.length - 1 ? "" : "disabled"} onclick="QF.colunas.splice(${i + 1},0,QF.colunas.splice(${i},1)[0]);desenharQuadroForm()">↓</button>
         <button type="button" class="com-x" aria-label="Tirar coluna" ${QF.colunas.length > 1 ? "" : "disabled"} onclick="QF.colunas.splice(${i},1);desenharQuadroForm()">×</button></div>`).join("")}</div>
@@ -4097,12 +4165,13 @@ function desenharQuadroForm() {
     <div class="dlg-foot">${podeApagar ? (QF.del ? `<span class="confirm">Apagar o quadro e todos os cartões? <button class="btn sm danger" type="button" onclick="excluirQuadro()">Apagar</button><button class="btn sm" type="button" onclick="QF.del=false;desenharQuadroForm()">Não</button></span>` : `<button class="btn danger" type="button" onclick="QF.del=true;desenharQuadroForm()">Apagar quadro</button>`) : ""}
       <span class="sp"></span><button class="btn" type="button" onclick="$('#qdDlg').close()">Cancelar</button><button class="btn primary" type="button" id="qfSalvar" onclick="salvarQuadro()">${QF.id ? "Salvar" : "Criar quadro"}</button></div>`;
 }
+function qfFundo(v) { QF.estilo.fundo = v; desenharQuadroForm(); }
 async function salvarQuadro() {
-  const cols = QF.colunas.map(c => ({ id: c.id, nome: (c.nome || "").trim() })).filter(c => c.nome);
+  const cols = QF.colunas.map(c => ({ id: c.id, nome: (c.nome || "").trim(), cor: c.cor || "" })).filter(c => c.nome);
   if (!QF.nome.trim()) return toast("Dê um nome ao quadro.");
   if (!cols.length) return toast("Coloque pelo menos uma coluna.");
   const b = $("#qfSalvar"); b.disabled = true;
-  try { const r = await api("quadroSalvar", { quadro: { id: QF.id || "", nome: QF.nome.trim(), cor: QF.cor, colunas: cols } }); $("#qdDlg").close(); S.quadroId = r.id; store("quadro", r.id); S.carimbo = ""; await carregar(); render(); toast(QF.id ? "Quadro salvo" : "Quadro criado"); }
+  try { const r = await api("quadroSalvar", { quadro: { id: QF.id || "", nome: QF.nome.trim(), cor: QF.cor, colunas: cols, estilo: QF.estilo } }); $("#qdDlg").close(); S.quadroId = r.id; store("quadro", r.id); S.carimbo = ""; await carregar(); render(); toast(QF.id ? "Quadro salvo" : "Quadro criado"); }
   catch (e) { b.disabled = false; writeFail(e); }
 }
 async function excluirQuadro() {
@@ -4635,7 +4704,17 @@ const PALETAS = {
 };
 const contraste = hex => { const n = parseInt(String(hex).slice(1), 16); return ((n >> 16) * 299 + ((n >> 8) & 255) * 587 + (n & 255) * 114) / 1000 > 150 ? "#141415" : "#F5F5F3"; };
 const minhasCores = () => (S.eu && S.eu.cores) || (() => { try { return JSON.parse(store("cores") || "{}"); } catch (e) { return {}; } })();
+function aplicarFundoSistema(c) {
+  const f = c && c.fundo ? fundoCss(c.fundo) : "";
+  document.body.classList.toggle("com-fundo", !!f);
+  document.body.style.background = f ? `${f}` : "";
+  if (f) document.body.style.backgroundAttachment = "fixed";
+  const fonte = c && c.fonte && FONTES[c.fonte] ? c.fonte : "padrao";
+  if (fonte !== "padrao") { carregarFonte(fonte); document.documentElement.style.setProperty("--f-body", FONTES[fonte][1]); }
+  else document.documentElement.style.removeProperty("--f-body");
+}
 function aplicarCores(c = minhasCores()) {
+  try { aplicarFundoSistema(c || {}); } catch (e) {}
   const r = document.documentElement.style;
   CORES_ITENS.forEach(([k, , v]) => r.removeProperty(v));
   ["--primary-ink", "--vinho-ink"].forEach(v => r.removeProperty(v));
@@ -4654,6 +4733,8 @@ function mudarCor(k, val) {
   guardarCores(c);
 }
 function usarPaleta(nome) { guardarCores(nome === "Neutro (padrão)" ? {} : { ...minhasCores(), ...PALETAS[nome] }); render(); }
+function fundoSistema(v) { const c = { ...minhasCores() }; if (v) c.fundo = v; else delete c.fundo; guardarCores(c); render(); }
+function fonteSistema(v) { const c = { ...minhasCores() }; if (v && v !== "padrao") c.fonte = v; else delete c.fonte; guardarCores(c); render(); }
 function guardarCores(c) {
   if (S.eu) S.eu.cores = c;
   store("cores", JSON.stringify(c)); aplicarCores(c);
@@ -4668,6 +4749,11 @@ function coresContaHtml() {
     <div class="field"><span>Paletas prontas</span><div class="chips">${Object.keys(PALETAS).map(n => `<label><input type="radio" name="paleta" onchange="usarPaleta('${n}')"><span class="pal-amostra">${["destaque", "cabecalho", "calendario"].map(k => `<i style="background:${PALETAS[n][k] || "var(--line)"}"></i>`).join("")}</span>${esc(n)}</label>`).join("")}</div></div>
     <div class="cores-grid">${CORES_ITENS.map(([k, l, v]) => `<label class="cor-it"><input type="color" value="${esc(c[k] || hex(v))}" oninput="mudarCor('${k}', this.value)"><span>${esc(l)}</span>${c[k] ? `<button type="button" class="com-x" title="Voltar ao padrão" aria-label="Voltar ${esc(l)} ao padrão" onclick="event.preventDefault();mudarCor('${k}','');render()">↺</button>` : ""}</label>`).join("")}</div>
     <button class="btn sm" type="button" style="justify-self:start" onclick="guardarCores({});render()">Restaurar todas as cores</button>
+  </div>
+  <div class="panel" style="display:grid;gap:12px;margin-top:16px"><h2 style="margin:0">Plano de fundo e fonte</h2>
+    <p class="muted" style="margin:0;font-size:13.5px">Também só para você. O conteúdo fica num cartão claro por cima do fundo, para continuar fácil de ler.</p>
+    ${escolherFundoHtml(c.fundo || "", "fundoSistema")}
+    <label class="field"><span>Fonte do sistema</span><select onchange="fonteSistema(this.value)">${Object.entries(FONTES).map(([k, [l, css]]) => `<option value="${k}"${(c.fonte || "padrao") === k ? " selected" : ""}${css ? ` style="font-family:${esc(css)}"` : ""}>${esc(l)}</option>`).join("")}</select></label>
   </div>`;
 }
 
@@ -6066,7 +6152,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-14.1"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-15.1"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",

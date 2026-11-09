@@ -19,7 +19,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-14.1';
+const VERSAO = '2026-11-15.1';
 // Endereço oficial do site. Os links dos e-mails SEMPRE usam este endereço (nunca o que vem do pedido).
 // A dona da plataforma pode trocar em Gestão → Empresas → Endereço do sistema.
 const SITE_PADRAO = 'https://planejaae.pages.dev/';
@@ -51,7 +51,7 @@ const CAMPOS_PROPOSTA = [['id', 'ID'], ['cliente', 'Cliente'], ['status', 'Statu
 const ABA_MODELOS = 'MODELOS';
 const CAMPOS_MODELO = [['id', 'ID'], ['empresaId', 'Empresa ID'], ['nome', 'Nome'], ['itens', 'Itens'], ['por', 'Criado por'], ['uid', 'Criado por ID'], ['criado', 'Criado em']];
 const ABA_QUADROS = 'QUADROS';
-const CAMPOS_QUADRO = [['id', 'ID'], ['empresaId', 'Empresa ID'], ['nome', 'Nome'], ['cor', 'Cor'], ['colunas', 'Colunas'], ['por', 'Criado por'], ['uid', 'Criado por ID'], ['criado', 'Criado em'], ['atualizado', 'Atualizado em']];
+const CAMPOS_QUADRO = [['id', 'ID'], ['empresaId', 'Empresa ID'], ['nome', 'Nome'], ['cor', 'Cor'], ['colunas', 'Colunas'], ['por', 'Criado por'], ['uid', 'Criado por ID'], ['criado', 'Criado em'], ['atualizado', 'Atualizado em'], ['estilo', 'Estilo']];
 const ABA_CARTOES = 'CARTOES';
 const CAMPOS_CARTAO = [['id', 'ID'], ['quadroId', 'Quadro ID'], ['empresaId', 'Empresa ID'], ['coluna', 'Coluna'], ['ordem', 'Ordem'], ['titulo', 'Título'], ['descricao', 'Detalhes'],
   ['responsavelId', 'Responsável ID'], ['prazo', 'Prazo'], ['cor', 'Cor'], ['checklist', 'Checklist'], ['marcaId', 'Marca ID'], ['por', 'Criado por'], ['uid', 'Criado por ID'], ['criado', 'Criado em'], ['atualizado', 'Atualizado em']];
@@ -494,7 +494,7 @@ function listar_(eu, desde, se) {
   r.pushAparelhos = parseJSON_(pp.getProperty('psh_' + eu.id), []).map(a => a.e);
   r.modelos = ['cliente', 'aprovador'].indexOf(eu.papel) >= 0 ? [] : ler_(ABA_MODELOS, CAMPOS_MODELO).filter(x => mesmaEmp_(eu, x.empresaId)).map(x => ({ id: x.id, nome: x.nome, por: x.por, uid: x.uid, criado: Number(x.criado) || 0, itens: parseJSON_(x.itens, []) }));
   if (eu.papel !== 'cliente' && podeTela_(eu, 'quadros')) {
-    r.quadros = ler_(ABA_QUADROS, CAMPOS_QUADRO).filter(q => mesmaEmp_(eu, q.empresaId)).map(q => ({ id: q.id, nome: q.nome, cor: q.cor, colunas: parseJSON_(q.colunas, []), por: q.por, uid: q.uid, criado: Number(q.criado) || 0, atualizado: Number(q.atualizado) || 0 }));
+    r.quadros = ler_(ABA_QUADROS, CAMPOS_QUADRO).filter(q => mesmaEmp_(eu, q.empresaId)).map(q => ({ id: q.id, nome: q.nome, cor: q.cor, colunas: parseJSON_(q.colunas, []), estilo: parseJSON_(q.estilo, {}), por: q.por, uid: q.uid, criado: Number(q.criado) || 0, atualizado: Number(q.atualizado) || 0 }));
     const ids = r.quadros.map(q => q.id);
     r.cartoes = ler_(ABA_CARTOES, CAMPOS_CARTAO).filter(c => ids.indexOf(c.quadroId) >= 0).map(c => Object.assign(c, { ordem: Number(c.ordem) || 0, checklist: parseJSON_(c.checklist, []), prazo: paraISO_(c.prazo), criado: Number(c.criado) || 0, atualizado: Number(c.atualizado) || 0 }));
   } else { r.quadros = []; r.cartoes = []; }
@@ -2203,10 +2203,20 @@ function relatorioMensal() {
  * ====================================================================== */
 
 // só aceita cores no formato #rrggbb e chaves conhecidas
+// plano de fundo: g:<gradiente pronto>, c:#cor ou i:<link https da imagem>
+const FONTES_OK = ['padrao', 'elegante', 'arredondada', 'manuscrita', 'moderna', 'classica', 'maquina'];
+function fundoOk_(v) {
+  v = String(v || '');
+  if (/^g:[a-z_]{1,20}$/.test(v) || /^c:#[0-9a-fA-F]{6}$/.test(v)) return v;
+  if (v.indexOf('i:') === 0) { const u = urlSegura_(v.slice(2)); return u && u.length <= 600 && /^https:\/\//.test(u) ? 'i:' + u : ''; }
+  return '';
+}
 function limparCores_(c) {
   const ok = ['destaque', 'cabecalho', 'calendario', 's-ideia', 's-validacao', 's-cliente', 's-ajustes', 's-producao', 's-aprovacao', 's-aprovado', 's-agendado', 's-postado', 's-reuniao', 's-atividade'];
   const o = {};
   Object.keys(c || {}).forEach(k => { if (ok.indexOf(k) >= 0 && /^#[0-9a-fA-F]{6}$/.test(String(c[k]))) o[k] = String(c[k]); });
+  if (c && fundoOk_(c.fundo)) o.fundo = fundoOk_(c.fundo);
+  if (c && FONTES_OK.indexOf(c.fonte) > 0) o.fonte = c.fonte;
   return o;
 }
 
@@ -2588,11 +2598,12 @@ function quadroSalvar_(eu, q) {
   const nome = String(q.nome || '').trim().slice(0, 80);
   if (!nome) throw erro_('server', 'Dê um nome ao quadro.');
   const vistos = {}, colunas = (Array.isArray(q.colunas) ? q.colunas : []).slice(0, 20)
-    .map(c => ({ id: idSeguro_(c.id) || Utilities.getUuid().slice(0, 8), nome: String(c.nome || '').trim().slice(0, 40) }))
+    .map(c => ({ id: idSeguro_(c.id) || Utilities.getUuid().slice(0, 8), nome: String(c.nome || '').trim().slice(0, 40), cor: COR_OK_(c.cor) }))
     .filter(c => c.nome && !vistos[c.id] && (vistos[c.id] = 1));
   if (!colunas.length) throw erro_('server', 'O quadro precisa de pelo menos uma coluna.');
   const id = atual ? atual.id : Utilities.getUuid().slice(0, 13);
-  gravar_(ABA_QUADROS, CAMPOS_QUADRO, { id: id, empresaId: atual ? atual.empresaId : eu.empresaId, nome: nome, cor: COR_OK_(q.cor), colunas: JSON.stringify(colunas),
+  const est = q.estilo || {}, estilo = { fundo: fundoOk_(est.fundo), fonte: FONTES_OK.indexOf(est.fonte) >= 0 ? est.fonte : 'padrao' };
+  gravar_(ABA_QUADROS, CAMPOS_QUADRO, { id: id, empresaId: atual ? atual.empresaId : eu.empresaId, nome: nome, cor: COR_OK_(q.cor), colunas: JSON.stringify(colunas), estilo: JSON.stringify(estilo),
     por: atual ? atual.por : eu.nome, uid: atual ? atual.uid : eu.id, criado: atual ? atual.criado : String(Date.now()), atualizado: String(Date.now()) });
   // cartões de colunas apagadas vão para a primeira coluna
   if (atual) {

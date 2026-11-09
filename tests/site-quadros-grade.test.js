@@ -77,7 +77,7 @@ const datas = () => Object.fromEntries(P({ action: 'listar', token: ta }).pautas
   ok('Kanban saiu do submenu Equipe', !(await pg.evaluate(() => window.__eq)).includes('quadros'));
   await pg.goto('http://site.test/#quadros'); await pg.waitForTimeout(400);
   await pg.click('button:has-text("+ Novo quadro")'); await pg.waitForTimeout(200);
-  await pg.fill('#qfNome', 'Black Friday'); await pg.click('#qdDlg button:has-text("+ Coluna")'); await pg.fill('.qf-col:last-child input', 'Aprovado');
+  await pg.fill('#qfNome', 'Black Friday'); await pg.click('#qdDlg button:has-text("+ Coluna")'); await pg.fill('.qf-col:last-child input:not([type=color])', 'Aprovado');
   await pg.click('#qfSalvar'); await pg.waitForTimeout(700);
   ok('quadro criado com 4 colunas', (await pg.$$('.qd-col')).length === 4);
   for (const t of ['Briefing', 'Arte do banner', 'Legenda']) { await pg.fill('.qd-col:first-child .qd-add input', t); await pg.press('.qd-col:first-child .qd-add input', 'Enter'); await pg.waitForTimeout(500); }
@@ -114,6 +114,30 @@ const datas = () => Object.fromEntries(P({ action: 'listar', token: ta }).pautas
   await pg.goto('http://site.test/#quadros'); await pg.waitForTimeout(400);
   ok('cartão aparece no quadro', (await pg.textContent('.qd-board')).includes('Gravar bastidores'));
   await pg.click('button:has-text("← Todos os quadros")'); await pg.waitForTimeout(300);
+  // ---------- aparência do quadro
+  if (await pg.isVisible('.qd-it')) { await pg.click('.qd-it'); await pg.waitForTimeout(300); }
+  await pg.click('button:has-text("Editar quadro")'); await pg.waitForTimeout(300);
+  await pg.click('#qdForm .fd-op[title="Pôr do sol"]'); await pg.waitForTimeout(150);
+  await pg.selectOption('#qdForm select', 'arredondada');
+  await pg.fill('#qdForm .qf-col:nth-child(1) input[type=color]', '#22c55e');
+  await pg.screenshot({ path: cap('quadro-aparencia.png') });
+  await pg.click('#qfSalvar'); await pg.waitForTimeout(800);
+  const qs = P({ action: 'listar', token: ta }).quadros[0];
+  ok('quadro guarda fundo, fonte e cor da coluna', qs.estilo.fundo === 'g:por_do_sol' && qs.estilo.fonte === 'arredondada' && qs.colunas[0].cor === '#22c55e', JSON.stringify([qs.estilo, qs.colunas[0]]));
+  ok('fundo e cor aparecem no quadro', /gradient/.test(await pg.getAttribute('.qd-fundo', 'style')) && (await pg.$$('.qd-col.tem-cor')).length === 1);
+  await pg.screenshot({ path: cap('quadro-com-fundo.png'), fullPage: true });
+  P({ action: 'quadroSalvar', token: ta, quadro: { id: qs.id, nome: qs.nome, colunas: qs.colunas, estilo: { fundo: 'i:javascript:alert(1)', fonte: 'x' } } });
+  ok('link javascript: não vira fundo', P({ action: 'listar', token: ta }).quadros[0].estilo.fundo === '');
+  // ---------- fundo do sistema (Minha conta)
+  await pg.goto('http://site.test/#conta'); await pg.waitForTimeout(400);
+  await pg.click('.fd-op[title="Noite"]'); await pg.waitForTimeout(1200);
+  const tsofi = P({ action: 'login', login: 'sofi@x.com', senha: 'Teste#2026' }).token;
+  ok('fundo do sistema aplicado e salvo', await pg.evaluate(() => document.body.classList.contains('com-fundo')) && P({ action: 'listar', token: tsofi }).eu.cores.fundo === 'g:noite');
+  await pg.goto('http://site.test/#calendario'); await pg.waitForTimeout(400);
+  await pg.screenshot({ path: cap('sistema-fundo.png') });
+  await pg.goto('http://site.test/#conta'); await pg.waitForTimeout(300); await pg.click('.fd-op.sem'); await pg.waitForTimeout(900);
+  ok('tirar o fundo volta ao normal', !(await pg.evaluate(() => document.body.classList.contains('com-fundo'))));
+  await pg.goto('http://site.test/#quadros'); await pg.waitForTimeout(300); await pg.click('button:has-text("← Todos os quadros")').catch(() => {}); await pg.waitForTimeout(300);
   ok('lista de quadros', (await pg.textContent('.qd-lista')).includes('Black Friday'));
   // ---------- celular
   const pm = await abrir({ width: 390, height: 800 });
