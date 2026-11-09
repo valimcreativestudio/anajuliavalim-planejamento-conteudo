@@ -19,7 +19,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-13.1';
+const VERSAO = '2026-11-14.1';
 // Endereço oficial do site. Os links dos e-mails SEMPRE usam este endereço (nunca o que vem do pedido).
 // A dona da plataforma pode trocar em Gestão → Empresas → Endereço do sistema.
 const SITE_PADRAO = 'https://planejaae.pages.dev/';
@@ -73,7 +73,7 @@ const CAMPOS_PAUTA = [
   ['agTipo', 'Agendado como'], ['agQuando', 'Agendado para'], ['postLink', 'Link do post publicado'],
   ['capa', 'Imagem de prévia'], ['midias', 'Mídias da publicação'],
   ['comentarios', 'Comentários'], ['prazoArte', 'Prazo da arte'], ['prazoAprovacao', 'Prazo da aprovação'],
-  ['autoPub', 'Publicar automático'], ['pubInfo', 'Situação da publicação automática'], ['igMidia', 'ID do post no Instagram'], ['versoes', 'Versões anteriores da arte'], ['canva', 'Link do design no Canva']
+  ['autoPub', 'Publicar automático'], ['pubInfo', 'Situação da publicação automática'], ['igMidia', 'ID do post no Instagram'], ['versoes', 'Versões anteriores da arte'], ['canva', 'Link do design no Canva'], ['ordemGrade', 'Ordem na grade']
 ];
 const CAMPOS_STORY = [
   ['id', 'ID'], ['marcaId', 'Marca ID'], ['marca', 'Marca'], ['data', 'Data'], ['hora', 'Hora'], ['ordem', 'Ordem'],
@@ -534,6 +534,7 @@ function pautaParaSite_(p) {
   p.status = normStatus_(p.status);
   p.historico = parseJSON_(p.historico, []);
   p.midias = parseJSON_(p.midias, []);
+  p.ordemGrade = p.ordemGrade === '' || p.ordemGrade == null ? null : Number(p.ordemGrade);
   p.comentarios = parseJSON_(p.comentarios, []);
   p.versoes = parseJSON_(p.versoes, []);
   p.prazoArte = paraISO_(p.prazoArte);
@@ -2652,8 +2653,14 @@ function reordenarGrade_(eu, marcaId, mudancas) {
     if (!p || p.marcaId !== marcaId) throw erro_('server', 'Postagem não encontrada. Atualize a página.');
     if (['Postado', 'Agendado'].indexOf(p.status) >= 0) throw erro_('server', '"' + (p.postagem || 'Postagem') + '" já está agendada ou postada e não muda de lugar.');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(m.data || ''))) throw erro_('server', 'Data inválida.');
+    if (m.ordem != null && !isFinite(Number(m.ordem))) throw erro_('server', 'Posição inválida.');
   });
-  l.forEach(m => salvarPauta_(eu, { id: String(m.id), data: String(m.data) }));
+  l.forEach(m => {
+    const p = todas.filter(x => x.id === String(m.id))[0];
+    if (p.data !== String(m.data)) salvarPauta_(eu, { id: String(m.id), data: String(m.data) });
+    // posição na grade: desempata posts do mesmo dia
+    if (m.ordem != null) setPauta_(String(m.id), { ordemGrade: String(Number(m.ordem)) });
+  });
   return l.length;
 }
 

@@ -39,7 +39,7 @@ const datas = () => Object.fromEntries(P({ action: 'listar', token: ta }).pautas
   ok('post agendado aparece travado', (await pg.$$('.tile.rd.fixo')).length === 1);
   // arrastar o Post 1 (o mais antigo, último) para o lugar do Post 4 (o mais recente, primeiro)
   await pg.dragAndDrop('.tile.rd:has-text("Post 1")', '.tile.rd:has-text("Post 4")'); await pg.waitForTimeout(200);
-  ok('arrastar muda as datas na tela', /era/.test(await pg.textContent('.tile.rd:has-text("Post 1")')) && /mudando de data/.test(await pg.textContent('.rd-barra')));
+  ok('arrastar muda as datas na tela', /era/.test(await pg.textContent('.tile.rd:has-text("Post 1")')) && /mudando de lugar/.test(await pg.textContent('.rd-barra')));
   ok('nada gravado antes de Salvar', JSON.stringify(datas()) === JSON.stringify({ 'Post 1': '03', 'Post 2': '10', 'Post 3': '17', 'Post 4': '24' }), JSON.stringify(datas()));
   await pg.screenshot({ path: cap('grade-reordenar.png'), fullPage: true });
   // sair sem salvar: volta como antes
@@ -54,6 +54,22 @@ const datas = () => Object.fromEntries(P({ action: 'listar', token: ta }).pautas
   ok('agendado não mudou', P({ action: 'listar', token: ta }).pautas.find(p => p.id === fixo).data.endsWith('-28'));
   await pg.click('#toast .toast-desf'); await pg.waitForTimeout(900);
   ok('Desfazer volta a ordem anterior', JSON.stringify(datas()) === JSON.stringify({ 'Post 1': '03', 'Post 2': '10', 'Post 3': '17', 'Post 4': '24' }), JSON.stringify(datas()));
+  // ---------- posts do mesmo dia (caso real: vários posts em 10/11)
+  const mesmos = ['A', 'B', 'C'].map(n => P({ action: 'salvarPauta', token: ta, pauta: { marcaId: liso, data: `${mes}-12`, postagem: 'Mesmo dia ' + n } }).id);
+  await pg.evaluate(() => { S.carimbo = ''; return carregar(); }); await pg.goto('http://site.test/#grade'); await pg.waitForTimeout(400);
+  const ordemGrade = () => pg.$$eval('.grade .tile .tt', x => x.map(e => e.textContent).filter(t => t.startsWith('Mesmo dia')).join(','));
+  const antes = await ordemGrade();
+  await pg.click('button:has-text("Reordenar grade")'); await pg.waitForTimeout(300);
+  const primeiro = antes.split(',')[0];
+  await pg.click(`.tile.rd:has-text("${primeiro}") .rd-mv button[aria-label^="Mais para frente"]`); await pg.waitForTimeout(200);
+  ok('mesmo dia: conta como mudança', /mudando de lugar/.test(await pg.textContent('.rd-barra b')) && /mudou de lugar/.test(await pg.textContent('.rd-barra + .grade-box')), await pg.textContent('.rd-barra b'));
+  await pg.click('#rdSalvar'); await pg.waitForTimeout(900);
+  const depois = await ordemGrade();
+  ok('mesmo dia: a grade guarda a nova ordem', depois !== antes && depois.split(',')[1] === primeiro, antes + ' → ' + depois);
+  await pg.reload(); await pg.waitForTimeout(900); await pg.goto('http://site.test/#grade'); await pg.waitForTimeout(400);
+  ok('mesmo dia: continua depois de recarregar', (await ordemGrade()) === depois);
+  mesmos.forEach(id => P({ action: 'excluirPauta', token: ta, id }));
+  await pg.evaluate(() => { S.carimbo = ''; return carregar(); });
   // ---------- kanban
   const menu = await pg.$$eval('#tabs > *', x => x.map(e => e.textContent.trim().replace(/\s+/g, ' ')));
   ok('Kanban é um item próprio no menu do topo', menu.some(t => /^🗂️?\s*Kanban/.test(t) || t === 'Kanban'), menu.join(' | '));

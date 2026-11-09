@@ -1525,7 +1525,7 @@ function gradeBox(m, mes, destaque) {
     .filter(p => !(p.status === "Postado" && codigos.has(codigoIg(p.postLink))));
   const itens = ps.map(p => ({ t: "plan", em: (p.agData || p.data || "") + "T" + (p.agHora || "12:00"), p }))
     .concat(midias.map(x => ({ t: "ig", em: x.em || "", x })))
-    .sort((a, b) => String(b.em).localeCompare(String(a.em)));
+    .sort((a, b) => String(b.em).slice(0, 10).localeCompare(String(a.em).slice(0, 10)) || posGrade(a) - posGrade(b) || String(b.em).localeCompare(String(a.em)));
   const ponto = `<span class="ok" title="Já postado"></span>`;
   const AGUARDA = ["Em validação", "Validação do cliente", "Em aprovação", "Aprovação do cliente"];
   const tiles = itens.map(it => {
@@ -3934,6 +3934,8 @@ function clientesHtml() {
 }
 
 /* ---------- Reordenar a grade (muda as datas; só grava no "Salvar") ---------- */
+// posição salva pelo reordenar (desempata posts do mesmo dia); sem posição, fica depois
+const posGrade = it => it.t === "plan" && it.p.ordemGrade != null && it.p.ordemGrade !== "" ? Number(it.p.ordemGrade) : 1e6;
 const FIXOS_GRADE = ["Postado", "Agendado"];
 function postsDaGrade(mid, mes) {
   return S.posts.filter(p => p.marcaId === mid && (p.data || "").startsWith(mes))
@@ -3942,26 +3944,27 @@ function postsDaGrade(mid, mes) {
 function reordIniciar() {
   const ps = postsDaGrade(S.marcaId, S.month).filter(p => !FIXOS_GRADE.includes(p.status));
   if (ps.length < 2) return toast("É preciso ter pelo menos 2 posts não agendados neste mês para reordenar.");
-  const ord = ps.slice().sort((a, b) => (b.data || "").localeCompare(a.data || "") || String(b.agHora || "").localeCompare(String(a.agHora || "")));
-  S.reord = { marcaId: S.marcaId, mes: S.month, ordem: ord.map(p => p.id), slots: ord.map(p => p.data), orig: Object.fromEntries(ord.map(p => [p.id, p.data])), sel: null };
+  const ord = ps.slice().sort((a, b) => (b.data || "").localeCompare(a.data || "") || posGrade({ t: "plan", p: a }) - posGrade({ t: "plan", p: b }) || String(b.agHora || "").localeCompare(String(a.agHora || "")));
+  S.reord = { marcaId: S.marcaId, mes: S.month, ordem: ord.map(p => p.id), slots: ord.map(p => p.data), orig: Object.fromEntries(ord.map(p => [p.id, p.data])), origPos: ord.map(p => p.id), sel: null };
   render(); window.scrollTo(0, 0);
 }
 function reordDatas() { const r = S.reord, o = {}; r.ordem.forEach((id, i) => { o[id] = r.slots[i]; }); return o; }
-function reordMudancas() { const d = reordDatas(); return S.reord.ordem.filter(id => d[id] !== S.reord.orig[id]).map(id => ({ id, data: d[id] })); }
+// muda quem trocou de data OU de lugar (posts do mesmo dia só trocam de lugar)
+function reordMudancas() { const r = S.reord, d = reordDatas(); return r.ordem.map((id, i) => ({ id, data: d[id], ordem: i, mudou: d[id] !== r.orig[id] || r.origPos[i] !== id })).filter(x => x.mudou).map(({ id, data, ordem }) => ({ id, data, ordem })); }
 function reordHtml(m) {
   const r = S.reord, d = reordDatas(), mud = reordMudancas().length;
   const fixos = postsDaGrade(m.id, r.mes).filter(p => FIXOS_GRADE.includes(p.status));
   const itens = r.ordem.map(id => ({ p: S.posts.find(x => x.id === id), data: d[id], mov: true })).filter(x => x.p)
     .concat(fixos.map(p => ({ p, data: p.agData || p.data, mov: false })))
-    .sort((a, b) => b.data.localeCompare(a.data) || (a.mov === b.mov ? 0 : a.mov ? -1 : 1));
+    .sort((a, b) => b.data.localeCompare(a.data) || (a.mov && b.mov ? r.ordem.indexOf(a.p.id) - r.ordem.indexOf(b.p.id) : a.mov === b.mov ? 0 : a.mov ? -1 : 1));
   const tile = x => {
-    const p = x.p, src = blobSrc(p), mudou = x.mov && r.orig[p.id] !== x.data;
-    return `<div class="tile rd${src ? " has-img" : ""}${x.mov ? "" : " fixo"}${r.sel === p.id ? " sel" : ""}${mudou ? " mudou" : ""}" ${x.mov ? `draggable="true" data-id="${esc(p.id)}" role="button" tabindex="0" onclick="reordToque(${js(p.id)})"` : `title="${esc(p.status)}: não muda de lugar"`} style="--fase:${esc(faseCor(m, p.fase))}">
+    const p = x.p, src = blobSrc(p), mudou = x.mov && r.orig[p.id] !== x.data, trocou = x.mov && !mudou && r.origPos[r.ordem.indexOf(p.id)] !== p.id;
+    return `<div class="tile rd${src ? " has-img" : ""}${x.mov ? "" : " fixo"}${r.sel === p.id ? " sel" : ""}${mudou || trocou ? " mudou" : ""}" ${x.mov ? `draggable="true" data-id="${esc(p.id)}" role="button" tabindex="0" onclick="reordToque(${js(p.id)})"` : `title="${esc(p.status)}: não muda de lugar"`} style="--fase:${esc(faseCor(m, p.fase))}">
       ${src ? `<img src="${esc(src)}" alt="${esc(nm(p))}" loading="lazy" draggable="false" onerror="this.parentNode.classList.remove('has-img');this.remove()">` : ""}
       <span class="tt">${esc(nm(p))}</span><span class="tm">${esc(p.formato || "")}</span>
-      <span class="rd-data">${br(x.data)}${mudou ? `<small>era ${br(r.orig[p.id])}</small>` : ""}</span>${x.mov ? `<span class="rd-mv"><button type="button" aria-label="Mais para trás (data mais nova)" onclick="event.stopPropagation();reordPasso(${js(p.id)},-1)"${r.ordem[0] === p.id ? " disabled" : ""}>◀</button><button type="button" aria-label="Mais para frente (data mais antiga)" onclick="event.stopPropagation();reordPasso(${js(p.id)},1)"${r.ordem[r.ordem.length - 1] === p.id ? " disabled" : ""}>▶</button></span>` : `<span class="rd-lock">🔒</span>`}</div>`;
+      <span class="rd-data">${br(x.data)}${mudou ? `<small>era ${br(r.orig[p.id])}</small>` : trocou ? `<small>mudou de lugar</small>` : ""}</span>${x.mov ? `<span class="rd-mv"><button type="button" aria-label="Mais para trás (data mais nova)" onclick="event.stopPropagation();reordPasso(${js(p.id)},-1)"${r.ordem[0] === p.id ? " disabled" : ""}>◀</button><button type="button" aria-label="Mais para frente (data mais antiga)" onclick="event.stopPropagation();reordPasso(${js(p.id)},1)"${r.ordem[r.ordem.length - 1] === p.id ? " disabled" : ""}>▶</button></span>` : `<span class="rd-lock">🔒</span>`}</div>`;
   };
-  return `<div class="rd-barra"><div><b>${mud ? `${mud} post${mud > 1 ? "s" : ""} mudando de data` : "Arraste os posts para mudar a ordem"}</b>
+  return `<div class="rd-barra"><div><b>${mud ? `${mud} post${mud > 1 ? "s" : ""} mudando de lugar` : "Arraste os posts ou use as setas ◀ ▶"}</b>
       <span class="muted">${r.sel ? "Agora toque no post que está no lugar para onde ele vai." : "Arraste, use as setas ◀ ▶ de cada post, ou toque num post e depois no lugar para onde ele vai."} As datas do mês ficam as mesmas, só trocam entre os posts. Posts agendados ou postados (🔒) não mudam. Só vale depois de <b>Salvar</b>.</span></div>
       <div class="rd-acts"><button class="btn" type="button" onclick="S.reord=null;render()">Cancelar</button><button class="btn primary" type="button" id="rdSalvar" onclick="reordSalvar()">Salvar nova ordem</button></div></div>
     <div class="grade-box"><div class="grade">${itens.map(tile).join("")}</div></div>`;
@@ -3993,8 +3996,8 @@ function reordPasso(id, d) {
 }
 async function reordSalvar() {
   const r = S.reord, mud = reordMudancas();
-  if (!mud.length) return toast(r.ordem.length && new Set(r.slots).size < r.slots.length ? "Nada mudou: esses posts estão no mesmo dia. Mude a ordem com outro post." : "Você ainda não mudou nenhum post de lugar. Arraste ou use as setas ◀ ▶.");
-  const volta = mud.map(x => ({ id: x.id, data: r.orig[x.id] })), mid = r.marcaId;
+  if (!mud.length) return toast("Você ainda não mudou nenhum post de lugar. Arraste ou use as setas ◀ ▶.");
+  const volta = mud.map(x => ({ id: x.id, data: r.orig[x.id], ordem: r.origPos.indexOf(x.id) })), mid = r.marcaId;
   const b = $("#rdSalvar"); b.disabled = true; b.textContent = "Salvando…";
   try {
     await api("reordenarGrade", { marcaId: mid, mudancas: mud });
@@ -6063,7 +6066,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-13.1"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-14.1"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",
