@@ -509,6 +509,26 @@ nav.tabs .badge { display: inline-grid; place-items: center; min-width: 18px; he
 .qf-cor { display: inline-flex; align-items: center; gap: 2px; }
 .qf-cor input[type=color] { width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 8px; padding: 2px; background: var(--surface); cursor: pointer; }
 .qf-cor button { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 14px; }
+/* quadro do Kanban com fundo: a imagem cobre a tela toda, como no Trello */
+body.fundo-kanban main#app { max-width: none; background: transparent !important; backdrop-filter: none !important; box-shadow: none !important; margin: 0 !important; border-radius: 0; min-height: calc(100vh - 140px); }
+body.fundo-kanban main#app .view-head { background: rgba(0,0,0,.38); backdrop-filter: blur(6px); border-radius: 14px; padding: 10px 14px; color: #fff; }
+body.fundo-kanban main#app .view-head h1, body.fundo-kanban main#app .view-head h1 small { color: #fff; }
+body.fundo-kanban .qd-fundo.com-fundo { padding: 0; background: transparent; }
+body.fundo-kanban .qd-board { min-height: calc(100vh - 290px); }
+body.fundo-kanban .qd-col { background: color-mix(in srgb, #101114 82%, transparent) !important; color: #f4f4f5; backdrop-filter: blur(6px); box-shadow: 0 4px 16px rgba(0,0,0,.25); }
+body.fundo-kanban .qd-col h3, body.fundo-kanban .qd-col h3 .n { color: #f4f4f5; }
+body.fundo-kanban .qd-col.tem-cor { background: color-mix(in srgb, var(--colc) 22%, color-mix(in srgb, #101114 84%, transparent)) !important; }
+body.fundo-kanban .qd-col.tem-cor h3 { color: color-mix(in srgb, var(--colc) 45%, #fff); }
+body.fundo-kanban .qd-add input { color: #e4e4e7; border-color: rgba(255,255,255,.18); }
+body.fundo-kanban .qd-add input::placeholder { color: #a1a1aa; }
+body.fundo-kanban .qd-add input:focus { background: rgba(255,255,255,.08); }
+body.fundo-kanban .qc { background: #22272b; color: #e6e6e8; border-color: rgba(255,255,255,.06); }
+body.fundo-kanban .qc:hover { border-color: rgba(255,255,255,.35); }
+body.fundo-kanban .qc .meta { color: #a1a1aa; }
+body.fundo-kanban .qc .tf-sel.cheio { color: #4ade80; }
+body.fundo-kanban .qc .mv button { color: #d4d4d8; border-color: rgba(255,255,255,.2); }
+body.fundo-kanban main#app .view-head .btn { color: var(--ink); }
+body.fundo-kanban .board-rolo { background: rgba(0,0,0,.25); border-radius: 999px; }
 /* sistema com plano de fundo: o conteúdo fica num cartão por cima */
 body.com-fundo main#app { background: color-mix(in srgb, var(--bg) 86%, transparent); backdrop-filter: blur(8px); border-radius: 20px; margin-top: 16px; margin-bottom: 24px; box-shadow: 0 8px 30px rgba(0,0,0,.18); }
 @media (max-width: 640px) { body.com-fundo main#app { margin-top: 10px; border-radius: 14px; } }
@@ -1265,6 +1285,7 @@ const view = () => {
 };
 
 function render() {
+  if (document.body.classList.contains("fundo-kanban") && view() !== "quadros") { document.body.classList.remove("fundo-kanban", "fundo-kanban-claro"); aplicarFundoSistema(minhasCores()); }
   // briefing do cliente: página pública, sem login
   if (location.hash.startsWith("#redefinir=")) { vRedefinir(location.hash.slice(11).replace(/\W/g, "")); return; }
   if (location.hash.startsWith("#proposta=")) { vPropostaPublica(location.hash.slice(10).replace(/\W/g, "")); return; }
@@ -4109,12 +4130,21 @@ function vQuadro(q) {
   const est = q.estilo || {}, fundo = fundoCss(est.fundo), fonte = FONTES[est.fonte] ? est.fonte : "padrao";
   if (fonte !== "padrao") carregarFonte(fonte);
   return head("Kanban", q.nome, `<span class="qd-vis grande" title="Quem vê este quadro">${visTxt(q)}</span><button class="btn" type="button" onclick="S.quadroId=null;store('quadro','');render()">← Todos os quadros</button><button class="btn" type="button" onclick="abrirQuadroForm(${js(q.id)})">Editar quadro</button>`) +
-    `<div class="qd-fundo${fundo ? " com-fundo" : ""}${fundo && fundoEscuro(est.fundo) ? " escuro" : ""}" style="${fundo ? `background:${esc(fundo)};` : ""}${fonte !== "padrao" ? `font-family:${esc(FONTES[fonte][1])};` : ""}"><div class="board-rolo" aria-hidden="true"><div></div></div><div class="board qd-board" style="--qn:${q.colunas.length}">${q.colunas.map((col, ci) => { const cs = cartoesDe(q.id, col.id); return `<section class="col qd-col${col.cor ? " tem-cor" : ""}" data-col="${esc(col.id)}"${col.cor ? ` style="--colc:${esc(col.cor)}"` : ""}>
+    `<div class="qd-fundo${fundo ? " com-fundo" : ""}" style="${fonte !== "padrao" ? `font-family:${esc(FONTES[fonte][1])};` : ""}"><div class="board-rolo" aria-hidden="true"><div></div></div><div class="board qd-board" style="--qn:${q.colunas.length}">${q.colunas.map((col, ci) => { const cs = cartoesDe(q.id, col.id); return `<section class="col qd-col${col.cor ? " tem-cor" : ""}" data-col="${esc(col.id)}"${col.cor ? ` style="--colc:${esc(col.cor)}"` : ""}>
       <h3>${esc(col.nome)}<span class="n">${cs.length}</span></h3>
       ${cs.map(c => card(c, ci)).join("")}
       <form class="qd-add" onsubmit="event.preventDefault();addCartao(${js(col.id)},this)"><input name="t" maxlength="200" placeholder="+ Adicionar cartão" aria-label="Novo cartão em ${esc(col.nome)}"></form></section>`; }).join("")}</div></div>`;
 }
+// fundo do quadro na tela inteira (como no Trello); ao sair do quadro volta o fundo da pessoa
+function fundoKanban(q) {
+  const f = q && q.estilo && q.estilo.fundo ? fundoCss(q.estilo.fundo) : "";
+  document.body.classList.toggle("fundo-kanban", !!f);
+  document.body.classList.toggle("fundo-kanban-claro", !!f && !fundoEscuro(q.estilo.fundo));
+  if (f) { document.body.style.background = f; document.body.style.backgroundAttachment = "fixed"; }
+  else aplicarFundoSistema(minhasCores());
+}
 function wireQuadro() {
+  fundoKanban(view() === "quadros" ? quadroAtual() : null);
   rolagemNoTopo();
   document.querySelectorAll(".qd-board .qc").forEach(c => {
     c.addEventListener("dragstart", e => { e.dataTransfer.setData("text/plain", "qc:" + c.dataset.id); c.classList.add("arrastando"); });

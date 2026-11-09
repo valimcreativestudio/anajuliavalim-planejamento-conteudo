@@ -126,8 +126,12 @@ const datas = () => Object.fromEntries(P({ action: 'listar', token: ta }).pautas
   await pg.click('#qfSalvar'); await pg.waitForTimeout(800);
   const qs = P({ action: 'listar', token: ta }).quadros[0];
   ok('quadro guarda fundo, fonte e cor da coluna', qs.estilo.fundo === 'g:por_do_sol' && qs.estilo.fonte === 'arredondada' && qs.colunas[0].cor === '#22c55e', JSON.stringify([qs.estilo, qs.colunas[0]]));
-  ok('fundo e cor aparecem no quadro', /gradient/.test(await pg.getAttribute('.qd-fundo', 'style')) && (await pg.$$('.qd-col.tem-cor')).length === 1);
+  ok('fundo cobre a tela inteira e cor na coluna', (await pg.evaluate(() => document.body.classList.contains('fundo-kanban') && /gradient/.test(document.body.style.background))) && (await pg.$$('.qd-col.tem-cor')).length === 1);
   await pg.screenshot({ path: cap('quadro-com-fundo.png'), fullPage: true });
+  await pg.goto('http://site.test/#calendario'); await pg.waitForTimeout(300);
+  ok('saindo do quadro o fundo some', !(await pg.evaluate(() => document.body.classList.contains('fundo-kanban'))));
+  await pg.goto('http://site.test/#quadros'); await pg.waitForTimeout(300);
+  ok('voltando ao quadro o fundo volta', await pg.evaluate(() => document.body.classList.contains('fundo-kanban')));
   P({ action: 'quadroSalvar', token: ta, quadro: { id: qs.id, nome: qs.nome, colunas: qs.colunas, estilo: { fundo: 'i:javascript:alert(1)', fonte: 'x' } } });
   ok('link javascript: não vira fundo', P({ action: 'listar', token: ta }).quadros[0].estilo.fundo === '');
   // ---------- fundo do sistema (Minha conta)
