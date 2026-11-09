@@ -22,7 +22,7 @@
 const VERSAO = '2026-11-13.1';
 // Endereço oficial do site. Os links dos e-mails SEMPRE usam este endereço (nunca o que vem do pedido).
 // A dona da plataforma pode trocar em Gestão → Empresas → Endereço do sistema.
-const SITE_PADRAO = 'https://planejaae.netlify.app/';
+const SITE_PADRAO = 'https://planejaae.pages.dev/';
 const NOME_APP = 'Planeja Aê';
 
 const ABA_PAUTAS = 'POSTAGENS';
