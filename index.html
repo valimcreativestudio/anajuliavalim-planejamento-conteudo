@@ -310,6 +310,8 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100dvh - 2
 .upl { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; align-items: end; }
 /* Login, equipe e aprovações */
 .me { display: flex; align-items: center; gap: 8px; font-size: 13px; flex-wrap: wrap; min-width: 0; max-width: 100%; }
+/* bloco da pessoa (sino, nome, Minha conta, Sair) alinhado à direita, embaixo dos botões do topo */
+@media (min-width: 761px) { header.top .me { margin-left: auto; justify-content: flex-end; } }
 @media (max-width: 520px) { .me .papel { display: none; } .me .who { white-space: normal; } }
 header.top .wrap { position: relative; }
 .sino { position: relative; width: 36px; height: 36px; border-radius: 99px; border: 1px solid color-mix(in srgb, var(--vinho-ink) 40%, transparent); background: transparent; color: var(--vinho-ink); display: grid; place-items: center; flex: none; }
