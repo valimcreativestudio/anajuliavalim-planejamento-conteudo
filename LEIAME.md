@@ -109,6 +109,8 @@ A mesma chave serve para **todas as marcas** cujas Páginas você marcou no pass
 
 Também funciona com a chave do **login do Instagram** (começa com "IG"), se esse tipo aparecer no seu app.
 
+**Chave do "login unificado" (usuário do sistema), sem Página do Facebook:** cole a chave e, no campo ao lado, o **ID da conta do Instagram** (o número que a Meta mostra abaixo do @ da marca, começa com 1784…). O sistema vai direto na conta, sem procurar Página.
+
 ## Atividade da equipe
 
 Em **Equipe → Atividade** (o administrador, o diretor e o gestor veem): último acesso de cada pessoa, quantas postagens criou, editou e enviou, quantas validou/aprovou ou devolveu, pendências e a lista das últimas ações. Quem fica 3 dias sem sinal aparece em vermelho.

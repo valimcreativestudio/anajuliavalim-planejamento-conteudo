@@ -37,4 +37,16 @@ ok('conectado: legenda inteira, título da 1ª linha e formato', c.legenda === l
 ok('conectado: fica Postado com o ID do Instagram (para métricas)', c.status === 'Postado' && c.igMidia === '901');
 ok('histórico registra a importação', (c.historico || []).some(h => /Puxou do Instagram/.test(h.acao)));
 ok('depois de puxar, nada mais falta', P({ action: 'instaFaltando', token: ts, marcaId: liso }).itens.length === 0);
+// ---- conectar com chave do "login unificado" (usuário do sistema): chave + ID da conta, sem Página
+const m3 = P({ action: 'salvarMarca', token: ta, marca: { nome: 'Liso 3' } }).id;
+global.IG.pages = []; global.IG.contas = { '17841447646452710': 'lisoobrigatorio' };
+const semId = P({ action: 'instaConectar', token: ta, marcaId: m3, chave: 'EAAsistemaXXXXXXXXXXXXXXXXXXXX' });
+ok('sem o ID: explica que precisa do ID da conta', /ID da conta do Instagram/.test(semId.error || ''), semId.error);
+const idErrado = P({ action: 'instaConectar', token: ta, marcaId: m3, chave: 'EAAsistemaXXXXXXXXXXXXXXXXXXXX', contaId: '17841400000000099' });
+ok('ID errado: avisa', !!idErrado.error, idErrado.error);
+const cx = P({ action: 'instaConectar', token: ta, marcaId: m3, chave: 'EAAsistemaXXXXXXXXXXXXXXXXXXXX', contaId: '17841447646452710' });
+ok('chave + ID: conecta direto na conta', cx.usuario === 'lisoobrigatorio' && JSON.parse(G.props['ig_' + m3]).igId === '17841447646452710', JSON.stringify(cx));
+global.IG.fbdata = [{ id: '777', caption: 'Post via sistema', media_type: 'IMAGE', permalink: 'https://www.instagram.com/p/SIS777/', timestamp: '2026-11-15T15:00:00+0000' }];
+const f3 = P({ action: 'instaFaltando', token: ta, marcaId: m3 });
+ok('com essa conexão, lista os posts do perfil', f3.itens.length === 1 && f3.itens[0].link === 'https://www.instagram.com/p/SIS777/', JSON.stringify(f3.itens));
 console.log(falhas ? falhas + ' FALHA(S)' : 'tudo certo'); process.exit(falhas ? 1 : 0);

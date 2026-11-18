@@ -602,6 +602,12 @@ body.com-fundo main#app { background: color-mix(in srgb, var(--bg) 86%, transpar
 .ig-res { display: grid; gap: 4px; padding: 12px; border-radius: 12px; background: color-mix(in srgb, var(--st-postado) 12%, var(--surface)); border: 1px solid color-mix(in srgb, var(--st-postado) 40%, transparent); }
 .ig-res .atraso { color: var(--danger); font-size: 13px; }
 @media (max-width: 520px) { .ig-it { grid-template-columns: 22px 64px minmax(0, 1fr); } .ig-it .lnk { display: none; } }
+.ig-ajuda { margin: 0; font-size: 13px; text-transform: none; letter-spacing: 0; font-weight: 400; }
+.ig-como { font-size: 13px; text-transform: none; letter-spacing: 0; font-weight: 400; }
+.ig-como summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+.ig-como ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; color: var(--muted); }
+.ig-cx { flex-wrap: wrap; }
+.ig-cx input { flex: 1 1 200px; min-width: 0; }
 .qd-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
 .qd-it { display: grid; gap: 4px; text-align: left; padding: 14px 16px 14px 18px; border: 1px solid var(--line); border-left: 6px solid var(--qc); border-radius: 14px; background: var(--surface); color: var(--ink); font: inherit; cursor: pointer; }
 .qd-it:hover { border-color: var(--qc); }
@@ -2343,15 +2349,20 @@ function instaConfigHtml(m, pode) {
   return `<div class="ig-box field"><span>Instagram da marca</span>
     ${st.conectado ? `<div class="row"><span>Conectado como <b>@${esc(st.usuario || "")}</b>. A Grade do Insta mostra os posts do perfil.</span>
         ${pode ? `<button class="btn sm danger" type="button" onclick="instaDesconectar()">Desconectar</button>` : ""}</div>`
-      : `<span class="muted" style="font-size:13px">Conecte para ver na Grade do Insta os posts que já estão no perfil. Cole a chave gerada na Meta (passo a passo no LEIAME). Se a chave for do login do Facebook, preencha antes o @ da marca em Marca → Sobre.</span>`}
-    ${pode ? `<div class="row"><input id="igToken" type="password" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();instaConectar()}" placeholder="${st.conectado ? "Colar uma chave nova" : "Cole a chave de acesso do Instagram"}"><button class="btn sm primary" type="button" id="igBtn" onclick="instaConectar()">${st.conectado ? "Trocar chave" : "Conectar"}</button></div>` : ""}
+      : `<p class="muted ig-ajuda">Conecte para ver os posts do perfil na Grade do Insta, puxar posts para o calendário e ver os resultados. Cole a chave gerada na Meta.</p>
+      <details class="ig-como"><summary>Como conectar (3 jeitos)</summary><ul>
+        <li><b>Login do Instagram</b>: chave que começa com <b>IG</b>. Só cole a chave.</li>
+        <li><b>Login unificado / usuário do sistema</b>: cole a chave e o <b>ID da conta do Instagram</b> (o número que aparece na Meta abaixo do @ da marca, ex.: 17841…). Não precisa de Página.</li>
+        <li><b>Login do Facebook</b>: o Instagram precisa estar ligado a uma Página que você administra. Preencha antes o @ da marca em Marca → Sobre e cole a chave.</li></ul></details>`}
+    ${pode ? `<div class="row ig-cx"><input id="igToken" type="password" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();instaConectar()}" placeholder="${st.conectado ? "Colar uma chave nova" : "Cole a chave de acesso"}" aria-label="Chave de acesso"><input id="igConta" inputmode="numeric" autocomplete="off" placeholder="ID da conta do Instagram (se a Meta mostrar)" aria-label="ID da conta do Instagram"><button class="btn sm primary" type="button" id="igBtn" onclick="instaConectar()">${st.conectado ? "Trocar chave" : "Conectar"}</button></div>` : ""}
   </div>`;
 }
 async function instaConectar() {
   const t = $("#igToken").value.trim();
   if (!t) return toast("Cole a chave de acesso.");
   const b = $("#igBtn"); b.disabled = true; b.textContent = "Conectando…";
-  try { const r = await api("instaConectar", { marcaId: S.marcaId, chave: t }); delete S.insta[S.marcaId]; S.dirty = false; await carregar(); toast(`Instagram @${r.usuario} conectado`); }
+  const conta = ($("#igConta") ? $("#igConta").value : "").replace(/\D/g, "");
+  try { const r = await api("instaConectar", { marcaId: S.marcaId, chave: t, contaId: conta }); delete S.insta[S.marcaId]; S.dirty = false; await carregar(); toast(`Instagram @${r.usuario} conectado`); }
   catch (e) { b.disabled = false; b.textContent = "Conectar"; toast(e.message || "Não consegui conectar."); }
 }
 async function instaDesconectar() {
@@ -6329,7 +6340,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-18.1"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-19.1"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",

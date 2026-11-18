@@ -19,7 +19,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-18.1';
+const VERSAO = '2026-11-19.1';
 // Endereço oficial do site. Os links dos e-mails SEMPRE usam este endereço (nunca o que vem do pedido).
 // A dona da plataforma pode trocar em Gestão → Empresas → Endereço do sistema.
 const SITE_PADRAO = 'https://planejaae.pages.dev/';
@@ -169,7 +169,7 @@ function doPost(e) {
     if (req.action === 'logoEmpresa') return json_(Object.assign({ ok: true }, logoEmpresa_(eu, req)));
     if (req.action === 'enviarArquivo') return json_(Object.assign({ ok: true }, enviarArquivo_(eu, req)));
     // Instagram: chamadas externas, também fora da trava
-    if (req.action === 'instaConectar') return json_(Object.assign({ ok: true }, instaConectar_(eu, req.marcaId, req.chave)));
+    if (req.action === 'instaConectar') return json_(Object.assign({ ok: true }, instaConectar_(eu, req.marcaId, req.chave, req.contaId)));
     if (req.action === 'instaDesconectar') return json_(Object.assign({ ok: true }, instaDesconectar_(eu, req.marcaId)));
     if (req.action === 'instaMidias') return json_(Object.assign({ ok: true }, instaMidias_(eu, req.marcaId, req.forcar)));
     if (req.action === 'lerPasta') return json_(Object.assign({ ok: true }, lerPasta_(eu, req.link)));
@@ -1039,16 +1039,27 @@ function instaGet_(url) {
   return j;
 }
 
-function instaConectar_(eu, marcaId, token) {
+function instaConectar_(eu, marcaId, token, contaId) {
   if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Você não pode conectar o Instagram desta marca.');
   token = String(token || '').trim();
+  contaId = String(contaId || '').replace(/\D/g, '');
   if (token.length < 20) throw erro_('server', 'Cole a chave de acesso completa.');
+  if (contaId && (contaId.length < 8 || contaId.length > 25)) throw erro_('server', 'O ID da conta do Instagram é um número comprido (ex.: 17841400000000000). Confira e tente de novo.');
   let dados;
-  if (/^IG/.test(token)) {
+  if (contaId && !/^IG/.test(token)) {
+    // chave do "login unificado"/usuário do sistema da Meta: vai direto na conta do Instagram, sem passar por Página
+    const me = instaGet_('https://graph.facebook.com/' + contaId + '?fields=id,username&access_token=' + encodeURIComponent(token));
+    if (!me.id) throw erro_('insta', 'Essa chave não deu acesso à conta ' + contaId + '. Confira o ID e as permissões da chave.');
+    dados = { tipo: 'fb', token: token, igId: String(me.id), usuario: me.username || '', direto: true };
+  } else if (/^IG/.test(token)) {
     const me = instaGet_('https://graph.instagram.com/me?fields=user_id,username&access_token=' + encodeURIComponent(token));
     dados = { tipo: 'ig', token: token, usuario: me.username || '' };
   } else {
-    dados = instaPelaPagina_(marcaId, token);
+    try { dados = instaPelaPagina_(marcaId, token); }
+    catch (e) {
+      if (/nenhuma Página/.test(String(e.message))) throw erro_('insta', 'Essa chave não passa por uma Página do Facebook. Se ela foi gerada pela "API com login unificado" (usuário do sistema), preencha também o ID da conta do Instagram e conecte de novo.');
+      throw e;
+    }
   }
   dados.salvo = Date.now(); dados.renovado = Date.now();
   PropertiesService.getScriptProperties().setProperty('ig_' + marcaId, JSON.stringify(dados));
