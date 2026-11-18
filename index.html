@@ -3597,6 +3597,8 @@ async function copiarLegenda() {
 function writeFail(e) {
   const c = e && e.code;
   if (c === "sessao") { S.token = ""; store("token", ""); S.eu = null; if ($("#dlg").open) $("#dlg").close(); render(); return toast("Sua sessão expirou. Entre de novo."); }
+  // site novo com o script da planilha antigo: explica o que fazer
+  if (/Ação desconhecida/.test((e && e.message) || "")) return toast("Essa função precisa do script novo da planilha: cole o Codigo.gs no Apps Script e crie uma Nova versão da implantação.");
   const msg = c === "local" ? e.message
     : (c === "server" || c === "permissao" || c === "insta") && e.message ? e.message
     : "Não foi possível salvar. Confira a internet e tente de novo.";
@@ -4444,7 +4446,7 @@ async function puxarIg(modo) {
   const itens = modo === "sel" ? [...IGP.sel].map(link => ({ link }))
     : IGP.links.split(/\s+/).map(t => t.trim()).filter(t => /instagram\.com\//i.test(t)).map(link => ({ link, data: IGP.data, formato: IGP.formato }));
   if (!itens.length) return toast(modo === "sel" ? "Marque pelo menos um post." : "Cole pelo menos um link do Instagram.");
-  const b = $(modo === "sel" ? "#igSel" : "#igLnk"); b.disabled = true; b.textContent = "Puxando…";
+  const b = $(modo === "sel" ? "#igSel" : "#igLnk"); b.disabled = true; b.textContent = "Puxando… (pode levar até 30 segundos)";
   try {
     const r = await api("instaImportar", { marcaId: IGP.marcaId, itens });
     IGP.resultado = r; if (modo === "links") IGP.links = r.erros.map(e => e.link).join("\n");
