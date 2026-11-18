@@ -19,7 +19,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-21.1';
+const VERSAO = '2026-11-21.2';
 // Endereço oficial do site. Os links dos e-mails SEMPRE usam este endereço (nunca o que vem do pedido).
 // A dona da plataforma pode trocar em Gestão → Empresas → Endereço do sistema.
 const SITE_PADRAO = 'https://planejaae.pages.dev/';
@@ -252,8 +252,7 @@ function rodarAcao_(eu, req) {
         case 'cartaoFeito': cartaoFeito_(eu, req.id, !!req.feito); return json_({ ok: true });
         case 'quadroEtiquetas': quadroEtiquetas_(eu, req.id, req.etiquetas); return json_({ ok: true });
         case 'fixarGrade': return json_(Object.assign({ ok: true }, fixarGrade_(eu, req.marcaId, req.codigo, req.posicao)));
-        case 'fixarGrade': return ['Mudou os fixados da grade', nomeDaMarca_(req.marcaId), Number(req.posicao) ? 'posição ' + req.posicao : 'desafixou', empresaDe_(req.marcaId)];
-    case 'reordenarGrade': return json_({ ok: true, n: reordenarGrade_(eu, req.marcaId, req.mudancas) });
+        case 'reordenarGrade': return json_({ ok: true, n: reordenarGrade_(eu, req.marcaId, req.mudancas) });
         case 'modeloSalvar': return json_({ ok: true, id: modeloSalvar_(eu, req.marcaId, req.mes, req.nome, req.comTemas) });
         case 'modeloAplicar': return json_({ ok: true, n: modeloAplicar_(eu, req.id, req.marcaId, req.mes, req.comTemas) });
         case 'modeloExcluir': modeloExcluir_(eu, req.id); return json_({ ok: true });
@@ -3366,6 +3365,7 @@ function antesDoRegistro_(eu, req) {
       return [atual ? 'Alterou a pessoa' : 'Cadastrou a pessoa', (u.nome || u.login || '') + ' (' + (PAPEIS.indexOf(u.papel) >= 0 ? u.papel : '') + ')', mud];
     }
     case 'excluirEmpresa': { const x = ler_(ABA_EMPRESAS, CAMPOS_EMPRESA).filter(e => e.id === String(req.id))[0]; return x ? ['Apagou a empresa', x.nome, 'com todos os dados (cópia guardada no Drive)', ''] : null; }
+    case 'fixarGrade': return ['Mudou os fixados da grade', nomeDaMarca_(req.marcaId), Number(req.posicao) ? 'posição ' + req.posicao : 'desafixou', empresaDe_(req.marcaId)];
     case 'reordenarGrade': return (req.mudancas || []).length ? ['Reordenou a grade', nomeDaMarca_(req.marcaId), (req.mudancas || []).length + ' postagem(ns) mudaram de data', empresaDe_(req.marcaId)] : null;
     case 'quadroExcluir': { const x = ler_(ABA_QUADROS, CAMPOS_QUADRO).filter(q => q.id === String(req.id))[0]; return x ? ['Apagou o quadro', x.nome, 'com todos os cartões', x.empresaId] : null; }
     case 'modeloExcluir': { const x = ler_(ABA_MODELOS, CAMPOS_MODELO).filter(m => m.id === String(req.id))[0]; return x ? ['Apagou o modelo de mês', x.nome, '', x.empresaId] : null; }

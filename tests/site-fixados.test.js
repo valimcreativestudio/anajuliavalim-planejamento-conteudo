@@ -18,6 +18,7 @@ ok('cliente não fixa', !!P({ action: 'fixarGrade', token: tc, marcaId: liso, co
 ok('posição inválida recusada', !!P({ action: 'fixarGrade', token: ta, marcaId: liso, codigo: 'CODE38x', posicao: 5 }).error);
 P({ action: 'fixarGrade', token: ta, marcaId: liso, codigo: 'CODE38x', posicao: 1 });
 P({ action: 'fixarGrade', token: ta, marcaId: liso, codigo: 'CODE39x', posicao: 2 });
+ok('registro anota quem mudou os fixados', P({ action: 'auditoria', token: ta }).itens.some(x => /Mudou os fixados da grade/.test(x.acao)));
 P({ action: 'fixarGrade', token: ta, marcaId: liso, codigo: 'CODE37x', posicao: 3 });
 let fx = P({ action: 'listar', token: ta }).marcas.find(m => m.id === liso).fixados;
 ok('fixados guardados na marca, na ordem', fx.join(',') === 'CODE38x,CODE39x,CODE37x', fx.join(','));
