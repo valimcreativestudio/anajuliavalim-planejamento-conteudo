@@ -224,6 +224,12 @@ a.lnk:hover { text-decoration: underline; }
 .tile .tag-dest { position: absolute; left: 6px; bottom: 6px; z-index: 2; background: var(--pr-alta); color: #111; font-size: 10.5px; font-weight: 700; border-radius: 4px; padding: 1px 6px; }
 #grDlg { width: min(600px, calc(100vw - 24px)); }
 .grade-note { max-width: 520px; margin: 12px auto 0; font-size: 12.5px; color: var(--muted); text-align: center; }
+.grade-modo { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 520px; margin: 0 auto 12px; }
+.grade-modo button[aria-pressed="true"] { background: var(--primary); color: var(--primary-ink); border-color: var(--primary); }
+.ig-pin { position: absolute; top: 6px; left: 6px; z-index: 3; width: 28px; height: 28px; border: 0; border-radius: 99px; background: rgba(0,0,0,.55); color: #fff; opacity: .4; cursor: pointer; }
+.ig-pin:hover, .ig-pin.on { opacity: 1; }
+.ig-pin.on { background: #f5cd47; color: #000; }
+.tile.ig.fixado { box-shadow: inset 0 0 0 3px #f5cd47; }
 
 /* Resumo */
 .sum-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
@@ -1460,29 +1466,60 @@ function carregarInsta(mid, forcar) {
     .catch(e => { S.insta[mid] = { em: Date.now(), dados: { conectado: true, erro: e.message || "Não consegui ler o Instagram agora." } }; })
     .finally(() => { if ($("#grDlg").open) desenharGradeDlg(); else if (view() === "grade" && S.marcaId === mid && !$("#dlg").open && !S.dirty) render(); });
 }
+// instante de um horário: o do Instagram vem em UTC (+0000); o planejado é a hora local, sem fuso
+const epocaDe = s => {
+  const v = String(s || "").trim().replace(" ", "T").replace(/([+-]\d{2})(\d{2})$/, "$1:$2");
+  const t = Date.parse(v); // sem fuso, o navegador lê como hora local
+  return isNaN(t) ? 0 : t;
+};
+// alterna entre a grade com os posts reais do Instagram e a grade só com os planejados
+function gradeModoBotoes() {
+  const modo = S.gradeModo || "ig";
+  return `<div class="grade-modo" role="group" aria-label="Mostrar na grade">
+    <button class="btn sm" type="button" aria-pressed="${modo === "ig"}" onclick="mudarGradeModo('ig')">Com posts do Insta</button>
+    <button class="btn sm" type="button" aria-pressed="${modo === "plan"}" onclick="mudarGradeModo('plan')">Sem posts do Insta</button></div>`;
+}
+// marca ou desmarca um post do Instagram como fixado no topo da grade (até 3, como no perfil)
+function fixarIg(mid, id, fixar) {
+  const midias = ((S.insta[mid] || {}).dados || {}).midias || [];
+  const atuais = midias.filter(x => x.fixado && x.id !== id).map(x => x.id);
+  if (fixar && atuais.length >= 3) return toast("No Instagram dá para fixar até 3 posts. Desfixe um antes.");
+  api("instaFixados", { marcaId: mid, ids: fixar ? atuais.concat(id) : atuais })
+    .then(() => { toast(fixar ? "Post fixado no topo da grade" : "Post desfixado"); carregarInsta(mid, true); })
+    .catch(e => toast(e.message || "Não consegui salvar os fixados."));
+}
+function mudarGradeModo(modo) {
+  S.gradeModo = modo;
+  if ($("#grDlg").open) desenharGradeDlg(); else render();
+}
 // grade de uma marca num mês; destaque = postagem que está sendo aprovada
 function gradeBox(m, mes, destaque) {
   const ig = m.insta && m.insta.conectado;
-  if (ig) carregarInsta(m.id);
+  const comIg = !!ig && (S.gradeModo || "ig") === "ig";
+  if (comIg) carregarInsta(m.id);
   const cache = S.insta[m.id] || {}, d = cache.dados || {};
-  const midias = ig && d.midias ? d.midias : [];
+  const midias = comIg && d.midias ? d.midias : [];
   const codigos = new Set(midias.map(x => codigoIg(x.link)).filter(Boolean));
   // fica fora da grade só o que não vai para o feed (por exemplo, só Stories ou só TikTok)
   const ps = S.posts.filter(p => p.marcaId === m.id && (p.data || "").startsWith(mes))
     .filter(p => { const r = redesDe(p.rede); return !r.length || r.some(x => !NAO_FEED.includes(x)); })
     // um post já marcado como postado, com o link igual a um post do perfil, aparece uma vez só (com a imagem real)
     .filter(p => !(p.status === "Postado" && codigos.has(codigoIg(p.postLink))));
-  const itens = ps.map(p => ({ t: "plan", em: (p.agData || p.data || "") + "T" + (p.agHora || "12:00"), p }))
-    .concat(midias.map(x => ({ t: "ig", em: x.em || "", x })))
-    .sort((a, b) => String(b.em).localeCompare(String(a.em)));
+  // fixados do Instagram primeiro (na ordem marcada); o resto do mais recente ao mais antigo, pelo instante real
+  const todos = ps.map(p => ({ t: "plan", em: (p.agData || p.data || "") + "T" + (p.agHora || "12:00"), p }))
+    .concat(midias.map(x => ({ t: "ig", em: x.em || "", x, fix: !!x.fixado })));
+  const itens = todos.filter(it => it.fix)
+    .concat(todos.filter(it => !it.fix).sort((a, b) => epocaDe(b.em) - epocaDe(a.em)));
+  const podeFixar = comIg && S.canWrite && !ehCliente();
   const ponto = `<span class="ok" title="Já postado"></span>`;
   const AGUARDA = ["Em validação", "Validação do cliente", "Em aprovação", "Aprovação do cliente"];
   const tiles = itens.map(it => {
     if (it.t === "ig") {
       const x = it.x;
-      return `<a class="tile ig has-img" href="${esc(urlOk(x.link))}" target="_blank" rel="noopener" title="${esc(x.legenda || "Post do Instagram")}">
+      return `<a class="tile ig has-img${x.fixado ? " fixado" : ""}" href="${esc(urlOk(x.link))}" target="_blank" rel="noopener" title="${esc(x.legenda || "Post do Instagram")}">
         ${x.img ? `<img src="${esc(x.img)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ""}
-        ${x.tipo === "VIDEO" ? `<span class="fic">▶</span>` : x.tipo === "CAROUSEL_ALBUM" ? `<span class="fic">▤</span>` : ""}${ponto}</a>`;
+        ${x.tipo === "VIDEO" ? `<span class="fic">▶</span>` : x.tipo === "CAROUSEL_ALBUM" ? `<span class="fic">▤</span>` : ""}${ponto}
+        ${podeFixar ? `<button class="ig-pin${x.fixado ? " on" : ""}" type="button" aria-pressed="${!!x.fixado}" title="${x.fixado ? "Desfixar" : "Fixar no topo"}" onclick="event.preventDefault();event.stopPropagation();fixarIg(${js(m.id)}, ${js(x.id)}, ${!x.fixado})">📌</button>` : ""}</a>`;
     }
     const p = it.p, src = blobSrc(p);
     const cls = p.id === destaque ? " destaque" : (destaque && AGUARDA.includes(p.status) ? " aguarda" : "");
@@ -1497,10 +1534,10 @@ function gradeBox(m, mes, destaque) {
   const ini = (m.nome || "?").trim().charAt(0).toUpperCase();
   const usuario = (d.usuario || (m.insta && m.insta.usuario) || "");
   const foto = thumbDe(perfilDe(m).fotoPerfil);
-  const sub = ig ? `${midias.length ? `${midias.length} posts do perfil` : "Perfil conectado"} + ${ps.length} planejados em ${esc(monthLabel(mes))}` : `${ps.length} posts planejados em ${esc(monthLabel(mes))}`;
-  const aviso = !ig ? "" : d.erro ? `<p class="grade-note" style="color:var(--danger)">${esc(d.erro)}</p>`
+  const sub = comIg ? `${midias.length ? `${midias.length} posts do perfil` : "Perfil conectado"} + ${ps.length} planejados em ${esc(monthLabel(mes))}` : `${ps.length} posts planejados em ${esc(monthLabel(mes))}`;
+  const aviso = !comIg ? "" : d.erro ? `<p class="grade-note" style="color:var(--danger)">${esc(d.erro)}</p>`
     : cache.carregando && !d.midias ? `<p class="grade-note">Buscando os posts do Instagram…</p>` : "";
-  return { ig, aviso, html: `<div class="grade-box">
+  return { ig, comIg, aviso, html: `<div class="grade-box">
       <div class="profile"><div class="avatar" style="overflow:hidden">${foto ? `<img src="${esc(foto)}" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.remove()">` : esc(ini)}</div><div><b>${usuario ? "@" + esc(usuario) : esc(m.nome)}</b><div class="muted">${sub}</div></div></div>
       ${itens.length ? `<div class="grade">${tiles}</div>` : `<div class="empty" style="margin:0 16px 16px">Nenhum post de feed neste mês.</div>`}
     </div>
@@ -1508,8 +1545,8 @@ function gradeBox(m, mes, destaque) {
 }
 function vGrade() {
   const m = marca(), g = gradeBox(m, S.month);
-  return headM(m.nome, "Grade do Instagram", monthNav() + (g.ig ? `<button class="btn sm" type="button" onclick="carregarInsta(S.marcaId, true);render()">Atualizar do Instagram</button>` : "")) +
-    g.html + (!g.ig && !ehCliente() ? `<p class="grade-note">Para ver aqui também os posts que já estão no perfil, conecte o Instagram da marca em <a class="lnk" href="#marca-config">Marca → Configurações</a>.</p>` : g.aviso) +
+  return headM(m.nome, "Grade do Instagram", monthNav() + (g.comIg ? `<button class="btn sm" type="button" onclick="carregarInsta(S.marcaId, true);render()">Atualizar do Instagram</button>` : "")) +
+    (g.ig ? gradeModoBotoes() : "") + g.html +(!g.ig && !ehCliente() ? `<p class="grade-note">Para ver aqui também os posts que já estão no perfil, conecte o Instagram da marca em <a class="lnk" href="#marca-config">Marca → Configurações</a>.</p>` : g.aviso) +
     `<p class="grade-note">Do mais recente (canto superior esquerdo) ao mais antigo. Os planejados mostram a arte quando a postagem tem a imagem de prévia; os posts do perfil abrem no Instagram.</p>`;
 }
 // grade aberta a partir de uma aprovação, com o post em destaque
@@ -1525,7 +1562,7 @@ function desenharGradeDlg() {
   const m = S.marcas.find(x => x.id === p.marcaId), g = gradeBox(m, mes, id);
   $("#grForm").innerHTML = `<div class="dlg-head"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600">${esc(m.nome)} · ${esc(monthLabel(mes))}</div><h2>Como fica na grade</h2></div>
       <button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#grDlg').close()">×</button></div>
-    <div class="dlg-body" style="grid-template-columns:1fr">${g.html}${g.aviso}</div>`;
+    <div class="dlg-body" style="grid-template-columns:1fr">${g.ig ? gradeModoBotoes() : ""}${g.html}${g.aviso}</div>`;
 }
 
 /* ---------- Resumo do mês: dashboard para apresentar ---------- */

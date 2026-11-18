@@ -166,6 +166,7 @@ function doPost(e) {
     if (req.action === 'instaConectar') return json_(Object.assign({ ok: true }, instaConectar_(eu, req.marcaId, req.chave)));
     if (req.action === 'instaDesconectar') return json_(Object.assign({ ok: true }, instaDesconectar_(eu, req.marcaId)));
     if (req.action === 'instaMidias') return json_(Object.assign({ ok: true }, instaMidias_(eu, req.marcaId, req.forcar)));
+    if (req.action === 'instaFixados') return json_(Object.assign({ ok: true }, instaFixados_(eu, req.marcaId, req.ids)));
     if (req.action === 'lerPasta') return json_(Object.assign({ ok: true }, lerPasta_(eu, req.link)));
     if (req.action === 'ia') return json_(Object.assign({ ok: true }, ia_(eu, req.tarefa, req.marcaId, req.dados || {})));
     if (req.action === 'lerConteudo') return json_(Object.assign({ ok: true }, lerConteudo_(eu, req.link)));
@@ -1052,6 +1053,20 @@ function instaPelaPagina_(marcaId, token) {
   return { tipo: 'fb', token: p.access_token, igId: p.instagram_business_account.id, usuario: p.instagram_business_account.username || '', pagina: p.name || '' };
 }
 
+// posts fixados no topo da grade: a API do Instagram não informa quais estão fixados, então a equipe marca aqui (até 3, como no perfil)
+function instaFixados_(eu, marcaId, ids) {
+  if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Você não pode mudar os fixados desta marca.');
+  const lista = (Array.isArray(ids) ? ids : []).map(x => String(x || '').slice(0, 60)).filter(Boolean).filter((x, i, a) => a.indexOf(x) === i).slice(0, 3);
+  PropertiesService.getScriptProperties().setProperty('fix_' + marcaId, JSON.stringify(lista));
+  CacheService.getScriptCache().remove('igm_' + marcaId);
+  mexeu_();
+  return { fixados: lista };
+}
+function fixadosDe_(marcaId) {
+  const v = parseJSON_(PropertiesService.getScriptProperties().getProperty('fix_' + marcaId), []);
+  return Array.isArray(v) ? v : [];
+}
+
 function instaDesconectar_(eu, marcaId) {
   if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Você não pode desconectar o Instagram desta marca.');
   PropertiesService.getScriptProperties().deleteProperty('ig_' + marcaId);
@@ -1080,14 +1095,15 @@ function instaMidias_(eu, marcaId, forcar) {
   try {
     const campos = 'fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&limit=36&access_token=' + encodeURIComponent(d.token);
     const j = instaGet_(d.tipo === 'fb' ? 'https://graph.facebook.com/' + d.igId + '/media?' + campos : 'https://graph.instagram.com/me/media?' + campos);
-    res = {
-      conectado: true, usuario: d.usuario,
-      midias: (j.data || []).map(x => ({
-        id: x.id, tipo: x.media_type, link: x.permalink, em: x.timestamp,
-        img: x.media_type === 'VIDEO' ? (x.thumbnail_url || '') : (x.media_url || ''),
-        legenda: String(x.caption || '').slice(0, 140)
-      }))
-    };
+    const midias = (j.data || []).map(x => ({
+      id: x.id, tipo: x.media_type, link: x.permalink, em: x.timestamp,
+      img: x.media_type === 'VIDEO' ? (x.thumbnail_url || '') : (x.media_url || ''),
+      legenda: String(x.caption || '').slice(0, 140)
+    }));
+    // fixados vêm primeiro, na ordem em que a equipe os marcou; o resto segue a ordem do Instagram
+    const fixos = fixadosDe_(marcaId).map(id => midias.filter(x => x.id === id)[0]).filter(Boolean);
+    midias.forEach(x => { x.fixado = fixos.indexOf(x) >= 0; });
+    res = { conectado: true, usuario: d.usuario, midias: fixos.concat(midias.filter(x => !x.fixado)) };
   } catch (e) {
     return { conectado: true, usuario: d.usuario, erro: String(e.message || e) };
   }
