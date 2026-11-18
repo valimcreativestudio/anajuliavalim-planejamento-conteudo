@@ -19,7 +19,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-20.1';
+const VERSAO = '2026-11-21.1';
 // Endereço oficial do site. Os links dos e-mails SEMPRE usam este endereço (nunca o que vem do pedido).
 // A dona da plataforma pode trocar em Gestão → Empresas → Endereço do sistema.
 const SITE_PADRAO = 'https://planejaae.pages.dev/';
@@ -251,7 +251,9 @@ function rodarAcao_(eu, req) {
         case 'cartaoExcluir': cartaoExcluir_(eu, req.id); return json_({ ok: true });
         case 'cartaoFeito': cartaoFeito_(eu, req.id, !!req.feito); return json_({ ok: true });
         case 'quadroEtiquetas': quadroEtiquetas_(eu, req.id, req.etiquetas); return json_({ ok: true });
-        case 'reordenarGrade': return json_({ ok: true, n: reordenarGrade_(eu, req.marcaId, req.mudancas) });
+        case 'fixarGrade': return json_(Object.assign({ ok: true }, fixarGrade_(eu, req.marcaId, req.codigo, req.posicao)));
+        case 'fixarGrade': return ['Mudou os fixados da grade', nomeDaMarca_(req.marcaId), Number(req.posicao) ? 'posição ' + req.posicao : 'desafixou', empresaDe_(req.marcaId)];
+    case 'reordenarGrade': return json_({ ok: true, n: reordenarGrade_(eu, req.marcaId, req.mudancas) });
         case 'modeloSalvar': return json_({ ok: true, id: modeloSalvar_(eu, req.marcaId, req.mes, req.nome, req.comTemas) });
         case 'modeloAplicar': return json_({ ok: true, n: modeloAplicar_(eu, req.id, req.marcaId, req.mes, req.comTemas) });
         case 'modeloExcluir': modeloExcluir_(eu, req.id); return json_({ ok: true });
@@ -482,7 +484,7 @@ function listar_(eu, desde, se) {
     criado: Number(m.criado) || 0,
     perfil: parseJSON_(m.perfil, {}),
     arquivos: parseJSON_(m.arquivos, []),
-    insta: instaStatus_(m.id),
+    insta: instaStatus_(m.id), fixados: fixadosDe_(m.id),
     temCliente: marcaTemCliente_(m.id, pessoasCache)
   }));
   const pautas = ler_(ABA_PAUTAS, CAMPOS_PAUTA).filter(p => acesso_(eu, p.marcaId) && noPeriodo(p.data)).map(pautaParaSite_);
@@ -1126,8 +1128,34 @@ function instaMidias_(eu, marcaId, forcar) {
   } catch (e) {
     return { conectado: true, usuario: d.usuario, erro: String(e.message || e) };
   }
+  // fixados mais antigos que os 36 recentes: busca na lista completa do perfil para aparecerem no topo da grade
+  try {
+    const tem = {}; res.midias.forEach(x => { tem[codigoIg_(x.link)] = 1; });
+    const faltam = fixadosDe_(marcaId).filter(c => c && !tem[c]);
+    if (faltam.length) (instaTodas_(marcaId) || []).filter(x => faltam.indexOf(codigoIg_(x.link)) >= 0)
+      .forEach(x => res.midias.push({ id: x.id, tipo: x.tipo, link: x.link, em: x.em, img: x.img || '', legenda: String(x.legenda || '').slice(0, 140), antigo: true }));
+  } catch (e) { /* sem os fixados antigos; a grade mostra o resto */ }
   try { cache.put('igm_' + marcaId, JSON.stringify(res), 900); } catch (e) {}
   return res;
+}
+
+/* ---------- Posts fixados no topo da grade (marcados à mão) ---------- */
+function fixadosDe_(marcaId) {
+  const l = parseJSON_(PropertiesService.getScriptProperties().getProperty('fix_' + marcaId), []);
+  return [0, 1, 2].map(i => /^[\w-]{5,40}$/.test(String(l[i] || '')) ? String(l[i]) : '');
+}
+function fixarGrade_(eu, marcaId, codigo, posicao) {
+  if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Você não pode mudar a grade desta marca.');
+  codigo = String(codigo || '');
+  if (!/^[\w-]{5,40}$/.test(codigo)) throw erro_('server', 'Post do Instagram inválido.');
+  const pos = Number(posicao);
+  if ([0, 1, 2, 3].indexOf(pos) < 0) throw erro_('server', 'Escolha a posição 1, 2 ou 3.');
+  const l = fixadosDe_(marcaId).map(c => c === codigo ? '' : c);
+  if (pos) l[pos - 1] = codigo; // quem estava nessa posição sai dos fixados
+  PropertiesService.getScriptProperties().setProperty('fix_' + marcaId, JSON.stringify(l));
+  CacheService.getScriptCache().remove('igm_' + marcaId);
+  mexeu_();
+  return { fixados: l };
 }
 
 /* ---------- Puxar posts do Instagram para o calendário ---------- */
@@ -1139,12 +1167,12 @@ function instaTodas_(marcaId) {
   if (!d) return null;
   const cache = CacheService.getScriptCache(), c = cache.get('igall_' + marcaId);
   if (c) { try { return JSON.parse(c); } catch (e) {} }
-  const campos = 'fields=id,caption,media_type,permalink,timestamp&limit=100&access_token=' + encodeURIComponent(d.token);
+  const campos = 'fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&limit=100&access_token=' + encodeURIComponent(d.token);
   let url = d.tipo === 'fb' ? 'https://graph.facebook.com/' + d.igId + '/media?' + campos : 'https://graph.instagram.com/me/media?' + campos;
   const l = [];
   for (let i = 0; i < 3 && url; i++) {
     const j = instaGet_(url);
-    (j.data || []).forEach(x => l.push({ id: x.id, tipo: x.media_type, link: x.permalink, em: x.timestamp, legenda: String(x.caption || '') }));
+    (j.data || []).forEach(x => l.push({ id: x.id, tipo: x.media_type, link: x.permalink, em: x.timestamp, legenda: String(x.caption || ''), img: x.media_type === 'VIDEO' ? (x.thumbnail_url || '') : (x.media_url || '') }));
     url = j.paging && j.paging.next && /^https:\/\/graph\.(instagram|facebook)\.com\//.test(j.paging.next) ? j.paging.next : '';
   }
   try { cache.put('igall_' + marcaId, JSON.stringify(l), 600); } catch (e) { /* grande demais para o cache */ }

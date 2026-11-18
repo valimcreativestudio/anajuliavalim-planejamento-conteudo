@@ -214,6 +214,10 @@ Ao rodar **configurar**, o script cria quatro rotinas (a quarta é o relatório 
 
 **Reordenar a grade** (Grade do Insta → ↕ Reordenar grade): arraste os posts (no celular, toque num e depois no lugar para onde ele vai). As datas do mês continuam as mesmas, só trocam entre os posts; cada post mostra a data nova e a antiga. Posts agendados ou postados ficam travados (🔒). **Só grava ao apertar "Salvar nova ordem"**; se sair da tela, mudar de mês ou cancelar, tudo volta como estava. Depois de salvar ainda dá para **Desfazer**.
 
+## Posts fixados no topo da grade (📌)
+
+A API do Instagram **não informa** quais posts estão fixados no perfil, então eles são marcados à mão: na **Grade do Insta**, passe o mouse (ou toque) num post publicado e clique no **📌** → **Posição 1, 2 ou 3** (ou **Desafixar**). A grade mostra primeiro os fixados, na posição marcada, e depois o resto por data, do mais novo para o mais antigo, como no perfil. Os fixados ficam guardados na marca e continuam no topo depois de "Atualizar do Instagram", mesmo se forem posts antigos. **Quando mudar os fixados no Instagram, mude também aqui** — o sistema não percebe sozinho. Clientes veem os selos 📌, mas não mudam.
+
 ## Horário dos posts
 
 Na postagem, o campo **Horário (ordem no dia)** define a ordem quando há vários posts no mesmo dia: no **calendário** e na **lista** eles aparecem do mais cedo para o mais tarde (com o 🕒 horário no cartão); na **Grade do Insta**, o mais tarde fica primeiro, como no feed. No **Reordenar grade**, o horário vai junto com o lugar (trocar dois posts de lugar troca os horários). Posts agendados usam o horário do agendamento; os puxados do Instagram vêm com o horário em que foram postados.

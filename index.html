@@ -609,6 +609,17 @@ body.com-fundo main#app { background: color-mix(in srgb, var(--bg) 86%, transpar
 .ig-cx { flex-wrap: wrap; }
 .ig-cx input { flex: 1 1 200px; min-width: 0; }
 .hr-chip { font-weight: 700; color: var(--ink); }
+.tile .tile-a { position: absolute; inset: 0; display: block; }
+.tile .tile-a img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tile.fixado { box-shadow: inset 0 0 0 3px #f5cd47; }
+.pin-tag { position: absolute; left: 6px; bottom: 6px; z-index: 3; background: rgba(0,0,0,.7); color: #fff; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 1px 6px; pointer-events: none; }
+.pin-btn { position: absolute; right: 6px; bottom: 6px; z-index: 4; width: 28px; height: 28px; border-radius: 50%; border: 0; background: rgba(0,0,0,.55); cursor: pointer; font-size: 13px; opacity: 0; transition: opacity .15s; }
+.tile:hover .pin-btn, .tile:focus-within .pin-btn, .pin-btn.on, .pin-btn:focus { opacity: 1; }
+@media (hover: none) { .pin-btn { opacity: .85; } }
+.pin-menu { position: absolute; right: 6px; bottom: 38px; z-index: 6; display: grid; gap: 2px; min-width: 150px; padding: 6px; border-radius: 10px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); box-shadow: var(--shadow); font-size: 13px; text-align: left; }
+.pin-menu b { padding: 4px 8px; font-size: 12px; color: var(--muted); }
+.pin-menu button { border: 0; background: transparent; text-align: left; padding: 7px 8px; border-radius: 7px; font: inherit; color: inherit; cursor: pointer; }
+.pin-menu button:hover, .pin-menu button.on { background: var(--surface-2); font-weight: 600; }
 .qd-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
 .qd-it { display: grid; gap: 4px; text-align: left; padding: 14px 16px 14px 18px; border: 1px solid var(--line); border-left: 6px solid var(--qc); border-radius: 14px; background: var(--surface); color: var(--ink); font: inherit; cursor: pointer; }
 .qd-it:hover { border-color: var(--qc); }
@@ -1625,6 +1636,8 @@ function gradeBox(m, mes, destaque) {
   const cache = S.insta[m.id] || {}, d = cache.dados || {};
   const midias = ig && d.midias ? d.midias : [];
   const codigos = new Set(midias.map(x => codigoIg(x.link)).filter(Boolean));
+  const fix = Object.fromEntries((m.fixados || []).map((c, i) => [c, i + 1]).filter(([c]) => c));
+  const codigoItem = it => it.t === "ig" ? codigoIg(it.x.link) : it.p.status === "Postado" ? codigoIg(it.p.postLink) : "";
   // fica fora da grade só o que não vai para o feed (por exemplo, só Stories ou só TikTok)
   const ps = S.posts.filter(p => p.marcaId === m.id && (p.data || "").startsWith(mes))
     .filter(p => { const r = redesDe(p.rede); return !r.length || r.some(x => !NAO_FEED.includes(x)); })
@@ -1632,25 +1645,35 @@ function gradeBox(m, mes, destaque) {
     .filter(p => !(p.status === "Postado" && codigos.has(codigoIg(p.postLink))));
   const itens = ps.map(p => ({ t: "plan", em: (p.agData || p.data || "") + "T" + (horaPost(p) || "12:00"), p }))
     .concat(midias.map(x => ({ t: "ig", em: x.em || "", x })))
-    .sort((a, b) => String(b.em).slice(0, 16).localeCompare(String(a.em).slice(0, 16)) || posGrade(a) - posGrade(b));
+    .sort((a, b) => (fix[codigoItem(a)] || 9) - (fix[codigoItem(b)] || 9) || String(b.em).slice(0, 16).localeCompare(String(a.em).slice(0, 16)) || posGrade(a) - posGrade(b));
   const ponto = `<span class="ok" title="Já postado"></span>`;
+  const podeFixar = S.canWrite && !ehCliente() && !destaque;
+  // 📌 fixados: selo com a posição e, para quem edita, o menu de posição
+  const pino = cod => {
+    if (!cod) return "";
+    const n = fix[cod], menu = podeFixar && S.pinMenu === cod;
+    return `${n ? `<span class="pin-tag" title="Fixado no topo (posição ${n})">📌 ${n}</span>` : ""}
+      ${podeFixar ? `<button type="button" class="pin-btn${n ? " on" : ""}" aria-label="${n ? "Mudar fixado" : "Fixar no topo"}" title="${n ? "Mudar fixado" : "📌 Fixar no topo"}" onclick="event.preventDefault();event.stopPropagation();S.pinMenu=S.pinMenu===${js(cod)}?null:${js(cod)};render()">📌</button>` : ""}
+      ${menu ? `<div class="pin-menu" onclick="event.stopPropagation()"><b>Fixar no topo</b>${[1, 2, 3].map(i => `<button type="button" class="${n === i ? "on" : ""}" onclick="event.preventDefault();fixarPost(${js(cod)},${i})">Posição ${i}${Object.entries(fix).find(([c, v]) => v === i && c !== cod) ? " (troca)" : ""}</button>`).join("")}${n ? `<button type="button" onclick="event.preventDefault();fixarPost(${js(cod)},0)">Desafixar</button>` : ""}</div>` : ""}`;
+  };
   const AGUARDA = ["Em validação", "Validação do cliente", "Em aprovação", "Aprovação do cliente"];
   const tiles = itens.map(it => {
     if (it.t === "ig") {
       const x = it.x;
-      return `<a class="tile ig has-img" href="${esc(urlOk(x.link))}" target="_blank" rel="noopener" title="${esc(x.legenda || "Post do Instagram")}">
-        ${x.img ? `<img src="${esc(x.img)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ""}
-        ${x.tipo === "VIDEO" ? `<span class="fic">▶</span>` : x.tipo === "CAROUSEL_ALBUM" ? `<span class="fic">▤</span>` : ""}${ponto}</a>`;
+      return `<div class="tile ig has-img${fix[codigoIg(x.link)] ? " fixado" : ""}"><a class="tile-a" href="${esc(urlOk(x.link))}" target="_blank" rel="noopener" title="${esc(x.legenda || "Post do Instagram")}">
+        ${x.img ? `<img src="${esc(x.img)}" alt="${esc((x.legenda || "Post do Instagram").slice(0, 60))}" loading="lazy" referrerpolicy="no-referrer">` : ""}</a>
+        ${x.tipo === "VIDEO" ? `<span class="fic">▶</span>` : x.tipo === "CAROUSEL_ALBUM" ? `<span class="fic">▤</span>` : ""}${ponto}${pino(codigoIg(x.link))}</div>`;
     }
     const p = it.p, src = blobSrc(p);
     const cls = p.id === destaque ? " destaque" : (destaque && AGUARDA.includes(p.status) ? " aguarda" : "");
-    return `<button class="tile${src ? " has-img" : ""}${cls}" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="${destaque ? "$('#grDlg').close();" : ""}openEditor(${js(p.id)})" title="${esc(nm(p))} · ${esc(p.status)}">
+    const codP = codigoItem(it);
+    return `<div class="tile${src ? " has-img" : ""}${cls}${fix[codP] ? " fixado" : ""}" role="button" tabindex="0" style="--fase:${esc(faseCor(m, p.fase))}" onclick="${destaque ? "$('#grDlg').close();" : ""}openEditor(${js(p.id)})" onkeydown="if(event.key==='Enter'){this.click()}" title="${esc(nm(p))} · ${esc(p.status)}">
       ${src ? `<img src="${esc(src)}" alt="${esc(nm(p))}" loading="lazy" onerror="this.parentNode.classList.remove('has-img');this.remove()">` : ""}
       <span class="fic">${FMT_ICON[p.formato] || ""}</span>
       <span class="tt">${esc(nm(p))}</span>
       <span class="tm">${br(p.data)} · ${esc(p.formato)}</span>
-      ${p.status === "Postado" ? ponto : ""}${p.id === destaque ? `<span class="tag-dest">Este post</span>` : ""}
-    </button>`;
+      ${p.status === "Postado" ? ponto : ""}${p.id === destaque ? `<span class="tag-dest">Este post</span>` : ""}${pino(codP)}
+    </div>`;
   }).join("");
   const ini = (m.nome || "?").trim().charAt(0).toUpperCase();
   const usuario = (d.usuario || (m.insta && m.insta.usuario) || "");
@@ -1672,6 +1695,15 @@ function vGrade() {
   return headM(m.nome, "Grade do Instagram", monthNav() + (S.canWrite && !ehCliente() ? `<button class="btn sm" type="button" onclick="reordIniciar()">↕ Reordenar grade</button>` : "") + (g.ig ? `<button class="btn sm" type="button" onclick="carregarInsta(S.marcaId, true);render()">Atualizar do Instagram</button>` : "")) +
     g.html + (!g.ig && !ehCliente() ? `<p class="grade-note">Para ver aqui também os posts que já estão no perfil, conecte o Instagram da marca em <a class="lnk" href="#marca-config">Marca → Configurações</a>.</p>` : g.aviso) +
     `<p class="grade-note">Do mais recente (canto superior esquerdo) ao mais antigo. Os planejados mostram a arte quando a postagem tem a imagem de prévia; os posts do perfil abrem no Instagram.</p>`;
+}
+document.addEventListener("click", e => { if (S.pinMenu && !e.target.closest(".pin-menu, .pin-btn")) { S.pinMenu = null; render(); } });
+async function fixarPost(codigo, posicao) {
+  const m = marca(); S.pinMenu = null;
+  try {
+    const r = await api("fixarGrade", { marcaId: m.id, codigo, posicao });
+    m.fixados = r.fixados; carregarInsta(m.id, true); render();
+    toast(posicao ? `Fixado na posição ${posicao}` : "Post desafixado");
+  } catch (e) { render(); writeFail(e); }
 }
 // grade aberta a partir de uma aprovação, com o post em destaque
 function verNaGrade(id) {
@@ -6349,7 +6381,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-20.1"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-21.1"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",
