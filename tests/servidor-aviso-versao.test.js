@@ -1,0 +1,25 @@
+// Aviso por e-mail quando o site tem uma versão mais nova do script (nunca instala sozinho)
+const G = require('./simulador-google.js');
+const P = o => G.post(JSON.stringify(o));
+let falhas = 0; const ok = (nome, cond, extra) => { if (!cond) falhas++; console.log((cond ? 'ok   ' : 'FALHA') + ' ' + nome + (extra !== undefined ? ' → ' + extra : '')); };
+G.configurar();
+const atual = require('fs').readFileSync(require('path').join(__dirname, '..', 'apps-script', 'Codigo.gs'), 'utf8').match(/const VERSAO = '([\d.-]+)'/)[1];
+const emails = () => G.enviados.filter(e => /Script da planilha: versão nova/.test(e.subject || ''));
+global.CODIGO_REMOTO = `const VERSAO = '${atual}';`;
+G.verificarVersaoScript();
+ok('mesma versão: não avisa', emails().length === 0);
+global.CODIGO_REMOTO = `const VERSAO = '2026-01-01.1';`;
+G.verificarVersaoScript();
+ok('versão mais antiga no site: não avisa', emails().length === 0);
+global.CODIGO_REMOTO = `// código\nconst VERSAO = '2099-12-31.1';\nfunction x(){}`;
+G.verificarVersaoScript();
+const e = emails();
+ok('versão nova: avisa a dona por e-mail', e.length === 1 && /2099-12-31\.1/.test(e[0].subject) && /Copiar código novo/.test(e[0].htmlBody) && /nunca se atualiza sozinho/.test(e[0].htmlBody), e[0] && e[0].subject);
+ok('o link do e-mail é o endereço oficial', /href="https:\/\/planejaae\.com\.br\/"/.test(e[0].htmlBody));
+G.verificarVersaoScript();
+ok('avisa uma vez só por versão', emails().length === 1);
+global.CODIGO_REMOTO = '';
+G.verificarVersaoScript();
+ok('site fora do ar: não quebra nem avisa', emails().length === 1);
+ok('o acionador diário é instalado pelo configurar', G.gatilhos.some(t => (t.getHandlerFunction ? t.getHandlerFunction() : t.f || t.nome) === 'verificarVersaoScript') || JSON.stringify(G.gatilhos).includes('verificarVersaoScript'), JSON.stringify(G.gatilhos).slice(0, 200));
+console.log(falhas ? falhas + ' FALHA(S)' : 'tudo certo'); process.exit(falhas ? 1 : 0);

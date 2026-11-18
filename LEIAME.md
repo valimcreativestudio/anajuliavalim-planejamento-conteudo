@@ -3,7 +3,8 @@
 Sistema de planejamento de Instagram por marca: calendário, postagens, fluxo de produção, grade do feed e resumo do mês.
 
 - O **site** fica na Cloudflare: **https://planejaae.com.br** (e https://planejaae.pages.dev). Antes ficava no GitHub Pages, que suspendeu a conta. As regras de segurança da hospedagem estão em `_headers`.
-- O site fica na **Cloudflare Pages** (projeto **planejaae**). Para publicar uma versão nova: `node ferramentas/publicar-cloudflare.js` (detalhes no topo do arquivo) ou, no painel da Cloudflare, Workers & Pages → planejaae → Create deployment → arrastar a pasta.
+- O site fica num **Cloudflare Worker** chamado **planejaae** (os arquivos vão dentro dele), ligado a planejaae.com.br e www. Para publicar uma versão nova: `node ferramentas/montar-worker.js <pasta>` e enviar com a API (detalhes no topo do arquivo). O antigo projeto **Pages** ficou desativado.
+- **Script da planilha:** uma vez por dia ele confere se o site tem uma versão mais nova do `Codigo.gs` e, se tiver, manda um **e-mail para a dona** com o passo a passo (Copiar código novo → colar no Apps Script → Nova versão). Por segurança ele **nunca se atualiza sozinho**.
 - Os **dados** ficam na sua planilha do Google, nas abas `MARCAS` e `POSTAGENS`.
 - Cada pessoa entra com o próprio login e senha. O administrador cadastra a equipe e escolhe as marcas de cada um.
 

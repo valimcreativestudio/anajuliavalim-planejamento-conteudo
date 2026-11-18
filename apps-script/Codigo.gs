@@ -19,10 +19,10 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-21.2';
+const VERSAO = '2026-11-22.1';
 // Endereço oficial do site. Os links dos e-mails SEMPRE usam este endereço (nunca o que vem do pedido).
 // A dona da plataforma pode trocar em Gestão → Empresas → Endereço do sistema.
-const SITE_PADRAO = 'https://planejaae.pages.dev/';
+const SITE_PADRAO = 'https://planejaae.com.br/';
 const NOME_APP = 'Planeja Aê';
 
 const ABA_PAUTAS = 'POSTAGENS';
@@ -2150,13 +2150,42 @@ function backupSemanal() {
 
 /* ---------- Gatilhos automáticos (criados ao rodar "configurar") ---------- */
 function instalarGatilhos_() {
-  const nomes = ['resumoDiario', 'backupSemanal', 'publicarAgendados', 'relatorioMensal', 'limpezaDiaria'];
+  const nomes = ['resumoDiario', 'backupSemanal', 'publicarAgendados', 'relatorioMensal', 'limpezaDiaria', 'verificarVersaoScript'];
   ScriptApp.getProjectTriggers().forEach(t => { if (nomes.indexOf(t.getHandlerFunction()) >= 0) ScriptApp.deleteTrigger(t); });
   ScriptApp.newTrigger('resumoDiario').timeBased().everyDays(1).atHour(8).create();
   ScriptApp.newTrigger('backupSemanal').timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(3).create();
   ScriptApp.newTrigger('publicarAgendados').timeBased().everyMinutes(15).create();
   ScriptApp.newTrigger('relatorioMensal').timeBased().onMonthDay(1).atHour(9).create();
   ScriptApp.newTrigger('limpezaDiaria').timeBased().everyDays(1).atHour(3).create();
+  ScriptApp.newTrigger('verificarVersaoScript').timeBased().everyDays(1).atHour(10).create();
+}
+
+/* ---------- Aviso de versão nova do script (só avisa; nunca troca o código sozinho) ----------
+ * Uma vez por dia lê a VERSAO do Codigo.gs publicado no site e, se for mais nova que a que está rodando,
+ * manda um e-mail para a dona da plataforma com o passo a passo. Avisa uma vez por versão. */
+function verificarVersaoScript() {
+  const base = site_();
+  let txt = '';
+  try {
+    const r = UrlFetchApp.fetch(base + 'apps-script/Codigo.gs?v=' + Date.now(), { muteHttpExceptions: true });
+    if (r.getResponseCode() !== 200) return;
+    txt = r.getContentText();
+  } catch (e) { return; }
+  const nova = (txt.match(/const VERSAO = '([\d.-]+)'/) || [])[1];
+  if (!nova || nova <= VERSAO) return;
+  const pp = PropertiesService.getScriptProperties();
+  if (pp.getProperty('AVISO_VERSAO') === nova) return;
+  const donas = ler_(ABA_USUARIOS, CAMPOS_USUARIO).filter(u => u.dono === 'sim' && u.ativo === 'sim' && /@/.test(u.login));
+  if (!donas.length || MailApp.getRemainingDailyQuota() < donas.length) return;
+  donas.forEach(u => MailApp.sendEmail({ to: u.login, name: NOME_APP, subject: '🔄 Script da planilha: versão nova ' + nova,
+    htmlBody: '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#1d1d1f;max-width:560px">' +
+      '<h2 style="margin:0 0 12px;font-size:20px">Tem versão nova do script da planilha</h2>' +
+      '<p style="margin:0 0 12px">Está rodando a <b>' + escH_(VERSAO) + '</b> e o site já está na <b>' + escH_(nova) + '</b>. Algumas funções novas só funcionam depois de atualizar.</p>' +
+      '<ol style="margin:0 0 14px;padding-left:20px;line-height:1.6"><li>Abra o <a href="' + base + '">' + NOME_APP + '</a>. Na faixa do topo, clique em <b>Copiar código novo</b>.</li>' +
+      '<li>Na planilha: <b>Extensões → Apps Script</b>. Selecione tudo (Ctrl+A), apague e cole (Ctrl+V). Salve.</li>' +
+      '<li><b>Implantar → Gerenciar implantações → lápis → Versão: Nova versão → Implantar</b>.</li></ol>' +
+      '<p style="margin:0;color:#6b6b70;font-size:12px">Por segurança, o script nunca se atualiza sozinho: este e-mail só avisa. Você recebe um aviso por versão.</p></div>' }));
+  pp.setProperty('AVISO_VERSAO', nova);
 }
 
 /* ======================================================================
