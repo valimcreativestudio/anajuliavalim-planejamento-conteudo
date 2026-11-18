@@ -140,7 +140,7 @@ a.btn { text-decoration: none; color: var(--ink); display: inline-flex; align-it
 }
 .chip { --fase: var(--line); text-align: left; border: 0; border-left: 4px solid var(--fase); background: color-mix(in srgb, var(--fase) 16%, var(--surface)); border-radius: 6px; padding: 5px 7px; font-size: 12.5px; line-height: 1.3; display: grid; gap: 2px; width: 100%; }
 .chip:hover { background: color-mix(in srgb, var(--fase) 28%, var(--surface)); }
-.chip .meta { display: flex; align-items: center; gap: 6px; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.chip .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
 .chip .t { overflow-wrap: anywhere; }
 .chip .t b { font-weight: 600; }
 .dot { width: 8px; height: 8px; border-radius: 99px; display: inline-block; flex: none; }
@@ -608,6 +608,7 @@ body.com-fundo main#app { background: color-mix(in srgb, var(--bg) 86%, transpar
 .ig-como ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; color: var(--muted); }
 .ig-cx { flex-wrap: wrap; }
 .ig-cx input { flex: 1 1 200px; min-width: 0; }
+.hr-chip { font-weight: 700; color: var(--ink); }
 .qd-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
 .qd-it { display: grid; gap: 4px; text-align: left; padding: 14px 16px 14px 18px; border: 1px solid var(--line); border-left: 6px solid var(--qc); border-radius: 14px; background: var(--surface); color: var(--ink); font: inherit; cursor: pointer; }
 .qd-it:hover { border-color: var(--qc); }
@@ -1304,6 +1305,9 @@ const marca = () => S.marcas.find(m => m.id === S.marcaId) || null;
 const fasesDe = m => (m && Array.isArray(m.fases) && m.fases.length) ? m.fases : DEFAULT_FASES;
 const faseCor = (m, nome) => (fasesDe(m).find(f => f.nome === nome) || {}).cor || "var(--line)";
 const postsMarca = () => S.posts.filter(p => p.marcaId === S.marcaId).sort((a, b) => (a.data || "").localeCompare(b.data || "") || (a.ordem || 0) - (b.ordem || 0));
+// horário do post: o que foi preenchido no editor ou, se agendado, o do agendamento
+const horaPost = p => (p && (p.hora || p.agHora)) || "";
+const porHora = (a, b) => (horaPost(a) || "99:99").localeCompare(horaPost(b) || "99:99");
 const postsMes = () => postsMarca().filter(p => (p.data || "").startsWith(S.month));
 const produtosDe = m => {
   const set = new Set((m && m.produtos) || []);
@@ -1444,7 +1448,7 @@ function vCal() {
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
     const k = iso(d), ps = byDay[k] || [];
     const out = d.getMonth() !== first.getMonth();
-    ps.sort((a, b) => FORMATOS.indexOf(a.formato) - FORMATOS.indexOf(b.formato));
+    ps.sort((a, b) => porHora(a, b) || posGrade({ t: "plan", p: a }) - posGrade({ t: "plan", p: b }) || FORMATOS.indexOf(a.formato) - FORMATOS.indexOf(b.formato));
     cells += `<div class="day${out ? " out" : ""}${ps.length ? " has" : ""}${k === today ? " today" : ""}" data-dia="${k}">
       <div class="dhead"><span class="dnum"><b>${d.getDate()}</b><span class="wd">${WD[d.getDay()]}</span></span>
       ${S.canWrite ? `<button class="add-day" type="button" aria-label="Nova postagem em ${br(k)}" onclick="openEditor(null,'${k}')">+</button>` : ""}</div>
@@ -1453,7 +1457,7 @@ function vCal() {
       ${ps.map(p => `<button class="chip${S.calSt && grupoSt(p.status)[0] !== S.calSt ? " apagado" : ""}" type="button" style="--fase:${esc(faseCor(m, p.fase))}" onclick="openEditor(${js(p.id)})"${S.canWrite ? ` draggable="true" data-id="${esc(p.id)}"` : ""}>
         <span class="st-bola" style="background:${stColor(p.status)}" title="${esc(grupoSt(p.status)[0])}"></span>
         ${blobSrc(p) ? `<span class="prev"><img src="${esc(blobSrc(p))}" alt="" loading="lazy" onerror="this.parentNode.remove()"></span>` : ""}
-        <span class="meta"><span class="fmt">${FMT_ICON[p.formato] || ""} ${esc(p.formato || "")}</span>${REPROVADOS.includes(p.status) ? `<span class="flag">${p.status === "Ideia reprovada" ? "Reprovada" : "Ajustes"}</span>` : ""}${COM_CLIENTE.includes(p.status) ? `<span style="color:var(--pr-alta)">Com o cliente</span>` : ""}${atrasoDe(p) ? `<span class="atr" title="${esc(atrasoDe(p).txt)}">⚠ Atrasado</span>` : ""}${(p.comentarios || []).length ? `<span title="Comentários">💬 ${p.comentarios.length}</span>` : ""}${p.status === "Agendado" && p.agHora ? `<span title="Agendado">⏰ ${esc(p.agHora)}${p.agData && p.agData !== p.data ? " " + br(p.agData) : ""}</span>` : ""}</span>
+        <span class="meta">${horaPost(p) ? `<span class="hr-chip">🕒 ${esc(horaPost(p))}</span>` : ""}<span class="fmt">${FMT_ICON[p.formato] || ""} ${esc(p.formato || "")}</span>${REPROVADOS.includes(p.status) ? `<span class="flag">${p.status === "Ideia reprovada" ? "Reprovada" : "Ajustes"}</span>` : ""}${COM_CLIENTE.includes(p.status) ? `<span style="color:var(--pr-alta)">Com o cliente</span>` : ""}${atrasoDe(p) ? `<span class="atr" title="${esc(atrasoDe(p).txt)}">⚠ Atrasado</span>` : ""}${(p.comentarios || []).length ? `<span title="Comentários">💬 ${p.comentarios.length}</span>` : ""}${p.status === "Agendado" && p.agHora ? `<span title="Agendado">⏰ ${esc(p.agHora)}${p.agData && p.agData !== p.data ? " " + br(p.agData) : ""}</span>` : ""}</span>
         <span class="t" title="${esc(prodsDe(p.produto).join(", "))}"><b>${esc(prodCurto(p))}${prodCurto(p) ? ":" : ""}</b> ${esc(p.postagem || "sem título")}</span></button>`).join("")}
     </div>`;
   }
@@ -1472,7 +1476,8 @@ function filtered() {
     (!S.f.status || p.status === S.f.status) &&
     (!S.f.formato || p.formato === S.f.formato) &&
     (!S.f.produto || prodsDe(p.produto).includes(S.f.produto)) &&
-    (!q || [p.postagem, p.pauta, p.legenda, p.produto, p.observacao].join(" ").toLowerCase().includes(q)));
+    (!q || [p.postagem, p.pauta, p.legenda, p.produto, p.observacao].join(" ").toLowerCase().includes(q)))
+    .sort((a, b) => (a.data || "").localeCompare(b.data || "") || porHora(a, b));
 }
 function setF(k, v) { S.f[k] = v; render(); }
 
@@ -1625,9 +1630,9 @@ function gradeBox(m, mes, destaque) {
     .filter(p => { const r = redesDe(p.rede); return !r.length || r.some(x => !NAO_FEED.includes(x)); })
     // um post já marcado como postado, com o link igual a um post do perfil, aparece uma vez só (com a imagem real)
     .filter(p => !(p.status === "Postado" && codigos.has(codigoIg(p.postLink))));
-  const itens = ps.map(p => ({ t: "plan", em: (p.agData || p.data || "") + "T" + (p.agHora || "12:00"), p }))
+  const itens = ps.map(p => ({ t: "plan", em: (p.agData || p.data || "") + "T" + (horaPost(p) || "12:00"), p }))
     .concat(midias.map(x => ({ t: "ig", em: x.em || "", x })))
-    .sort((a, b) => String(b.em).slice(0, 10).localeCompare(String(a.em).slice(0, 10)) || posGrade(a) - posGrade(b) || String(b.em).localeCompare(String(a.em)));
+    .sort((a, b) => String(b.em).slice(0, 16).localeCompare(String(a.em).slice(0, 16)) || posGrade(a) - posGrade(b));
   const ponto = `<span class="ok" title="Já postado"></span>`;
   const AGUARDA = ["Em validação", "Validação do cliente", "Em aprovação", "Aprovação do cliente"];
   const tiles = itens.map(it => {
@@ -2438,6 +2443,7 @@ function drawEditor() {
       ${p.id ? `<div class="full">${fluxoHtml(p)}</div>` : ""}
       <h4>Planejamento</h4>
       <label class="field"><span>Data${p.data ? "" : " (vazia = banco de ideias)"}</span><input id="eData" type="date"${p.data || !p.id && !p.banco ? " required" : ""} value="${esc(p.data || "")}"${ro}></label>
+      <label class="field"><span>Horário (ordem no dia)</span><input id="eHora" type="time" value="${esc(p.hora || p.agHora || "")}"${ro}></label>
       <label class="field"><span>Prazo da arte</span><input id="eArte" type="date" value="${esc(p.prazoArte || "")}"${ro}></label>
       <label class="field"><span>Prazo da aprovação</span><input id="eAprov" type="date" value="${esc(p.prazoAprovacao || "")}"${ro}></label>
       <label class="field"><span>Formato</span>${sel("eFormato", FORMATOS, p.formato)}</label>
@@ -2544,7 +2550,7 @@ async function puxarPasta() {
 function gather() {
   const v = id => ($("#" + id)?.value ?? "").trim();
   return {
-    marcaId: S.marcaId, data: v("eData"), formato: v("eFormato"), fase: v("eFase"),
+    marcaId: S.marcaId, data: v("eData"), hora: v("eHora"), formato: v("eFormato"), fase: v("eFase"),
     produto: [...document.querySelectorAll("#eProdutos .msel-op input:checked")].map(i => i.value).join(" + "), postagem: v("ePostagem"), pauta: v("ePauta"), objetivo: v("eObjetivo"), cta: v("eCta"),
     rede: [...document.querySelectorAll("#eRedes .msel-op input:checked")].map(i => i.value).join(" + "), gravacao: v("eGravacao"), observacao: $("#eObs").value, inspiracao: $("#eInsp").value,
     legenda: $("#eLegenda").value, canva: v("eCanva"), prazoArte: v("eArte"), prazoAprovacao: v("eAprov"), criativo: v("eCriativo"), capa: v("eCapa"), midias: EDIT.midias || [], atualizado: Date.now()
@@ -4094,13 +4100,13 @@ function postsDaGrade(mid, mes) {
 function reordIniciar() {
   const ps = postsDaGrade(S.marcaId, S.month).filter(p => !FIXOS_GRADE.includes(p.status));
   if (ps.length < 2) return toast("É preciso ter pelo menos 2 posts não agendados neste mês para reordenar.");
-  const ord = ps.slice().sort((a, b) => (b.data || "").localeCompare(a.data || "") || posGrade({ t: "plan", p: a }) - posGrade({ t: "plan", p: b }) || String(b.agHora || "").localeCompare(String(a.agHora || "")));
-  S.reord = { marcaId: S.marcaId, mes: S.month, ordem: ord.map(p => p.id), slots: ord.map(p => p.data), orig: Object.fromEntries(ord.map(p => [p.id, p.data])), origPos: ord.map(p => p.id), sel: null };
+  const ord = ps.slice().sort((a, b) => (b.data || "").localeCompare(a.data || "") || (horaPost(b) || "12:00").localeCompare(horaPost(a) || "12:00") || posGrade({ t: "plan", p: a }) - posGrade({ t: "plan", p: b }));
+  S.reord = { marcaId: S.marcaId, mes: S.month, ordem: ord.map(p => p.id), slots: ord.map(p => p.data), horas: ord.map(p => p.hora || ""), origHora: Object.fromEntries(ord.map(p => [p.id, p.hora || ""])), orig: Object.fromEntries(ord.map(p => [p.id, p.data])), origPos: ord.map(p => p.id), sel: null };
   render(); window.scrollTo(0, 0);
 }
 function reordDatas() { const r = S.reord, o = {}; r.ordem.forEach((id, i) => { o[id] = r.slots[i]; }); return o; }
 // muda quem trocou de data OU de lugar (posts do mesmo dia só trocam de lugar)
-function reordMudancas() { const r = S.reord, d = reordDatas(); return r.ordem.map((id, i) => ({ id, data: d[id], ordem: i, mudou: d[id] !== r.orig[id] || r.origPos[i] !== id })).filter(x => x.mudou).map(({ id, data, ordem }) => ({ id, data, ordem })); }
+function reordMudancas() { const r = S.reord, d = reordDatas(); return r.ordem.map((id, i) => ({ id, data: d[id], hora: r.horas[i], ordem: i, mudou: d[id] !== r.orig[id] || r.origPos[i] !== id })).filter(x => x.mudou).map(({ id, data, hora, ordem }) => ({ id, data, hora, ordem })); }
 function reordHtml(m) {
   const r = S.reord, d = reordDatas(), mud = reordMudancas().length;
   const fixos = postsDaGrade(m.id, r.mes).filter(p => FIXOS_GRADE.includes(p.status));
@@ -4112,7 +4118,7 @@ function reordHtml(m) {
     return `<div class="tile rd${src ? " has-img" : ""}${x.mov ? "" : " fixo"}${r.sel === p.id ? " sel" : ""}${mudou || trocou ? " mudou" : ""}" ${x.mov ? `draggable="true" data-id="${esc(p.id)}" role="button" tabindex="0" onclick="reordToque(${js(p.id)})"` : `title="${esc(p.status)}: não muda de lugar"`} style="--fase:${esc(faseCor(m, p.fase))}">
       ${src ? `<img src="${esc(src)}" alt="${esc(nm(p))}" loading="lazy" draggable="false" onerror="this.parentNode.classList.remove('has-img');this.remove()">` : ""}
       <span class="tt">${esc(nm(p))}</span><span class="tm">${esc(p.formato || "")}</span>
-      <span class="rd-data">${br(x.data)}${mudou ? `<small>era ${br(r.orig[p.id])}</small>` : trocou ? `<small>mudou de lugar</small>` : ""}</span>${x.mov ? `<span class="rd-mv"><button type="button" aria-label="Mais para trás (data mais nova)" onclick="event.stopPropagation();reordPasso(${js(p.id)},-1)"${r.ordem[0] === p.id ? " disabled" : ""}>◀</button><button type="button" aria-label="Mais para frente (data mais antiga)" onclick="event.stopPropagation();reordPasso(${js(p.id)},1)"${r.ordem[r.ordem.length - 1] === p.id ? " disabled" : ""}>▶</button></span>` : `<span class="rd-lock">🔒</span>`}</div>`;
+      <span class="rd-data">${br(x.data)}${x.mov && r.horas[r.ordem.indexOf(p.id)] ? " " + esc(r.horas[r.ordem.indexOf(p.id)]) : ""}${mudou ? `<small>era ${br(r.orig[p.id])}</small>` : trocou ? `<small>mudou de lugar</small>` : ""}</span>${x.mov ? `<span class="rd-mv"><button type="button" aria-label="Mais para trás (data mais nova)" onclick="event.stopPropagation();reordPasso(${js(p.id)},-1)"${r.ordem[0] === p.id ? " disabled" : ""}>◀</button><button type="button" aria-label="Mais para frente (data mais antiga)" onclick="event.stopPropagation();reordPasso(${js(p.id)},1)"${r.ordem[r.ordem.length - 1] === p.id ? " disabled" : ""}>▶</button></span>` : `<span class="rd-lock">🔒</span>`}</div>`;
   };
   return `<div class="rd-barra"><div><b>${mud ? `${mud} post${mud > 1 ? "s" : ""} mudando de lugar` : "Arraste os posts ou use as setas ◀ ▶"}</b>
       <span class="muted">${r.sel ? "Agora toque no post que está no lugar para onde ele vai." : "Arraste, use as setas ◀ ▶ de cada post, ou toque num post e depois no lugar para onde ele vai."} As datas do mês ficam as mesmas, só trocam entre os posts. Posts agendados ou postados (🔒) não mudam. Só vale depois de <b>Salvar</b>.</span></div>
@@ -4147,7 +4153,7 @@ function reordPasso(id, d) {
 async function reordSalvar() {
   const r = S.reord, mud = reordMudancas();
   if (!mud.length) return toast("Você ainda não mudou nenhum post de lugar. Arraste ou use as setas ◀ ▶.");
-  const volta = mud.map(x => ({ id: x.id, data: r.orig[x.id], ordem: r.origPos.indexOf(x.id) })), mid = r.marcaId;
+  const volta = mud.map(x => ({ id: x.id, data: r.orig[x.id], hora: r.origHora[x.id], ordem: r.origPos.indexOf(x.id) })), mid = r.marcaId;
   const b = $("#rdSalvar"); b.disabled = true; b.textContent = "Salvando…";
   try {
     await api("reordenarGrade", { marcaId: mid, mudancas: mud });
@@ -4438,13 +4444,14 @@ function desenharPuxarIg() {
         <textarea id="igLinks" rows="4" placeholder="https://www.instagram.com/p/…" oninput="IGP.links=this.value">${esc(IGP.links)}</textarea>
         ${IGP.ig ? `<span class="muted" style="font-size:12.5px">Se algum link não estiver no perfil conectado, ele usa a data e o formato abaixo.</span>` : ""}
         <div class="pf-grid"><label class="field"><span>Data da postagem</span><input type="date" value="${esc(IGP.data)}" onchange="IGP.data=this.value"></label>
+          <label class="field"><span>Horário</span><input type="time" value="${esc(IGP.hora || "")}" onchange="IGP.hora=this.value"></label>
           <label class="field"><span>Formato</span><select onchange="IGP.formato=this.value">${FORMATOS.map(f => `<option${f === IGP.formato ? " selected" : ""}>${f}</option>`).join("")}</select></label></div>
         <button class="btn primary" type="button" id="igLnk" onclick="puxarIg('links')">Puxar link${/\n\S/.test(IGP.links.trim()) ? "s" : ""}</button></div>
     </div>`;
 }
 async function puxarIg(modo) {
   const itens = modo === "sel" ? [...IGP.sel].map(link => ({ link }))
-    : IGP.links.split(/\s+/).map(t => t.trim()).filter(t => /instagram\.com\//i.test(t)).map(link => ({ link, data: IGP.data, formato: IGP.formato }));
+    : IGP.links.split(/\s+/).map(t => t.trim()).filter(t => /instagram\.com\//i.test(t)).map(link => ({ link, data: IGP.data, hora: IGP.hora || "", formato: IGP.formato }));
   if (!itens.length) return toast(modo === "sel" ? "Marque pelo menos um post." : "Cole pelo menos um link do Instagram.");
   const b = $(modo === "sel" ? "#igSel" : "#igLnk"); b.disabled = true; b.textContent = "Puxando… (pode levar até 30 segundos)";
   try {
@@ -6342,7 +6349,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-19.1"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-20.1"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",

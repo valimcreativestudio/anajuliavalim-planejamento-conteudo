@@ -19,7 +19,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-19.1';
+const VERSAO = '2026-11-20.1';
 // Endereço oficial do site. Os links dos e-mails SEMPRE usam este endereço (nunca o que vem do pedido).
 // A dona da plataforma pode trocar em Gestão → Empresas → Endereço do sistema.
 const SITE_PADRAO = 'https://planejaae.pages.dev/';
@@ -74,7 +74,7 @@ const CAMPOS_PAUTA = [
   ['agTipo', 'Agendado como'], ['agQuando', 'Agendado para'], ['postLink', 'Link do post publicado'],
   ['capa', 'Imagem de prévia'], ['midias', 'Mídias da publicação'],
   ['comentarios', 'Comentários'], ['prazoArte', 'Prazo da arte'], ['prazoAprovacao', 'Prazo da aprovação'],
-  ['autoPub', 'Publicar automático'], ['pubInfo', 'Situação da publicação automática'], ['igMidia', 'ID do post no Instagram'], ['versoes', 'Versões anteriores da arte'], ['canva', 'Link do design no Canva'], ['ordemGrade', 'Ordem na grade']
+  ['autoPub', 'Publicar automático'], ['pubInfo', 'Situação da publicação automática'], ['igMidia', 'ID do post no Instagram'], ['versoes', 'Versões anteriores da arte'], ['canva', 'Link do design no Canva'], ['ordemGrade', 'Ordem na grade'], ['hora', 'Horário']
 ];
 const CAMPOS_STORY = [
   ['id', 'ID'], ['marcaId', 'Marca ID'], ['marca', 'Marca'], ['data', 'Data'], ['hora', 'Hora'], ['ordem', 'Ordem'],
@@ -598,6 +598,7 @@ function salvarPauta_(eu, p) {
   const novos = {};
   Object.keys(p).forEach(k => { if (PROTEGIDOS.indexOf(k) < 0) novos[k] = p[k]; });
   ['criativo', 'capa', 'canva'].forEach(k => { if (k in novos) novos[k] = urlSegura_(novos[k]); });
+  if ('hora' in novos) novos.hora = /^([01]\d|2[0-3]):[0-5]\d$/.test(String(novos.hora || '')) ? String(novos.hora) : '';
   if (Array.isArray(novos.midias)) novos.midias = novos.midias.filter(x => x && idSeguro_(x.id));
   if (Array.isArray(novos.midias)) novos.midias = JSON.stringify(novos.midias.slice(0, 20).map(x => ({ id: String(x.id || ''), nome: String(x.nome || '').slice(0, 120), tipo: x.tipo === 'video' ? 'video' : 'imagem' })));
   if (atual && Array.isArray(base.midias)) base.midias = JSON.stringify(base.midias);
@@ -1183,7 +1184,8 @@ function instaImportar_(eu, marcaId, itens) {
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) { erros.push({ link: link, motivo: m ? 'O Instagram não informou a data.' : 'Não achei esse post no perfil conectado. Escolha a data e tente de novo.' }); return; }
     const titulo = String(it.postagem || '').trim() || (legenda.split('\n').map(t => t.trim()).filter(Boolean)[0] || 'Post do Instagram').slice(0, 80);
-    const id = salvarPauta_(eu, { marcaId: marcaId, data: data, postagem: titulo, legenda: legenda.slice(0, 5000), formato: formato || 'Estático', rede: 'Instagram', observacao: 'Puxado do Instagram' });
+    if (!hora && /^([01]\d|2[0-3]):[0-5]\d$/.test(String(it.hora || ''))) hora = String(it.hora);
+    const id = salvarPauta_(eu, { marcaId: marcaId, data: data, hora: hora, postagem: titulo, legenda: legenda.slice(0, 5000), formato: formato || 'Estático', rede: 'Instagram', observacao: 'Puxado do Instagram' });
     const pauta = pautaPorId_(id), hist = (pauta && pauta.historico) || [];
     hist.push({ em: Date.now(), por: eu.nome, uid: eu.id, acao: 'Puxou do Instagram (já postado)' });
     setPauta_(id, { status: 'Postado', postLink: m ? m.link : link.split('?')[0], igMidia: m ? m.id : '', agTipo: 'Feed', agQuando: hora ? paraBR_(data) + ' ' + hora : '', historico: JSON.stringify(hist) });
@@ -2784,10 +2786,14 @@ function reordenarGrade_(eu, marcaId, mudancas) {
     if (['Postado', 'Agendado'].indexOf(p.status) >= 0) throw erro_('server', '"' + (p.postagem || 'Postagem') + '" já está agendada ou postada e não muda de lugar.');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(m.data || ''))) throw erro_('server', 'Data inválida.');
     if (m.ordem != null && !isFinite(Number(m.ordem))) throw erro_('server', 'Posição inválida.');
+    if (m.hora != null && m.hora !== '' && !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(m.hora))) throw erro_('server', 'Horário inválido.');
   });
   l.forEach(m => {
     const p = todas.filter(x => x.id === String(m.id))[0];
-    if (p.data !== String(m.data)) salvarPauta_(eu, { id: String(m.id), data: String(m.data) });
+    const mud = {};
+    if (p.data !== String(m.data)) mud.data = String(m.data);
+    if (m.hora != null && String(m.hora) !== String(p.hora || '')) mud.hora = String(m.hora);
+    if (Object.keys(mud).length) salvarPauta_(eu, Object.assign({ id: String(m.id) }, mud));
     // posição na grade: desempata posts do mesmo dia
     if (m.ordem != null) setPauta_(String(m.id), { ordemGrade: String(Number(m.ordem)) });
   });
