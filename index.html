@@ -591,6 +591,17 @@ body.com-fundo main#app { background: color-mix(in srgb, var(--bg) 86%, transpar
 .etq-ed { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
 .etq-ed input[type=color] { width: 40px; height: 32px; border: 1px solid var(--line); border-radius: 8px; padding: 2px; background: var(--surface); }
 .etq-ed input:not([type=color]) { min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 7px 10px; color: var(--ink); font: inherit; }
+#igDlg { width: min(680px, calc(100vw - 24px)); }
+.ig-sec { display: grid; gap: 10px; }
+.ig-sec textarea { width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 10px; color: var(--ink); font: inherit; resize: vertical; }
+.ig-lista { display: grid; gap: 6px; max-height: 320px; overflow: auto; }
+.ig-it { display: grid; grid-template-columns: 22px 78px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; background: var(--surface); }
+.ig-d { display: grid; font-weight: 600; font-size: 13px; }
+.ig-d small { font-weight: 500; color: var(--muted); font-size: 11.5px; }
+.ig-l { font-size: 13px; color: var(--muted); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.ig-res { display: grid; gap: 4px; padding: 12px; border-radius: 12px; background: color-mix(in srgb, var(--st-postado) 12%, var(--surface)); border: 1px solid color-mix(in srgb, var(--st-postado) 40%, transparent); }
+.ig-res .atraso { color: var(--danger); font-size: 13px; }
+@media (max-width: 520px) { .ig-it { grid-template-columns: 22px 64px minmax(0, 1fr); } .ig-it .lnk { display: none; } }
 .qd-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
 .qd-it { display: grid; gap: 4px; text-align: left; padding: 14px 16px 14px 18px; border: 1px solid var(--line); border-left: 6px solid var(--qc); border-radius: 14px; background: var(--surface); color: var(--ink); font: inherit; cursor: pointer; }
 .qd-it:hover { border-color: var(--qc); }
@@ -1167,6 +1178,7 @@ tr.reg-alerta td:first-child { box-shadow: inset 3px 0 0 var(--pr-alta); }
 <dialog id="lxDlg"><form id="lxForm" method="dialog"></form></dialog>
 <dialog id="qdDlg"><form id="qdForm" method="dialog" onsubmit="event.preventDefault()"></form></dialog>
 <dialog id="qcDlg"><form id="qcForm" method="dialog" onsubmit="event.preventDefault()"></form></dialog>
+<dialog id="igDlg"><form id="igForm" method="dialog" onsubmit="event.preventDefault()"></form></dialog>
 <dialog id="mkDlg"><form id="mkForm" method="dialog"></form></dialog>
 <dialog id="mdDlg"><form id="mdForm" method="dialog" onsubmit="event.preventDefault()"></form></dialog>
 <dialog id="buDlg"><form id="buForm" method="dialog" onsubmit="event.preventDefault()"></form></dialog>
@@ -1442,7 +1454,7 @@ function vCal() {
   const n = postsMes().length;
   const redesUsadas = [...new Set(postsMarca().flatMap(p => redesDe(p.rede)))];
   const ferramentas = `<select class="rede-sel" aria-label="Filtrar por rede" onchange="S.calRede=this.value;render()"><option value="">Todas as redes</option>${redesUsadas.map(x => `<option${S.calRede === x ? " selected" : ""}>${esc(x)}</option>`).join("")}</select>
-    <button class="btn" type="button" onclick="abrirApresentacao()">▶ Apresentar</button>${S.canWrite ? `<button class="btn" type="button" onclick="abrirImportar()">Importar documento</button><button class="btn" type="button" onclick="copiarMesAnterior()">Copiar mês anterior</button><button class="btn" type="button" onclick="abrirModelos()">📐 Modelos de mês</button>` : ""}`;
+    <button class="btn" type="button" onclick="abrirApresentacao()">▶ Apresentar</button>${S.canWrite ? `<button class="btn" type="button" onclick="abrirImportar()">Importar documento</button><button class="btn" type="button" onclick="copiarMesAnterior()">Copiar mês anterior</button><button class="btn" type="button" onclick="abrirModelos()">📐 Modelos de mês</button><button class="btn" type="button" onclick="abrirPuxarIg()">📥 Puxar do Instagram</button>` : ""}`;
   return headM(m.nome, "Calendário", monthNav() + addBtn()) + `<div class="cal-tools">${ferramentas}</div>` + pacoteHtml(m, S.month) + legendaHtml(postsMes()) +
     `<div class="cal">${cells}</div>
     <p class="muted" style="margin-top:12px">${n} ${n === 1 ? "publicação" : "publicações"} em ${esc(monthLabel(S.month))}. A bolinha no canto de cada post mostra a fase (veja a legenda em cima; clique numa fase para destacar só ela). Clique num post para abrir o detalhamento${S.canWrite ? " ou arraste para outro dia para mudar a data" : ""}. Ideias sem data ficam na aba Ideias.${S.canWrite ? ` <button type="button" class="lg-limpar" onclick="abrirLixeira()">🗑 Lixeira</button>` : ""} <label style="display:inline-flex;gap:5px;align-items:center;margin-left:6px"><input type="checkbox"${verDatas ? " checked" : ""} onchange="store('datas', this.checked ? '1' : '0');render()"> Mostrar datas comemorativas</label></p>`;
@@ -4386,6 +4398,55 @@ async function enviarPonto() {
 $("#mkDlg").addEventListener("click", e => { if (e.target === $("#mkDlg")) $("#mkDlg").close(); });
 $("#mkDlg").addEventListener("close", () => { const id = MK && MK.id; MK = null; if (!id) return; if ($("#dlg").open) redesenharComentarios(id, "editor"); else render(); });
 
+/* ---------- Puxar posts do Instagram para o calendário ---------- */
+let IGP = null;
+function abrirPuxarIg() {
+  const m = marca(); if (!m) return;
+  IGP = { marcaId: m.id, ig: instaOk(m.id), itens: null, sel: new Set(), erro: "", resultado: null, links: "", data: hojeIso(), formato: "Estático" };
+  desenharPuxarIg(); if (!$("#igDlg").open) $("#igDlg").showModal();
+  if (IGP.ig) api("instaFaltando", { marcaId: m.id }).then(r => { if (!IGP) return; IGP.itens = r.itens || []; desenharPuxarIg(); }).catch(e => { if (!IGP) return; IGP.erro = e.message || "Não consegui ler o Instagram agora."; IGP.itens = []; desenharPuxarIg(); });
+}
+function desenharPuxarIg() {
+  const m = S.marcas.find(x => x.id === IGP.marcaId) || {}, r = IGP.resultado;
+  const lista = IGP.itens;
+  const perfil = !IGP.ig ? `<div class="motivo" style="margin:0"><b style="color:var(--ink)">Instagram da marca não conectado</b>Dá para puxar pelo link escolhendo a data. Conectando em <b>Marca → Configurações</b>, a data, a hora, a legenda e o formato vêm sozinhos, e aparece aqui a lista de tudo o que está no perfil e falta no calendário.</div>`
+    : lista === null ? `<p class="muted" style="margin:0">Buscando os posts do perfil…</p>`
+    : IGP.erro ? `<p class="muted" style="margin:0;color:var(--danger)">${esc(IGP.erro)}</p>`
+    : !lista.length ? `<p class="muted" style="margin:0">✓ Todos os posts recentes do perfil já estão no calendário.</p>`
+    : `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><b>${lista.length} post${lista.length > 1 ? "s" : ""} do perfil que não estão no calendário</b><button class="btn sm" type="button" onclick="IGP.sel=IGP.sel.size===IGP.itens.length?new Set():new Set(IGP.itens.map(x=>x.link));desenharPuxarIg()">${IGP.sel.size === lista.length ? "Desmarcar todos" : "Marcar todos"}</button></div>
+      <div class="ig-lista">${lista.map(x => `<label class="ig-it"><input type="checkbox"${IGP.sel.has(x.link) ? " checked" : ""} onchange="this.checked?IGP.sel.add(${js(x.link)}):IGP.sel.delete(${js(x.link)});desenharPuxarIg()"><span class="ig-d">${x.data ? br(x.data) : "—"}<small>${esc(x.tipo)}</small></span><span class="ig-l">${esc(x.legenda || "(sem legenda)")}</span><a class="lnk" href="${esc(urlOk(x.link))}" target="_blank" rel="noopener" onclick="event.stopPropagation()">ver</a></label>`).join("")}</div>
+      <button class="btn primary" type="button" id="igSel" onclick="puxarIg('sel')"${IGP.sel.size ? "" : " disabled"}>Puxar ${IGP.sel.size || ""} selecionado${IGP.sel.size === 1 ? "" : "s"}</button>`;
+  $("#igForm").innerHTML = `<div class="dlg-head"><div><div class="muted" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600">${esc(m.nome || "")}</div><h2>📥 Puxar do Instagram</h2></div>
+      <button class="icon-btn x" type="button" aria-label="Fechar" onclick="$('#igDlg').close()">×</button></div>
+    <div class="dlg-body" style="grid-template-columns:1fr">
+      ${r ? `<div class="ig-res"><b>${r.criados.length ? `✓ ${r.criados.length} post${r.criados.length > 1 ? "s" : ""} no calendário como "Postado"` : "Nenhum post novo"}</b>${r.pulados.length ? `<span class="muted">${r.pulados.length} já estava${r.pulados.length > 1 ? "m" : ""} no calendário.</span>` : ""}${r.erros.map(e => `<span class="atraso">${esc(e.link)}: ${esc(e.motivo)}</span>`).join("")}</div>` : ""}
+      <div class="panel ig-sec">${perfil}</div>
+      <div class="panel ig-sec"><b>Colar links</b><span class="muted" style="font-size:13px">Copie o link do post no Instagram (⋯ → Copiar link) e cole aqui. Pode colar vários, um por linha.</span>
+        <textarea id="igLinks" rows="4" placeholder="https://www.instagram.com/p/…" oninput="IGP.links=this.value">${esc(IGP.links)}</textarea>
+        ${IGP.ig ? `<span class="muted" style="font-size:12.5px">Se algum link não estiver no perfil conectado, ele usa a data e o formato abaixo.</span>` : ""}
+        <div class="pf-grid"><label class="field"><span>Data da postagem</span><input type="date" value="${esc(IGP.data)}" onchange="IGP.data=this.value"></label>
+          <label class="field"><span>Formato</span><select onchange="IGP.formato=this.value">${FORMATOS.map(f => `<option${f === IGP.formato ? " selected" : ""}>${f}</option>`).join("")}</select></label></div>
+        <button class="btn primary" type="button" id="igLnk" onclick="puxarIg('links')">Puxar link${/\n\S/.test(IGP.links.trim()) ? "s" : ""}</button></div>
+    </div>`;
+}
+async function puxarIg(modo) {
+  const itens = modo === "sel" ? [...IGP.sel].map(link => ({ link }))
+    : IGP.links.split(/\s+/).map(t => t.trim()).filter(t => /instagram\.com\//i.test(t)).map(link => ({ link, data: IGP.data, formato: IGP.formato }));
+  if (!itens.length) return toast(modo === "sel" ? "Marque pelo menos um post." : "Cole pelo menos um link do Instagram.");
+  const b = $(modo === "sel" ? "#igSel" : "#igLnk"); b.disabled = true; b.textContent = "Puxando…";
+  try {
+    const r = await api("instaImportar", { marcaId: IGP.marcaId, itens });
+    IGP.resultado = r; if (modo === "links") IGP.links = r.erros.map(e => e.link).join("\n");
+    if (r.criados.length && IGP.itens) { const ok = new Set(itens.map(i => i.link)); IGP.itens = IGP.itens.filter(x => !ok.has(x.link)); IGP.sel = new Set(); }
+    S.carimbo = ""; await carregar();
+    const mes = r.criados.length ? r.criados[0].data.slice(0, 7) : null;
+    if (mes && mes !== S.month) { S.month = mes; render(); }
+    desenharPuxarIg();
+  } catch (e) { b.disabled = false; writeFail(e); desenharPuxarIg(); }
+}
+$("#igDlg").addEventListener("click", e => { if (e.target === $("#igDlg")) $("#igDlg").close(); });
+$("#igDlg").addEventListener("close", () => { IGP = null; render(); });
+
 /* ---------- Modelos de mês ---------- */
 function abrirModelos() { S.mdCom = S.mdCom !== false; desenharModelos(); if (!$("#mdDlg").open) $("#mdDlg").showModal(); }
 function desenharModelos() {
@@ -6268,7 +6329,7 @@ $("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg")
 
 /* ---------- Planilha (Google Apps Script) ---------- */
 const API = ((window.CONFIG && window.CONFIG.API_URL) || "").trim();
-const VERSAO_SCRIPT = "2026-11-17.1"; // igual à VERSAO do Codigo.gs
+const VERSAO_SCRIPT = "2026-11-18.1"; // igual à VERSAO do Codigo.gs
 async function api(action, payload = {}) {
   const r = await fetch(API, {
     method: "POST",

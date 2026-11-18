@@ -34,7 +34,7 @@ global.Utilities = {
   base64Encode: b => Buffer.from(b.map(x => x & 255)).toString('base64'),
   base64Decode: s => [...Buffer.from(s, 'base64')],
   newBlob: (b, m, n) => ({ b, m, n, getBytes: () => [...Buffer.from(String(b))].map(x => x > 127 ? x - 256 : x), getAs: () => ({ setName: x => ({ pdf: x }) }) }),
-  formatDate: (d) => d.toISOString().slice(0, 10)
+  formatDate: (d, tz, fmt) => { const pt = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: tz || 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(d).map(x => [x.type, x.value])); return String(fmt || 'yyyy-MM-dd').replace('yyyy', pt.year).replace('MM', pt.month).replace('dd', pt.day).replace('HH', pt.hour).replace('mm', pt.minute); }
 };
 global.Session = { getScriptTimeZone: () => 'America/Sao_Paulo', getEffectiveUser: () => ({ getEmail: () => 'ana@agencia.com' }) };
 global.ContentService = { MimeType: { JSON: 'json' }, createTextOutput: t => ({ t, getContent() { return t; }, setMimeType() { return this; } }) };

@@ -19,7 +19,7 @@
  */
 
 // muda a cada atualização; o site avisa quando a implantação está com uma versão diferente
-const VERSAO = '2026-11-17.1';
+const VERSAO = '2026-11-18.1';
 // Endereço oficial do site. Os links dos e-mails SEMPRE usam este endereço (nunca o que vem do pedido).
 // A dona da plataforma pode trocar em Gestão → Empresas → Endereço do sistema.
 const SITE_PADRAO = 'https://planejaae.pages.dev/';
@@ -183,6 +183,8 @@ function doPost(e) {
     if (req.action === 'pushSair') { pushSair_(eu, req.endpoint); return json_({ ok: true }); }
     if (req.action === 'pushPendentes') return json_({ ok: true, mensagens: pushPendentes_(eu) });
     if (req.action === 'pushTeste') { limite_('pusht_' + eu.id, 10, 3600); return json_({ ok: true, enviados: pushPara_(eu.id, '🔔 Avisos ligados', 'É assim que os avisos do ' + NOME_APP + ' vão chegar.', '#calendario') }); }
+    if (req.action === 'instaFaltando') return json_(Object.assign({ ok: true }, instaFaltando_(eu, req.marcaId)));
+    if (req.action === 'instaImportar') { const lk = LockService.getScriptLock(); lk.waitLock(20000); try { return json_(Object.assign({ ok: true }, instaImportar_(eu, req.marcaId, req.itens))); } finally { lk.releaseLock(); } }
     if (req.action === 'publicarAgora') return json_(Object.assign({ ok: true }, publicarAgora_(eu, req.id, req.tipo)));
     if (TELA_DA_ACAO[req.action] && ['acessosListar', 'acessosSalvar', 'trends'].indexOf(req.action) >= 0) exigeTela_(eu, TELA_DA_ACAO[req.action]);
     if (req.action === 'acessosListar') return json_(Object.assign({ ok: true }, acessosListar_(eu, req.marcaId)));
@@ -1115,6 +1117,70 @@ function instaMidias_(eu, marcaId, forcar) {
   try { cache.put('igm_' + marcaId, JSON.stringify(res), 900); } catch (e) {}
   return res;
 }
+
+/* ---------- Puxar posts do Instagram para o calendário ---------- */
+const codigoIg_ = u => (String(u || '').match(/instagram\.com\/(?:[\w.]+\/)?(?:p|reel|reels|tv)\/([\w-]+)/i) || [])[1] || '';
+const FORMATO_IG = { IMAGE: 'Estático', CAROUSEL_ALBUM: 'Carrossel', VIDEO: 'Vídeo' };
+// todos os posts do perfil (até 300), com a legenda inteira; guarda 10 minutos
+function instaTodas_(marcaId) {
+  const d = instaDados_(marcaId);
+  if (!d) return null;
+  const cache = CacheService.getScriptCache(), c = cache.get('igall_' + marcaId);
+  if (c) { try { return JSON.parse(c); } catch (e) {} }
+  const campos = 'fields=id,caption,media_type,permalink,timestamp&limit=100&access_token=' + encodeURIComponent(d.token);
+  let url = d.tipo === 'fb' ? 'https://graph.facebook.com/' + d.igId + '/media?' + campos : 'https://graph.instagram.com/me/media?' + campos;
+  const l = [];
+  for (let i = 0; i < 3 && url; i++) {
+    const j = instaGet_(url);
+    (j.data || []).forEach(x => l.push({ id: x.id, tipo: x.media_type, link: x.permalink, em: x.timestamp, legenda: String(x.caption || '') }));
+    url = j.paging && j.paging.next && /^https:\/\/graph\.(instagram|facebook)\.com\//.test(j.paging.next) ? j.paging.next : '';
+  }
+  try { cache.put('igall_' + marcaId, JSON.stringify(l), 600); } catch (e) { /* grande demais para o cache */ }
+  return l;
+}
+function codigosNoCalendario_(marcaId) {
+  const o = {};
+  ler_(ABA_PAUTAS, CAMPOS_PAUTA).filter(p => p.marcaId === marcaId).forEach(p => { const c = codigoIg_(p.postLink); if (c) o[c] = 1; if (p.igMidia) o['id:' + p.igMidia] = 1; });
+  return o;
+}
+// posts do perfil que ainda não estão no calendário
+function instaFaltando_(eu, marcaId) {
+  if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Você não pode criar postagens nesta marca.');
+  const todas = instaTodas_(marcaId);
+  if (!todas) return { conectado: false, itens: [] };
+  const ja = codigosNoCalendario_(marcaId), tz = Session.getScriptTimeZone();
+  return { conectado: true, itens: todas.filter(x => !ja[codigoIg_(x.link)] && !ja['id:' + x.id]).map(x => ({ id: x.id, link: x.link, tipo: FORMATO_IG[x.tipo] || 'Estático',
+    data: x.em ? Utilities.formatDate(new Date(x.em), tz, 'yyyy-MM-dd') : '', legenda: x.legenda.slice(0, 160) })) };
+}
+// cria as postagens (status Postado) a partir de links do Instagram
+function instaImportar_(eu, marcaId, itens) {
+  if (!podeEditar_(eu, marcaId)) throw erro_('permissao', 'Você não pode criar postagens nesta marca.');
+  const l = (Array.isArray(itens) ? itens : []).slice(0, 60);
+  if (!l.length) throw erro_('server', 'Cole pelo menos um link de post do Instagram.');
+  limite_('igimp_' + eu.id, 300, 3600, 'Muitos posts puxados agora. Tente de novo em uma hora.');
+  const todas = instaTodas_(marcaId) || [], ja = codigosNoCalendario_(marcaId), tz = Session.getScriptTimeZone();
+  const criados = [], pulados = [], erros = [];
+  l.forEach(it => {
+    const link = String(it.link || '').trim(), cod = codigoIg_(link);
+    if (!cod || !/^https:\/\/(www\.)?instagram\.com\//i.test(link)) { erros.push({ link: link.slice(0, 120), motivo: 'Não é um link de post do Instagram.' }); return; }
+    if (ja[cod]) { pulados.push({ link: link, motivo: 'Já está no calendário.' }); return; }
+    const m = todas.filter(x => codigoIg_(x.link) === cod)[0];
+    let data = String(it.data || ''), hora = '', legenda = String(it.legenda || ''), formato = FORMATOS_OK_.indexOf(it.formato) >= 0 ? it.formato : '';
+    if (m) {
+      if (m.em) { data = Utilities.formatDate(new Date(m.em), tz, 'yyyy-MM-dd'); hora = Utilities.formatDate(new Date(m.em), tz, 'HH:mm'); }
+      legenda = m.legenda || legenda; formato = FORMATO_IG[m.tipo] || formato;
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) { erros.push({ link: link, motivo: m ? 'O Instagram não informou a data.' : 'Não achei esse post no perfil conectado. Escolha a data e tente de novo.' }); return; }
+    const titulo = String(it.postagem || '').trim() || (legenda.split('\n').map(t => t.trim()).filter(Boolean)[0] || 'Post do Instagram').slice(0, 80);
+    const id = salvarPauta_(eu, { marcaId: marcaId, data: data, postagem: titulo, legenda: legenda.slice(0, 5000), formato: formato || 'Estático', rede: 'Instagram', observacao: 'Puxado do Instagram' });
+    const pauta = pautaPorId_(id), hist = (pauta && pauta.historico) || [];
+    hist.push({ em: Date.now(), por: eu.nome, uid: eu.id, acao: 'Puxou do Instagram (já postado)' });
+    setPauta_(id, { status: 'Postado', postLink: m ? m.link : link.split('?')[0], igMidia: m ? m.id : '', agTipo: 'Feed', agQuando: hora ? paraBR_(data) + ' ' + hora : '', historico: JSON.stringify(hist) });
+    ja[cod] = 1; criados.push({ id: id, data: data, titulo: titulo });
+  });
+  return { criados: criados, pulados: pulados, erros: erros };
+}
+const FORMATOS_OK_ = ['Estático', 'Carrossel', 'Vídeo'];
 
 /* ---------- Acessos das contas da marca (login, senha, chave) ----------
  * Ficam nas Propriedades do script (cred_<marca>), fora da planilha, e só vão para

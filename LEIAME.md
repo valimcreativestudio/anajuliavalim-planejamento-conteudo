@@ -212,6 +212,13 @@ Ao rodar **configurar**, o script cria quatro rotinas (a quarta é o relatório 
 
 **Reordenar a grade** (Grade do Insta → ↕ Reordenar grade): arraste os posts (no celular, toque num e depois no lugar para onde ele vai). As datas do mês continuam as mesmas, só trocam entre os posts; cada post mostra a data nova e a antiga. Posts agendados ou postados ficam travados (🔒). **Só grava ao apertar "Salvar nova ordem"**; se sair da tela, mudar de mês ou cancelar, tudo volta como estava. Depois de salvar ainda dá para **Desfazer**.
 
+## Puxar posts do Instagram para o calendário
+
+No **Calendário → 📥 Puxar do Instagram**:
+- **Com o Instagram da marca conectado**: aparece a lista dos posts do perfil que ainda não estão no calendário (até os 300 mais recentes). Marque e clique em **Puxar selecionados**: entram no dia e horário em que foram postados, como **Postado**, com a legenda inteira, o formato (Estático, Carrossel, Vídeo), o título tirado da 1ª linha da legenda e o link do post.
+- **Colar links**: no Instagram, ⋯ → **Copiar link** e cole (um por linha). Se a marca não estiver conectada, ou o post não estiver no perfil conectado, escolha a data e o formato.
+- Nada é duplicado: post que já está no calendário (mesmo link) é pulado.
+
 ## Testes automáticos
 
 A pasta `tests/` tem testes que simulam a planilha e abrem o site num navegador: segurança (empresas separadas, permissões, código malicioso), login com código e com Google, tarefas, quadro, marcar na arte, modelos, desfazer, apagar pessoa e empresa.
