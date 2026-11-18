@@ -41,6 +41,7 @@ export default {
     const h = new Headers(CAB);
     if (!a) { h.set('Content-Type', 'text/plain; charset=utf-8'); return new Response('Página não encontrada', { status: 404, headers: h }); }
     h.set('Content-Type', a[1]);
+    h.set('X-Planeja-Origem', 'worker');
     h.set('Cache-Control', SEM_CACHE.includes(url.pathname) || SEM_CACHE.includes(caminho) ? 'no-cache' : 'public, max-age=3600');
     return new Response(req.method === 'HEAD' ? null : a[0], { headers: h });
   }
