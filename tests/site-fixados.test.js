@@ -30,7 +30,7 @@ ok('fixar outro na posição 2 tira o anterior dela', fx.join(',') === 'CODE38x,
 P({ action: 'fixarGrade', token: ta, marcaId: liso, codigo: 'CODE39x', posicao: 2 });
 (async () => {
   fs.mkdirSync(path.join(__dirname, 'capturas'), { recursive: true });
-  const b = await chromium.launch(); const pg = await b.newPage({ viewport: { width: 1280, height: 900 } }); const erros = [];
+  const b = await chromium.launch(); const pg = await b.newPage({ viewport: { width: 1280, height: 900 }, timezoneId: 'America/Sao_Paulo' }); const erros = [];
   pg.on('pageerror', e => erros.push(e.message));
   await pg.route('http://site.test/**', r => { const u = new URL(r.request().url()); const f = path.join(dir, u.pathname === '/' ? 'index.html' : u.pathname); if (!fs.existsSync(f)) return r.fulfill({ status: 404, body: '' }); let body = fs.readFileSync(f); if (f.endsWith('index.html')) body = body.toString().replace("connect-src 'self'", "connect-src 'self' https://api.test"); if (f.endsWith('config.js')) body = body.toString().replace(/API_URL: "[^"]*"/, 'API_URL: "https://api.test/exec"'); r.fulfill({ body, contentType: f.endsWith('.js') ? 'text/javascript' : 'text/html' }); });
   await pg.route('https://api.test/**', r => r.fulfill({ contentType: 'application/json', body: JSON.stringify(G.post(r.request().postData())) }));
@@ -55,6 +55,13 @@ P({ action: 'fixarGrade', token: ta, marcaId: liso, codigo: 'CODE39x', posicao: 
   o = await ordem();
   ok('fixar pela tela na posição 1', o[0] === 'Post 4' && o[1] === 'Xpert Liss Mask', o.slice(0, 3).join(' | '));
   ok('quem estava na posição 1 sai dos fixados', !o.slice(0, 2).includes('Tecnologia Xpert Liss'));
+  // botões com / sem posts do Insta
+  await pg.click('.grade-modo button:has-text("Sem posts do Insta")'); await pg.waitForTimeout(300);
+  ok('sem posts do Insta: só os planejados', (await pg.$$('.grade .tile.ig')).length === 0);
+  await pg.click('.grade-modo button:has-text("Com posts do Insta")'); await pg.waitForTimeout(300);
+  ok('com posts do Insta: volta o perfil', (await pg.$$('.grade .tile.ig')).length > 30);
+  // ordem pelo instante real: 15:00 UTC (Instagram) é 12:00 em Brasília, então vem antes de um planejado às 12:30 local
+  ok('fuso: Instagram em UTC comparado com a hora local', await pg.evaluate(() => epocaDe('2026-11-30T12:30') > epocaDe('2026-11-30T15:00:00+0000') && epocaDe('2026-11-30T12:00') === epocaDe('2026-11-30T15:00:00+0000')));
   // cliente vê os fixados, mas não tem o botão
   const pc = await b.newPage({ viewport: { width: 390, height: 800 } }); pc.on('pageerror', e => erros.push(e.message));
   await pc.route('http://site.test/**', r => { const u = new URL(r.request().url()); const f = path.join(dir, u.pathname === '/' ? 'index.html' : u.pathname); if (!fs.existsSync(f)) return r.fulfill({ status: 404, body: '' }); let body = fs.readFileSync(f); if (f.endsWith('index.html')) body = body.toString().replace("connect-src 'self'", "connect-src 'self' https://api.test"); if (f.endsWith('config.js')) body = body.toString().replace(/API_URL: "[^"]*"/, 'API_URL: "https://api.test/exec"'); r.fulfill({ body, contentType: f.endsWith('.js') ? 'text/javascript' : 'text/html' }); });
